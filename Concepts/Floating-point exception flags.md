@@ -6,11 +6,13 @@ tags:
 
 # Floating-point exception flags
 
-**Curriculum depth:** Introduced · **First seen:** C004 · **Latest development:** C004
+**Curriculum depth:** Developed · **First seen:** C004 · **Latest development:** C005
 
 ## Definition and mechanism
 
 Invalid, divide-by-zero, overflow, underflow and inexact are status conditions, not C++ throw exceptions. Exact subnormal results need not signal underflow. Flag/trap behavior depends on the environment.
+
+The strict host lab observes arithmetic flags at runtime and restores the incoming environment. Exactly represented subnormal results need not signal underflow; flags are not a whole-algorithm error estimate.
 
 ## Prerequisites
 
@@ -25,8 +27,10 @@ Connect later dependent concepts here as their lessons arrive.
 
 Reconstruct the concrete example in the definition and identify its validity assumptions.
 
-**Pending:** M005 will relate flags to complete arithmetic operations; current lab is not a full flag oracle.
+**Pending:** Extend this mechanism to later algorithms and target-specific behavior. See the M005 chapter for its current examples and validity assumptions.
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|M005 development]]
+
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

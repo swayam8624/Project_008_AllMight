@@ -20,6 +20,8 @@ A base is the number of available digits. Position i contributes digit × base�
 
 ## Used by
 
+- [[Terminating fractions and dyadic rationals]] — Finite fractional digits correspond to an integer over a power of the base.
+
 - [[Significand and hidden bit]] — uses positional notation to establish this mechanism's representation or policy.
 
 - [[Binary conversion]] — uses positional notation as part of its representation or reasoning.
@@ -40,4 +42,4 @@ Explain positional notation without the label, work the example above, then stat
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

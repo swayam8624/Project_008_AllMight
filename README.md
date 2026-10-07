@@ -29,7 +29,7 @@ GitHub repository: `Project_008_AllMight`.
 
 ## Volume boundaries
 
-Volume 01, **From Signals to Meaning: Bits, Numbers, and Memory**, covers planned Parts 1–100 / M001–M006. Parts 1–76 have been supplied and expanded.
+Volume 01, **From Signals to Meaning: Bits, Numbers, and Memory**, now integrates all Parts 1–100 / M001–M006. The teaching text is organized by problem and prerequisite, not by incoming part/chunk boundaries.
 
 Volume 02, **C++: From Objects to Reliable Programs**, is planned for Parts 101–300 / M007–M018: two related hundred-part phases, twelve chunks. Do not create empty future chapters or mark previews complete. Later volumes normally follow a hundred-part/six-chunk phase, with adjacent phases combined only when subject continuity warrants it. The curriculum has 180 integrated chunks, not the earlier assumed 150 uniform batches.
 
@@ -38,6 +38,7 @@ Volume 02, **C++: From Objects to Reliable Programs**, is planned for Parts 101�
 1. Check supplied headings and exact part range; identify the correct volume.
 2. Identify prerequisites and missing explanatory steps. Define unfamiliar words and symbols where first needed, in plain language.
 3. Extend the connected teaching narrative. Include why the mechanism exists, how it works, a fully worked example, limits/failure cases, and observable lab checks. Revisit earlier explanations when later parts deepen them.
+   Reorganize the completed subject volume into concept-led story sections. Explain what each mechanism solves and which previous limitations still remain; keep source numbering in the coverage ledger and provenance, not as teaching headings.
 4. Link reusable technical terms to real nodes using wiki links, while retaining their present definition in the teaching text. Use canonical spellings.
 5. Update the existing concept, index, prerequisite and reciprocal downstream links. Keep future depth explicitly pending.
 6. Extend durable headings in derivations/code/traces. Do not scatter the sequence into new chunk files.
@@ -56,9 +57,9 @@ Technical concept links point to real files. Heading links locate chapter/proof 
 
 Forward means useful current context exists but deeper treatment is pending. Introduced means recognizable and usable at the present level. Developed means later material has added mechanism or implementation. Owned means the notes support independent reconstruction; it is not a claim about personal mastery.
 
-- Accepted/expanded parts: 1–76.
-- Accepted chunks: M001–M004, 4 of 180.
-- Next expected source: M005, Parts 77–88.
-- First volume target: Parts 1–100; next ranges 77–88 and 89–100.
+- Accepted/expanded parts: 1–100.
+- Accepted chunks: M001–M006, 6 of 180.
+- Next expected source: M007, Parts 101–116.
+- First volume: complete source coverage, with concept-led teaching organization.
 
 [[Graphics Engine Mastery - Continuous Notes]] · [[Keyword Index]] · [[Dependency Map]]

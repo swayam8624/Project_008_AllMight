@@ -22,6 +22,8 @@ Packing places several constrained values into a carrier. Input `[1,0,1,1,0,1,0,
 
 ## Used by
 
+- [[Groupwise quantization and metadata]] — uses this mechanism to define its representation, error or validation contract.
+
 - [[Atomic operations and write contention]] — uses bit packing as part of its representation or reasoning.
 - [[Quantization and compressed weights]] — uses bit packing as part of its representation or reasoning.
 
@@ -33,4 +35,4 @@ Explain bit packing without the label, work the example above, then state the as
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

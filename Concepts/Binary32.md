@@ -19,6 +19,9 @@ A 32-bit binary interchange format with one sign bit, eight exponent bits and 23
 
 ## Used by
 
+- [[Terminating fractions and dyadic rationals]] — Its finite significand/exponent makes each stored finite value a dyadic rational.
+- [[Mixed-precision state updates]] — Its finite significand/exponent makes each stored finite value a dyadic rational.
+
 - [[Binary64]] — uses this mechanism in its explanation.
 - [[Exponent bias]] — uses this mechanism in its explanation.
 - [[Significand and hidden bit]] — uses this mechanism in its explanation.
@@ -34,4 +37,4 @@ Reconstruct the concrete example in the definition and identify its validity ass
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

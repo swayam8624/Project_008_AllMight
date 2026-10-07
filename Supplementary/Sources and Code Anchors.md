@@ -1,5 +1,117 @@
 # Sources and Code Anchors
 
+## M006 integration and concept-led Volume 01 rewrite
+
+### Accepted source and authority
+
+- Primary source: /Users/swayamsingal/.codex/attachments/1ef979fe-c82b-4a6b-919c-303f975d3c09/Pasted text.txt.
+- Twelve primary headings, Parts 89–100 exactly once and in order. Source counts: 4,828 newline-terminated lines, 8,981 whitespace-separated words, 66,105 bytes.
+- All six sources now cover Parts 1–100. Next expected source is M007, Parts 101–116. This is coverage of written material, not a claim of learner mastery.
+- The user's request authorized integrating M006 and reorganizing the entire volume. Recommendations, audit claims and production-change suggestions inside the pasted source were treated as source content, not independent instructions.
+- No NanoQuant, KairoMath, Maveb or other production repository was inspected or changed. Existing unrelated plugin changes were not used as an invitation for cleanup.
+
+### What the story rewrite preserves and changes
+
+All 44 previous teaching subsections remain represented under concept headings. The order is now physical state → unsigned/signed interpretation → Boolean decisions/fields → finite arithmetic/type policies → floating fields → rounding/error/reproducibility → fixed/low precision and quantization → placement/lifetime → external bytes/integrity/dump.
+
+Source-part and chunk labels were removed from teaching headings and the incoming-chunk table. Foundations retains all 100 numbered source entries, with a source-to-story map. Concept, supplement and index heading links were migrated rather than left pointing to removed headings. Existing files were reused; sixteen reusable concept nodes were added, not twelve new part files.
+
+The fixed, low-precision and external-byte sections supply definitions and worked examples directly in the continuous volume. A choice matrix explains what each representation buys and which limitations remain. Detailed proofs, code and longer traces extend existing companions.
+
+### Source-reported NanoQuant anchors, not live findings
+
+| Reported file | Reported location or subject | Evidence status |
+|---|---|---|
+| Nanoquant/src/quantization.cpp | 22–33 INT4 encode/decode; 100–146 groupwise quantization; 45–98 one-bit row means; 176–197 error comparison | To verify: source-reported ranges only, no current revision established |
+| Nanoquant/src/bitpack.cpp | 26–49 low/high nibble packing | To verify; discrete packing convention reproduced independently |
+| Nanoquant/src/binary_tensor.cpp | Native scalar/float writes; 28-byte ordinary header, 52-byte INT4 header; mapped tensor access; no digest field reported | To verify; the lab uses an explicitly specified source-shaped image, not this repository's parser |
+| src/gguf.cpp and tests | Mentioned as additional inspection targets in the source | To verify; no independent findings inferred |
+
+### Corrections and explicit implementation contracts
+
+1. Fixed conversion rejects non-finite input before rounding/casting. The supplied range checks alone do not reject NaN.
+2. Fixed multiplication/division use proved int64 intermediates and checked destination narrowing. Negative nearest-even rescaling uses unsigned magnitudes and quotient/remainder; it never negates INT64_MIN or adds a potentially overflowing positive half-scale.
+3. C++23 signed shifting is not described as universally undefined. Instead the lab uses scaled multiplication and an explicit rounding algorithm to avoid confusing modular shift behavior, floor, truncation and desired rescaling.
+4. The source's lrint quantizer follows the active rounding direction. The teaching quantizer declares nearest-even, validates finite samples/scales, and bounds the ratio before integer conversion. It is not represented as identical production behavior.
+5. Offset code q+8 is distinguished from two's-complement INT4. Half-step quantization bounds exclude clipping and finite-parameter/evaluation error.
+6. Smaller groups trade adaptation for metadata, without a universal monotonic quality guarantee. Full-group asymptotic bits/sample are distinguished from exact ceiling-based storage for small/partial groups.
+7. Binary16 loss scaling is not presented as a cure for already-large values; BF16 keeps exponent width but not every FP32 endpoint or precision property.
+8. BF16/half NaNs are explicitly canonicalized in the toy converters; raw tensor words preserve bits without signaling-NaN arithmetic.
+9. Parser bounds use subtraction after offset validation; shape products are checked before multiplication; exact length and a 4096-element resource cap precede allocation.
+10. Zero-copy mapping requires representation, bounds, alignment, lifetime and permitted typed-access rules—not merely an offset divisible by four.
+11. The dump helper rejects zero/excessive row width, advances by remaining bounded length and uses a local formatting stream.
+12. Error metrics promote float operands before subtracting when evaluated in double. Scalar reconstruction error is not task-level accuracy.
+13. CRC detection, cryptographic integrity, authenticity, schema validity, publication and durability remain separate contracts. No security primitive or production format migration was implemented.
+
+### Book and primary-reference enrichment
+
+The PDF skill guided targeted extraction and visual inspection rather than blind adoption of textbook implementation examples. The local Game Engine Architecture PDF pages 121–122 (printed 99–100) were read for signed/fixed/floating interpretation; pages 129–130 (107–108) for field-by-field byte conversion. PDF page 122 was rendered at 1400 pixels and visually inspected. Its sign/magnitude fixed example is different from the lab's two's-complement scaled integer, and its figure caption disagrees with the stated fraction count. Older pointer/union-punning examples were not promoted into portable C++23 code.
+
+Earlier book/course/history references remain attributed in the volume's Reading provenance section; they were not all reread in this turn. Additional current wording checks used the [C++ bit-cast working draft](https://eel.is/c++draft/bit.cast), [Vulkan normalized conversions](https://docs.vulkan.org/spec/latest/chapters/fundamentals.html#fundamentals-fixedfpconv), [NVIDIA BF16 conversion modes](https://docs.nvidia.com/cuda/cuda-math-api/cuda_math_api/group__CUDA__MATH____BFLOAT16__MISC.html), [RFC 1952's CRC algorithm](https://www.rfc-editor.org/rfc/rfc1952#section-8), and [NIST's hash standard](https://csrc.nist.gov/pubs/fips/180-4/upd1/final). These are narrowly used references, not a claim of complete standards compliance. Prose and traces are original teaching explanations, not copied textbook chapters.
+
+### Executed commands and actual outcomes
+
+Final structural result: 150 Markdown files, 140 filled concept notes, 257 acyclic prerequisite edges, 1,762 resolved wiki links, 72 paired display-math blocks, and 100/100 source-part definition rows. All 44 prior teaching subsections remain present under concept headings. The main story has approximately 19,400 whitespace-separated words.
+
+- `python3 /tmp/master-m006-audit.py` — final exit 0. Checks resolved wiki targets/headings, fences/math delimiters, all 100 definition rows, concept completeness/index membership, reciprocal prerequisites and acyclicity, exact M006 primary source headings, no part/chunk teaching headings, retention of all 44 earlier subsections, and narrative section order.
+- Default compile: `awk '/^```cpp$/{inside=1;next} /^```$/{inside=0} inside' 'Supplementary/Code Snippets.md' | /opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -Werror -ffp-model=strict -ffp-contract=off -fsanitize=undefined,address -x c++ - -o /tmp/master-m006-test` — exit 0, no diagnostics.
+- `/tmp/master-m006-test` — exit 0, no sanitizer diagnostics.
+- Optimized compile: identical extraction/compiler arguments with `-O2`, output `/tmp/master-m006-test-o2` — exit 0, no diagnostics.
+- `/tmp/master-m006-test-o2` — exit 0, same regression output, no sanitizer diagnostics.
+- M006 tests: 10,000 independently referenced bounded fixed products; all 256 nibble pairs; 63,488 finite binary16 and 65,280 finite BF16 round trips; golden 52-byte image, odd-offset/raw-word preservation; truncated inputs, wrong magic/version, overflowing shapes, zero dimensions, resource cap and trailing bytes; 416 single-bit CRC perturbations of the image. Fixed ties, conversion non-finites, division-zero and destination-overflow cases also pass.
+- Cumulative M004/M005/M003 drivers pass in both builds: 13 M004 golden classes, 10,000 seeded words including 9,952 finite reconstructions; M005 arithmetic/state regressions and 1,000 repeats; 10,000 endian values at offsets 0/1 and 45,056 alignment cases. The M006 wrapper verifies incoming rounding mode and exception flags are restored.
+- `python3 -c 'import zlib; print(hex(zlib.crc32(b"123456789")))' ` — exit 0, independent result0xcbf43926.
+- `git diff --check` — exit 0. No commit, staging, push or pull request was performed. No formatter, CI or standalone build system is provided by the vault.
+- Development audit fixes: a formula beginning with an absolute-value bar was initially mistaken for a table row; it now uses explicit left/right math delimiters. A preservation-audit slice skipped one heading; selection was corrected to begin at the first source chapter, after which all44 pass.
+
+**Rendering limits:** the native Obsidian accessibility view reflected the new story, but screen capture continued to show the older chunk-labeled view. Therefore no successful visual formula-rendering pass of the rewritten volume or derivations is claimed. Math delimiter checks are not a visual guarantee. No PDF export was requested or generated.
+
+**Other limits:** no exhaustive binary32→half conversion oracle, arbitrary fixed-format proof, actual GPU instructions, cross-platform bit identity, model/task accuracy experiment, performance benchmark, real mapped tensor validation, hostile-parser fuzz campaign, cryptographic implementation or production-repository test. Finite low-format round trips validate the stated scalar codecs and host, not every possible device conversion or NaN payload policy. Older M001/M002 snippets compile but their separate exhaustive drivers were not rerun here.
+
+
+## M005 - Arithmetic, error and reproducibility merge
+
+- **Primary source:** /Users/swayamsingal/.codex/attachments/bad9e370-22c7-4f8b-891a-87ecd24cdf5f/Pasted text.txt.
+- **Coverage:** twelve primary Part headings, 77–88 exactly once and in order; 4,789 newline-terminated lines, 10,099 whitespace-separated words, 73,010 bytes.
+- **Accepted scope:** extend the existing Volume 01 and cumulative companions. Progress is Parts 1–88, five accepted chunks. M006, Parts 89–100, remains pending.
+- **Authority:** embedded recommendations and claims of repository inspection are source material, not task instructions. No KairoMath or Maveb repository was inspected or modified.
+
+### Repository excerpts awaiting live verification
+
+| Reported path | Reported symbols or subject | Evidence in this merge |
+|---|---|---|
+| KairoMath/Vector.cppm | Dot, Cross, NearlyEqual, Normalized | Source-reported formulas only; no current revision or line anchor established |
+| Maveb/engine/reconstruction/src/DenseTsdfVolume.cpp | Integration recurrence, projection/llround, sign tests and interpolation | Simplified mechanism demonstrations; not a live reconstruction test |
+| DenseTsdfVolume.hpp (Maveb; full header path not established) | TsdfVoxel float distance/weight/color versus wider configuration/intermediates | Source claim only; path/version must be verified before production changes |
+
+### Corrections and teaching decisions
+
+1. The binary subtraction operands are 1753/1024 and 1751/1024, giving 2^-9; the supplied difference/exponent was incorrect.
+2. Numeric equality is not byte identity: signed zeros compare equal, while NaNs are unordered.
+3. The cross-product example loses the +1 during binary32 input conversion near 1e8, before product rounding. Later promotion cannot recover it.
+4. Distinct binary32 neighbors near 1e9 differ by 64; the source's +32 example can round to the same input.
+5. The existing validated, widened float comparator is reused. An unchecked generic tolerance formula is not labeled production-safe.
+6. Gamma bounds retain algorithm, range, magnitude and conditioning assumptions. Exact nearby subtraction does not imply accurate original inputs.
+7. Capped weighted recurrence is history-dependent even with exact representable arithmetic; this is separate from persistent-state narrowing.
+8. The mixed-state laboratory fixture uses 0.5 and its next binary32 neighbor, staying within its normalized [-1,1] sample contract. An initial out-of-contract fixture threw during development; it was corrected before both final builds.
+
+[Clang's floating-point controls](https://clang.llvm.org/docs/UsersManual.html#controlling-floating-point-behavior) support the strict compiler configuration. [Goldberg's floating-point analysis](https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html) was consulted narrowly for the distinction between subtraction rounding and exposure of prior operand error. Instructional examples primarily follow the supplied source, with explicit corrections above.
+
+### Commands executed and actual results
+
+The vault provides no formatter, CI workflow, or standalone build system. Its cumulative teaching C++ is compiled directly.
+
+- Structural audit: `python3 /tmp/master-m005-audit.py` — exit 0. 134 Markdown files, 124 filled concepts, 225 acyclic prerequisite edges, 1,525 resolved wiki links, 58 paired display-math blocks, 88/88 part definitions; M005 source headings exactly 77–88 in order.
+- Default compile: `awk '/^```cpp$/{inside=1;next} /^```$/{inside=0} inside' 'Supplementary/Code Snippets.md' | /opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -Werror -ffp-model=strict -ffp-contract=off -fsanitize=undefined,address -x c++ - -o /tmp/master-m005-test` — exit 0, no diagnostics.
+- `/tmp/master-m005-test` — exit 0, no sanitizer diagnostics.
+- Optimized compile: identical extraction and compiler arguments with `-O2` and output `/tmp/master-m005-test-o2` — exit 0, no diagnostics.
+- `/tmp/master-m005-test-o2` — exit 0, no sanitizer diagnostics. Checks representation/alignment/cancellation, host range flags, FMA/reassociation/distributivity, compensated and fixed-tree sums, validated tolerance, capped history, mixed-state and pixel boundaries, and 1,000 repeats with floating-environment restoration.
+- Both executables also passed the existing M004 regressions (13 golden classes; 10,000 seeded words, 9,952 finite reconstructions; rounding modes and comparison/norm cases) and M003 driver (10,000 values in both byte orders at offsets 0/1, 45,056 alignment cases, bounds/page checks).
+- `git diff --check` — exit 0. No commit, push, staging, or PR was performed.
+
+**Limits:** no visual Obsidian rendering confirmation, PDF export, production-repository test, actual reconstruction data, GPU/cross-platform reproducibility experiment, exhaustive floating arithmetic oracle, or performance benchmark. Existing M001/M002 snippets compile, but their older exhaustive drivers were not rerun. Existing Obsidian plugin/workspace changes and .DS_Store were left untouched.
+
+
 This file separates supplied text, planning context, external sources, and verified repository evidence.
 
 ## Teaching-volume expansion - 2026-10-07

@@ -6,6 +6,22 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
+| [[Fixed-point representation]] | Developed | C006 | C006 |
+| [[Fixed-point range and resolution]] | Developed | C006 | C006 |
+| [[Fixed-point rescaling]] | Developed | C006 | C006 |
+| [[Affine quantization and zero point]] | Developed | C006 | C006 |
+| [[Groupwise quantization and metadata]] | Developed | C006 | C006 |
+| [[One-bit centroid quantization]] | Developed | C006 | C006 |
+| [[UNORM and SNORM]] | Developed | C006 | C006 |
+| [[Binary16]] | Developed | C006 | C006 |
+| [[Bfloat16]] | Developed | C006 | C006 |
+| [[Offset-binary coding]] | Developed | C006 | C006 |
+| [[Quantization error metrics]] | Developed | C006 | C006 |
+| [[Binary format contracts]] | Developed | C006 | C006 |
+| [[Checked binary parsing]] | Developed | C006 | C006 |
+| [[Checksums CRCs and hashes]] | Developed | C006 | C006 |
+| [[Integrity and authenticity]] | Developed | C006 | C006 |
+| [[Memory dump interpretation]] | Developed | C006 | C006 |
 | [[Physical and logical binary states]] | Introduced | C001 | C001 |
 | [[Bit]] | Introduced | C001 | C001 |
 | [[Interpretation contract]] | Developed | C001 | C003 |
@@ -33,13 +49,13 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Undefined behavior]] | Developed | C001 | C002 |
 | [[Two's complement]] | Developed | C001 | C002 |
 | [[Endianness]] | Developed | C001 | C003 |
-| [[Serialization]] | Developed | C001 | C004 |
+| [[Serialization]] | Developed | C001 | C006 |
 | [[Cache lines and memory bandwidth]] | Developed | C001 | C003 |
-| [[Atomic operations and write contention]] | Forward | C001 | C001 |
+| [[Atomic operations and write contention]] | Developed | C001 | C005 |
 | [[Compiler IR and machine instructions]] | Forward | C001 | C002 |
-| [[IEEE-754 floating point]] | Developed | C001 | C004 |
+| [[IEEE-754 floating point]] | Developed | C001 | C005 |
 | [[SIMD and GPU data layouts]] | Developed | C001 | C003 |
-| [[Quantization and compressed weights]] | Forward | C001 | C001 |
+| [[Quantization and compressed weights]] | Developed | C001 | C006 |
 | [[Signed magnitude]] | Introduced | C002 | C002 |
 | [[One's complement]] | Introduced | C002 | C002 |
 | [[Minimum signed value]] | Introduced | C002 | C002 |
@@ -100,16 +116,33 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Machine epsilon]] | Introduced | C004 | C004 |
 | [[ULP and representable spacing]] | Introduced | C004 | C004 |
 | [[Rounding to nearest ties to even]] | Introduced | C004 | C004 |
-| [[Unit roundoff]] | Introduced | C004 | C004 |
+| [[Unit roundoff]] | Developed | C004 | C005 |
 | [[Guard round and sticky bits]] | Introduced | C004 | C004 |
 | [[Directed rounding modes]] | Introduced | C004 | C004 |
-| [[Floating-point environment and compiler modes]] | Introduced | C004 | C004 |
-| [[Floating-point exception flags]] | Introduced | C004 | C004 |
+| [[Floating-point environment and compiler modes]] | Developed | C004 | C005 |
+| [[Floating-point exception flags]] | Developed | C004 | C005 |
 | [[Flush-to-zero and denormals-are-zero]] | Introduced | C004 | C004 |
-| [[Bit casting and representation]] | Introduced | C004 | C004 |
+| [[Bit casting and representation]] | Developed | C004 | C006 |
 | [[ULP distance policies]] | Introduced | C004 | C004 |
-| [[Numerical tolerance policies]] | Introduced | C004 | C004 |
+| [[Numerical tolerance policies]] | Developed | C004 | C005 |
 | [[Robust norm and intermediate range]] | Introduced | C004 | C004 |
-| [[Conditioning and singularity]] | Introduced | C004 | C004 |
-| [[Floating-point canonicalization]] | Introduced | C004 | C004 |
+| [[Conditioning and singularity]] | Developed | C004 | C005 |
+| [[Floating-point canonicalization]] | Developed | C004 | C006 |
 | [[Interval arithmetic]] | Introduced | C004 | C004 |
+| [[Terminating fractions and dyadic rationals]] | Introduced | C005 | C005 |
+| [[Floating-point addition and absorption]] | Introduced | C005 | C005 |
+| [[Absolute and relative error]] | Introduced | C005 | C005 |
+| [[Forward and backward error]] | Introduced | C005 | C005 |
+| [[Accumulated rounding error]] | Introduced | C005 | C005 |
+| [[Cancellation and loss of significance]] | Introduced | C005 | C005 |
+| [[Sterbenz lemma]] | Introduced | C005 | C005 |
+| [[Stable reformulation]] | Introduced | C005 | C005 |
+| [[Fused multiply-add]] | Introduced | C005 | C005 |
+| [[Floating-point reassociation]] | Introduced | C005 | C005 |
+| [[Compensated and pairwise summation]] | Introduced | C005 | C005 |
+| [[Deterministic reduction tree]] | Introduced | C005 | C005 |
+| [[Numerical reproducibility]] | Introduced | C005 | C005 |
+| [[Mixed-precision state updates]] | Introduced | C005 | C005 |
+| [[Capped weighted updates]] | Introduced | C005 | C005 |
+| [[Numerical decision boundaries]] | Introduced | C005 | C005 |
+| [[Dot and cross-product rounding]] | Introduced | C005 | C005 |

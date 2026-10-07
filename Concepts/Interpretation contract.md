@@ -21,6 +21,10 @@ For `0xAD`, unsigned interpretation gives 173; eight-bit two's complement gives 
 
 ## Used by
 
+- [[Fixed-point representation]] — uses this mechanism to define its representation, error or validation contract.
+- [[Offset-binary coding]] — uses this mechanism to define its representation, error or validation contract.
+- [[Integrity and authenticity]] — uses this mechanism to define its representation, error or validation contract.
+
 - [[Bit casting and representation]] — uses interpretation contract to establish this mechanism's representation or policy.
 
 - [[Integral promotion]] — uses interpretation contract as part of its representation or reasoning.
@@ -45,6 +49,6 @@ Explain interpretation contract without the label, work the example above, then 
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 teaching chapter]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C002 - M002 - Parts 0021-0040 - Finite integers, ALU arithmetic, and C++ hazards|C002 development]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 teaching chapter]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 development]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C003 - M003 - Parts 0041-0060 - Byte placement, virtual memory, and storage lifetime|C003 development]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|C003 development]]

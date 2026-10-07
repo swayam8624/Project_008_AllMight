@@ -19,6 +19,8 @@ Exponent zero and nonzero fraction remove the hidden one and hold the effective 
 
 ## Used by
 
+- [[Sterbenz lemma]] — An exact tiny difference may need gradual-underflow representability.
+
 - [[ULP and representable spacing]] — uses this mechanism in its explanation.
 - [[Floating-point exception flags]] — uses this mechanism in its explanation.
 - [[Flush-to-zero and denormals-are-zero]] — uses this mechanism in its explanation.
@@ -31,4 +33,4 @@ Reconstruct the concrete example in the definition and identify its validity ass
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

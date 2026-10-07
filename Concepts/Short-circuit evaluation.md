@@ -20,6 +20,8 @@ Built-in logical AND skips its right operand after false; logical OR skips it af
 
 ## Used by
 
+- [[Checked binary parsing]] — uses this mechanism to define its representation, error or validation contract.
+
 Connect later chunks here when they use this concept.
 
 ## Recall and next depth
@@ -30,4 +32,4 @@ Explain short-circuit evaluation without the label, work the example above, then
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

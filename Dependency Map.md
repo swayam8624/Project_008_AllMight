@@ -27,9 +27,9 @@ An edge from prerequisite to dependent means the dependent explanation uses the 
 | [[Byte and octet]], [[Bit significance]] | [[Endianness]] | Byte ordering must be distinguished from bit weights. |
 | [[Endianness]], [[Fixed-width integer types]] | [[Serialization]] | A file format must define the exact emitted byte sequence. |
 
-## Chunk dependency and pending work
+## Narrative order and source coverage
 
-M001 provides representation, masks, shifts, and Boolean rules. M002 uses them to build finite arithmetic and explain language types. M003 develops [[Endianness]], [[Alignment and padding]], and [[Addresses and virtual memory]] into byte codecs, layout, page translation, permissions, and lifetime. M004 develops [[IEEE-754 floating point]] through formats, special classes, spacing and rounding. M005, Parts 77–88, is the next expected source. The connected teaching volume explains these prerequisites directly; graph links support navigation and later depth.
+All six sources are accepted through Part 100. The volume now follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Fixed point and quantization reuse integer and error rules; serialization joins representation to external bytes. Source order remains in Foundations, not in teaching headings. M007, Parts 101–116, begins the next subject.
 
 Future connections already have definitions: [[IEEE-754 floating point]], [[Cache lines and memory bandwidth]], [[Atomic operations and write contention]], [[SIMD and GPU data layouts]], [[Quantization and compressed weights]], [[Compiler IR and machine instructions]], and [[Guest and host integer domains]]. Update these same notes when their curriculum parts arrive.
 
@@ -107,4 +107,47 @@ For each chunk, define new terms before linking them, add prerequisite reasons, 
 | [[Signed zero]], [[NaNs and payloads]], [[Serialization]], [[Bit casting and representation]] | [[Floating-point canonicalization]] | Canonicalization deliberately merges encodings: both zeros to positive zero, all NaNs to one quiet pattern. Raw preservation instead keeps sign/payload distinctions. Neither is universally correct; this is a file/hash contract choice. |
 | [[Directed rounding modes]], [[Floating-point environment and compiler modes]] | [[Interval arithmetic]] | An interval encloses a possible exact value between lower and upper bounds. Correct outward rounding can preserve containment when the whole algorithm honors necessary assumptions. |
 
-M004 is merged through Part 76. The next expected source is M005, Parts 77–88. Prerequisites are explanatory dependencies, not a requirement to navigate out of the continuous volume.
+The first volume covers all Parts 1–100. Prerequisites explain the story's dependencies; they do not require leaving the continuous volume to learn an essential definition.
+
+## M005 - Arithmetic, error and reproducibility learning spine
+
+| Prerequisites | Dependent | Why these steps are needed |
+|---|---|---|
+| [[Positional notation]], [[Binary32]] | [[Terminating fractions and dyadic rationals]] | A reduced denominator must contain only factors of two to terminate in binary. |
+| [[Significand and hidden bit]], [[Exponent bias]], [[Guard round and sticky bits]] | [[Floating-point addition and absorption]] | Align scales before addition; discarded digits influence rounding or disappear. |
+| [[Unit roundoff]] | [[Absolute and relative error]] | Separate error magnitude from error relative to a nonzero reference. |
+| [[Absolute and relative error]], [[Conditioning and singularity]] | [[Forward and backward error]] | Distinguish output discrepancy from the input perturbation that explains it. |
+| [[Unit roundoff]], [[Absolute and relative error]] | [[Accumulated rounding error]] | Bounds depend on rounding count, range assumptions and operand magnitudes. |
+| [[Absolute and relative error]], [[Significand and hidden bit]], [[Conditioning and singularity]] | [[Cancellation and loss of significance]] | A small difference exposes input uncertainty relative to its size. |
+| [[Cancellation and loss of significance]], [[Subnormals and gradual underflow]] | [[Sterbenz lemma]] | Nearby stored operands can subtract exactly even though their original inputs were rounded. |
+| [[Cancellation and loss of significance]] | [[Stable reformulation]] | Change intermediates to avoid unnecessary loss while preserving the mathematical target. |
+| [[IEEE-754 floating point]], [[Rounding to nearest ties to even]] | [[Fused multiply-add]] | One final rounding differs from separate product and sum roundings. |
+| [[Floating-point addition and absorption]], [[Fused multiply-add]] | [[Floating-point reassociation]] | Expression grouping changes rounded intermediates. |
+| [[Floating-point reassociation]], [[Accumulated rounding error]] | [[Compensated and pairwise summation]] | Correction terms and balanced trees address different accumulation mechanisms. |
+| [[Compensated and pairwise summation]] | [[Deterministic reduction tree]] | Fix leaves and grouping to make reduction order repeatable. |
+| [[Deterministic reduction tree]], [[Floating-point environment and compiler modes]], [[Atomic operations and write contention]] | [[Numerical reproducibility]] | Order, arithmetic environment and synchronization are separate contracts. |
+| [[Binary32]], [[Binary64]], [[Rounding to nearest ties to even]] | [[Mixed-precision state updates]] | Wider computation cannot restore information discarded by persistent narrowing. |
+| [[Mixed-precision state updates]], [[Arithmetic policies]] | [[Capped weighted updates]] | Capping changes the recurrence and creates exact history dependence before roundoff. |
+| [[Absolute and relative error]], [[Directed rounding modes]] | [[Numerical decision boundaries]] | Small numeric changes can cross pixel, sign or threshold decisions. |
+| [[Cancellation and loss of significance]], [[Fused multiply-add]], [[Compensated and pairwise summation]] | [[Dot and cross-product rounding]] | Input representation, product rounding and summation are separate sources of error. |
+
+## Representation choices and external contracts
+
+| Prerequisites | Dependent | Why these steps are needed |
+|---|---|---|
+| [[Two's complement]], [[Interpretation contract]] | [[Fixed-point representation]] | A raw integer I represents I/S for an agreed positive scale S and units. With S=2^16, raw 212992 means 3.25. The integer has no built-in fractional point. |
+| [[Fixed-point representation]] | [[Fixed-point range and resolution]] | For signed N-bit raw storage and F fraction bits, step is 2^-F and the positive endpoint is (2^(N-1)-1)/2^F. Required step 0.001 and magnitude 1e6 in 32 bits allow F=10 or 11. |
+| [[Fixed-point representation]], [[Minimum signed value]], [[Arithmetic policies]] | [[Fixed-point rescaling]] | Raw multiplication changes scale S to S²; divide the wide product by S with a declared rounding rule. Raw division uses A*S/B. Check the destination after widening, and handle divisor zero and signed minima. |
+| [[Fixed-point representation]], [[Absolute and relative error]] | [[Affine quantization and zero point]] | A positive step s, integer zero point z and bounded code q reconstruct x̂=s(q-z). Nearest encode uses clamp(round(x/s)+z). Half-step error assumes no clipping and ideal parameters. |
+| [[Affine quantization and zero point]], [[Bit packing]] | [[Groupwise quantization and metadata]] | Local groups share a scale, improving adaptation at a metadata cost. Symmetric INT4 calibration maxAbs/7 reconstructs codes around [-7,7]; float scales add about 32/G bits per value for full groups. |
+| [[Quantization and compressed weights]] | [[One-bit centroid quantization]] | One sign label selects one of two row means. Row [-1,-3,2,4] reconstructs [-2,-2,3,3], with RMSE one. Two float32 centroids cost 64 additional bits per row. |
+| [[Affine quantization and zero point]] | [[UNORM and SNORM]] | UNORM decodes q/(2^n-1); UNORM8 code128 gives128/255. SNORM commonly clamps q/(2^(n-1)-1) at -1, so -128 and -127 both map to -1 for eight bits. |
+| [[IEEE-754 floating point]], [[Rounding to nearest ties to even]] | [[Binary16]] | IEEE binary16 has 1/5/10 fields, bias15 and11 normal precision bits. Word3E00 is1.5; maximum finite65504; normal minimum2^-14 and subnormal minimum2^-24. |
+| [[IEEE-754 floating point]], [[Rounding to nearest ties to even]] | [[Bfloat16]] | BF16 has1/8/7 fields, bias127 and8 normal precision bits. It keeps broad exponent range at coarse spacing2^-7 above1. A nearest-even conversion must handle NaNs separately from finite rounding. |
+| [[Unsigned modular arithmetic]], [[Interpretation contract]] | [[Offset-binary coding]] | A bias turns signed levels into unsigned codes. For the source-shaped INT4 convention c=q+8, -3 becomes nibble0101, not the two's-complement nibble1101. |
+| [[Absolute and relative error]], [[Quantization and compressed weights]] | [[Quantization error metrics]] | For N>0, RMSE is sqrt(sum squared discrepancies/N), MAE is mean absolute discrepancy, and max error is the largest observed magnitude. Promote float operands before subtraction when measuring in double. |
+| [[Serialization]], [[Bit casting and representation]] | [[Binary format contracts]] | A schema declares field widths/order, byte order, numeric representation, valid values, lengths, version, padding and identity policy. Magic identifies a candidate format; version chooses a schema, neither authenticates content. |
+| [[Binary format contracts]], [[Unsigned modular arithmetic]], [[Short-circuit evaluation]] | [[Checked binary parsing]] | Validate products before size calculation, ranges with offset≤size and length≤size-offset, and practical resource limits before allocation. Mapping/alignment does not itself establish valid typed object access. |
+| [[Bitwise XOR]], [[Serialization]] | [[Checksums CRCs and hashes]] | Checksums/digests summarize specified bytes. Additive checksums miss reorderings; CRCs use GF(2) polynomial remainders and declared parameters. Cryptographic hashes need a trusted reference to support integrity claims against substitution. |
+| [[Checksums CRCs and hashes]], [[Interpretation contract]] | [[Integrity and authenticity]] | Integrity compares content with a declared reference; authenticity requires a trust mechanism such as a MAC or signature. Replacing both file and untrusted digest defeats a simple hash comparison. |
+| [[Endianness]], [[Bit casting and representation]], [[Binary format contracts]] | [[Memory dump interpretation]] | Raw octets gain meaning from offsets, width, encoding and byte order. Bytes00 00 80 3F mean integer1065353216 or binary32 one under different little-endian contracts. A dump does not prove a typed object is live. |

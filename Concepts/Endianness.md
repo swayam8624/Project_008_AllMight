@@ -19,6 +19,8 @@ Byte order maps numeric significance to ascending addresses without changing the
 
 ## Used by
 
+- [[Memory dump interpretation]] — uses this mechanism to define its representation, error or validation contract.
+
 - [[Little endian]] — uses this mechanism as stated in its prerequisites.
 - [[Big endian]] — uses this mechanism as stated in its prerequisites.
 - [[Byte swapping and network order]] — uses this mechanism as stated in its prerequisites.
@@ -32,4 +34,4 @@ Derive four bytes, invert each matching codec, and explain the mismatched decode
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C003 - M003 - Parts 0041-0060 - Byte placement, virtual memory, and storage lifetime|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]]

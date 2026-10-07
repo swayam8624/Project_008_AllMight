@@ -18,6 +18,12 @@ Choose the nearest representable value; exactly halfway choose the even retained
 
 ## Used by
 
+- [[Binary16]] — uses this mechanism to define its representation, error or validation contract.
+- [[Bfloat16]] — uses this mechanism to define its representation, error or validation contract.
+
+- [[Fused multiply-add]] — Midpoint decisions determine separate/fused results and narrowed persistent state.
+- [[Mixed-precision state updates]] — Midpoint decisions determine separate/fused results and narrowed persistent state.
+
 - [[Unit roundoff]] — uses this mechanism in its explanation.
 - [[Guard round and sticky bits]] — uses this mechanism in its explanation.
 - [[Directed rounding modes]] — uses this mechanism in its explanation.
@@ -30,4 +36,4 @@ Reconstruct the concrete example in the definition and identify its validity ass
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

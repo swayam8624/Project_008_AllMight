@@ -6,11 +6,13 @@ tags:
 
 # Unit roundoff
 
-**Curriculum depth:** Introduced · **First seen:** C004 · **Latest development:** C004
+**Curriculum depth:** Developed · **First seen:** C004 · **Latest development:** C005
 
 ## Definition and mechanism
 
 Under nearest binary rounding the conventional relative bound for normal-range results is u=2^-p, half upward epsilon. For binary32 this is 2^-24. The bound has range/rounding assumptions.
+
+Repeated-rounding bounds use $\gamma_n=nu/(1-nu)$ when $nu<1$, under the stated rounding and range assumptions. Summation error also depends on operand magnitudes; this is not a universal relative-error guarantee.
 
 ## Prerequisites
 
@@ -19,14 +21,19 @@ Under nearest binary rounding the conventional relative bound for normal-range r
 
 ## Used by
 
+- [[Absolute and relative error]] — The local normal-rounding bound supplies the error-analysis scale.
+- [[Accumulated rounding error]] — The local normal-rounding bound supplies the error-analysis scale.
+
 Connect later dependent concepts here as their lessons arrive.
 
 ## Recall and next depth
 
 Reconstruct the concrete example in the definition and identify its validity assumptions.
 
-**Pending:** Do not apply the same relative bound to arbitrarily tiny subnormal results.
+**Pending:** Subnormal absolute-error models and target-specific arithmetic require separate treatment; do not extend the normal relative bound to arbitrarily tiny results.
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|M005 development]]
+
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

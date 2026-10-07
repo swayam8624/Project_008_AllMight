@@ -21,6 +21,10 @@ A policy states the intended response to an unrepresentable answer: wrap modulo 
 
 ## Used by
 
+- [[Fixed-point rescaling]] — uses this mechanism to define its representation, error or validation contract.
+
+- [[Capped weighted updates]] — Capping changes which influence is retained rather than only the representation.
+
 - [[Quantization and compressed weights]] — uses arithmetic policies as part of its representation or reasoning.
 - [[Saturating arithmetic]] — uses arithmetic policies as part of its representation or reasoning.
 
@@ -32,4 +36,4 @@ Explain arithmetic policies without the label, work the example above, then stat
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C002 - M002 - Parts 0021-0040 - Finite integers, ALU arithmetic, and C++ hazards|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

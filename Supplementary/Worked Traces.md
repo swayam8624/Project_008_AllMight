@@ -6,7 +6,7 @@ A trace should include a concrete input, every state transition that matters, th
 
 ## M001 - The 0xAD control byte
 
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 / M001]]
+**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 / M001]]
 
 ### Input and conventions
 
@@ -58,7 +58,7 @@ OR-only replacement fails when a new value needs to clear an old 1. For example,
 
 ## M002 - Carry and overflow are different questions
 
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C002 - M002 - Parts 0021-0040 - Finite integers, ALU arithmetic, and C++ hazards|C002 / M002]]
+**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 / M002]]
 
 ### Input and conventions
 
@@ -318,3 +318,105 @@ The supplied matrix inversion excerpt asserts determinant magnitude > epsilon be
 Canonicalization at the raw-word level maps either zero to `00000000` and any NaN to chosen `7FC00000`; all other words remain unchanged. This avoids consuming a signaling NaN as a float but deliberately discards its payload/class distinction. No existing asset format was changed.
 
 [[Supplementary/Derivations#M004 - Floating-point fields, spacing, and rounding]] · [[Supplementary/Code Snippets#M004 - Binary interchange inspection and strict rounding laboratory]]
+
+## M005 - Rounding paths and update history
+
+### Runtime witness sheet
+
+| Experiment under strict nearest arithmetic | Expected observation |
+|---|---|
+| binary32 0.1 | word 3DCCCCCD; exact rational 13421773/2^27 |
+| binary64 0.1+0.2 versus 0.3 | words 3FD3333333333334 and 3FD3333333333333 |
+| 1.5+0.15625 | align exponents by 3; result 1.65625 |
+| 2^24+1 | midpoint absorbed to 2^24 |
+| 2^24+2 | next float, exactly 16777218 |
+| 1753/1024−1751/1024 | exact 2^-9 |
+| stored binary32 1.00000006−1 | exact 2^-23, not desired 6e-8 |
+| sqrt(1e16+1)−sqrt(1e16) in double | zero after absorption/rounded roots |
+| reciprocal conjugate form | useful nonzero value near 5e-9 |
+| max float × 2 | infinity; overflow/inexact flags on tested host |
+| min normal × 0.5 | exact subnormal; no underflow/inexact on tested host |
+| min subnormal × 0.5 | zero tie; underflow/inexact on tested host |
+| FMA witness | separate 0, fused 2^-46 |
+| 1e20,−1e20,3.14 regrouped | 3.14f versus zero |
+| distributive witness | 1192.0928955078125 versus 1024 |
+
+The integer remainder loop for 1/10 emits 00011, then returns to remainder numerator 2, proving periodicity without using an already-approximate decimal float as the conversion reference.
+
+### Kahan trace at binary32 precision
+
+| Input | Adjusted y | New sum | Compensation |
+|---|---|---|---|
+| 2^24 | 2^24 | 2^24 | 0 |
+| 1 | 1 | 2^24 | −1 |
+| 1 | 2 | 2^24+2 | 0 |
+
+Naive loses both ones in this order. Kahan preserves this particular aggregate; it is not a universal order-independent sum. Pairwise on [2^24,1,1] splits one item from two, adds the ones first, and also reaches 2^24+2.
+
+### Precision lost on input cannot be recovered later
+
+Intended component 100000001 becomes binary32 100000000. Promoting that stored float gives exact binary64 100000000, not the intended integer. Directly converting the original integer to double preserves it. The cross-product example must distinguish input loss from later multiplication/subtraction error.
+
+### A minimal repeated-storage witness
+
+Two values $0.5$ and $0.5+2^{-24}$ average to exact midpoint $0.5+2^{-25}$. Float persistent state rounds that mean to $0.5$ under nearest-even. Updating with a third value $0.5+2^{-24}$ then gives a different rounded float than preserving the exact/wider mean through all three samples. Double intermediates in the next update cannot recover the midpoint already discarded. These samples stay inside the laboratory's normalized interval $[-1,1]$.
+
+### Capped weighted mean trace
+
+Cap=2, all observation weights=1:
+
+| Step | Sequence A sample | A distance/weight | Sequence B sample | B distance/weight |
+|---|---|---|---|---|
+| 1 | 0 | 0 / 1 | 0 | 0 / 1 |
+| 2 | 1 | 0.5 / 2 | −1 | −0.5 / 2 |
+| 3 | −1 | −0.25 / 2 | 1 | +0.25 / 2 |
+
+These exact results differ by 0.5 with no arithmetic approximation needed. Source-reported Maveb state narrowing is an additional mechanism; this is a toy formula reproduction, not a live volume reconstruction test.
+
+### Discrete decisions
+
+nextafter(2.5,−infinity) rounds to pixel 2 via llround; nextafter(2.5,+infinity) rounds to 3. The exact midpoint rounds to 3 by the halfway-away-from-zero rule. A small perturbation crossing this boundary changes which observation is sampled.
+
+A scalar field value changing sign near zero can change a surface-extraction case. Scalar RMS error, sign-change count, vertex displacement and topology measure different consequences; none was measured on real reconstruction data in this merge.
+
+[[Supplementary/Code Snippets#M005 - Strict arithmetic and state-update laboratory]] · [[Supplementary/Derivations#M005 - Representation error, cancellation, and rounding graphs]]
+
+## Representation choice - One quantity through several contracts
+
+### Exact choices and irreversible approximations
+
+| Quantity/contract | Stored representation | Reconstructed result | What this demonstrates |
+|---|---|---|---|
+| Signed32,F16, value3.25 | raw212992, word00034000 | exactly3.25 | fixed scale is part of interpretation |
+| Signed32,F8, values1.5 and2.25 | raw384 and576; wide product221184 | raw864, value3.375 | product scale must be reduced from256² |
+| INT4 group[-7,-3.2,0,2.9,6.8],s=1 | levels[-7,-3,0,3,7] | same levels at scale1 | quantization is lossy before packing |
+| Offset nibble codes | [1,5,8,11,15] | unpack identical codes | codes are not two's-complement nibbles |
+| Low-first packed bytes | 51 B8 0F | five codes, unused high nibble zero | count is needed to distinguish padding |
+| UNORM8 code128 |80 hexadecimal |128/255 | normalized midpoint is not exactly0.5 |
+| Binary16 value1.5 |3E00 |exactly1.5 | hidden one and exponent bias reused |
+| BF16 tie input3F808000 |3F80 |1.0 | finite nearest-even conversion |
+| BF16 next tie3F818000 |3F82 |1.015625 | even choice can round upward |
+
+### Fixed negative rounding trace
+
+At divisor2, numerator−5 has magnitude5=2·2+1. The remainder is exactly half and quotient2 is even; nearest-even gives−2. Numerator−7 gives magnitude7=3·2+1, odd quotient3; increment to4 and restore sign, giving−4. Integer division−7/2 instead gives−3, and arithmetic right shift gives−4. Agreement on one example does not prove identical policies.
+
+### Reconstruct the centroid row
+
+Input[-1,-3,2,4] gives negative sum−4/count2 and positive sum6/count2. Centroids are−2 and3. The sign labels select[-2,-2,3,3]. Reference-minus-reconstruction errors[1,−1,−1,1] square to four ones, so RMSE=1; absolute errors also give MAE=1 and max1.
+
+### The byte image keeps meaning outside the bytes
+
+The continuous story displays every header/payload offset. The golden total is52 bytes:28 header plus24 data. Decode the image at byte-buffer offset1 using a subspan: the schema's offset zero moves with the subspan; no typed pointer alignment is assumed.
+
+Change byte at file offset1E from80 to00. Payload word3F800000 becomes3F000000; value1 becomes0.5. Shape, magic, version and total size remain valid. The declared CRC over complete original bytes changes; parsing success alone did not protect the numeric data.
+
+Raw image words80000000,7F800000,7FC00001,7F800001 round-trip through the word codec unchanged. This tests raw bytes, not signaling-NaN arithmetic or payload-preserving float transport.
+
+### Three failure paths that must not be confused
+
+- A code outside0–15 fails the nibble contract before packing.
+- A huge claimed shape fails checked size arithmetic/resource policy before allocation.
+- A same-size changed payload can pass structure checks while failing an independent integrity comparison.
+
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|Teach the complete journey]] · [[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Run the regressions]]

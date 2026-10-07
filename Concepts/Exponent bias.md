@@ -18,6 +18,8 @@ Normal exponents are encoded as unsigned E=e+B. Binary32 B=127, so exponent 3 st
 
 ## Used by
 
+- [[Floating-point addition and absorption]] — Effective exponents must be decoded before comparing scale and shifting.
+
 - [[Floating-point encoding and decoding]] — uses this mechanism in its explanation.
 - [[Subnormals and gradual underflow]] — uses this mechanism in its explanation.
 - [[ULP and representable spacing]] — uses this mechanism in its explanation.
@@ -30,4 +32,4 @@ Reconstruct the concrete example in the definition and identify its validity ass
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

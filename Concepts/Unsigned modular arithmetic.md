@@ -21,6 +21,9 @@ Modulo m retains the remainder class after division by m. An unsigned N-bit doma
 
 ## Used by
 
+- [[Offset-binary coding]] — uses this mechanism to define its representation, error or validation contract.
+- [[Checked binary parsing]] — uses this mechanism to define its representation, error or validation contract.
+
 - [[Two's complement]] — uses unsigned modular arithmetic as part of its representation or reasoning.
 - [[Arithmetic policies]] — uses unsigned modular arithmetic as part of its representation or reasoning.
 
@@ -32,4 +35,4 @@ Explain unsigned modular arithmetic without the label, work the example above, t
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C001 - M001 - Parts 0001-0020 - Binary states to packed Boolean meaning|C001 teaching chapter]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C002 - M002 - Parts 0021-0040 - Finite integers, ALU arithmetic, and C++ hazards|C002 development]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 teaching chapter]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 development]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]

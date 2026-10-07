@@ -18,6 +18,8 @@ A 64-bit binary interchange format with 1/11/52 fields, 53 significant normal bi
 
 ## Used by
 
+- [[Mixed-precision state updates]] — A wider format can represent finite binary32 values exactly but not recover earlier loss.
+
 Connect later dependent concepts here as their lessons arrive.
 
 ## Recall and next depth
@@ -28,4 +30,4 @@ Reconstruct the concrete example in the definition and identify its validity ass
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C004 - M004 - Parts 0061-0076 - Floating-point representation, spacing, and rounding|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|M004 teaching chapter]] · [[Supplementary/Foundations#M004 - Parts 61-76|Per-part definitions]] · [[Dependency Map]]

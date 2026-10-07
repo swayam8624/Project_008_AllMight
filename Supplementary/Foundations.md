@@ -120,3 +120,53 @@ Representation supplies the weights needed for masks. Boolean operators supply t
 | 76 | [[Directed rounding modes]]: upward, downward and toward-zero are signed directions; runtime environment changes must be checked and restored. |
 
 The continuous chapter contains these definitions and essential traces directly. Numerical reproductions establish supplied-formula behavior, not current repository implementation; see [[Supplementary/Sources and Code Anchors]].
+
+## M005 - Parts 77-88
+
+| Part | Definition, mechanism, and concrete reconstruction cue |
+|---|---|
+| 77 | [[Terminating fractions and dyadic rationals]]: a reduced fraction terminates in binary iff its denominator is a power of two; 0.1f stores 13421773/2^27, not 1/10. |
+| 78 | [[Floating-point addition and absorption]]: align exponents, preserve guard/round/sticky, normalize and round; 2^24+1 is a nearest-even tie that stores 2^24. |
+| 79 | [[Cancellation and loss of significance]]: nearly equal operands expose prior error relative to a small difference; sensitivity factor (|a|+|b|)/|a-b|. |
+| 80 | [[Sterbenz lemma]]: nearby nonnegative stored floats satisfying x/2≤y≤2x have an exact representable difference under suitable gradual-underflow rules; input uncertainty remains. |
+| 81 | [[Floating-point exception flags]]: max×2 overflows; min-normal/2 is exact subnormal, while min-subnormal/2 rounds to zero with tiny/inexact behavior in the tested environment. |
+| 82 | [[Absolute and relative error]]: absolute discrepancy carries units; relative discrepancy divides by nonzero reference magnitude. Distinguish forward/backward error and stability from conditioning. |
+| 83 | [[Numerical tolerance policies]]: separate absolute and relative tolerances; validate them and non-finite inputs. Numeric exact equality is not representation equality. |
+| 84 | [[Numerical tolerance policies]]: a global epsilon mixes units, scales, algorithmic error and conditioning; approximate closeness is nontransitive. |
+| 85 | [[Fused multiply-add]]: one-rounding fl(ab+c) differs from fl(fl(ab)+c); the (1+2^-23)^2 witness yields 2^-46 rather than zero. |
+| 86 | [[Floating-point reassociation]]: (a+b)+c and a+(b+c) can differ; naive, compensated and fixed pairwise reductions have different contracts. |
+| 87 | [[Floating-point reassociation]]: distributive graphs differ: with a=1e10,b=1+2^-23,c=-1, factored result 1192.0928955078125 versus unfused expanded 1024. |
+| 88 | [[Numerical reproducibility]]: precision, ordering, FMA, environment and compiler/math-library settings matter. Atomicity does not fix global order; capped TSDF updates are mathematically history-dependent. |
+
+All essential explanations and traces are in the continuous chapter. Repository findings remain supplied-source claims; no live engine experiment is implied.
+## M006 - Parts 89-100
+
+| Part | Definition, mechanism, and concrete reconstruction cue |
+|---|---|
+| 89 | [[Fixed-point representation]]: a signed raw integer I at scale S represents I/S; F=16 gives step 2^-16 and raw 212992 for 3.25. |
+| 90 | [[Fixed-point range and resolution]]: require 2^-F≤requested step and M·2^F≤2^(N-1)-1. A 32-bit domain ±1e6 with step≤0.001 permits F=10 or 11. |
+| 91 | [[Fixed-point rescaling]]: multiply at scale S², then round/divide by S; division uses A·S/B. Prove intermediate width, handle negative ties and zero divisors, and check destination range. |
+| 92 | [[Arithmetic policies]] remain necessary for fixed point. Nearest unclipped absolute error≤1/(2S); near-zero relative error can be large. Controlled integer arithmetic can improve repeatability, not make every operation associative. |
+| 93 | [[Affine quantization and zero point]] maps finite values to codes and reconstructs s(q-z). Groupwise scales cost metadata; source-shaped offset INT4 codes [1,5,8,11,15] pack to 51 B8 0F. One-bit row centroids are not automatically ±1. |
+| 94 | [[UNORM and SNORM]]: UNORM8 reconstructs q/255; SNORM8 clamps q/127 at −1. Quantized normal components can require safe renormalization; sRGB is a separate interpretation. |
+| 95 | [[Binary16]] uses 1/5/10 fields, bias15, 11 normal precision bits, maximum65504, normal minimum2^-14, subnormal minimum2^-24. Word3E00 encodes1.5. |
+| 96 | [[Bfloat16]] uses1/8/7 fields, bias127, 8 normal precision bits; it trades detail for wide exponent range. Nearest-even conversion must classify NaNs instead of discarding their low payload into infinity. |
+| 97 | [[Bit casting and representation]] transfers suitable initialized object representation; numeric cast converts a value. Eligibility does not solve byte order, arbitrary valid representations, alignment or mapped-object lifetime. |
+| 98 | [[Binary format contracts]] declare widths/order/representation/version; [[Checked binary parsing]] validates products, subtracted bounds, exact lengths and resource limits. Magic/version are not integrity or authenticity. |
+| 99 | [[Checksums CRCs and hashes]] summarize specified content. Additive sums miss byte reordering; CRC requires named parameters; a cryptographic digest needs a trusted reference, MAC or signature for an adversarial trust claim. |
+| 100 | [[Memory dump interpretation]] decodes by offset/schema/byte order. The 2×3 demonstration has a28-byte header and24-byte binary32 payload; identical bytes have different meanings under integer, float or character interpretations. |
+
+### Source-to-story navigation
+
+Source numbering is an audit ledger, not lesson segmentation. The complete teaching narrative reorganizes all six accepted sources by problem and prerequisite.
+
+| Source material | Teaching position |
+|---|---|
+| Binary states, bases, unsigned/signed encodings | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|Interpretation]] |
+| Boolean rules, masks, shifts and packed fields | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields|Decisions and fields]] |
+| Adders, integer algorithms, range policies and language conversions | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|Finite arithmetic]] |
+| IEEE fields, special classes and representable spacing | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|Floating representation]] |
+| Rounding paths, cancellation, error and reproducibility | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|Arithmetic uncertainty]] |
+| Fixed point, FP16/BF16, quantizers and normalized formats | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep|Representation choices]] |
+| Addresses, layout, page translation and storage lifetime | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|Placement]] |
+| Bit transfer, schemas, checked parsing, integrity and dumps | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement|External bytes]] |

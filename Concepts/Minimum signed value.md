@@ -20,6 +20,8 @@ N-bit two's complement spans −2ᴺ⁻¹ through 2ᴺ⁻¹−1. Eight-bit minim
 
 ## Used by
 
+- [[Fixed-point rescaling]] — uses this mechanism to define its representation, error or validation contract.
+
 - [[Signed integer overflow]] — uses minimum signed value as part of its representation or reasoning.
 
 ## Recall and next depth
@@ -30,4 +32,4 @@ Explain minimum signed value without the label, work the example above, then sta
 
 ## Source and navigation
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#C002 - M002 - Parts 0021-0040 - Finite integers, ALU arithmetic, and C++ hazards|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
