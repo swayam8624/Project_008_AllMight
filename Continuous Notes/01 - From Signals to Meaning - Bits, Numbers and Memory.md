@@ -1,4 +1,4 @@
-# From Signals to Meaning: Bits, Numbers, and Memory
+### From Signals to Meaning: Bits, Numbers, and Memory
 
 This is a continuous teaching story about turning physical observations into meaningful, usable, and recoverable data. Its route is **state → interpretation → arithmetic → representation choice → placement → external bytes → investigation**. Follow the problems, not the order the source lessons arrived.
 
