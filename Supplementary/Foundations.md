@@ -1,5 +1,26 @@
 # Foundations
 
+## M007 - Parts 101-112
+
+The supplied source has exactly twelve parts, 101–112. The earlier predicted range 101–116 is superseded for this accepted source. Its preview names M008, 113–126; that range is pending until supplied. Volume 02 is 1/12 sources, not completed Parts 101–300.
+
+| Part | Definition, mechanism, and concrete reconstruction cue |
+|---|---|
+| 101 | [[Translation units and linking]] — Source → preprocessing → semantic compilation → object/BMI → link. A declaration can permit compilation while an absent implementation fails linking; BMI is not object code. |
+| 102 | [[Declarations and definitions]] — Every definition is a declaration, not conversely. extern int x declares; int x=0 defines. Forward class is incomplete; fixed-underlying opaque enum is complete. |
+| 103 | [[One Definition Rule]] — Multiple translation units must describe coherent entities. Header guards are per-TU; ordinary external definitions and inline/template exceptions have different constraints. |
+| 104 | [[Scopes and name lookup]] — Scope belongs to a name; qualified lookup selects a context; hiding changes lookup without deleting the hidden object. ADL adds associated candidates. |
+| 105 | [[Storage duration and object lifetime]] — Automatic/static/thread/dynamic classify storage. A block-scope static outlives the block; a local pointer and its dynamic pointee have distinct durations. |
+| 106 | [[Object construction and storage reuse]] — Sufficient aligned storage and completed initialization establish an ordinary object lifetime. destroy_at can end the object while the byte buffer remains; casts do not construct arbitrary objects. |
+| 107 | [[Object identity and generation handles]] — Equal values need not be one object, and reused addresses host different occupants. A slot/generation needs live-registry validation, not merely a non-sentinel index. |
+| 108 | [[Fixed-width integer types]] — sizeof(char)=1 C++ byte; CHAR_BIT≥8. int has minimum capacity, not a universal32-bit width. Exact/least/fast and size_t express different requirements. |
+| 109 | [[Scoped enums and validated domains]] — Scoped enumerators and no implicit integer conversion reduce accidents. Explicit underlying width does not validate received codes; states and combinable flags need separate designs. |
+| 110 | [[Aggregate initialization]] — C++20/23 aggregate criteria are not the older user-provided-constructor rule. Designators follow member declaration order. Braces may select initializer-list or ordinary constructors instead. |
+| 111 | [[Class access and invariants]] — struct defaults members and bases public; class defaults them private. Both are class types. Record/invariant intent is convention, not a syntactic capability limit. |
+| 112 | [[Standard-layout and trivial copyability]] — Alignment creates internal/tail padding. Traits do not imply array traversal, packing, serialization or GPU compatibility. Named x/y/z require explicit indexing or actual array storage. |
+
+Read [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|the C++ narrative]] from buildable text through entities, storage, occupants, domains and layout. Source numbers belong in this ledger, not in teaching chapters. Independent code and essential traces remain inline in that volume.
+
 This cumulative supplement retains the per-part definition and coverage ledger. The connected teaching volumes now explain the essential foundations, unfamiliar terms and worked steps directly; readers should not need this ledger to reconstruct a lesson. Concept links provide optional navigation. Examples and clarifications are explanatory material; repository claims retain their evidence status in [[Supplementary/Sources and Code Anchors]].
 
 ## M001 - Parts 1-20

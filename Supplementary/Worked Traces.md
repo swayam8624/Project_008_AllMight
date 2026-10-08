@@ -1,5 +1,20 @@
 # Worked Traces
 
+## C++ - Build and occupant trace navigation
+
+Essential traces stay inside [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following one call through the build|the build story]] and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following an escaped address through time|the escaped-address story]]. The complete inline laboratory supplies observable constructions/destructions without executing stale access.
+
+| Event | Storage | Object or logical occupant | Valid access |
+|---|---|---|---|
+| Aligned byte array exists | Reserved through its enclosing scope | Byte storage; no explicit Tracked occupant yet | Construct at a suitable location |
+| construct_at(...,7) returns | Same buffer | First Tracked initialized, count1 | Returned pointer can access value7 |
+| destroy_at(first) completes | Buffer remains | First lifetime ended, destruction count1 | Do not access its members |
+| construct_at(...,8) returns | Same location | Second occupant, construction count2 | Use returned second pointer |
+| destroy_at(second) completes | Buffer remains until scope exit | Second lifetime ended, destruction count2 | No further Tracked access |
+| Registry slot0 changes generation7→8 | Registry slot retained | Old handle no longer names live occupant | Compare against live registry generation |
+
+This deliberate reuse is not the same as dereferencing a pointer to an automatic object after its storage duration ended. Transparent replacement has specific rules; std::launder is not a universal cure for stale pointers.
+
 Longer hand traces live here. Organize by mechanism so later chunks can extend the same trace with deeper representation, math, implementation, or hardware behavior.
 
 A trace should include a concrete input, every state transition that matters, the final output, one invariant check, and one deliberately failing or boundary input when useful.

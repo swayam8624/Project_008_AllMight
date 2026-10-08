@@ -20,7 +20,7 @@ GitHub repository: `Project_008_AllMight`.
 | Graphics Engine Mastery - Continuous Notes.md | Library index and subject-volume navigation |
 | Continuous Notes/ | Connected, self-contained teaching volumes |
 | Supplementary/Derivations.md | Cumulative full proofs and mathematical reconstruction |
-| Supplementary/Code Snippets.md | Canonical code and laboratory drivers |
+| Supplementary/Code Snippets.md | Existing canonical drivers and project-specific excerpts; independent C++ examples stay inline in Volume 02 |
 | Supplementary/Worked Traces.md | Extended reusable traces; essential traces also appear in the volume |
 | Supplementary/Foundations.md | One definition/mechanism entry per accepted part; coverage ledger |
 | Supplementary/Sources and Code Anchors.md | Provenance, book pages, exact commands, results and limits |
@@ -42,6 +42,7 @@ Volume 02, **C++: From Objects to Reliable Programs**, is planned for Parts 101�
 4. Link reusable technical terms to real nodes using wiki links, while retaining their present definition in the teaching text. Use canonical spellings.
 5. Update the existing concept, index, prerequisite and reciprocal downstream links. Keep future depth explicitly pending.
 6. Extend durable headings in derivations/code/traces. Do not scatter the sequence into new chunk files.
+   For the C++ volume, keep independent examples and complete standalone laboratories beside their explanation. Separate only project-specific/dependency-bearing excerpts. Weave the final twelve-source volume into a single story; preserve exact source coverage in Foundations.
 7. Enrich selectively from relevant books or primary references when useful. Write original explanations; record source/page and distinguish older platform examples from current language guarantees.
 8. Validate links/headings, equations/fences, complete per-part coverage, prerequisite consistency, and executable examples. Syntax checks and visual rendering checks are separate. Report actual results and untested limits.
 
@@ -57,9 +58,9 @@ Technical concept links point to real files. Heading links locate chapter/proof 
 
 Forward means useful current context exists but deeper treatment is pending. Introduced means recognizable and usable at the present level. Developed means later material has added mechanism or implementation. Owned means the notes support independent reconstruction; it is not a claim about personal mastery.
 
-- Accepted/expanded parts: 1–100.
-- Accepted chunks: M001–M006, 6 of 180.
-- Next expected source: M007, Parts 101–116.
+- Accepted/expanded parts: 1–112.
+- Accepted chunks: M001–M007, 7 of 180; C++ volume 1 of 12 sources.
+- Next source preview from M007: M008, Parts 113–126 (pending receipt). The older predicted M007 range 101–116 does not override the actual supplied 101–112.
 - First volume: complete source coverage, with concept-led teaching organization.
 
 [[Graphics Engine Mastery - Continuous Notes]] · [[Keyword Index]] · [[Dependency Map]]

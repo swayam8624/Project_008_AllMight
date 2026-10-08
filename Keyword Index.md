@@ -6,6 +6,22 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
+| [[Translation units and linking]] | Introduced | C007 | C007 |
+| [[Declarations and definitions]] | Introduced | C007 | C007 |
+| [[One Definition Rule]] | Introduced | C007 | C007 |
+| [[Linkage and entity ownership]] | Introduced | C007 | C007 |
+| [[Scopes and name lookup]] | Introduced | C007 | C007 |
+| [[Argument-dependent lookup]] | Introduced | C007 | C007 |
+| [[C++ modules and reachability]] | Introduced | C007 | C007 |
+| [[Preprocessing and macro boundaries]] | Introduced | C007 | C007 |
+| [[Object construction and storage reuse]] | Introduced | C007 | C007 |
+| [[Object identity and generation handles]] | Introduced | C007 | C007 |
+| [[Scoped enums and validated domains]] | Introduced | C007 | C007 |
+| [[Aggregate initialization]] | Introduced | C007 | C007 |
+| [[Class access and invariants]] | Introduced | C007 | C007 |
+| [[Standard-layout and trivial copyability]] | Introduced | C007 | C007 |
+| [[Named members versus array elements]] | Introduced | C007 | C007 |
+| [[Thread-local storage]] | Introduced | C007 | C007 |
 | [[Fixed-point representation]] | Developed | C006 | C006 |
 | [[Fixed-point range and resolution]] | Developed | C006 | C006 |
 | [[Fixed-point rescaling]] | Developed | C006 | C006 |
@@ -70,7 +86,7 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Shift-and-add multiplication]] | Introduced | C002 | C002 |
 | [[Binary long division]] | Introduced | C002 | C002 |
 | [[Saturating arithmetic]] | Introduced | C002 | C002 |
-| [[Fixed-width integer types]] | Introduced | C002 | C002 |
+| [[Fixed-width integer types]] | Developed | C002 | C007 |
 | [[Usual arithmetic conversions]] | Introduced | C002 | C002 |
 | [[Mixed signedness]] | Introduced | C002 | C002 |
 | [[Arithmetic policies]] | Introduced | C002 | C002 |
@@ -81,11 +97,11 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Little endian]] | Introduced | C003 | C003 |
 | [[Big endian]] | Introduced | C003 | C003 |
 | [[Byte swapping and network order]] | Introduced | C003 | C003 |
-| [[ABI and object layout]] | Introduced | C003 | C003 |
+| [[ABI and object layout]] | Developed | C003 | C007 |
 | [[Internal and tail padding]] | Introduced | C003 | C003 |
 | [[Field reordering and AoS versus SoA]] | Introduced | C003 | C003 |
 | [[Packed structures and misaligned access]] | Introduced | C003 | C003 |
-| [[Pointer arithmetic and provenance]] | Introduced | C003 | C003 |
+| [[Pointer arithmetic and provenance]] | Developed | C003 | C007 |
 | [[Pages and page offsets]] | Introduced | C003 | C003 |
 | [[Page tables and MMU]] | Introduced | C003 | C003 |
 | [[TLB]] | Introduced | C003 | C003 |
@@ -95,10 +111,10 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Call stack and stack frames]] | Introduced | C003 | C003 |
 | [[Dynamic allocation and heap]] | Introduced | C003 | C003 |
 | [[Allocator fragmentation]] | Introduced | C003 | C003 |
-| [[Storage duration and object lifetime]] | Introduced | C003 | C003 |
-| [[Static storage and initialization]] | Introduced | C003 | C003 |
+| [[Storage duration and object lifetime]] | Developed | C003 | C007 |
+| [[Static storage and initialization]] | Developed | C003 | C007 |
 | [[Read-only data and code]] | Introduced | C003 | C003 |
-| [[Ownership and non-owning views]] | Introduced | C003 | C003 |
+| [[Ownership and non-owning views]] | Developed | C003 | C007 |
 | [[Virtual and physical contiguity]] | Introduced | C003 | C003 |
 | [[Memory-mapped files]] | Introduced | C003 | C003 |
 | [[Atomic publication and durability]] | Introduced | C003 | C003 |

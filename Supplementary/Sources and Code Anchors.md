@@ -1,5 +1,40 @@
 # Sources and Code Anchors
 
+## M007 - C++ volume opening
+
+### Source, authority and coverage
+
+Source: /Users/swayamsingal/.codex/attachments/59da4203-2008-47b6-9828-d42453cf50c0/Pasted text.txt. Twelve primary headings101–112; 11,549 whitespace-separated words. Actual coverage supersedes the earlier prediction101–116. M008113–126 is the attachment's next preview, pending receipt. Accepted total1–112; C++1/12 planned sources; seven of180 overall.
+
+The user authorized a new continuous C++ volume, same explanatory depth, independent examples inline and only project-dependent excerpts separate. Source suggestions to fix Kairo, claims about current revisions and “Depth gate passed” are not independent authority or verified facts. Volume01 and Obsidian metadata were user-modified on arrival and were not edited.
+
+### Books and primary checks
+
+Locally read A Tour of C++ (2014), PDF16/18 (printed5/7, types/initialization),36–39 (printed25–28, separate compilation/namespaces/error boundaries), and21–22 for array/reference context. The edition is C++11-era, not authority for C++20/23 modules or aggregate rules. Professional C++ and Effective Modern C++ were cited by the attachment but not independently read in this merge; no fresh page citation or exhaustive book integration is claimed.
+
+Cross-checks: [lifetime](https://eel.is/c++draft/basic.life), [ODR](https://eel.is/c++draft/basic.def.odr), [array-relative pointer arithmetic](https://eel.is/c++draft/expr.add), [aggregate initialization](https://eel.is/c++draft/dcl.init.aggr), [Clang modules](https://clang.llvm.org/docs/StandardCPlusPlusModules.html). The draft pages are living references, not frozen C++23 wording; the notes use C++20/23 aggregate criteria and do not teach later replacement wording as a settled C++23 guarantee.
+
+Corrections explicitly cover: complete opaque enums; declarations of references to incomplete classes; unsequenced macro increments; named-module imports versus header units; visibility versus reachability; local-static initialization versus mutation synchronization; constinit versus const; registry/generation checks; aggregate criteria; separate members versus arrays; CPU/file/shader layout contracts. Source-reported KairoMath, KairoECS and CMake excerpts remain **To verify** in [[Supplementary/Code Snippets#Source-reported C++ project excerpts]]. No production repository was inspected or changed.
+
+### Commands and results
+
+README, relevant vault docs and recent Git changes inspected. No CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, CI, build, formatter or test instructions found beyond README and user AGENTS rules. `gh pr list --state all --limit 5 --json number,title,files` returned[]. No relevant PR available.
+
+Compiler: /opt/homebrew/opt/llvm/bin/clang++, Homebrew Clang23.1.1, arm64-apple-darwin27.2.0. Lab directory /tmp/master-m007.IRxaor.
+
+- `/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined objects.cpp -o objects`, then `./objects`: exit0, assertions passed, no sanitizer diagnostics.
+- Same command plus `-O2`, output objects-o2, then `./objects-o2`: exit0, same checks passed. Padded record measured size24/alignment8/offsets0,8,16; reordered size16. These are measured ABI facts, not universal guarantees.
+- `/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 --precompile Math.cppm -o Math.pcm`; `... -std=c++23 -c Math.pcm -o Math.o`; `... -std=c++23 -fprebuilt-module-path=. -c MathImpl.cpp -o MathImpl.o`; same importer command for App.cpp/App.o; `... App.o Math.o MathImpl.o -o modules`; `./modules`: all exit0; App verifies twice(21)==42.
+- `/opt/homebrew/opt/llvm/bin/clang++ App.o Math.o -o missing-definition`: intentionally exit1, undefined symbol twice@Math(int). Expected regression for missing implementation, not a failed positive test.
+
+Only complete labeled laboratories compiled; illustrative fragments, invalid examples and project excerpts were not concatenated. No stale dereference/member-as-array UB executed. Thread-local lab uses one thread. Concurrency, shutdown, counter wrap, performance, cross-compiler/GPU behavior and personal mastery remain untested. No visual Obsidian pass or PDF export claimed. No commit, stage, push or PR made. Structural audit results are recorded after execution.
+
+Additional primary wording checks: [member layout](https://eel.is/c++draft/class.mem.general), [fundamental types](https://eel.is/c++draft/basic.fundamental), and [opaque enum completeness](https://eel.is/c++draft/dcl.enum).
+
+Structural command: `/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /tmp/master-m007-audit.py`. Exit0:167 Markdown files,156 filled/indexed concepts,273 acyclic prerequisite edges with reciprocal Used by links,1,940 resolved wiki links,74 paired display-math blocks,112/112 part-definition rows and exact source101–112 order. Six existing concepts deepened, sixteen reusable nodes added. The inline lab matches its compiled fixture. Volume01 SHA-256 remained2a6d5f34012ddcc7f32378d6bbe66f232b675262e11d9eb01f8781306c13f71c.
+
+`git diff --check -- README.md 'Graphics Engine Mastery - Continuous Notes.md' 'Dependency Map.md' 'Keyword Index.md' Supplementary Concepts 'Continuous Notes/02 - C++ - From Objects to Reliable Programs.md'`: exit0. An unrestricted diff check also reports pre-existing user whitespace in Volume01; that file was deliberately left alone. The audits distinguish code attributes and table-escaped wiki aliases from actual graph links.
+
 ## M006 integration and concept-led Volume 01 rewrite
 
 ### Accepted source and authority

@@ -1,5 +1,28 @@
 # Dependency Map
 
+## C++ - From buildable text to live objects
+
+The C++ opening accepts Parts 101–112. Scope/lookup, linkage, storage duration and lifetime remain separate questions. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+
+| Prerequisite | Dependent | Reason |
+|---|---|---|
+| [[Compiler IR and machine instructions]] | [[Translation units and linking]] | Compilation and emitted code explain why separately translated units need a link step. |
+| [[Translation units and linking]] | [[Declarations and definitions]] | A caller needs declaration/type information before the defining implementation is available. |
+| [[Declarations and definitions]] | [[One Definition Rule]] | Agreement about which declarations define entities is necessary to state the one-definition constraint. |
+| [[Declarations and definitions]] | [[Linkage and entity ownership]] | Declarations must be related to determine whether they denote one entity or distinct private entities. |
+| [[Declarations and definitions]] | [[Scopes and name lookup]] | A declaration binds a name before scope and lookup can determine which binding is found. |
+| [[Scopes and name lookup]] | [[Argument-dependent lookup]] | Ordinary lookup provides candidates and suppression rules before arguments can add associated candidates. |
+| [[Translation units and linking]] | [[C++ modules and reachability]] | Interface information serves compilation, while object code serves linking; modules change their distribution. |
+| [[Translation units and linking]] | [[Preprocessing and macro boundaries]] | The compilation boundary explains where token replacement stops and typed semantic analysis begins. |
+| [[Storage duration and object lifetime]] | [[Object construction and storage reuse]] | Backing-storage duration must be distinguished from the occupant's start, destruction and replacement. |
+| [[Object construction and storage reuse]] | [[Object identity and generation handles]] | Storage reuse creates successive occupants, motivating handles that record the intended generation. |
+| [[Fixed-width integer types]] | [[Scoped enums and validated domains]] | An enum's underlying integer type establishes representation but not the application's valid code set. |
+| [[Declarations and definitions]] | [[Aggregate initialization]] | The defined class's members and constructors determine whether aggregate element initialization applies. |
+| [[Declarations and definitions]] | [[Class access and invariants]] | Class declarations establish members and bases whose access must be public or controlled. |
+| [[ABI and object layout]] | [[Standard-layout and trivial copyability]] | ABI offsets and padding must be separated from standard-layout and byte-copy language eligibility. |
+| [[Pointer arithmetic and provenance]] | [[Named members versus array elements]] | Array-relative pointer bounds explain why adjacency of separate members cannot authorize indexing. |
+| [[Storage duration and object lifetime]] | [[Thread-local storage]] | Thread duration is a distinct backing-storage category, not a synonym for a local name's scope. |
+
 An edge from prerequisite to dependent means the dependent explanation uses the prerequisite's definition or mechanism. Obsidian's graph shows actual note links; the labeled prerequisite lists in concept notes give those edges their meaning.
 
 ## Learning spines
@@ -29,7 +52,7 @@ An edge from prerequisite to dependent means the dependent explanation uses the 
 
 ## Narrative order and source coverage
 
-All six sources are accepted through Part 100. The volume now follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Fixed point and quantization reuse integer and error rules; serialization joins representation to external bytes. Source order remains in Foundations, not in teaching headings. M007, Parts 101–116, begins the next subject.
+The first six sources cover Parts 1–100. Volume 01 follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Source order remains in Foundations. M007 now opens Volume 02 with supplied Parts 101–112; the earlier prediction of 101–116 is not accepted coverage.
 
 Future connections already have definitions: [[IEEE-754 floating point]], [[Cache lines and memory bandwidth]], [[Atomic operations and write contention]], [[SIMD and GPU data layouts]], [[Quantization and compressed weights]], [[Compiler IR and machine instructions]], and [[Guest and host integer domains]]. Update these same notes when their curriculum parts arrive.
 

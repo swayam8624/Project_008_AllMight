@@ -1,5 +1,34 @@
 # Code Snippets
 
+## Source-reported C++ project excerpts
+
+These fragments came from M007, not from a live checkout. Reported names, ranges and APIs are **To verify**. They are separate here because they belong to projects with their own module/build dependencies. This merge does not authorize production edits. All independent C++ examples and the complete object laboratory are in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+
+Reported KairoMath/Vector.cppm module opening (source range 1–14):
+
+```text
+module;
+// Standard-library includes in the global module fragment.
+export module Kairo.Foundation.Math.Vector;
+export namespace kairo::foundation::math {
+    // Project definitions.
+}
+```
+
+Reported Vector3 relationship (source ranges 470–472, 526–530, 546–549), intentionally not executable code:
+
+```text
+members: T x; T y; T z;
+Data(): return &x;
+operator[](index): assert(index < Size); return Data()[index];
+```
+
+Language analysis: separate scalar members are not an array; contiguous measured offsets cannot authorize Data()[1]. A span does not repair that representation. A project fix would need revision/caller checks and an API decision: preserve named-field syntax with explicit dispatch, or store a real array. No such change was made here.
+
+Reported KairoECS/Entity.cppm (source ranges 10–22 and 27): Index and Generation are uint32_t fields; InvalidIndex uses numeric_limits; StructuralChangeKind is enum class with uint8_t underlying type. The source describes default initializers and no user-declared constructor. Aggregate status and current generation validation must be checked in the actual revision. A non-sentinel index alone is only shape validation, not proof of registry liveness.
+
+Reported KairoMath/CMakeLists.txt (6–8 and 43–57): C++23 and FILE_SET CXX_MODULES. These are source-reported configuration claims, not an independently verified current build.
+
 Canonical teaching code and verified repository excerpts live here. Organize by concept or subsystem, not by incoming chunk. Update existing sections when later chunks add variants, optimizations, tests, or failure handling.
 
 For every snippet, label it as one of:

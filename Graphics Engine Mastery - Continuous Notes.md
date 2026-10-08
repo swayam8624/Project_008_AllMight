@@ -7,7 +7,7 @@ This library entry point leads to self-contained teaching stories. Definitions, 
 | Volume | Source coverage | Current state | Read |
 |---|---|---|---|
 | 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory|Open volume 01]] |
-| 02 · C++: From Objects to Reliable Programs | Planned Parts 101–300 · M007–M018 | Awaiting source; no empty volume created | Next source: M007, Parts 101–116 |
+| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–112 · M007; planned Parts 101–300 · M007–M018 | 1/12 sources integrated; connected opening story, inline independent examples | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Open volume 02]] |
 | Later subjects | Remaining integrated curriculum | Boundaries follow real subject continuity | No empty volume files |
 
 ## Follow the questions, not the source boundaries
@@ -27,6 +27,8 @@ This library entry point leads to self-contained teaching stories. Definitions, 
 
 [[Supplementary/Derivations]] contains longer proofs. [[Supplementary/Code Snippets]] contains canonical implementations and experiments. [[Supplementary/Worked Traces]] adds deeper traces; essential ones remain in the volume.
 
-[[Supplementary/Foundations]] retains all 100 source-part entries and their narrative locations. [[Supplementary/Sources and Code Anchors]] records source claims, book enrichment, corrections, commands, results and limitations. [[Keyword Index]], [[Dependency Map]] and Concepts hold the reusable graph.
+[[Supplementary/Foundations]] retains all 112 accepted source-part entries and their narrative locations. [[Supplementary/Sources and Code Anchors]] records source claims, book enrichment, corrections, commands, results and limitations. [[Keyword Index]], [[Dependency Map]] and Concepts hold the reusable graph. Independent C++ examples and runnable laboratories remain inside Volume 02; only project-dependent excerpts are separated.
+
+The C++ story begins with [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving a program a buildable shape|source and build]], then [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Storage is a place; an object is its occupant|storage and lifetime]], and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Bringing the object model back to bytes|layout]]. Its complete twelve-chunk weave remains pending future sources.
 
 Six variable-length source chunks cover the first 100 parts, not 120. That historical correction belongs to source tracking; a teacher can present the story without announcing chunk numbers.

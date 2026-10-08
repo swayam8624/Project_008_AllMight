@@ -1,6 +1,10 @@
 ### From Signals to Meaning: Bits, Numbers, and Memory
 
-This is a continuous teaching story about turning physical observations into meaningful, usable, and recoverable data. Its route is **state → interpretation → arithmetic → representation choice → placement → external bytes → investigation**. Follow the problems, not the order the source lessons arrived.
+This is a continuous teaching story about turning physical observations into meaningful, usable, and recoverable data. Its route is 
+
+**state → interpretation → arithmetic → representation choice → placement → external bytes → investigation**.
+
+Follow the problems, not the order the source lessons arrived.
 
 Read the definitions, examples and intermediate states here. The [[Supplementary/Derivations|derivation companion]] adds longer proofs, and [[Supplementary/Code Snippets|code companion]] supplies experiments. A [[Keyword Index|keyword link]] is optional navigation, not a missing definition. The [[Supplementary/Foundations|coverage ledger]] and [[Supplementary/Sources and Code Anchors|source record]] retain source numbering separately from the lesson.
 
@@ -25,9 +29,13 @@ Examples use eight-bit octets and a C++23 laboratory baseline. Address diagrams 
 
 ### Start with the problem, not the vocabulary
 
-Suppose a machine must remember whether a lamp is on. It needs two reliably distinguishable states, not necessarily the symbols “0” and “1.” A closed/open switch, a charged/discharged storage element, or two ranges of voltage can represent the distinction. The engineer defines which physical condition means which logical state.
+Suppose a machine must remember whether a lamp is on. It needs two reliably distinguishable states, not necessarily the symbols “0” and “1.” A closed/open switch, a charged/discharged storage element, or two ranges of voltage can represent the distinction.
 
-Now ask the same machine to remember a count. One yes/no state is not enough. Combine independent states: two bits distinguish four patterns, three distinguish eight, and eight distinguish 256. To interpret a pattern as a number or character, give it an encoding rule. **Encoding** is the agreed mapping from meaning to representation; **decoding** is the reverse operation.
+>The engineer defines which physical condition means which logical state.
+
+Now ask the same machine to remember a count. One yes/no state is not enough. Combine independent states: two bits distinguish four patterns, three distinguish eight, and eight distinguish 256. To interpret a pattern as a number or character, give it an encoding rule.
+
+>**Encoding** is the agreed mapping from meaning to representation; **decoding** is the reverse operation.
 
 Binary is useful because broad low/high signal ranges can be distinguished despite small disturbances. It is not a claim that physics has only two possible values, or that computers cannot process decimal numbers. The digital abstraction deliberately ignores small differences within each permitted range. That tolerance is a **noise margin**: room for a disturbance without changing the logical interpretation. Exact voltage thresholds depend on the circuit; the examples here do not prescribe a CPU's supply voltage.
 

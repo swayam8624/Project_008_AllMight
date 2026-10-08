@@ -21,6 +21,8 @@ IR is the compiler's intermediate representation of program operations. Instruct
 
 ## Used by
 
+- [[Translation units and linking]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+
 Connect later chunks here when they use this concept.
 
 ## Recall and next depth
