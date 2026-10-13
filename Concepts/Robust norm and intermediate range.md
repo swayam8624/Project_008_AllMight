@@ -19,6 +19,8 @@ A final representable answer can be lost to overflowing intermediates. Squaring 
 
 ## Used by
 
+- [[Unit directions and safe normalization]] — Phase 6 uses this established foundation in its geometry narrative.
+
 Connect later dependent concepts here as their lessons arrive.
 
 ## Recall and next depth

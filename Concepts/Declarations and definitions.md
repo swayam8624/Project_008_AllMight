@@ -19,16 +19,12 @@ A declaration introduces or redeclares an entity; a definition provides the enti
 ## Used by
 
 - [[Class access and invariants]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
-
 - [[Aggregate initialization]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
-
 - [[Scopes and name lookup]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
-
 - [[Linkage and entity ownership]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
-
 - [[One Definition Rule]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
-
-Later chunks extend this same node; dependent concepts are listed here as they are integrated.
+- [[References and aliases]]
+- [[Value categories and materialization]]
 
 ## Recall and next depth
 

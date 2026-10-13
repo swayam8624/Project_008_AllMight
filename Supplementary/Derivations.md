@@ -1,5 +1,310 @@
 # Derivations
 
+## Phase 6 - Geometry reconstruction proofs
+
+These extensions belong to [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
+
+### Why projection is an orthogonal decomposition
+
+For a nonzero target vector $\mathbf b$, define $\alpha=(\mathbf a\cdot\mathbf b)/(\mathbf b\cdot\mathbf b)$ and $\mathbf r=\mathbf a-\alpha\mathbf b$. Then
+
+$$
+\mathbf r\cdot\mathbf b=\mathbf a\cdot\mathbf b-
+\frac{\mathbf a\cdot\mathbf b}{\mathbf b\cdot\mathbf b}(\mathbf b\cdot\mathbf b)=0.
+$$
+
+For any candidate coefficient $t$, the difference is $\mathbf r+(\alpha-t)\mathbf b$. Its squared length is
+
+$$
+\|\mathbf r\|^2+(\alpha-t)^2\|\mathbf b\|^2,
+$$
+
+since its cross term vanishes. The minimum occurs uniquely at $t=\alpha$. Thus perpendicular residual, least-squares projection, and closest line point are one result.
+
+For a unit axis $\mathbf u$, define the projection matrix $P=\mathbf u\mathbf u^\mathsf T$. Matrix multiplication reconstructs $(\mathbf a\cdot\mathbf u)\mathbf u$. Since $\mathbf u^\mathsf T\mathbf u=1$, we obtain $P^2=P$. The complementary rejection matrix $I-P$ is also idempotent. The plane reflection matrix is $I-2P$ and squares to identity:
+
+$$
+(I-2P)^2=I-4P+4P^2=I.
+$$
+
+This explains why reflecting twice restores a vector in exact arithmetic.
+
+### Gram determinants connect length and area
+
+For two generators, their Gram matrix is
+
+$$
+G=\begin{pmatrix}\mathbf a\cdot\mathbf a&\mathbf a\cdot\mathbf b\\
+\mathbf a\cdot\mathbf b&\mathbf b\cdot\mathbf b\end{pmatrix}.
+$$
+
+Its determinant is $\|\mathbf a\|^2\|\mathbf b\|^2-(\mathbf a\cdot\mathbf b)^2$, the squared parallelogram area. For a basis matrix $B$ with three columns, $G=B^\mathsf TB$. Therefore
+
+$$
+\det(G)=\det(B^\mathsf T)\det(B)=\det(B)^2.
+$$
+
+This is why the Gram determinant loses the sign of orientation. Reflecting the complete frame changes $\det(B)$ but not its square. A zero determinant signals dependence; a small dimensional value by itself is not a complete conditioning estimate.
+
+### Affine weights and translation
+
+For points with coordinates $p_i$ and weights $w_i$, move every contributor by $t$. Their weighted result becomes
+
+$$
+\sum_iw_i(p_i+t)=\sum_iw_ip_i+\left(\sum_iw_i\right)t.
+$$
+
+Weights summing to one produce the translation of a point. Weights summing to zero produce an origin-independent displacement. Other sums do not transform as either canonical role without further interpretation. Nonnegative weights summing to one produce convex combinations. The sum condition and sign condition solve different problems.
+
+### The normal transformation preserves a scalar pairing
+
+Let a vector transform actively as $v'=Av$, and represent a linear measurement by column coefficients $n$, so it returns $n^\mathsf Tv$. Preserving every measured result requires $n'^\mathsf TAv=n^\mathsf Tv$ for every $v$, hence $n'=A^{-\mathsf T}n$ when $A$ is invertible.
+
+For a passive basis description $v=Bc$, the same fixed measurement has coordinate coefficients $\omega_B=B^\mathsf Tn$. Notice that this is a different question from actively deforming a surface. Both formulas follow from the same pairing rather than contradictory transformation rules.
+
+In nonorthonormal coordinates, a vector's coordinate column $c$ determines its metric measurement row $c^\mathsf TG$. Componentwise dotting assumes $G=I$. This connects basis changes, dual measurements and normals.
+
+### Why perspective interpolation uses reciprocal weights
+
+Let affine surface weights be $\mu_i$, with sum one, and homogeneous vertex values $H_i$. Before division, the combined representative is $H=\sum_i\mu_iH_i$. Its final coordinate is $W=\sum_i\mu_iw_i$. After division, the screen weights satisfy
+
+$$
+\lambda_i=\frac{\mu_iw_i}{W}.
+$$
+
+Thus $\mu_i=\lambda_iW/w_i$. Impose $\sum_i\mu_i=1$ to get $W=1/(\sum_i\lambda_i/w_i)$, then
+
+$$
+\mu_i=\frac{\lambda_i/w_i}{\sum_j\lambda_j/w_j}.
+$$
+
+Applying these weights to an affine attribute gives the perspective-correct formula in the volume. The derivation assumes a valid projected configuration with appropriate nonzero denominators and clipping; it is not an instruction to divide primitives crossing a projective boundary.
+
+### Support queries commute with set addition in a specific way
+
+For nonempty compact sets $A,B$, expand the dot product in the support definition:
+
+$$
+h_{A\oplus B}(d)=\max_{a\in A,b\in B}(d\cdot a+d\cdot b)
+=h_A(d)+h_B(d).
+$$
+
+The maxima separate because the choices of $a$ and $b$ are independent. Reflecting $B$ gives $h_{-B}(d)=h_B(-d)$; a maximizing point is the negative of a maximizer for $B$ in direction $-d$. Thus one valid support point of the collision difference is $s_A(d)-s_B(-d)$. Maximizers need not be unique, so repeatable tie selection is part of an implementation contract.
+
+### Proof, numerical algorithm and application policy
+
+A mathematical identity can be correct while its direct arithmetic evaluation overflows or cancels. A numerically stable calculation can still solve an ill-conditioned problem. A certified sign for stored coordinates can still misrepresent a physically uncertain measurement. Teach these three boundaries separately; neither a tolerance nor a proof replaces all of them.
+
+## XR - Sampling, contrast transfer and temporal evidence
+
+### Why local pixels per degree is not the average
+
+Start with a flat screen. Let its width be $W$, its viewing distance $D$, and its number of pixel columns $N$. The viewer looks at the center.
+
+Pixel pitch is $p=W/N$. For a point at angle $\theta$:
+
+$$
+x=D\tan\theta.
+$$
+
+The angle is in radians. Differentiating gives the amount of screen distance per angular change:
+
+$$
+\frac{dx}{d\theta}=D\sec^2\theta.
+$$
+
+Divide by pixel pitch to get pixels per radian. Then multiply by $\pi/180$ to get pixels per degree.
+
+At the center:
+
+$$
+\mathrm{PPD}_0=\frac{DN}{W}\frac{\pi}{180}.
+$$
+
+The average density uses the entire field of view instead:
+
+$$
+\mathrm{PPD}_{\mathrm{average}}
+=\frac{N}{(360/\pi)\tan^{-1}(W/(2D))}.
+$$
+
+With $W=0.53\,\mathrm{m}$, $D=0.60\,\mathrm{m}$, and $N=1920$, the center has about 37.9362 PPD. The average is about 40.2863 PPD.
+
+These numbers answer different questions. They are not conflicting measurements. A different projection or lens distortion requires its own mapping. See [[Visual angle and calibrated rays]].
+
+### Sampling creates ambiguity before reconstruction begins
+
+Take sample index $n$ and change the original frequency from $f_0$ to $f_0+mf_s$, where $m$ is an integer.
+
+The extra phase is $2\pi mn$. At integer sample positions it is a whole number of cycles, so the samples do not change. For a real cosine, negative-frequency equivalence also matters.
+
+In frequency coordinates, sampling repeats the original spectrum every $f_s$. If that spectrum occupies $[-B,B]$, the copies stay separate when:
+
+$$
+f_s>2B.
+$$
+
+This is the strict band-limited form used here.
+
+Sinc reconstruction can select the original copy under the ideal assumptions. Once copies overlap, later smoothing cannot generally identify which part came from which original frequency.
+
+The boundary case also matters. At $f_s/2$, a sine can give:
+
+$$
+\sin(\pi n)=0
+$$
+
+for every integer $n$. The continuous signal is nonzero between those observations.
+
+### A normalized filter preserves constants, not arbitrary details
+
+For convolution:
+
+$$
+y[n]=\sum_k h[k]x[n-k],
+$$
+
+a constant input $x[n]=a$ gives:
+
+$$
+y[n]=a\sum_k h[k].
+$$
+
+The filter preserves the constant when its weights sum to one and its boundary rule also preserves constants.
+
+The weights $1/4$, $1/2$, and $1/4$ have frequency response:
+
+$$
+H(\omega)=\frac{1+\cos\omega}{2}.
+$$
+
+The gain is one at $\omega=0$ and zero at $\omega=\pi$.
+
+A balanced difference of two normalized Gaussians instead has zero DC response. Unequal gains do not necessarily cancel.
+
+For the stated continuous Gaussian blur model:
+
+$$
+\mathrm{MTF}(f)=e^{-2\pi^2\sigma^2f^2}.
+$$
+
+Use matching units for blur width $\sigma$ and frequency $f$. A finite discrete kernel need not have exactly this response.
+
+### Temporal variance and age are conditional results
+
+Assume a constant blend factor $\alpha$, a stationary target, correct alignment, and independent observations with equal noise variance.
+
+The weight given to an observation $j$ frames old is:
+
+$$
+w_j=\alpha(1-\alpha)^j.
+$$
+
+The weights sum to one. For independent noise, variance uses the sum of squared weights:
+
+$$
+\frac{\operatorname{Var}(H)}{\operatorname{Var}(C)}
+=\frac{\alpha^2}{1-(1-\alpha)^2}
+=\frac{\alpha}{2-\alpha}.
+$$
+
+The mean age is:
+
+$$
+\operatorname{meanAge}=\frac{1-\alpha}{\alpha}
+\quad\text{frames}.
+$$
+
+These formulas explain noise reduction and delayed response. They do not prove valid history after disocclusion or a changing target. Correlated errors add covariance terms, and reducing variance does not remove bias. See [[Temporal reprojection and history validation]].
+
+### Psychometric scale is not itself the chosen threshold
+
+Use the illustrative curve:
+
+$$
+F(x)=1-\frac12e^{-(x/\lambda)^k},
+\qquad \lambda>0,\quad k>0.
+$$
+
+Define the threshold $T$ as the stimulus level giving 75% correct:
+
+$$
+F(T)=0.75.
+$$
+
+Rearrange:
+
+$$
+e^{-(T/\lambda)^k}=\frac12.
+$$
+
+Taking logarithms gives:
+
+$$
+\left(\frac{T}{\lambda}\right)^k=\ln2.
+$$
+
+Therefore:
+
+$$
+T=\lambda(\ln2)^{1/k}.
+$$
+
+The numerical lab verifies $F(T)=0.75$ for illustrative parameters. It does not fit participant responses or validate a paper's fitted coefficients.
+
+## C++ - Assignment as a resource transaction
+
+The [[Assignment and exception guarantees|strong guarantee]] requires a defined observable state before the operation and an unchanged promised state if preparation fails. Let D0 be the destination's original owned allocation/value and S the source. The teaching byte owner's copy assignment follows:
+
+1. Construct replacement R from S without changing D0. Allocation failure propagates while D0 and S retain their original state.
+2. Non-throwing swap transfers R's value into the destination and D0 into the temporary. This is the commit point: no remaining step can fail under the stated byte-copy/release contract.
+3. Destroy R, releasing the former destination D0 exactly once.
+
+Self-copy is explicitly guarded; an alternative copy-and-swap without that guard could still be safe but allocate unnecessarily. This proof assumes a non-throwing swap, safe release, and copy preparation that does not mutate its source. It does not establish whole-object strong guarantees for arbitrary memberwise assignment or a copy operation with external side effects.
+
+For the failure-injection witness, initial owners A/B each hold one allocation. An injected exception before the new allocation succeeds leaves two owners/two live allocations and B's old byte9. Moving A into C then leaves A empty while C owns A's allocation. Moving C into B releases B's previous allocation before adoption, leaving one allocation. Destroying/resetting its final owner leaves zero. The source remains a live empty object throughout its moved-from interval.
+
+### Why no-throw properties matter to growth
+
+Suppose source element0 is moved and changed, then moving element1 throws. The partially populated new buffer can be cleaned up, but cleanup alone does not restore element0's old value. Copying that preserves source state can support rollback where available; a genuinely non-throwing move avoids that transfer failure. If copying is unavailable and moving may throw, consult the exact operation's exceptional-effects contract. move_if_noexcept encodes the relevant construction-expression choice, not a universal rollback theorem.
+
+### Isolating sink counts from growth
+
+With spare destination capacity and a Probe type whose copy/move constructors are instrumented: lvalue→value parameter→element gives one copy/one move; xvalue→parameter→element gives two moves; same-type prvalue→parameter→element gives direct parameter construction/one move. Cache growth would add transfer of old elements. Optional named-result NRVO is independent of these parameter routes, so record it separately instead of silently adding it to a fixed portable count.
+
+## C++ - Qualification safety and borrow intervals
+
+### Why nested const needs an intermediate guard
+
+This is a hypothetical proof by contradiction, not legal code to run. Suppose `int**` could convert to `const int**`:
+
+```cpp
+const int immutable = 7;
+int* mutable_path = nullptr;
+int** outer = &mutable_path;
+// const int** injected = outer; // actual C++ rejects this
+// *injected = &immutable;       // hypothetical mutation of mutable_path
+// *mutable_path = 9;            // would write an actually const object
+```
+
+Step one establishes a const object. Step two gives the mutable pointer a mutable type. The hypothetical conversion lets a const-object address enter that mutable pointer through an alias. The final write would violate the first promise without an explicit cast. Therefore adding const only at the deepest level is not safe. `const int* const*` makes the intermediate pointer read-only through that path, rejecting the injection assignment. This explains the safety requirement; the general language rule is qualification decomposition, not a special ban against double pointers. See [[Multilevel pointer qualification]].
+
+### A borrow's access interval is an intersection
+
+Let $L_o$ denote times at which the referent is live, $L_s$ times at which its storage/access relationship is valid, and $L_i$ times at which the path still names the intended logical entity. Under the API's mutation and synchronization contract, the admissible access times satisfy:
+
+$$
+L_{\mathrm{access}}\subseteq L_o\cap L_s\cap L_i.
+$$
+
+These are sets of times, not byte counts or durations to add. Const/type/bounds/permissions still add independent obligations. Reallocation can end the old storage relationship; destruction ends the old object's live interval; slot assignment can preserve the live object while ending its association with a logical entity. A non-null bit pattern establishes none of those intervals.
+
+For an epoch witness, save $e_b$ when borrowing and compare with the live pool epoch $e_p$ before access. Acceptance requires $e_b=e_p$, but that test is meaningful only if the epoch owner remains live, every invalidating mutation advances the counter, equality cannot falsely recur through wrap, and mutation cannot race between check and use. A single-threaded epoch implements a conservative API contract, not a proof of ownership or lock-free safety. See [[Borrow contracts and pool epochs]] and the inline [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing|slot trace]].
+
+### Forwarding reconstructed from collapsing
+
+For an lvalue argument of type int to deduced `T&&`, deduction chooses `T=int&`; applying `&&` to that substituted reference collapses to `int&`. For an int prvalue, deduction chooses `T=int`; the parameter is `int&&`. In the body the parameter's name is an lvalue in both cases. `std::forward<T>` uses the deduced T to restore the original category; unconditional move discards that distinction. This derivation requires the forwarding pattern, not merely any spelling containing two ampersands.
+
 ## C++ - Conventional record layout and identity horizon
 
 This proof extends [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Bringing the object model back to bytes|the inline layout explanation]], not a universal class-layout algorithm. Assume an ordinary ABI with member size/alignment pairs, no bases, virtual machinery, overlap, packing or stronger requested alignment. For nonnegative offset x and positive required alignment a:

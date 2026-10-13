@@ -21,6 +21,8 @@ SIMD applies an operation across multiple data lanes; GPU buffers and formats sp
 
 ## Used by
 
+- [[Vector storage SIMD and boundary layouts]] — Phase 6 uses this established foundation in its geometry narrative.
+
 Connect later chunks here when they use this concept.
 
 ## M003 development

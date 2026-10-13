@@ -20,6 +20,9 @@ Dot sums products with intermediate rounding; cross components subtract products
 
 ## Used by
 
+- [[Robust geometric predicates]] — Phase 6 uses this established foundation in its geometry narrative.
+- [[Vector tolerances and finite-state diagnostics]] — Phase 6 uses this established foundation in its geometry narrative.
+
 Connect later dependent concepts here when their lessons arrive.
 
 ## Recall and next depth

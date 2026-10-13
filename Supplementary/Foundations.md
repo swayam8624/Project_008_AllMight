@@ -1,8 +1,147 @@
 # Foundations
 
+## Phase 6 - Parts 501-600
+
+The user supplied the Phase 6 group identified as M031–M036 in nineteen pasted documents, including a supplemental panel analogy. Explicit lesson headings cover 99 distinct parts: 501–541 and 543–600. Part 542 is referenced as the next cross-product definition but has no standalone lesson; its mechanism is explicitly reconstructed from adjacent material in the new volume. The narrative therefore develops all 100 phase topics without falsely claiming 100 standalone source lessons.
+
+Main coverage is now the disjoint ranges 1–147 and 501–600: 247 developed topic entries, of which 246 have supplied standalone numbered lessons and one is identified reconstruction. Parts 148–500 and 601 onward remain pending. Accepted chunk groups are M001–M009 and the user-labeled M031–M036, 15 of 180; no unverified per-chunk subdivision of this phase's parts is imposed. XR01/Modules 1–19 remain separate.
+
+[[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|Read the continuous Phase 6 story]]. Source part numbers are an audit ledger, not lesson segmentation.
+
+| Part | Supplied topic, expanded mechanism and narrative node |
+|---|---|
+| 501 | SCALARS AS ELEMENTS OF A NUMBER FIELD — Field laws make nonzero division and vector scaling meaningful; a floating type is only an approximation. [[Scalars fields and real-number models]] |
+| 502 | REAL NUMBERS AND THE PROPERTIES GRAPHICS RELIES ON — Order, intervals and completeness justify real geometry; bounded machine values are not the complete number line. [[Scalars fields and real-number models]] |
+| 503 | COMPLEX NUMBERS AND TWO-DIMENSIONAL ROTATION INTUITION — Unit complex multiplication rotates a plane; conjugation reverses it, and magnitude drift adds unwanted scale. [[Complex numbers and planar rotations]] |
+| 504 | VECTORS AS GEOMETRIC DISPLACEMENTS — Free displacement survives translation of its starting point; location and movement are different roles. [[Vectors coordinates and affine points]] |
+| 505 | VECTORS AS COORDINATE TUPLES — An ordered tuple gives components, but neither its basis nor physical role follows from storage shape. [[Vectors coordinates and affine points]] |
+| 506 | THE DISTINCTION BETWEEN A VECTOR AND ITS COORDINATES — One physical vector has different coordinates in different bases; distinguish passive description from active motion. [[Vectors coordinates and affine points]] |
+| 507 | VECTOR SPACES AND THEIR AXIOMS — Closure and vector-space laws enable consistent combinations; unit directions are a constrained non-example. [[Vector spaces subspaces and span]] |
+| 508 | SUBSPACES — A nonempty subset closed under arbitrary two-vector combinations is a subspace; shifted planes need affine language. [[Vector spaces subspaces and span]] |
+| 509 | LINEAR COMBINATIONS — Arbitrary coefficients generate movements, not necessarily averages; negative weights are valid. [[Vector spaces subspaces and span]] |
+| 510 | SPAN — The span is the smallest subspace containing generators; redundant inputs do not enlarge it. [[Vector spaces subspaces and span]] |
+| 511 | LINEAR INDEPENDENCE — A zero combination must have only zero coefficients for independence; near dependence is a numerical question. [[Basis coordinates and dimension]] |
+| 512 | BASIS VECTORS — Spanning ensures reachability and independence ensures uniqueness; both are necessary for a basis. [[Basis coordinates and dimension]] |
+| 513 | DIMENSION OF A VECTOR SPACE — Dimension counts basis elements over the selected field; a plane stored in three components still has dimension two. [[Basis coordinates and dimension]] |
+| 514 | COORDINATE REPRESENTATION RELATIVE TO A BASIS — Coordinates weight an ordered basis; reconstruct the physical arrow before interpreting the tuple. [[Basis coordinates and dimension]] |
+| 515 | CHANGING BASIS CONCEPTUALLY — Changing coordinates solves the new basis relation; near-parallel basis axes amplify coefficient uncertainty. [[Basis coordinates and dimension]] |
+| 516 | STANDARD BASIS IN $\mathbb R^2$ — The two standard unit axes reconstruct every planar coordinate; visual up/right conventions remain separate. [[Basis coordinates and dimension]] |
+| 517 | STANDARD BASIS IN $\mathbb R^3$ — Three standard unit axes reconstruct spatial coordinates; no universal camera forward direction follows. [[Basis coordinates and dimension]] |
+| 518 | VECTOR ADDITION FROM THE PARALLELOGRAM RULE — Head-to-tail and parallelogram movement yield componentwise addition in a common basis. [[Vectors coordinates and affine points]] |
+| 519 | SCALAR MULTIPLICATION OF VECTORS — Scalar scaling stretches and may reverse direction; velocity times elapsed time yields displacement with correct units. [[Vectors coordinates and affine points]] |
+| 520 | VECTOR SUBTRACTION AS DISPLACEMENT DIFFERENCE — Subtraction adds the opposite vector; ordered point difference produces the displacement from one location to another. [[Vectors coordinates and affine points]] |
+| 521 | AFFINE POINTS VERSUS FREE VECTORS — Affine points have no intrinsic zero; point differences and translations are valid without choosing an origin. [[Vectors coordinates and affine points]] |
+| 522 | POSITION VECTORS AND WHY POINTS ARE NOT MATHEMATICALLY VECTORS — A position vector is point minus chosen origin; changing the origin cancels only in appropriate differences. [[Vectors coordinates and affine points]] |
+| 523 | DIRECTION VECTORS — Direction answers which way and must be nonzero; translation does not affect it. [[Vectors coordinates and affine points]] |
+| 524 | DISPLACEMENT VECTORS — Displacement records change in position and may validly be zero; units and frame must match. [[Vectors coordinates and affine points]] |
+| 525 | UNIT VECTORS — Unit vectors retain direction but remove magnitude; the zero vector cannot satisfy this promise. [[Vectors coordinates and affine points]] |
+| 526 | EUCLIDEAN VECTOR MAGNITUDE — Pythagoras yields Euclidean length only in orthonormal coordinates; a slanted basis needs its metric. [[Norms lengths and induced distances]] |
+| 527 | SQUARED MAGNITUDE AND WHY GRAPHICS OFTEN AVOIDS SQUARE ROOTS — Squared length avoids some square roots in comparisons but is neither a norm nor a metric. [[Norms lengths and induced distances]] |
+| 528 | NORMALIZING A VECTOR — Divide a nonzero vector by its length to normalize; this operation is nonlinear. [[Unit directions and safe normalization]] |
+| 529 | ZERO-VECTOR NORMALIZATION AND ROBUST HANDLING — Reject zero/non-finite inputs and scale before squaring; application noise thresholds are a separate policy. [[Unit directions and safe normalization]] |
+| 530 | L1 NORM — The first norm sums absolute coordinates; its unit ball is a coordinate-dependent diamond. [[Norms lengths and induced distances]] |
+| 531 | L2 NORM — The second norm is Euclidean; Cauchy–Schwarz proves its triangle inequality. [[Norms lengths and induced distances]] |
+| 532 | L-INFINITY NORM — The infinity norm is the maximum absolute component; its unit ball is a coordinate-dependent box. [[Norms lengths and induced distances]] |
+| 533 | DISTANCE INDUCED BY A NORM — A norm induces a metric by measuring point difference; different norms can choose different nearest points. [[Norms lengths and induced distances]] |
+| 534 | DOT PRODUCT ALGEBRAIC DEFINITION — The real-coordinate dot sums component products under an orthonormal metric assumption. [[Dot products and orthogonality]] |
+| 535 | DOT PRODUCT GEOMETRIC INTERPRETATION — Dot measures magnitude-weighted alignment; it equals cosine only for unit inputs. [[Dot products and orthogonality]] |
+| 536 | DERIVING THE COSINE-ANGLE RELATION FOR THE DOT PRODUCT — Compare an expanded squared difference with the cosine rule to derive the angle relation. [[Dot products and orthogonality]] |
+| 537 | ORTHOGONAL VECTORS — Orthogonality is zero inner product; zero has no angle, and numerical tests need scale-aware criteria. [[Dot products and orthogonality]] |
+| 538 | VECTOR PROJECTION ONTO ANOTHER VECTOR — Require the along-axis remainder to be orthogonal to derive the target squared-length denominator. [[Projection rejection and scalar components]] |
+| 539 | VECTOR REJECTION FROM ANOTHER VECTOR — Rejection removes the projected component and enables tangent-plane movement. [[Projection rejection and scalar components]] |
+| 540 | SCALAR PROJECTION — Signed scalar projection is length along a target direction, not the coefficient multiplying the target vector. [[Projection rejection and scalar components]] |
+| 541 | GRAM MATRIX CONCEPT — Pairwise basis dots form a Gram metric; coordinates measure physical lengths through this matrix. [[Gram matrices and coordinate metrics]] |
+| 542 | Cross product definition in $\mathbb R^3$ — Reconstructed enrichment: perpendicular oriented-area vector definition precedes the supplied determinant derivation. [[Cross products and oriented area]] |
+| 543 | CROSS PRODUCT DETERMINANT DERIVATION — Signed coordinate-plane minors yield the cross formula; direct expansion verifies perpendicularity. [[Cross products and oriented area]] |
+| 544 | CROSS PRODUCT GEOMETRIC MEANING — Cross produces an area normal, not merely an arbitrary perpendicular direction. [[Cross products and oriented area]] |
+| 545 | CROSS-PRODUCT MAGNITUDE AND PARALLELOGRAM AREA — Cross magnitude equals base times height; triangle area is half the parallelogram area. [[Cross products and oriented area]] |
+| 546 | CROSS-PRODUCT ORIENTATION AND THE RIGHT-HAND RULE — Input order and a chosen positive orientation fix the cross sign; mirrored transforms add a determinant sign. [[Coordinate handedness and orientation]] |
+| 547 | WHY THE CROSS PRODUCT IS SPECIAL TO THREE DIMENSIONS — Ordinary graphics cross identifies bivectors with vectors in three dimensions; higher dimensions need qualifications. [[Coordinate handedness and orientation]] |
+| 548 | SCALAR TRIPLE PRODUCT — Dotting an oriented area with a third movement produces a signed scalar volume. [[Triple products and signed volume]] |
+| 549 | TRIPLE PRODUCT AS SIGNED VOLUME — Triple product is parallelepiped volume; a four-point tetrahedron has one sixth of its absolute value. [[Triple products and signed volume]] |
+| 550 | VECTOR TRIPLE-PRODUCT IDENTITY — Expand a nested cross into dot-weighted vectors; cross grouping is not associative. [[Triple products and signed volume]] |
+| 551 | ANGLES BETWEEN VECTORS — Nonzero finite directions define an unsigned angle in the interval from zero to pi. [[Robust vector angles]] |
+| 552 | ROBUST ANGLE COMPUTATION WITH `atan2` — Scale first and use atan2 of cross length and dot; a signed angle additionally needs an oriented plane. [[Robust vector angles]] |
+| 553 | REFLECTION OF A DIRECTION ACROSS A NORMAL — Reverse the normal component to reflect across a plane; unit-normal and general-normal formulas differ. [[Reflection refraction and shading directions]] |
+| 554 | REFRACTION GEOMETRY FROM SNELL'S LAW — Snell scales the tangent component; a negative transmitted squared cosine indicates total internal reflection. [[Reflection refraction and shading directions]] |
+| 555 | HALF-VECTOR CONSTRUCTION IN SHADING — Normalize the sum of unit outward light/view directions; opposite inputs have no unique half-vector. [[Reflection refraction and shading directions]] |
+| 556 | TANGENT VECTORS ON A SURFACE — Surface derivatives or triangle edges span tangent movement; texture tangents may retain physical stretch. [[Surface tangents normals and bitangents]] |
+| 557 | NORMAL VECTORS ON A SURFACE — Geometric normals measure perpendicularity; shading normals can differ and need their own contract. [[Surface tangents normals and bitangents]] |
+| 558 | BITANGENT VECTORS — Solve edge/UV equations for a second tangent; degenerate UVs and mirrored-island signs need explicit handling. [[Surface tangents normals and bitangents]] |
+| 559 | ORTHONORMAL BASES — Unit perpendicular axes give an identity Gram matrix and simple dot-based reconstruction. [[Orthonormal frames and Gram-Schmidt]] |
+| 560 | CONSTRUCTING AN ORTHONORMAL BASIS FROM ONE DIRECTION — A least-aligned helper yields a nondegenerate frame from one direction, but does not ensure continuity. [[Orthonormal frames and Gram-Schmidt]] |
+| 561 | GRAM-SCHMIDT ORTHOGONALIZATION — Repeated projection removal preserves span while producing perpendicular axes for independent generators. [[Orthonormal frames and Gram-Schmidt]] |
+| 562 | MODIFIED GRAM-SCHMIDT AND NUMERICAL STABILITY — Measuring updated residuals changes rounding behavior; reorthogonalization cannot repair uncertain input rank. [[Orthonormal frames and Gram-Schmidt]] |
+| 563 | HANDEDNESS OF COORDINATE BASES — Triple-product sign classifies an ordered basis relative to chosen orientation, not memory layout. [[Coordinate handedness and orientation]] |
+| 564 | RIGHT-HANDED COORDINATE SYSTEMS — Positive frame orientation is preserved by proper rotations and cyclic axis permutations. [[Coordinate handedness and orientation]] |
+| 565 | LEFT-HANDED COORDINATE SYSTEMS — A reflected frame has opposite orientation while preserving Euclidean distances; API conventions need separate statements. [[Coordinate handedness and orientation]] |
+| 566 | ORIENTATION TESTS IN 2D USING SIGNED AREA — Signed doubled triangle area supplies a two-dimensional orientation predicate with a documented axis convention. [[Coordinate handedness and orientation]] |
+| 567 | ORIENTATION TESTS IN 3D USING TRIPLE PRODUCTS — Four-point triple products decide plane side and coplanarity under an explicit ordering convention. [[Coordinate handedness and orientation]] |
+| 568 | BARYCENTRIC COORDINATES AS AFFINE WEIGHTS — Triangle weights sum to one for affine meaning; nonnegative weights identify the convex interior. [[Barycentric coordinates and interpolation]] |
+| 569 | DERIVING BARYCENTRIC COORDINATES FOR A TRIANGLE — Edge Gram solves or signed area ratios recover weights; degeneracy and off-plane residuals remain separate checks. [[Barycentric coordinates and interpolation]] |
+| 570 | INTERPOLATING ATTRIBUTES WITH BARYCENTRIC COORDINATES — The same affine weights interpolate attributes; nonlinear encoding and unit length require additional policies. [[Barycentric coordinates and interpolation]] |
+| 571 | AFFINE COMBINATIONS VERSUS LINEAR COMBINATIONS — Only sum-one weights preserve point translation; sum-zero weights describe a displacement. [[Convex combinations and convex hulls]] |
+| 572 | CONVEX COMBINATIONS — Nonnegative affine weights produce convex mixtures; extrapolation is affine but not convex. [[Convex combinations and convex hulls]] |
+| 573 | CONVEX SETS — A convex set contains every line segment between its members; a boundary need not be convex. [[Convex combinations and convex hulls]] |
+| 574 | CONVEX HULL INTUITION — A convex hull is all finite convex mixtures and may fill source concavities or holes. [[Convex combinations and convex hulls]] |
+| 575 | MINKOWSKI SUM INTUITION — Pairwise set-coordinate addition represents sweeps and expansions; symmetric robot dilation is a special case. [[Minkowski sums and support mappings]] |
+| 576 | MINKOWSKI DIFFERENCE INTUITION — Collision difference means A plus reflected B here, not set subtraction; overlap is origin membership. [[Minkowski sums and support mappings]] |
+| 577 | SUPPORT FUNCTIONS OF CONVEX SHAPES — Support scalar and support point differ; opposite-direction support queries construct difference extrema on demand. [[Minkowski sums and support mappings]] |
+| 578 | HOMOGENEOUS COORDINATES AS PROJECTIVE REPRESENTATIVES — Nonzero common scale defines projective equivalence; finite representatives divide by their final coordinate. [[Homogeneous coordinates and perspective division]] |
+| 579 | POINTS AND DIRECTIONS THROUGH HOMOGENEOUS $w$ — Homogeneous one distinguishes points from zero-tagged directions under affine translation; zero tuple is invalid projectively. [[Homogeneous coordinates and perspective division]] |
+| 580 | NORMALIZED DEVICE-COORDINATE INTUITION AS A VECTOR-SPACE MAPPING — NDC standardizes device-coordinate ranges, not length; perspective division is nonlinear and follows clipping. [[Homogeneous coordinates and perspective division]] |
+| 581 | DUAL VECTORS AND COVECTORS — Covectors are linear scalar measurement rules; a metric hides their distinction from ordinary vectors. [[Covectors linear functionals and normal transforms]] |
+| 582 | WHY SURFACE NORMALS TRANSFORM DIFFERENTLY FROM POSITIONS — Preserve the normal's pairing with transformed tangents to derive inverse transpose; singular cases need policy. [[Covectors linear functionals and normal transforms]] |
+| 583 | LINEAR FUNCTIONALS — A linear functional distributes across weighted vector sums; its kernel contains movements it measures as zero. [[Covectors linear functionals and normal transforms]] |
+| 584 | EXTERIOR-PRODUCT INTUITION — Exterior algebra retains areas and volumes without requiring a vector-valued cross in every dimension. [[Exterior products and geometric algebra]] |
+| 585 | WEDGE PRODUCT AS ORIENTED AREA CONCEPT — Antisymmetric bilinear wedges encode oriented area; dependent generators have zero wedge. [[Exterior products and geometric algebra]] |
+| 586 | GEOMETRIC-ALGEBRA MOTIVATION FOR GRAPHICS — The geometric product combines dot and wedge; plane elements connect to complex-like rotation structure. [[Exterior products and geometric algebra]] |
+| 587 | FLOATING-POINT VECTOR STORAGE IN C++ — Floating storage has bounded precision and target layout; trivial copying does not certify external representation. [[Vector storage SIMD and boundary layouts]] |
+| 588 | VEC2 DATA STRUCTURE DESIGN — A two-component value type needs initialization, safe access and explicit semantic roles. [[Vector value types and component access]] |
+| 589 | VEC3 DATA STRUCTURE DESIGN — Three-component storage supports spatial operations but is not automatically a point, normal or unit direction. [[Vector value types and component access]] |
+| 590 | VEC4 DATA STRUCTURE DESIGN — Four-component storage can serve distinct roles; homogeneous coordinates and quaternions require separate contracts. [[Vector value types and component access]] |
+| 591 | OPERATOR OVERLOADS FOR VECTOR ARITHMETIC — Overloads should express unambiguous vector arithmetic; name dot, cross and componentwise multiplication. [[Vector value types and component access]] |
+| 592 | SWIZZLES AND COMPONENT ACCESS — Read swizzles reorder components; writable swizzles need temporary-copy and duplicate-destination policies. [[Vector value types and component access]] |
+| 593 | ALIGNMENT OF VECTOR TYPES — Measure alignment, size and stride; greater alignment may add padding and is not a performance guarantee. [[Vector storage SIMD and boundary layouts]] |
+| 594 | PACKED VERSUS ALIGNED VEC3 REPRESENTATIONS — Compact storage and aligned compute types can coexist with explicit conversion at boundaries. [[Vector storage SIMD and boundary layouts]] |
+| 595 | SIMD IMPLEMENTATION OF VECTOR ARITHMETIC — SIMD within one vector differs from SIMD across objects; layouts, reductions and FMA affect throughput and results. [[Vector storage SIMD and boundary layouts]] |
+| 596 | APPROXIMATE VECTOR EQUALITY — Exact, componentwise, distance, angular and ULP comparisons answer different questions; closeness is not transitive. [[Vector tolerances and finite-state diagnostics]] |
+| 597 | DEBUGGING NaN VECTORS — Catch the first invalid input or operation using finite checks; NaN propagation can silently skip decisions. [[Vector tolerances and finite-state diagnostics]] |
+| 598 | VECTOR INVARIANTS IN ENGINE APIs — Validated wrappers establish finite/unit promises and operations must preserve or explicitly drop them. [[Coordinate-space types and validated invariants]] |
+| 599 | DISTINGUISHING WORLD-SPACE AND LOCAL-SPACE VECTOR TYPES — Space-tagged points, vectors and transforms reject broad frame mistakes; dynamic local-frame identity remains a separate issue. [[Coordinate-space types and validated invariants]] |
+| 600 | Reconstructing a Production-Ready `Vec3` Library from First Principles — Reconstruct the scalar library from the mathematics, then verify contracts with edge cases and seeded properties. [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#A complete scalar laboratory makes the story executable|Inline capstone and tests]] |
+
+## XR01 - Independent seeing and representation source
+
+This source is outside the 3,000-part curriculum. Module labels below preserve the attachment's coverage without assigning it main part numbers. XR01 is one accepted source in a separate anticipated 3–4-source continuous series; future inputs are pending. Main coverage is recorded separately above: Parts 1–147 and 501–600, with the Part 542 source gap identified.
+
+| Independent source module | Mechanism and teaching location |
+|---|---|
+| XR01/1 - Light | [[Light spectra and radiometry]] and [[Reflectance and rendering equation]]: spectra/receptor response, units, BRDF and transport assumptions. |
+| XR01/2 - Eye | [[Retinal encoding and receptive fields]]: anatomy, receptors, phototransduction, center-surround and cortical processing. |
+| XR01/3 - Acuity | [[Visual angle and calibrated rays]] and [[Visual acuity and eccentricity]]: angular units, local/average PPD, eccentricity, MAR conventions. |
+| XR01/4 - Optics | [[Optical focus and binocular conflict]] and [[PSF OTF and MTF]]: refraction, focus, diffraction, distortion and contrast transfer. |
+| XR01/5 - Perception | [[Contrast sensitivity adaptation and masking]], [[Eye movements and display-time gaze]], [[Psychophysics and threshold inference]]: task, timing and detection models. |
+| XR01/6 - Signals | [[Continuous signals and discrete samples]]: domains, timestamps, sampling versus quantization and error assumptions. |
+| XR01/7 - Fourier | [[Fourier analysis and spectral phase]]: basis projection, DFT/FFT, phase, bins, leakage and amplitude conventions. |
+| XR01/8 - Sampling | [[Sampling aliasing and reconstruction]] and [[Spatiotemporal sampling and retinal motion]]: spectral replicas, sinc, prefiltering, moving-pattern frequency. |
+| XR01/9 - Filtering | [[Convolution and filter footprints]] and [[Multiscale texture filtering]]: kernels, separability, reconstruction, ringing, footprints and pyramids. |
+| XR01/10 - Antialiasing | [[Antialiasing and sample allocation]]: pixel integration, coverage versus shading and SSAA/MSAA distinctions. |
+| XR01/11 - Temporal | [[Temporal reprojection and history validation]]: weights, motion/jitter conventions, disocclusion and changing-quality history. |
+| XR01/12 - Color | [[Color encoding and linear-light operations]]: transfer/primaries, XYZ, relative luminance, HDR and distinct noise mechanisms. |
+| XR01/13 - Quality | [[Perceptual metrics and display calibration]]: reference, MSE/PSNR/SSIM, gaze weighting and model limits. |
+| XR01/14 - Papers | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Read research as a chain of questions, methods and bounded conclusions|Bounded paper-reading anchors]]; coefficients/study details not fully inspected remain source-reported. |
+| XR01/15 - Experiment | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Complete numerical and image-space laboratory|Tested proxy experiment]], explicitly not saved GPU work or a human study. |
+| XR01/16 - Use cases | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Diagnose a symptom by the quantity that failed|Failure-to-measurement table]]. |
+| XR01/17 - Further vision | [[Stereoacuity and binocular foveation]], retinal velocity, flicker/task dependence and bias/variance distinctions. |
+| XR01/18 - Vocabulary | Definitions appear at first use; filled Concepts and [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Teach the distinctions from a blank board|Recall desk]] preserve operational distinctions. |
+| XR01/19 - Understanding checks | Alias/phase, nonlinear filtering, additive-cost and evidence-reconstruction examples; [[Research validity and ablation]]. |
+
+Source numbering is a coverage ledger, not the narrative's teaching order. The copied “START CHUNK2” footer is not a supplied second source or an instruction to invent it.
+
 ## M007 - Parts 101-112
 
-The supplied source has exactly twelve parts, 101–112. The earlier predicted range 101–116 is superseded for this accepted source. Its preview names M008, 113–126; that range is pending until supplied. Volume 02 is 1/12 sources, not completed Parts 101–300.
+The supplied source has exactly twelve parts, 101–112. The revised M007 was integrated into the same coverage, not counted as new parts. M008 supplies 113–126 and M009 supplies127–147. Volume02 is3/12 sources, not completed Parts101–300.
 
 | Part | Definition, mechanism, and concrete reconstruction cue |
 |---|---|
@@ -22,6 +161,74 @@ The supplied source has exactly twelve parts, 101–112. The earlier predicted r
 Read [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|the C++ narrative]] from buildable text through entities, storage, occupants, domains and layout. Source numbers belong in this ledger, not in teaching chapters. Independent code and essential traces remain inline in that volume.
 
 This cumulative supplement retains the per-part definition and coverage ledger. The connected teaching volumes now explain the essential foundations, unfamiliar terms and worked steps directly; readers should not need this ledger to reconstruct a lesson. Concept links provide optional navigation. Examples and clarifications are explanatory material; repository claims retain their evidence status in [[Supplementary/Sources and Code Anchors]].
+
+## M008 - Parts 113-126
+
+All fourteen supplied parts are accepted. Source numbering audits coverage; it does not divide the teaching story. M009 now develops parameter passing and value transfer in Parts127–147.
+
+| Part | Definition, mechanism, and concrete reconstruction cue |
+|---|---|
+| 113 | [[References and aliases]] — Binding establishes an alias; assignment acts on the referent. A reference-to-pointer can reseat that pointer, unlike a reference to its pointee. |
+| 114 | [[Reference binding and converted temporaries]] — Type/category select the referent. const int& can track the original; const double& can bind a converted snapshot. Arrays keep extent through array references; bit-fields require special handling. |
+| 115 | [[Temporary lifetime extension]] and [[Move casts and forwarding references]] — Direct local binding can extend a temporary, not transitive function-return aliases. Braces/parentheses/new exceptions matter; move is a cast, and deduced T&& forwarding collapses references. |
+| 116 | [[Value categories and materialization]] — lvalue/xvalue identify, prvalue produces; glvalue and rvalue overlap at xvalue. A named T&& is an lvalue in ordinary use. decltype(name) differs from decltype((name)). |
+| 117 | [[Pointer arithmetic and provenance]] — A pointer is an access path, not ownership. Null/object/one-past/invalid states differ; dereference requires live, aligned, type-accessible in-range storage. |
+| 118 | [[Null pointers and optional access]] — nullptr distinguishes pointer absence from integer zero. Typed null deletion is valid; bare delete nullptr is ill-formed. Non-null does not prove lifetime. |
+| 119 | [[Named members versus array elements]] — Array-relative positions zero through N may be formed; only zero through N-1 dereferenced. Same-array subtraction must fit ptrdiff_t. Adjacent members do not authorize array indexing. |
+| 120 | [[Pointer arithmetic and provenance]] — A pointer's storage relationship is not manufactured by a plausible integer. Specified round trips do not resurrect occupants or authorize arbitrary arithmetic; P3407 is discussion, not C++23 law. |
+| 121 | [[Borrow invalidation and logical identity]] — Vector reallocation can dangle a borrow; swap assignment can leave a live slot with a different logical owner. Valid handles do not certify previous component references. |
+| 122 | [[Deferred captures and borrowed views]] — Reference members, spans, string views and captured this pointers require referent lifetime. Copying a view does not own its buffer; an owning capture supplies a different contract. |
+| 123 | [[Const qualification and shallow constness]] and [[Auto decltype and reference collapsing]] — Read-only access is not global immutability. Top-level const is often dropped by value deduction; actual const objects cannot be made writable by casts. |
+| 124 | [[Multilevel pointer qualification]] — Separate pointer and pointee qualification. int** to const int** would enable unsafe injection; intermediate const blocks it. Const span descriptors do not imply const elements. |
+| 125 | [[Ref-qualified accessors]] — const member functions restrict the object path; &/&& constrain caller category. Persistent getters can borrow; both mutable and const temporary getters need value/deleted policies. |
+| 126 | [[Logical constness and mutable caches]] — Eligible mutable members permit representation changes under const access. Cache/source invariants require invalidation and synchronization; return protected snapshots. Mutable closures are not automatically thread-safe. |
+
+### Borrowing source-to-story navigation
+
+| Mechanism | Teaching position |
+|---|---|
+| Alias, type/category, conversion and deduction | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving another name to a live object|Binding story]] |
+| Temporary lifetime, moves and forwarding | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A temporary needs an explicit lifetime story|Lifetime story]] |
+| Pointer validity, container mutation and pool identity | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing|Borrow story]] |
+| Const paths, getters, cache invariants | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Read-only is a path, not an ownership or synchronization promise|Access story]] |
+
+## M009 - Parts 127-147
+
+The supplied source contains exactly twenty-one parts. It extends Volume02 to Parts101–147 and3/12 accepted C++ sources. Teaching headings remain concept-led; Parts148 onward are not accepted.
+
+| Part | Definition, mechanism, and reconstruction cue |
+|---|---|
+| 127 | [[Parameter passing and sink contracts]] — Argument expressions initialize separate value-parameter objects. Lvalue/xvalue/prvalue routes differ; a sink retains/transforms a value, and copied pointer members still alias. |
+| 128 | [[References and aliases]] — Mutable/const/rvalue reference parameters borrow with different access and consumption contracts. Aliased source/destination references can change a sequential update's result. |
+| 129 | [[Parameter passing and sink contracts]] — Pointer parameters copy pointer values; T*& or pointer-output protocols can reseat caller state. Null optionality must be documented; array parameters adjust to pointers without extent enforcement. |
+| 130 | [[Return values and copy elision]] — Result objects can be constructed directly; NRVO is optional while appropriate same-type prvalue initialization requires no intermediate transfer. Eligible local/parameter return expressions implicitly move in C++23. |
+| 131 | [[Ref-qualified accessors]] and [[Temporary lifetime extension]] — Reference/view results retain owner lifetime/invalidation obligations. Temporary getters require policies for const rvalues too; decltype(auto) can return a reference through parentheses. |
+| 132 | [[Constructors and invariant establishment]] — Members/bases initialize before the body. Initializers establish state; body assignments replace it. Constructor failure and factory error results are different protocols. |
+| 133 | [[Default and value initialization]] — Default, zero, aggregate and value initialization differ. First-declaration defaulting is not an empty user-provided body; braces do not universally initialize every scalar. |
+| 134 | [[Member order and delegating constructors]] — Declaration order governs members regardless of colon-list spelling. Provider-before-dependent order establishes correct construction/reverse cleanup. |
+| 135 | [[Member order and delegating constructors]] — Delegation centralizes a target initialization path, then runs its own body. The target is the sole initializer; cycles are ill-formed. |
+| 136 | [[Destruction and partial construction]] — Destructor body precedes reverse subobject cleanup; failed ordinary construction destroys completed subobjects. Delegating-target completion changes the whole-object cleanup case. |
+| 137 | [[Copy semantics and resource identity]] — New-object copying follows members' semantic operations; equal-sign initialization is not assignment. Pointer/reference copies preserve associations rather than clone referents. |
+| 138 | [[Assignment and exception guarantees]] — Existing-object replacement must handle old ownership, self-aliasing and failure. Prepare before commit; reference/const members can delete generated assignment. |
+| 139 | [[Copy semantics and resource identity]] — Deep/shallow are contract choices, not good/bad labels. Pixel values may duplicate, handles identify, graph clones remap; copy-on-write adds mutation/lifetime/synchronization costs. |
+| 140 | [[Move operations and moved-from states]] — New-object moves can take resources and repair source state; scalar/inline members need not become cheaper. Ordinary constructors alone do not suppress implicit move generation. |
+| 141 | [[Move operations and moved-from states]] — Move assignment also handles the destination's former resource and self-move. Allocator policy can prevent constant-time adoption. |
+| 142 | [[Move casts and forwarding references]] — move changes category, not ownership itself; const remains const. Explicit local-return moves can inhibit NRVO; move_if_noexcept selects a transfer access path. |
+| 143 | [[Move operations and moved-from states]] — Source lifetime continues after moving. Valid-but-unspecified is not destroyed or undefined; operation preconditions still apply. A custom empty source needs an explicit maintained invariant. |
+| 144 | [[Return values and copy elision]] — Immovable types can use guaranteed direct result construction; a named-local fallback still needs usable operations. Accessible destruction remains required. |
+| 145 | [[Rules of Three Five and Zero]] — Destructor/copy constructor/copy assignment are coordinated raw-owner decisions; copying may instead be deleted. It is a design heuristic, not a compiler mandate. |
+| 146 | [[Special member generation and traits]] — Five adds both moves. User-declared versus user-provided matters; a defaulted destructor suppresses dedicated implicit moves, while move-constructible traits can still classify copying as viable. |
+| 147 | [[Rules of Three Five and Zero]] — Compose tested member owners rather than repeat transfer/release logic. Zero does not forbid ordinary constructors or prove cross-member invariants; [[Relocation versus move]] remains a versioned research bridge. |
+
+### Value-transfer source-to-story navigation
+
+| Teaching question | Narrative location |
+|---|---|
+| What crosses a call, and what can the callee retain? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A value crosses the function boundary|Parameter and sink contracts]] |
+| How can a result become an owning object without a hidden copy? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Return a result without handing out a lifetime problem|Result construction]] |
+| How does initial state become valid, then get cleaned up? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Construction establishes a usable state|Construction-to-cleanup story]] |
+| What does copying or moving this value mean? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Copy a meaning rather than just its bytes|Copy, assignment and transfer story]] |
+| Which boilerplate should exist at all? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From three repairs to five decisions to zero boilerplate|Composition and ownership]] |
 
 ## M001 - Parts 1-20
 

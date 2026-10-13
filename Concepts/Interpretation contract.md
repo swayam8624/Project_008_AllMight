@@ -24,9 +24,7 @@ For `0xAD`, unsigned interpretation gives 173; eight-bit two's complement gives 
 - [[Fixed-point representation]] — uses this mechanism to define its representation, error or validation contract.
 - [[Offset-binary coding]] — uses this mechanism to define its representation, error or validation contract.
 - [[Integrity and authenticity]] — uses this mechanism to define its representation, error or validation contract.
-
 - [[Bit casting and representation]] — uses interpretation contract to establish this mechanism's representation or policy.
-
 - [[Integral promotion]] — uses interpretation contract as part of its representation or reasoning.
 - [[Bit packing]] — uses interpretation contract as part of its representation or reasoning.
 - [[Undefined behavior]] — uses interpretation contract as part of its representation or reasoning.
@@ -34,12 +32,9 @@ For `0xAD`, unsigned interpretation gives 173; eight-bit two's complement gives 
 - [[Compiler IR and machine instructions]] — uses interpretation contract as part of its representation or reasoning.
 - [[IEEE-754 floating point]] — uses interpretation contract as part of its representation or reasoning.
 - [[Exhaustive finite-state testing]] — uses interpretation contract as part of its representation or reasoning.
-
 - [[Storage duration and object lifetime]] — depends on this concept; see its prerequisite explanation.
-
-## M003 development
-
-M003 adds byte order, legal alignment, object-relative offsets, mapping context, permissions, and [[Storage duration and object lifetime]]. Portable [[Serialization]] fixes external representation; an aligned mapped address alone does not establish a live object.
+- [[Continuous signals and discrete samples]]
+- [[Color encoding and linear-light operations]]
 
 ## Recall and next depth
 

@@ -6,9 +6,11 @@ tags:
 
 # Standard-layout and trivial copyability
 
-**Curriculum depth:** Introduced · **First seen:** C007 · **Latest development:** C007
+**Curriculum depth:** Developed · **First seen:** C007 · **Latest development:** C009
 
 ## Definition and mechanism
+
+Rule-Zero composition is not itself a trivially-copyable, standard-layout or serialization promise. Hand-written/defaulted special functions can change triviality, and relocation is not generic permission to memmove a nontrivial owner.
 
 Standard-layout is a structural language property supporting useful low-level layout reasoning; it does not promise no padding or a portable ABI. Trivial copyability permits particular byte-copy operations on valid objects/representations, not arbitrary byte validity or serialization. Aggregate, trivial and trivially-copyable are separate traits.
 
@@ -24,8 +26,10 @@ Later chunks extend this same node; dependent concepts are listed here as they a
 
 Give an example, explain why the rule exists, and identify which guarantee would be missing if the prerequisite were ignored.
 
-**Pending:** Deeper ownership, pointer/reference, generic programming and module rules from later sources. This is written coverage, not demonstrated personal mastery.
+**Pending:** versioned relocation facilities and measured cross-target ABI properties.
 
 ## Source and navigation
+
+[[Supplementary/Foundations#M009 - Parts 127-147|C009 development]]
 
 [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Bringing the object model back to bytes|C007 teaching chapter]] · [[Supplementary/Foundations#M007 - Parts 101-112|Source coverage]] · [[Dependency Map]]

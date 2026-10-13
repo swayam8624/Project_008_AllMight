@@ -23,6 +23,8 @@ M005 distinguishes absolute tolerance in the quantity's units from dimensionless
 
 ## Used by
 
+- [[Vector tolerances and finite-state diagnostics]] — Phase 6 uses this established foundation in its geometry narrative.
+
 - [[Conditioning and singularity]] — uses this mechanism in its explanation.
 
 ## Recall and next depth

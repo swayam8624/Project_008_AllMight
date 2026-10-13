@@ -1,5 +1,160 @@
 # Worked Traces
 
+## Phase 6 - The robot panel tracebook
+
+This cumulative trace extends [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the self-contained Phase 6 volume]]. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.
+
+### One physical object through six representations
+
+Start with metre-valued workcell points $A=(0,0,0)$, $B=(4,0,0)$, $C=(0,3,0)$ and sensor point $P=(1,1,0)$.
+
+| Stage | Intermediate value | Meaning and check |
+|---|---|---|
+| Edge subtraction | $e_1=(4,0,0)$, $e_2=(0,3,0)$ | Point differences, not new point locations. |
+| Dot and Gram | $g_{11}=16$, $g_{12}=0$, $g_{22}=9$ | Perpendicular but non-unit edge basis. |
+| Cross | $e_1\times e_2=(0,0,12)$ | Oriented area vector in square metres. |
+| Normalization | $n=(0,0,1)$ | Finite unit front normal; triangle area is $6$. |
+| Sensor coordinates | $\beta=1/4$, $\gamma=1/3$, $\alpha=5/12$ | Sum is one and all weights are positive. |
+| Attribute interpolation | $(5/12)20+(1/4)40+(1/3)50=35$ | Affine temperature model, not an asserted physical heat solution. |
+
+Move a point $D=(0,0,2)$ above the panel. The area normal dotted with $D-A$ is $24$, yielding tetrahedron volume $4$. Swap $B,C$ and both signs reverse; ordinary area and volume do not.
+
+### A mirror changes orientation, not all measurements
+
+Mirror horizontal coordinates with $R=\operatorname{diag}(-1,1,1)$. New first edge is $(-4,0,0)$ and second edge remains $(0,3,0)$. Their cross becomes $(0,0,-12)$. All edge lengths and all original pairwise dot products remain unchanged. The Gram matrix cannot tell us that the orientation flipped.
+
+The ordinary transformed normal direction $Rn$ is still $(0,0,1)$. The cross-derived oriented normal gains the additional factor $\det(R)=-1$. This is why a mesh pipeline needs a consistent front-face and mirror policy rather than one generic “transform vector” call.
+
+### Nonuniform scaling exposes a hidden normal bug
+
+For tangent $(1,1,0)$ and normal $(1,-1,0)$, double only the horizontal scale. Tangent becomes $(2,1,0)$. A naively transformed normal $(2,-1,0)$ gives dot $3$, not zero. The inverse-transpose normal $(1/2,-1,0)$ gives dot zero. Normalize the latter only after deriving its correct direction.
+
+### A frame can be valid without being continuous
+
+With normal $(0,0,1)$, a least-aligned horizontal helper produces tangent $(0,-1,0)$ and bitangent $(1,0,0)$. All axes are unit and perpendicular, and the frame is positive. Perturb the normal through a helper-selection tie: a different helper can become preferred abruptly. Correct axes do not establish smooth frame evolution. Animated systems must decide whether continuity or a texture reference is required.
+
+### Perspective-correct attribute trace
+
+For two projected endpoints with $w_0=1,w_1=2$, equal screen weights $1/2$ produce reciprocal-weight denominator $1/2+1/4=3/4$. Surface weights become $2/3$ and $1/3$. If endpoint attributes are $0$ and $1$, affine surface interpolation at that screen location gives $1/3$, not the naive $1/2$.
+
+### The first lost quantity can precede every formula
+
+Store intended horizontal coordinates $10^8$ and $10^8+1$ in binary32. Near that scale, one unit is below the local representable spacing, so both can round to the same value. Subtraction then yields zero. Promoting those already-rounded values to binary64 does not recover their difference. Retain a wider global representation or subtract in an appropriately local frame before narrowing.
+
+### Collision difference without an explicit shape
+
+Take intervals $A=[2,4]$ and $B=[3,5]$. In positive direction, the difference support is $4-3=1$. In negative direction, choose $2-5=-3$. The origin lies between them, consistent with overlap. For $A=[0,1]$, $B=[3,4]$, the extrema are $-4,-2$, both negative; the intervals do not overlap. A full higher-dimensional collision algorithm must manage its simplex and stopping policies separately.
+
+### What the executed lab actually demonstrates
+
+The inline scalar program checks the panel weights, area, frame, projection, rejection, reflection, finite-state rejection, huge/tiny scaled normalization, angles, transmission and total internal reflection. It also runs 2,000 deterministic moderate-range cases for decomposition, orthogonality, projection idempotence, reflected length and cross antisymmetry/perpendicularity. None of these tests certify all floating-point inputs, performance, a robust orientation implementation, or human understanding.
+
+## XR - From geometry to sample loss and evidence
+
+The complete explanations and code remain in [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality|the independent XR story]].
+
+Use this table to follow the quantities from one step to the next:
+
+| Step | Numerical witness | What it shows |
+|---|---|---|
+| Convert screen geometry to angles | FOV $47.658899^\circ$; average 40.286285 PPD; center 37.936213 PPD | Average and local density differ under the planar projection. |
+| Downsample without filtering | Alternating zero/one; take even samples; obtain all zeros | Decimation can turn a pattern into a misleading constant. |
+| Filter before downsampling | Average each pair; obtain 0.5 | This declared alternating sequence gives its intended mean. The filter is not an ideal universal cutoff. |
+| Analyze aligned frequencies | DFT bins 7 and 29 give one-sided amplitudes 0.3 and 0.1 | The stated amplitude normalization separates the two components. |
+| Apply the Gaussian optics model | Gains 0.951850 and 0.291213 at 0.05 and 0.25 cycles per pixel | Higher-frequency contrast is reduced more strongly. |
+| Average light, then encode | Linear 0.5 encodes to 0.735357 in sRGB | Encoded 0.5 instead decodes to 0.214041. The arithmetic domain matters. |
+| Change allocation with the same true-gaze metric | Fixed weighted MSE 0.00610803; gaze-following 0.00378445 | This is one toy-model result, not a human threshold or saved GPU work. |
+| Check threshold algebra | $F\!\left(\lambda(\ln2)^{1/k}\right)=0.75$ | The formula matches the selected criterion for the illustrative parameters. |
+
+### Frame history can be clean and wrong
+
+Follow a moving character:
+
+1. The previous frame sees the character at a pixel.
+2. The character moves, exposing the background.
+3. Incorrect reprojection brings the old character color into that background.
+4. Accumulation reduces random noise but retains a ghost.
+
+A depth or identity mismatch can justify rejecting that history.
+
+A gaze-region change creates a second problem. An old peripheral sample may belong to the correct surface but lack the detail required now.
+
+Lower MSE or lower variance alone does not establish that the reused information is correct.
+
+### An allocation claim and a runtime claim are different
+
+Normalize the original frame time to one:
+
+$$
+T_{\mathrm{old}}=0.6+0.4=1.
+$$
+
+Only the second component benefits. If its work becomes 70% cheaper:
+
+$$
+T_{\mathrm{new}}=0.6+0.4(0.3)=0.72.
+$$
+
+The speedup is:
+
+$$
+S=\frac1{0.72}\approx1.3889.
+$$
+
+The calculation assumes additive, non-overlapping costs. A real GPU may have overlap, bandwidth limits, occupancy changes, or synchronization costs.
+
+A post-filtered full reference does not establish that any original shading work was skipped.
+
+## C++ - Value-transfer and cleanup board traces
+
+Essential code and traces remain inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Trace one payload from decode to cache|the payload journey]] and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Observe construction, failure and reverse cleanup|the event laboratory]].
+
+| Scenario | Recorded events | Interpretation |
+|---|---|---|
+| Ordinary constructor body throws | 1,2,3,-2,-1 | Both members completed; complete Whole did not. No destructor-body -3 event. |
+| Whole completes, then leaves scope | 1,2,3,-3,-2,-1 | Destructor body precedes reverse member cleanup. |
+| Delegating target completes, delegating body throws | 4,5,6,-5,-4 | Complete target established object; cleanup invokes its destructor then member destruction. |
+
+Positive IDs mean construction/body entry, negatives mean destruction. The fixed recorder does not allocate from destructors. Exception traces establish the tested lifetime rules, not a policy for every subsystem's error handling.
+
+### Assignment failure versus successful ownership transfer
+
+Start A with byte7 and B with byte9 in separate buffers. Prepare B=A with an injected allocation failure: B still holds byte9 at the same live buffer, A still byte7, and allocation count is unchanged. Move-construct C from A: C owns byte7, A is documented empty. Copy-construct from empty A: new owner is empty without traversing a null range. Move-assign C into B: B's byte9 allocation is released, B takes byte7, C becomes empty. Self-move B through its alias preserves its value under this particular owner's contract. Reset B to empty and end scope: live allocation count0.
+
+### The aliased update does not behave like two copies
+
+For destination+=source; source*=0.5, starting with distinct source4/destination4 gives destination8/source2. If both parameters designate one float, its state is4→8→4. The second statement sees the first statement's write. Passing scalar values instead creates independent parameter values; no caller mutation is implied.
+
+### Observation is not a mandatory NRVO count
+
+On the recorded Clang C++23 build, the named Probe return observed zero moves ordinarily and one with optional elision disabled. The immovable same-type prvalue result remained valid in both. This differentiates language-required direct construction from a compiler-selected named-local elision. Do not substitute these observed counts for a timing or allocation benchmark.
+
+## C++ - Borrow deadlines and dense-pool identity
+
+The essential explanation remains inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing|the borrow story]]. This deeper board exercise separates the targets of three paths. Assume a vector with three live Slot objects, enough capacity, and assignments that do not end the destination Slot lifetime.
+
+| Event | First-slot borrow | Last-slot borrow | Entity-11 handle |
+|---|---|---|---|
+| Initial owners [11,22,33] | Live object representing 11 | Live object representing 33 | Must be checked against registry |
+| Move-assign last into first | Same live Slot now represents 33 | Still live until pop; moved-from state | Not a location guarantee |
+| Pop last | Live but wrong original association | Referent lifetime ended | Must be invalidated for removal under registry policy |
+| Reallocate remaining elements | Old storage path invalidated | Already invalid | Can still identify other live entities if registry validates them |
+| Validate entity33 and reacquire | New valid path to current owner33 | Do not reuse old path | Lookup binds identity to current location |
+
+Do not read a moved-from value without its type's specified contract; this example's integer members and Slot assignment make the first-slot result explicit. Not every pool implementation uses this algorithm. The source-reported Kairo anchors remain To verify.
+
+### Direct alias versus converted snapshot
+
+Start `count=10`, bind `const int& live=count` and `const double& snapshot=count`. The first referent is count; the second is a new converted double containing10.0. After `count=50`, live observes50 and snapshot observes10.0. At the end of their enclosing scope the extended double temporary dies; no separate double was owned by count.
+
+### A function call does not renew the deadline
+
+Construct temporary string → bind call parameter → return that same path → bind caller's receiving reference → complete full-expression → destroy temporary. The receiver's longer lifetime is irrelevant. Contrast direct local binding, which specifies extension, with returning `std::string` by value, which establishes an owning result. The complete rule is in [[Temporary lifetime extension]], not “references make temporaries live longer.”
+
+### Cache invalidation without exposed storage
+
+Source3/cache-empty → Get holds mutex, computes9, copies9, unlocks → Set holds mutex, replaces source with4, clears cache, unlocks → Get computes16 and copies it under mutex. The earlier returned9 remains a valid independent snapshot. If Get had exposed a reference, clearing the optional could end that referenced integer's lifetime. Locking only while obtaining the reference does not protect its later use.
+
 ## C++ - Build and occupant trace navigation
 
 Essential traces stay inside [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following one call through the build|the build story]] and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following an escaped address through time|the escaped-address story]]. The complete inline laboratory supplies observable constructions/destructions without executing stale access.

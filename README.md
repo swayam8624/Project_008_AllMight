@@ -19,6 +19,7 @@ GitHub repository: `Project_008_AllMight`.
 |---|---|
 | Graphics Engine Mastery - Continuous Notes.md | Library index and subject-volume navigation |
 | Continuous Notes/ | Connected, self-contained teaching volumes |
+| Visual Recall/ | One concise visual active-recall companion per subject volume; currently Volume01/Parts1–100 only |
 | Supplementary/Derivations.md | Cumulative full proofs and mathematical reconstruction |
 | Supplementary/Code Snippets.md | Existing canonical drivers and project-specific excerpts; independent C++ examples stay inline in Volume 02 |
 | Supplementary/Worked Traces.md | Extended reusable traces; essential traces also appear in the volume |
@@ -33,7 +34,13 @@ Volume 01, **From Signals to Meaning: Bits, Numbers, and Memory**, now integrate
 
 Volume 02, **C++: From Objects to Reliable Programs**, is planned for Parts 101–300 / M007–M018: two related hundred-part phases, twelve chunks. Do not create empty future chapters or mark previews complete. Later volumes normally follow a hundred-part/six-chunk phase, with adjacent phases combined only when subject continuity warrants it. The curriculum has 180 integrated chunks, not the earlier assumed 150 uniform batches.
 
-## Per-chunk workflow
+Phase 6, **From Movement to Meaning: Vectors, Geometry, and Reliable Code**, integrates Parts 501–600 in [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|its own continuous volume]]. Its `06` identifies the curriculum phase, not six completed vault volumes. The user labels this received phase group M031–M036; individual chunk boundaries are not inferred from the nineteen pasted excerpts. Part 542 has no standalone source lesson and is explicitly reconstructed. Parts 148–500 remain unreceived, not silently completed.
+
+## Independent XR foundations series
+
+[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality|XR: From Light to Perception]] is a separate continuous teaching series, outside the 3,000-part curriculum. XR01 identifies its first supplied source, not M010 or a numbered curriculum part. The anticipated 3–4-source series reuses this same file as later material arrives. Independent module coverage is recorded separately in Foundations; concepts can connect to shared foundations without advancing numbered-curriculum coverage. Future XR sources remain pending.
+
+## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
 2. Identify prerequisites and missing explanatory steps. Define unfamiliar words and symbols where first needed, in plain language.
@@ -58,9 +65,11 @@ Technical concept links point to real files. Heading links locate chapter/proof 
 
 Forward means useful current context exists but deeper treatment is pending. Introduced means recognizable and usable at the present level. Developed means later material has added mechanism or implementation. Owned means the notes support independent reconstruction; it is not a claim about personal mastery.
 
-- Accepted/expanded parts: 1–112.
-- Accepted chunks: M001–M007, 7 of 180; C++ volume 1 of 12 sources.
-- Next source preview from M007: M008, Parts 113–126 (pending receipt). The older predicted M007 range 101–116 does not override the actual supplied 101–112.
+- Expanded topic coverage: Parts 1–147 and 501–600, 247 disjoint entries. Standalone supplied lessons cover 246 entries; Part 542 is explicitly reconstructed enrichment.
+- Accepted chunk groups: M001–M009 and the user-labeled M031–M036, 15 of 180. C++ volume remains 3 of 12 sources. Revised M007 updates the same Parts 101–112 without double counting.
+- M009 supplies twenty-one parts, 127–147. Parts 148–500 and 601 onward remain pending; do not infer a uniform chunk size or unreceived M010 range.
 - First volume: complete source coverage, with concept-led teaching organization.
+- Phase 6: connected panel/workcell narrative, inline scalar implementation and tested capstone; Part 542 source gap remains visible.
+- Independent XR series: XR01 accepted; source Modules1–19 mapped to its separate narrative. This is not additional main-curriculum progress.
 
 [[Graphics Engine Mastery - Continuous Notes]] · [[Keyword Index]] · [[Dependency Map]]

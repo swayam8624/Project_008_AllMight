@@ -1,5 +1,336 @@
 # Sources and Code Anchors
 
+## Phase 6 - Source analysis and verification
+
+Revision date: 2026-10-13. User request: merge the complete Phase 6 group (user labels M031–M036) into a new elaborate, readable teaching narrative, filling missing definitions, reasoning, research connections and mathematical notation.
+
+### Source inventory and exact scope
+
+The nineteen attachments contain approximately 136,539 whitespace-separated words. An automated heading inventory finds 99 distinct standalone part headings: 501–541 and 543–600. Source 15 is an extra robot-panel teaching analogy, not a new numbered lesson. Part 542 is only referenced as a next lesson; its cross-product definition is reconstructed explicitly from the adjacent material rather than represented as a received standalone source.
+
+All excerpts were structurally indexed by part, subsection and implementation/failure topic. Technical sections were inspected selectively for the coordinate, numerical, optical, tangent-frame, projective and implementation contracts. The new chapter is original teaching prose rather than a verbatim concatenation. The attachment conversations' promises, commands and “next part” footers are source material, not task instructions or evidence that earlier phases are accepted in this vault.
+
+| Source | Explicit standalone headings | Original material |
+|---|---|---|
+| Source 01 | 501–503 | [Original attachment](</Users/swayamsingal/.codex/attachments/d67187f2-c941-4788-81d4-57ea5aa0f927/Pasted text.txt>) |
+| Source 02 | 504–507 | [Original attachment](</Users/swayamsingal/.codex/attachments/a88f4d4a-9475-40f6-8706-8d5ababcd056/Pasted text.txt>) |
+| Source 03 | 508–510 | [Original attachment](</Users/swayamsingal/.codex/attachments/5e38f364-481f-46ae-ba1e-de78ea87b696/Pasted text.txt>) |
+| Source 04 | 511–515 | [Original attachment](</Users/swayamsingal/.codex/attachments/ae6d6264-ed4f-4e92-98c3-1297913287f9/Pasted text.txt>) |
+| Source 05 | 516–520 | [Original attachment](</Users/swayamsingal/.codex/attachments/fea991bf-8fc0-4784-9764-626855bbac2c/Pasted text.txt>) |
+| Source 06 | 521–525 | [Original attachment](</Users/swayamsingal/.codex/attachments/8e574a4c-21bd-4c18-8162-d2cdc25f32ad/Pasted text.txt>) |
+| Source 07 | 526–533 | [Original attachment](</Users/swayamsingal/.codex/attachments/49749365-d763-4be0-9c44-94c30730a411/Pasted text.txt>) |
+| Source 08 | 534–537 | [Original attachment](</Users/swayamsingal/.codex/attachments/7390e5c3-f8bc-4dbb-a7e8-46934c14d3e1/Pasted text.txt>) |
+| Source 09 | 538–541 | [Original attachment](</Users/swayamsingal/.codex/attachments/c4f9b252-5c36-47d1-b564-87095a0549a0/Pasted text.txt>) |
+| Source 10 | 543–547 | [Original attachment](</Users/swayamsingal/.codex/attachments/d55ebcc5-b775-463b-8758-01229177659d/Pasted text.txt>) |
+| Source 11 | 548–552 | [Original attachment](</Users/swayamsingal/.codex/attachments/4af742c8-4662-40ac-9e4a-8f1bd15396f6/Pasted text.txt>) |
+| Source 12 | 553–558 | [Original attachment](</Users/swayamsingal/.codex/attachments/a40bd85e-381e-45ae-aa0b-798e14e95fad/Pasted text.txt>) |
+| Source 13 | 559–563 | [Original attachment](</Users/swayamsingal/.codex/attachments/f1610d95-9beb-4c8d-aad4-2394815a0b42/Pasted text.txt>) |
+| Source 14 | 564–570 | [Original attachment](</Users/swayamsingal/.codex/attachments/61e2ba5b-94e0-45fc-bf00-38bf9732f252/Pasted text.txt>) |
+| Source 15 | Panel analogy; no new part | [Original attachment](</Users/swayamsingal/.codex/attachments/e4b40a3a-8899-4fe6-bc0c-9f02d89b5e30/Pasted text.txt>) |
+| Source 16 | 571–579 | [Original attachment](</Users/swayamsingal/.codex/attachments/d58d1cde-01da-4844-82e9-39588e211760/Pasted text.txt>) |
+| Source 17 | 580–587 | [Original attachment](</Users/swayamsingal/.codex/attachments/1d100c64-ab21-400c-ab82-46d9298b96bf/Pasted text.txt>) |
+| Source 18 | 588–599 | [Original attachment](</Users/swayamsingal/.codex/attachments/e100ceec-1312-41d2-87a8-16e6396aff8b/Pasted text.txt>) |
+| Source 19 | 600 | [Original attachment](</Users/swayamsingal/.codex/attachments/2f8cf53f-4d29-4458-a735-c387bd334b68/Pasted text.txt>) |
+
+The user's current phase-group labels are accepted without claiming an independently verified per-chunk division of this hundred-part phase. The vault's earlier source coverage remains 1–147. Parts 148–500 remain unreceived. The new teaching coverage is 501–600, with the 542 gap visible, for 247 developed entries and 246 supplied standalone numbered lessons. Independent XR01 remains separate.
+
+### Pedagogy and substantive corrections
+
+The triangular workcell panel anchors a connected story: movement → coordinates → reachability and basis → measurement → decomposition → area/orientation → surfaces and optics → affine interpolation → convex collision → projective representation → dual measurements → implementation contracts.
+
+The rewrite puts questions and ordinary meanings before terminology, defines symbols close to their equations, retains worked intermediate states, and keeps independent code examples and the runnable capstone inline. All mathematical prose uses dollar-delimited LaTeX. The token-efficiency skill constrained inspection output, not explanation depth. The Playwright skill guides local math rendering without changing Obsidian configuration.
+
+Important clarifications include: coordinate Euclidean length assumes an orthonormal metric; squared distance is not itself a metric; a small dimensional determinant is not a universal conditioning test; zero direction is not a normalization fallback; off-plane Gram barycentrics represent a projection; projective equivalence does not license arbitrary clip-representative rescaling; a direction vector and projective point at infinity retain different information; normal/covector and cross-derived area transformations differ by determinant scaling; support functions require stated attainment assumptions; unsafe adjacent-member indexing is not rescued by apparent contiguity; NaNs must be constructed rather than obtained by reading indeterminate memory.
+
+Twenty-eight filled reusable concept nodes, reciprocal prerequisites, keyword rows and the dependency spine were added. The existing cumulative proof, trace, coverage and provenance files were extended. No new per-part or per-chunk note files were created.
+
+### Primary-reference enrichment
+
+- [Shewchuk's robust-predicate material](https://www.cs.cmu.edu/~quake/robust.html): sign uncertainty and adaptive predicate boundary. No predicate implementation was imported or certified.
+- [LAPACK's QR factorization guide](https://www.netlib.org/lapack/lug/node40.html): reflector-based QR as a deeper alternative to Gram systems. No LAPACK dependency or QR solver was added.
+- [PBRT's triangle implementation](https://www.pbr-book.org/4ed/Shapes/Triangle_Meshes): geometric/shading-frame distinction and orientation handling. No complete PBRT routine was copied.
+- [GLSL geometric functions](https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.html#geometric-functions): reflection/refraction conventions and the difference between shader zero-return and explicit failure APIs.
+- [Vulkan's shader memory-layout guide](https://docs.vulkan.org/guide/latest/shader_memory_layout.html): scalar/base/extended alignment and the need for enabled-feature/offset/stride checks.
+- [C++ working draft, additive operators](https://eel.is/c++draft/expr.add): array-relative pointer arithmetic; the working draft is distinguished from a claim about a particular engine.
+- [Duff et al., Building an Orthonormal Basis, Revisited](https://graphics.pixar.com/library/OrthonormalB/paper.pdf): bibliographic next-depth comparison anchor. The specialized paper algorithm was not implemented, fully reproduced or benchmarked.
+
+No claim is made to have read new iCloud book chapters, independently verified the entire canonical planning PDF, measured a real robot, run a human study, or inspected an existing Kairo implementation. Definitions and derivations added by this pass are teaching enrichment.
+
+### Executed C++ checks
+
+All three inline C++ examples were extracted together into the temporary fixture `/tmp/phase6_lab.cpp`. Extra compile-time assertions outside the capstone check complex quarter-turn multiplication and rejection of cross-space point subtraction. The complete capstone body remains identical to the note block.
+
+```sh
+clang++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror /tmp/phase6_lab.cpp -o /tmp/phase6_lab
+/tmp/phase6_lab
+/usr/bin/clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer /tmp/phase6_lab.cpp -o /tmp/phase6_lab_apple_sanitized
+/tmp/phase6_lab_apple_sanitized
+```
+
+Both final builds and executions exit 0 with all assertions passing. The optimized compiler is Homebrew Clang 18.1.8 targeting arm64; the successful sanitizer compiler is Apple Clang 21.0.0. Both report the reference double-component Vec3 size 24 bytes and alignment 8 on this target. Tests cover panel weights/reconstruction/area, frame handedness, projection/rejection/reflection, zero/NaN/infinity rejection, scaled normalization at huge/tiny magnitudes, unsigned angles, refraction and TIR, invalid configurations/tolerances, checked indexing, inverse-transpose normal behavior, and 2,000 seeded moderate-range geometry cases. No compiler warnings or sanitizer diagnostics were emitted by the final successful runs.
+
+An earlier Homebrew Clang 18 ASan/UBSan execution stalled before main. `sample 7978 1 1 -file /tmp/phase6-asan-sample.txt` showed sanitizer initialization waiting recursively in its runtime spin lock through the system allocator. The owned process was terminated with `kill -TERM 7978`; that execution is a runtime failure, not a passing test. Apple Clang's sanitizer build then completed successfully. No compiler/runtime installation or system configuration change was made.
+
+### Structural and rendering checks
+
+The fresh audit command is `python3 /tmp/master-phase6-audit.py`. It checks disjoint coverage, the explicit source gap, concept/index completeness, reciprocal prerequisites, graph acyclicity, wiki file/heading targets, mathematical delimiters/braces, tables, absence of numbered-part teaching headings and the copied lab fixture. Syntax checks do not establish visual rendering; local MathJax rendering results are recorded below after execution.
+
+Final audit exits 0: 248 Markdown documents, 234 filled concepts, 411 acyclic prerequisite edges, 3,124 resolved wiki links, 247 developed main-topic entries, 28 new Phase 6 concepts and 19 unchanged independent XR module entries. The Phase 6 chapter is approximately 15,183 whitespace-separated words. The audit scans 1,057 math expressions across its selected files, including earlier cumulative-supplement content; this is a different scope from the new-material-only browser count below. `git diff --check` exits 0. The existing `python3 /tmp/master-xr01-check.py` regression also exits 0 with all assertions passing.
+
+An intermediate audit flagged the ordinary phrase “color with alpha” as a leftover mathematical symbol and the temporary fixture's placement of additional assertions as a code mismatch. The wording became “opacity channel,” and the extra verification assertions were moved before the capstone block. The final fixture now contains the capstone body unchanged and the audit has zero errors. No failing intermediate result was counted as a pass.
+
+For rendering, `node /tmp/master-phase6-math.cjs` serves a temporary page at `http://127.0.0.1:8874`, using the installed Obsidian MathJax bundle and fonts without installing a dependency or editing Obsidian settings. The helper selects only Phase 6 content from the main volume, cumulative proofs/traces/coverage, and its 28 new concept notes. Browser commands used this prefix:
+
+```sh
+PATH=/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/swayamsingal/.codex/skills/playwright/scripts/playwright_cli.sh --session phase6-notes
+```
+
+Executed `open http://127.0.0.1:8874 --headed`, `reload`, `eval`, and `screenshot --filename` commands. Final direct MathJax conversion renders all 750 selected expressions as CHTML with zero equation errors, zero MathML fallbacks and zero failed font requests. The test page emits ancillary unavailable speech-worker/option warnings; the console is not claimed wholly clean. After a server restart, one reload returned about:blank; explicitly reopening the local page restored the final check. Representative barycentric fractions, a matrix system and exterior/geometric-product formulas were visually inspected in `/tmp/phase6-barycentric-math.png`, `/tmp/phase6-matrix-math.png` and `/tmp/phase6-exterior-math.png`. This is representative visual verification with Obsidian's math engine, not a complete live Obsidian chapter/theme inspection.
+
+### Limits and handoff
+
+The scalar lab is an educational reference, not universal production software. It does not supply certified geometric predicates, a complete QR/GJK/rasterizer, robust near-degenerate barycentrics, a spatially continuous frame field, GPU upload/driver tests, SIMD performance evidence, cross-platform determinism, FTZ-mode testing, exhaustive numeric testing or integration with Kairo. Assertions are not release-mode validation. No commit, push or pull request was made.
+
+## XR - Teaching-language and mathematical notation revision
+
+Revision date: 2026-10-13. User request: make the XR material easier to teach from and replace plain-text mathematical symbols with LaTeX. Scope is the independent XR continuous notes and its XR-only derivation/trace sections. Curriculum coverage, source acceptance, numerical models and the complete Python laboratory remain unchanged.
+
+Rewrote the narrative around question → ordinary-language explanation → equation → symbol definitions → example → limits. Split compressed multi-idea sentences, introduced terminology before using it, and added small comparison tables where distinctions aid teaching. Mathematical symbols now use inline math or display equations: Greek letters, subscripts, Snell/lens relations, MAR, contrast, temporal weights, sRGB encoding, luminance, PSNR and psychometric criteria. Stable chapter/graph heading targets and the source references remain intact. The description of the lab was corrected to match its actual horizontal/vertical sinusoidal patterns; it does not contain a separate bright-target stimulus.
+
+The chapter is now approximately 9,830 words rather than a shortened outline. The token-efficiency skill constrained diagnostic output, not explanatory depth. The Playwright skill guided a local equation test using the installed Obsidian MathJax bundle. No renderer/package dependency was added to the repository, and no Obsidian setting was changed.
+
+### Executed checks
+
+```sh
+python3 /tmp/master-xr-readability-audit.py
+python3 /tmp/master-xr01-check.py
+git diff --check
+node /tmp/master-xr-readability-math.cjs
+```
+
+Structural audit and numerical lab exit0; whitespace check passes. All original chapter-level headings remain, wiki file/heading targets resolve, prerequisites remain acyclic and reciprocal, and numbered coverage remains147 parts plus19 independent modules. The lab's source body and fixture are unchanged. Searches also check for the former plain-text Greek/subscript spellings outside math/code.
+
+The previous audit initially rejected valid two-column tables because it assumed exactly three columns; the revised checker validates each table against its own header and ignores display-math lines. An intermediate generated checker had a JavaScript replacement-string quoting error; it was corrected before final verification. These failures were not reported as passing tests.
+
+For browser commands, the following prefix was used with the already available CLI wrapper:
+
+```sh
+PATH=/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH /Users/swayamsingal/.codex/skills/playwright/scripts/playwright_cli.sh --session xr-readability
+```
+
+Executed open/reload, eval, and screenshot commands against the local test page at 127.0.0.1:8873. The test serves only the selected equations and installed MathJax assets. Bundled automatic startup waited on unavailable speech-worker support and emitted ancillary warnings; direct MathJax tex2mml/tex2chtml calls then checked all 313 selected expressions successfully: 313 CHTML outputs, zero syntax errors, zero output errors and zero MathML fallbacks. The main formulas and XR companion formulas were included.
+
+Initial preview screenshots exposed missing MathJax styles and an incorrect local font-asset route in the test harness. Both preview issues were corrected without changing the notes. The final page rendered all 313 expressions with zero equation errors and zero failed font requests. Representative screenshots of wave/energy equations, optics equations and the piecewise sRGB formulas were visually inspected; fractions, Greek letters, subscripts, superscripts and cases were correctly typeset. This checks conversion and representative appearance using Obsidian's installed math engine, not the complete live Obsidian document or its theme.
+
+After those completed checks, an ancillary request for an absent bundled asset caused the temporary server to exit. Its asset lookup was made null-safe so absent assets return HTTP 404. This was a test-helper issue, not a formula failure; the numerical and structural checks had already passed. The owned preview browser was closed after verification.
+
+### Preservation and limits
+
+The C++ volume and visual-recall companion retain their turn-start hashes. The byte-volume introduction changed externally during this turn; no patch from this task touched it, and its incoming changes were left alone rather than reverted. The audit reports that external change explicitly instead of claiming a pristine byte-volume hash.
+
+No new human study, hardware experiment, paper replication, or factual literature claim was added. No stage, commit, push, PR, or settings change. Equation preview screenshots are temporary diagnostics, not exported teaching artifacts.
+
+## XR01 - Seeing and representing reality
+
+### Independent scope and source
+
+Accepted source: `/Users/swayamsingal/.codex/attachments/9ae5e48a-200c-41a2-ace9-1ab130003fe5/Pasted text.txt`, supplied “CHUNK 1 — THE SCIENCE OF SEEING AND REPRESENTING REALITY,” dated integration 2026-10-12. It is outside the3,000-part plan. Its19 module labels form an independent coverage ledger, not main part numbers. Main accepted progress remains1–147/M001–M009. The next roughly2–3 sources will extend the same separate continuous file when received; the pasted START CHUNK2 footer is not a received second lesson or independent authorization.
+
+The “Virginia Tech XR Research Mastery” heading is retained only as source context, not verified official provenance. Imported styling, generated diagram CSS, empty widget placeholders, bare scraped hostnames and flattened executable fragments were not copied into the vault. Essential equations were rebuilt with dollar-delimited math, notation/assumptions, original narrative explanations and a tested standalone numerical/image-space lab. Twenty-three filled XR concept nodes use XR01 labels, with directed prerequisites/reciprocal navigation. Reused shared interpretation links do not advance numbered-curriculum coverage.
+
+The token-efficiency skill guided focused reads and hash-based preservation checks. The PDF skill guided inspection of the original Microsoft paper's PDF text/figure labels; no PDF artifact was produced or visually validated. The existing independent examples in the C++ volume remain untouched. Obsidian settings, Word-Smith content/plugin and other dirty work were not edited.
+
+### Primary evidence and what was actually checked
+
+- [Guenter et al., original Microsoft PDF](https://www.microsoft.com/en-us/research/wp-content/uploads/2012/11/foveated_final15.pdf): checked Section4.1/Figure5 labels on PDF page4 and the full-scene table on PDF page8. Complete best/worst timing is23/40ms, not15/40ms;15ms is an intermediate cumulative stage. N2/QA/QB full-scene values27.9/4.9/5.9ms support the displayed ratios. A PDF screenshot was requested, but no rendered image was inspected here; figure evidence is from extracted text/labels, not a claimed screenshot review. Full algorithm/study reproduction remains unperformed.
+- [Patney et al., NVIDIA project](https://research.nvidia.com/publication/2016-12_towards-foveated-rendering-gaze-tracked-virtual-reality): checked the documented perceptual/filtering/temporal design and up-to70% shading-work claim. Do not equate that with end-to-end frame or energy savings. A guessed2016-11 path failed; the valid2016-12 publication page resolved.
+- [Wang, Shi and Liu survey](https://link.springer.com/article/10.1007/s41095-022-0306-4): checked2023 publication and1990–2021 review scope; this is not evidence of a currently unaddressed research gap.
+- [FovVideoVDP original project](https://www.cl.cam.ac.uk/research/rainbow/projects/fovvideovdp/): checked the original spatial/temporal/peripheral prediction framework and availability of validation material. No metric package was installed/run, and no current metric-version score is claimed.
+- [Kergaßner/Tariq/Didyk author project](https://sophie-kergassner.github.io/depth-in-periphery.html): checked identity and bounded stereoacuity/foveation conclusion. Attachment-reported participant counts, exact apparatus protocol and fitted coefficient surface were not independently fully audited. Numeric p2 coefficients are therefore not promoted to a verified implementation.
+- [Dynamic Visual Dominance project](https://dynamicvisualdominance.mpi-inf.mpg.de/): checked the2026 publication identity and context-dependent visual-dominance framing. A guessed personal-site path failed before the official project was resolved. Detailed fitted models, dataset results and GPU savings were not reproduced.
+- [MIT sampling/aliasing chapter](https://visionbook.mit.edu/sampling_and_aliasing.html): checked the spectral-replication/reconstruction framework. The independent witnesses demonstrate specific identities; a finite toy filter is not an ideal universal anti-aliasing implementation.
+
+The source's Yang/Liu/Salvi2020 TAA survey is retained as a source-reported reading anchor: the guessed NVIDIA2020-03 publication path failed. The requested ICC sRGB landing page also did not resolve in this pass; the lab implements the supplied piecewise formulas and tests numerical/round-trip consequences, not conformance to a newly inspected color standard. Full book extraction, complete paper equations, institutional affiliation and reported human-study numbers not listed as checked remain unverified.
+
+### Corrections and modeling contracts
+
+The planar display's average PPD must not be labeled its central local density. The expanded notes derive the projection derivative: FOV47.658899degrees, average40.286285PPD, center37.936213PPD for W0.53m/D0.60m/N1920. Spectral amplitude reporting distinguishes interior one-sided amplitudes from normalized complex magnitudes; DC/Nyquist are not doubled. Balanced difference-of-Gaussian constant cancellation requires gain/normalization conditions.
+
+Exact-Nyquist phase is a boundary hazard; post-filtering cannot generally undo alias ambiguity. A fixed display refresh rate is not a universal perceptual cutoff. Motion-vector units/direction and jitter need contracts; TAA is not exposure integration. Temporal variance benefits require stationarity, independent noise and valid alignment. Psychometric correctness differs from generic detection, curve parameters differ from a selected threshold, and nonsignificance is not equivalence. A simulated foveation filter that computes a full reference first does not prove saved shading work or human invisibility.
+
+### Executed numerical verification
+
+```sh
+python3 /tmp/master-xr01-check.py
+```
+
+Exit0, all assertions passed. Standard-library-only Python3, no installed dependencies. Checks: angular geometry,13Hz/3Hz sampling equivalence at10Hz, sine-at-Nyquist zeros, prefiltered alternating-sequence mean,128-sample DFT amplitudes, sRGB round trip,75%-criterion algebra, ideal temporal variance sum, additive-cost arithmetic, finite image outputs and constant-preservation under clamped filtering.
+
+Recorded output: Gaussian MTF0.951850/0.291213 at0.05/0.25cycles per pixel; linear mean0.5 encodes to0.735357, while encoded0.5 decodes to0.214041. Fixed-center toy image MSE0.00597136 and weightedMSE0.00610803; gaze-following MSE0.00592713 and weightedMSE0.00378445 under the same true-gaze weights. These are one declared synthetic case, not universal rankings, participant findings or hardware benchmarks.
+
+### Verification scope and limitations
+
+```sh
+python3 /tmp/master-xr01-audit.py
+git diff --check
+```
+
+Final audit exit0:219 learning-vault Markdown files,206 filled concept nodes,365 acyclic prerequisite edges,2668 resolved wiki links,99 paired display-math blocks,147 main part rows and19 independent XR module rows. The23 XR nodes are indexed with matching source labels and reciprocal Used by links. New XR dependency rows agree with the concept prerequisites. The complete inline lab matches its executed fixture. Math delimiters/braces/cases and the new narrative's tables pass structural checks; no live math rendering claim is made. Whitespace check exits0.
+
+The old Oct10 temporary audit was no longer present on Oct12; an initial attempted reuse produced an invalid temporary script and failed. A fresh standalone audit replaced it and passed. No missing temporary result was treated as a successful test. KaTeX was not available on the default Node path; no renderer or dependency was installed.
+
+No human study, eye tracker, live headset, GPU rendering, OpenXR/Vulkan/ILLIXR integration, current perceptual metric execution or complete paper replication was performed. Formula/fence/link checks do not prove live Obsidian rendering. The existing main volumes and visual-recall file are protected by hashes; independent XR progress is checked separately from the147 numbered rows. Structural checks cover learning-vault Markdown, excluding unrelated Word-Smith/plugin content. No stage, commit, push, PR, destructive cleanup or settings change.
+
+## M009 - Construction and value transfer
+
+### Accepted source and teaching decisions
+
+Source: `/Users/swayamsingal/.codex/attachments/187e693f-797c-4414-8ad1-ba9f688a1239/Pasted text.txt`. Its exact numbered range is127–147: twenty-one parts, not an assumed twenty. Accepted overall coverage becomes1–147, nine of180 sources; Volume02 accepts101–147 and3/12 sources. No future M010 range is inferred.
+
+Extended the existing C++ narrative rather than creating a chunk file: call contracts → result objects → constructor invariants → initialization forms/order/delegation → cleanup → copy meaning → assignment transaction → move/source state → failure-aware selection → generated operations → Rule-Zero composition. Essential definitions, examples, traces, two new complete laboratories, four rejected-program exercises and sixteen new reconstruction questions stay inline. Thirteen filled concepts were created and prior category, move, ownership, construction, invariant and trait nodes were deepened.
+
+The attachment's KairoMath/Vector.cppm and KairoRenderer/Texture.cppm inspections are source-reported **To verify**. No live engine inspection or implementation is claimed. Independent TexturePayload and raw-owner examples are teaching models, not existing project classes. No new book passages were extracted this turn; the enrichment is primary wording checks, additional definitions, corrected contracts and original tested examples.
+
+### Primary wording and corrections
+
+Checked the living draft's [copy/move constructors](https://eel.is/c++draft/class.copy.ctor), [copy/move assignment](https://eel.is/c++draft/class.copy.assign), [initialization](https://eel.is/c++draft/dcl.init), [copy elision](https://eel.is/c++draft/class.copy.elision), [base/member initialization](https://eel.is/c++draft/class.base.init), [constructor cleanup](https://eel.is/c++draft/except.ctor), [move/forward helpers](https://eel.is/c++draft/forward), [library argument requirements](https://eel.is/c++draft/utility.arg.requirements) and [vector modifiers](https://eel.is/c++draft/vector.modifiers). These are current drafts, not a frozen C++23 text; new laboratories explicitly compile in C++23. [P2266R3 at the correct2022 path](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2266r3.html) was successfully inspected for the C++23 return-expression change. The earlier M008 failed2021-path attempt remains an honest historical record.
+
+Clarified ordinary constructor failure versus failure after a delegating target completed. Retained the existing const-rvalue getter policy omitted by the attachment's shorter example. Distinguished explicit deleted-move selection from relevant defaulted-deleted fallback behavior. Defined user-declared versus user-provided, initializer-list syntax versus std::initializer_list, and strong/basic/non-throwing guarantees.
+
+The raw byte owner value-initializes allocated bytes and guards empty copies before range traversal. Its copy preparation has a non-throwing byte-copy step, a non-throwing swap commit, and deterministic old-state cleanup. A deliberate failure hook tests the allocation-failure boundary; it is single-threaded instrumentation, not an allocator implementation. Self-move preserves the value under this custom contract, not a universal library promise.
+
+Generated memberwise moves do not prove cross-member domain relationships such as extent-to-buffer consistency. A move-constructible trait can select a copy; noexcept classifications describe the usable expression, not a promised dedicated move. Move/relocation and proposal/toolchain status remain distinct; no portable C++23 trivial-relocation facility or arbitrary memmove permission is asserted. No runtime benchmark or claimed GPU clone/cleanup is implied by the numeric handle examples.
+
+### Exact new-laboratory commands and results
+
+Homebrew Clang23.1.1, arm64-apple-darwin27.2.0; assertions enabled. Fixtures are temporary compiler artifacts; their exact complete bodies also live in Volume02.
+
+```sh
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -g -fsanitize=address,undefined /tmp/master-m009.FKDdGP/transfers.cpp -o /tmp/master-m009.FKDdGP/transfers-san
+/tmp/master-m009.FKDdGP/transfers-san
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O2 /tmp/master-m009.FKDdGP/transfers.cpp -o /tmp/master-m009.FKDdGP/transfers-opt
+/tmp/master-m009.FKDdGP/transfers-opt
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -fno-elide-constructors /tmp/master-m009.FKDdGP/transfers.cpp -o /tmp/master-m009.FKDdGP/transfers-no-elide
+/tmp/master-m009.FKDdGP/transfers-no-elide
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -g -fsanitize=address,undefined /tmp/master-m009.FKDdGP/construction.cpp -o /tmp/master-m009.FKDdGP/construction-san
+/tmp/master-m009.FKDdGP/construction-san
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O2 /tmp/master-m009.FKDdGP/construction.cpp -o /tmp/master-m009.FKDdGP/construction-opt
+/tmp/master-m009.FKDdGP/construction-opt
+```
+
+All five builds/runs exit0 with no compiler warnings or sanitizer diagnostics. Both laboratories report all assertions passed. Normal debug/optimized named-return observation is zero moves; optional-elision-disabled observation is one. Immovable direct construction remains accepted. Ownership checks include deep-copy independence, self-copy, injected allocation-failure rollback, distinct-source move construction/assignment, preserving self-move, empty-source copying and zero live allocations. Constructor checks include ordinary and delegating failure, successful cleanup, initialized defaults and reference/const-member trait behavior.
+
+```sh
+for task_case in /tmp/master-m009.FKDdGP/reject-named.cpp /tmp/master-m009.FKDdGP/reject-assignment.cpp /tmp/master-m009.FKDdGP/reject-explicit-move.cpp /tmp/master-m009.FKDdGP/reject-destructor.cpp; do
+    if /opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -fsyntax-only "$task_case"; then exit 1; fi
+done
+```
+
+Harness exit0; each individual compiler invocation exits nonzero with its expected diagnostic: named immovable fallback, deleted reference-member assignment, explicitly deleted best move, or deleted required destructor. This is successful rejection testing, not a passing positive build.
+
+### Limits and preservation
+
+Final regression/structure commands:
+
+```sh
+/tmp/master-m008.pYZYZG/borrows-san
+/tmp/master-m008.pYZYZG/temporaries-san
+/tmp/master-m008.pYZYZG/objects-san
+/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /tmp/master-m009-audit.py
+git diff --check
+```
+
+All exit0. Earlier executables were rerun, not newly recompiled; the structural audit verifies their three source bodies still match their exact inline fixtures. Both new laboratory bodies also match, and accepted M009 numbering matches127–147 exactly. Final audit:195 Markdown files,183 filled concepts,327 acyclic prerequisite edges,2380 resolved wiki links,76 paired display-math blocks and147 unique coverage rows. Keyword update markers, reciprocal Used by links and new dependency rows agree. Volume01 and its visual-recall companion match their recorded pre-merge hashes. The initial audit's missing M009 source-heading target was resolved by adding this record; the final audit has no errors. Whitespace check passes.
+
+The vault has no repository-wide C++ build, CI, formatter or static-analysis configuration; recent PR listing returned no entries. Only marked standalone labs and diagnostic programs were compiled, not every illustrative fragment. ASan/UBSan tests are not proofs of all lifetime/ownership behavior. No race analyzer, alternate ABI, live Obsidian rendering, decoder/GPU upload, allocator benchmark or production engine build was run. Existing dirty work remains preserved; no settings edits, staging, commit, push or PR.
+
+## M008 - Borrowing, categories and const access
+
+### Accepted material and scope
+
+- Revised M007: `/Users/swayamsingal/.codex/attachments/db06bd04-3612-4603-b9bc-2f8d553ef717/Pasted text.txt`, Parts101–112. Updates the existing opening rather than adding duplicate coverage. Added lookup-before-overload, point-of-declaration, copied-handle identity, bool wire encoding and exact floating-format distinctions.
+- M008: `/Users/swayamsingal/.codex/attachments/bb31d9a6-da31-4329-bca9-69cb87983e51/Pasted text.txt`, fourteen Parts113–126. Integrated into the same C++ volume as a connected object → alias/category → binding/lifetime → pointer/borrow → const/accessor/cache story. Accepted progress is1–126, eight of180 sources overall and2/12 C++ sources. Part127 onward remains pending.
+- Independent examples, essential traces, reconstruction questions and both new complete laboratories remain inline. Existing cumulative companions were extended. Fourteen filled concepts were added, with reciprocal prerequisite links; existing lifetime, provenance, ownership, lookup and identity nodes were deepened.
+- Kairo Registry/SparseSet, Entity and Vector excerpts are attachment-reported **To verify**, not current live-repository findings. No engine implementation, settings, production API or dependency was changed. Volume01 and its recall file were preserved.
+
+### Selected book passages and primary checks
+
+Read selected extracted passages from the local iCloud `CPP/Scott_Meyers_Effective_Modern_C++.pdf`: printed pages9,18,23,158–159,164 and103 (PDF pages27,36,41,176–177,182 and121); additional deduction/collapsing passages were inspected at PDF pages33,42–43,188 and221. This was selective reading, not a claim to have read the whole book. Older C++11/14 examples inform teaching, not newer language-version guarantees. Original examples/explanations were written for this vault rather than reproducing the book.
+
+The selected passages reinforce three teaching distinctions: deduction can discard top-level const/reference information; move/forward are category casts rather than resource transfers; const cache methods still need concurrency discipline. “Universal reference” in older material is identified with the narrower current forwarding-reference mechanism, not every T&& spelling.
+
+Primary wording checked: [reference initialization](https://eel.is/c++draft/dcl.init.ref), [temporary lifetime](https://eel.is/c++draft/class.temporary), [qualification conversions](https://eel.is/c++draft/conv.qual), [delete operands](https://eel.is/c++draft/expr.delete), [decltype](https://eel.is/c++draft/dcl.type.decltype), [vector capacity](https://eel.is/c++draft/vector.capacity) and [non-static member functions](https://eel.is/c++draft/class.mfct.non.static). These are living-draft pages, not a frozen C++23 publication; the notes explicitly distinguish later direct-return diagnostics and C++23 behavior. [P3407R1](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3407r1.html) is provenance research discussion, not adopted C++23 wording. [Core Guidelines F.16](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f16-for-in-parameters-pass-cheaply-copied-types-by-value-and-others-by-reference-to-const) informs parameter-design questions, not measured performance.
+
+An attempted P2266R3 page open at the2021 path failed; that unavailable page is not treated as inspected evidence. Named rvalue-reference variables are described as lvalues in ordinary use, with move-eligible return contexts identified as a C++23 special case, not generalized.
+
+### Corrections and expanded contracts
+
+The source's bare `delete nullptr;` is ill-formed; the positive example deletes an `int*` whose value is null. Reference definitions versus extern declarations are distinguished. Nothrow allocation failure does not suppress constructor exceptions. A const span descriptor does not make its elements const. Pointer-difference representability and the byte-aliasing type list are stated. Provenance round trips do not revive objects.
+
+The getter illustration includes a const-rvalue path; otherwise a const temporary can still reach a borrowed const-reference result. Pool epochs require the counter owner to survive, full invalidating-mutation coverage, wrap policy and synchronization. Cache source and cached result share protection; returned values are copied before unlocking. No sanitizer result is presented as proof against logical slot repurposing.
+
+### Executed examples and verification
+
+Compiler: `/opt/homebrew/opt/llvm/bin/clang++`, Homebrew23.1.1, arm64-apple-darwin27.2.0. Tests used C++23 with assertions enabled. Source fixtures are temporary verification artifacts, not separate vault code files.
+
+```sh
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -g -fsanitize=address,undefined -pthread /tmp/master-m008.pYZYZG/borrows.cpp -o /tmp/master-m008.pYZYZG/borrows-san
+/tmp/master-m008.pYZYZG/borrows-san
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O2 -pthread /tmp/master-m008.pYZYZG/borrows.cpp -o /tmp/master-m008.pYZYZG/borrows-opt
+/tmp/master-m008.pYZYZG/borrows-opt
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -g -fsanitize=address,undefined /tmp/master-m008.pYZYZG/temporaries.cpp -o /tmp/master-m008.pYZYZG/temporaries-san
+/tmp/master-m008.pYZYZG/temporaries-san
+```
+
+Borrow runs both exit0, print `borrow laboratory: all assertions passed`, and show no sanitizer diagnostics. The temporary run exits0 with live count0 and no sanitizer diagnostics; compilation deliberately reports three warnings: dangling parenthesized aggregate member, dangling new-initializer member and unused escaped reference. Those paths are not dereferenced.
+
+```sh
+for task_case in /tmp/master-m008.pYZYZG/reject-binding.cpp /tmp/master-m008.pYZYZG/reject-qualification.cpp /tmp/master-m008.pYZYZG/reject-delete.cpp; do
+    if /opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -fsyntax-only "$task_case"; then exit 1; fi
+done
+```
+
+Harness exit0: each individual compiler invocation exits nonzero with the expected const-binding, unsafe nested-pointer or nullptr_t-delete diagnostic. These are expected rejection tests, not failed positive builds.
+
+Additional commands executed successfully:
+
+```sh
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O2 /tmp/master-m008.pYZYZG/temporaries.cpp -o /tmp/master-m008.pYZYZG/temporaries-opt
+/tmp/master-m008.pYZYZG/temporaries-opt
+/opt/homebrew/opt/llvm/bin/clang++ -std=c++23 -Wall -Wextra -Wpedantic -O0 -g -fsanitize=address,undefined /tmp/master-m007.IRxaor/objects.cpp -o /tmp/master-m008.pYZYZG/objects-san
+/tmp/master-m008.pYZYZG/objects-san
+/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /tmp/master-m008-audit.py
+git diff --check
+```
+
+Optimized temporary run: exit0/live count0 with the same three deliberate compilation warnings. Existing object laboratory: exit0, object checks passed, measured Padded size24/alignment8/offsets0,8,16 and Reordered size16 on this target. Whole-vault audit: exit0,182 Markdown files,170 filled concept nodes,298 acyclic prerequisite edges,2175 resolved wiki links,76 paired display-math blocks and126 exact coverage rows. All three inline laboratory bodies match the compiled fixtures. Keyword update markers, reciprocal Used by links and new dependency-map rows agree. Volume01 and its visual-recall companion match their pre-merge SHA-256 hashes. Whitespace check: exit0.
+
+The first extended audit run failed because its temporary script over-escaped regular expressions; correcting those expressions exposed two then-missing source-heading links. Adding this source record resolved them, and the final audit passed. No missing-heading failure was dismissed as a rendering issue.
+
+### Verification limits
+
+No repository-wide C++ build, CI, formatter or static-analysis configuration exists in this Markdown vault. Only explicitly marked laboratories and diagnostic exercises were compiled; illustrative fragments are not all standalone programs. ASan/UBSan and short concurrent tests are not race proofs; ThreadSanitizer was not run. Compiler/ABI cross-platform behavior, production ECS contracts and live Obsidian math/theme rendering remain unverified. PDF extraction was for reading, not PDF layout verification or export. Existing dirty files were preserved; no stage, commit, push or PR.
+
+## Volume 01 - Visual active-recall companion
+
+User scope: separate concise visual recall notes for continuous volumes, Parts1–100 only for this request. Created one companion under Visual Recall, not one file per source/part. Teaching content is derived from the current Volume01 and its100-row Foundations ledger; no new book, repository or external technical claims are presented as fresh findings.
+
+The companion combines eight Mermaid diagrams (flows, classifier, lifetime state and writer/reader sequence), bit/byte strips, exact comparison tables, worked numeric cues,25 reconstruction prompts, nine collapsed Obsidian answer callouts and a final blank-board test. A nonoverlapping range map accounts for all100 parts. The C++ volume has no recall companion yet. Neither continuous volume was edited.
+
+### Executed verification
+
+- `/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /tmp/master-visual-recall-check.py`: exit0. Checks coverage1–100 exactly once, prompt numbering1–25, nine answer callouts, eight Mermaid blocks, paired fences/math,37 resolved recall links, key numeric witnesses and unchanged SHA-256 for both continuous volumes.
+- `/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 /tmp/master-m007-audit.py`: exit0. Whole-vault links, heading targets, math/fences, concept completeness, reciprocal prerequisites and acyclic graph pass after the recall addition. This is a structural audit, not a new C++ execution test.
+- `git diff --check -- 'Visual Recall/01 - Bits, Numbers and Memory - Visual Recall.md' README.md 'Graphics Engine Mastery - Continuous Notes.md' 'Supplementary/Sources and Code Anchors.md'`: successful scoped whitespace check.
+- Browser verification used the Playwright CLI wrapper with the bundled Node runtime first on PATH. Temporary server `/tmp/master-visual-recall-check.py --serve` read and integrity-checked the already-installed Obsidian Mermaid bundle from obsidian.asar, then served only a local diagram test page at127.0.0.1:8766. No repository package/dependency added.
+- Session master-recall opened the local page; evaluation returned eight successful Mermaid renders/eight SVGs. Screenshots of all eight diagrams were inspected; the over-wide rounding pipeline was shortened for readable labels and rendered again. Latest verification uses the final source.
+
+The initial browser CLI attempt encountered a Homebrew dynamic-library error; using the bundled Node runtime resolved it without changing the user's installation. One diagnostic run-code invocation needed the CLI's async-function form; the corrected invocation succeeded.
+
+### Limits
+
+Rendered diagrams were tested with Obsidian's bundled Mermaid engine in a browser, not inside the live Obsidian vault. Whole-document Obsidian theme, callout interaction, math rendering and mobile appearance were not visually tested. No new compiled-code tests were needed for this notes-only request; numeric witnesses were independently checked. Existing dirty files and settings were preserved; no stage, commit, push or PR.
+
 ## M007 - C++ volume opening
 
 ### Source, authority and coverage

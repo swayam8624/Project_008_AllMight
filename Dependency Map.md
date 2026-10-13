@@ -1,8 +1,108 @@
 # Dependency Map
 
+## Phase 6 - From movement to reliable geometry
+
+This spine integrates Parts 501–600 without assuming the unreceived Parts 148–500 are complete. Shared numeric and C++ nodes supply explicit prerequisites; independent XR material remains a separate series. Concept notes contain reciprocal downstream links. Read this table from prerequisite to dependent.
+
+| Prerequisites | Dependent | Why the dependency exists |
+|---|---|---|
+| [[Scalars fields and real-number models]] | [[Vectors coordinates and affine points]] | Field operations define which scalar multipliers the vector laws may use. |
+| [[Vectors coordinates and affine points]] | [[Vector spaces subspaces and span]] | Point, displacement and coordinate roles determine which geometric operations are meaningful. |
+| [[Vector spaces subspaces and span]] | [[Basis coordinates and dimension]] | Reachability and closure establish the spanning and independence questions. |
+| [[Basis coordinates and dimension]] | [[Norms lengths and induced distances]] | An ordered basis fixes coordinate meaning and the space whose geometry is measured. |
+| [[Norms lengths and induced distances]], [[Robust norm and intermediate range]] | [[Unit directions and safe normalization]] | Lengths and their domains are needed before unit directions or angular measurements. Range-safe scaling avoids losing a valid direction to unnecessary squared intermediates. |
+| [[Norms lengths and induced distances]] | [[Dot products and orthogonality]] | Lengths and their domains are needed before unit directions or angular measurements. |
+| [[Dot products and orthogonality]] | [[Projection rejection and scalar components]] | Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Basis coordinates and dimension]], [[Dot products and orthogonality]] | [[Gram matrices and coordinate metrics]] | An ordered basis fixes coordinate meaning and the space whose geometry is measured. Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Scalars fields and real-number models]] | [[Complex numbers and planar rotations]] | Field operations define which scalar multipliers the vector laws may use. |
+| [[Dot products and orthogonality]] | [[Cross products and oriented area]] | Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Cross products and oriented area]] | [[Coordinate handedness and orientation]] | Oriented area supplies face normals, frame signs and geometric determinants. |
+| [[Cross products and oriented area]], [[Dot products and orthogonality]] | [[Triple products and signed volume]] | Oriented area supplies face normals, frame signs and geometric determinants. Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Cross products and oriented area]], [[Unit directions and safe normalization]] | [[Robust vector angles]] | Oriented area supplies face normals, frame signs and geometric determinants. Validated finite unit directions establish the preconditions for simplified geometry formulas. |
+| [[Cross products and oriented area]], [[Unit directions and safe normalization]], [[Projection rejection and scalar components]] | [[Surface tangents normals and bitangents]] | Oriented area supplies face normals, frame signs and geometric determinants. Validated finite unit directions establish the preconditions for simplified geometry formulas. Removing an unwanted component creates residuals, tangent axes and mirror decompositions. |
+| [[Surface tangents normals and bitangents]], [[Gram matrices and coordinate metrics]] | [[Orthonormal frames and Gram-Schmidt]] | The surface tangent plane gives the axes that orthogonalization must preserve. Pairwise basis measurements define the systems and metric used in reconstruction. |
+| [[Projection rejection and scalar components]], [[Unit directions and safe normalization]] | [[Reflection refraction and shading directions]] | Removing an unwanted component creates residuals, tangent axes and mirror decompositions. Validated finite unit directions establish the preconditions for simplified geometry formulas. |
+| [[Gram matrices and coordinate metrics]], [[Vectors coordinates and affine points]] | [[Barycentric coordinates and interpolation]] | Pairwise basis measurements define the systems and metric used in reconstruction. Point, displacement and coordinate roles determine which geometric operations are meaningful. |
+| [[Cross products and oriented area]], [[Dot and cross-product rounding]] | [[Robust geometric predicates]] | Oriented area supplies face normals, frame signs and geometric determinants. Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain. |
+| [[Barycentric coordinates and interpolation]] | [[Convex combinations and convex hulls]] | Affine weights establish origin-independent combinations and inside-hull restrictions. |
+| [[Convex combinations and convex hulls]], [[Dot products and orthogonality]] | [[Minkowski sums and support mappings]] | Convex set geometry is the domain for hull support and collision constructions. Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Vectors coordinates and affine points]] | [[Homogeneous coordinates and perspective division]] | Point, displacement and coordinate roles determine which geometric operations are meaningful. |
+| [[Basis coordinates and dimension]], [[Dot products and orthogonality]] | [[Covectors linear functionals and normal transforms]] | An ordered basis fixes coordinate meaning and the space whose geometry is measured. Inner-product measurements supply the perpendicularity and alignment constraints. |
+| [[Cross products and oriented area]], [[Triple products and signed volume]] | [[Exterior products and geometric algebra]] | Oriented area supplies face normals, frame signs and geometric determinants. Oriented volume connects exterior grades and determinant-based geometry. |
+| [[Vectors coordinates and affine points]], [[Named members versus array elements]] | [[Vector value types and component access]] | Point, displacement and coordinate roles determine which geometric operations are meaningful. Array-relative pointer rules constrain safe named-component access. |
+| [[Vector value types and component access]], [[Alignment and padding]], [[SIMD and GPU data layouts]] | [[Vector storage SIMD and boundary layouts]] | Primitive representation and access rules support layout choices and semantic wrappers. Object alignment and array stride constrain storage and boundary conversions. Lane access and external interface layouts require separate storage contracts. |
+| [[Numerical tolerance policies]], [[Dot and cross-product rounding]] | [[Vector tolerances and finite-state diagnostics]] | A declared scale and domain make closeness and rejection thresholds meaningful. Cancellation and rounded inputs explain when a determinant sign or finite measurement is uncertain. |
+| [[Vectors coordinates and affine points]], [[Unit directions and safe normalization]], [[Vector value types and component access]] | [[Coordinate-space types and validated invariants]] | Point, displacement and coordinate roles determine which geometric operations are meaningful. Validated finite unit directions establish the preconditions for simplified geometry formulas. Primitive representation and access rules support layout choices and semantic wrappers. |
+
+## Independent XR learning spine
+
+XR01 is outside the3,000-part progression. Physical interpretation, angular geometry, signals, reconstruction and experimental evidence connect within this separate series and to shared foundations.
+
+| Prerequisites | Dependent | Why the dependency exists |
+|---|---|---|
+| [[Light spectra and radiometry]] | [[Reflectance and rendering equation]] | The light quantity and units must be established before its interaction or visual effect is modeled. |
+| [[Light spectra and radiometry]] | [[Retinal encoding and receptive fields]] | The light quantity and units must be established before its interaction or visual effect is modeled. |
+| [[Light spectra and radiometry]] | [[Optical focus and binocular conflict]] | The light quantity and units must be established before its interaction or visual effect is modeled. |
+| [[Optical focus and binocular conflict]] | [[Visual angle and calibrated rays]] | Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. |
+| [[Visual angle and calibrated rays]], [[Retinal encoding and receptive fields]] | [[Visual acuity and eccentricity]] | Angular coordinates make sampling density and gaze-relative location physically meaningful. |
+| [[Retinal encoding and receptive fields]] | [[Contrast sensitivity adaptation and masking]] | Spatial/contrast-sensitive neural responses motivate task-dependent visual models. |
+| [[Visual angle and calibrated rays]] | [[Eye movements and display-time gaze]] | Angular coordinates make sampling density and gaze-relative location physically meaningful. |
+| [[Interpretation contract]] | [[Continuous signals and discrete samples]] | A numeric sample requires a domain, units and encoding convention. |
+| [[Continuous signals and discrete samples]] | [[Fourier analysis and spectral phase]] | Filtering/frequency analysis operates on a declared domain and its samples. |
+| [[Fourier analysis and spectral phase]] | [[Sampling aliasing and reconstruction]] | Frequency and phase reveal transfer, sampling ambiguity and structural loss. |
+| [[Continuous signals and discrete samples]], [[Fourier analysis and spectral phase]] | [[Convolution and filter footprints]] | Filtering/frequency analysis operates on a declared domain and its samples. |
+| [[Optical focus and binocular conflict]], [[Fourier analysis and spectral phase]], [[Convolution and filter footprints]] | [[PSF OTF and MTF]] | Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. |
+| [[Convolution and filter footprints]], [[Sampling aliasing and reconstruction]] | [[Multiscale texture filtering]] | A weighting footprint establishes the filtered response, boundary effects and frequency transfer. |
+| [[Sampling aliasing and reconstruction]], [[Eye movements and display-time gaze]] | [[Spatiotemporal sampling and retinal motion]] | Allocation/filtering must respect what reduced samples can distinguish. |
+| [[Sampling aliasing and reconstruction]], [[Multiscale texture filtering]] | [[Antialiasing and sample allocation]] | Allocation/filtering must respect what reduced samples can distinguish. |
+| [[Spatiotemporal sampling and retinal motion]], [[Antialiasing and sample allocation]] | [[Temporal reprojection and history validation]] | Temporal reuse must respect changing scene and retinal observations. |
+| [[Light spectra and radiometry]], [[Interpretation contract]] | [[Color encoding and linear-light operations]] | The light quantity and units must be established before its interaction or visual effect is modeled. |
+| [[Contrast sensitivity adaptation and masking]], [[Fourier analysis and spectral phase]], [[Color encoding and linear-light operations]] | [[Perceptual metrics and display calibration]] | Visibility judgments require sensitivity and stimulus-context definitions. |
+| [[Contrast sensitivity adaptation and masking]] | [[Psychophysics and threshold inference]] | Visibility judgments require sensitivity and stimulus-context definitions. |
+| [[Visual acuity and eccentricity]], [[Temporal reprojection and history validation]], [[Eye movements and display-time gaze]] | [[Foveated rendering and uncertainty]] | Peripheral allocation uses a specified task-dependent angular sensitivity model. |
+| [[Optical focus and binocular conflict]], [[Psychophysics and threshold inference]], [[Visual acuity and eccentricity]] | [[Stereoacuity and binocular foveation]] | Optical image formation determines the direction/focus assumptions used by geometry and binocular analysis. |
+| [[Psychophysics and threshold inference]], [[Perceptual metrics and display calibration]] | [[Research validity and ablation]] | A perceptual conclusion requires a defined task and inference procedure. |
+
+## Construction and value transfer
+
+| Prerequisites | Dependent | Why the dependency exists |
+|---|---|---|
+| [[References and aliases]], [[Const qualification and shallow constness]] | [[Parameter passing and sink contracts]] | Parameter access differs according to whether a new object is created or an existing referent is borrowed. |
+| [[Value categories and materialization]], [[Object construction and storage reuse]] | [[Return values and copy elision]] | The return expression category distinguishes result construction from a bound path or move candidate. |
+| [[Class access and invariants]], [[Object construction and storage reuse]] | [[Constructors and invariant establishment]] | Construction must establish the conditions public operations are allowed to assume. |
+| [[Constructors and invariant establishment]] | [[Default and value initialization]] | Initialization form and structural order determine how the constructor establishes members. |
+| [[Constructors and invariant establishment]] | [[Member order and delegating constructors]] | Initialization form and structural order determine how the constructor establishes members. |
+| [[Member order and delegating constructors]], [[Storage duration and object lifetime]] | [[Destruction and partial construction]] | Reverse cleanup depends on the order and completeness of subobject construction. |
+| [[Object identity and generation handles]], [[Ownership and non-owning views]] | [[Copy semantics and resource identity]] | Copying an identifier differs from cloning the resource or application entity. |
+| [[Copy semantics and resource identity]], [[Constructors and invariant establishment]], [[Destruction and partial construction]] | [[Assignment and exception guarantees]] | Assignment and moving must implement a defined semantic value rather than a raw pointer copy. |
+| [[Move casts and forwarding references]], [[Copy semantics and resource identity]], [[Destruction and partial construction]] | [[Move operations and moved-from states]] | An xvalue cast permits selection of a consuming operation without performing it. |
+| [[Copy semantics and resource identity]], [[Move operations and moved-from states]], [[Default and value initialization]] | [[Special member generation and traits]] | Assignment and moving must implement a defined semantic value rather than a raw pointer copy. |
+| [[Move operations and moved-from states]], [[Assignment and exception guarantees]], [[Special member generation and traits]] | [[Noexcept and transfer selection]] | Traits, failure policy and relocation must distinguish source survival from source destruction. |
+| [[Special member generation and traits]], [[Assignment and exception guarantees]], [[Ownership and non-owning views]] | [[Rules of Three Five and Zero]] | The actual usable construction expression determines trait-controlled transfer selection. |
+| [[Move operations and moved-from states]], [[Object construction and storage reuse]] | [[Relocation versus move]] | Traits, failure policy and relocation must distinguish source survival from source destruction. |
+
+## Borrowing, categories and const access
+
+| Prerequisites | Dependent | Why the dependency exists |
+|---|---|---|
+| [[Storage duration and object lifetime]], [[Declarations and definitions]] | [[References and aliases]] | A reference is an alias established by binding, not a reseatable pointer object. |
+| [[Declarations and definitions]] | [[Value categories and materialization]] | lvalues and xvalues identify objects/functions; prvalues produce values/results. |
+| [[References and aliases]], [[Value categories and materialization]] | [[Reference binding and converted temporaries]] | Binding chooses an initial referent under type/category rules. |
+| [[Reference binding and converted temporaries]], [[Storage duration and object lifetime]] | [[Temporary lifetime extension]] | Ordinary temporary destruction occurs at the full-expression's end unless specified extension applies. |
+| [[Value categories and materialization]], [[References and aliases]] | [[Auto decltype and reference collapsing]] | Ordinary by-value auto drops top-level const/reference information; auto& preserves referent qualification. |
+| [[Auto decltype and reference collapsing]], [[Value categories and materialization]] | [[Move casts and forwarding references]] | std::move is an xvalue cast preserving constness, not a resource transfer. |
+| [[Pointer arithmetic and provenance]] | [[Null pointers and optional access]] | A null pointer designates no object/function; nullptr_t converts to appropriate null pointer values without choosing an integer overload. |
+| [[Pointer arithmetic and provenance]], [[Object identity and generation handles]] | [[Borrow invalidation and logical identity]] | A borrow relies on an external lifetime/mutation contract. |
+| [[Borrow invalidation and logical identity]] | [[Borrow contracts and pool epochs]] | An epoch versions a borrow-validity interval. |
+| [[Ownership and non-owning views]], [[Temporary lifetime extension]], [[Borrow invalidation and logical identity]] | [[Deferred captures and borrowed views]] | A span or string_view describes data without owning it. |
+| [[References and aliases]] | [[Const qualification and shallow constness]] | Const restricts modification through an access path; another mutable alias can change a mutable referent. |
+| [[Const qualification and shallow constness]] | [[Multilevel pointer qualification]] | int** cannot implicitly become const int**: that would permit injection of an actually const object's address into an original int*. |
+| [[Const qualification and shallow constness]], [[Value categories and materialization]], [[Temporary lifetime extension]] | [[Ref-qualified accessors]] | Member &/&& qualifiers constrain the caller's object category. |
+| [[Const qualification and shallow constness]], [[Class access and invariants]] | [[Logical constness and mutable caches]] | Logical constness preserves public meaning while eligible mutable data members may change private state. |
+
 ## C++ - From buildable text to live objects
 
-The C++ opening accepts Parts 101–112. Scope/lookup, linkage, storage duration and lifetime remain separate questions. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+The C++ volume accepts Parts 101–147. Construction/value transfer now develop the object-and-borrow foundation without conflating lifetime, identity, category, ownership, failure guarantees or expression traits. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
 
 | Prerequisite | Dependent | Reason |
 |---|---|---|

@@ -1,14 +1,8 @@
 ### From Signals to Meaning: Bits, Numbers, and Memory
 
-This is a continuous teaching story about turning physical observations into meaningful, usable, and recoverable data. Its route is 
-
 **state → interpretation → arithmetic → representation choice → placement → external bytes → investigation**.
 
-Follow the problems, not the order the source lessons arrived.
-
-Read the definitions, examples and intermediate states here. The [[Supplementary/Derivations|derivation companion]] adds longer proofs, and [[Supplementary/Code Snippets|code companion]] supplies experiments. A [[Keyword Index|keyword link]] is optional navigation, not a missing definition. The [[Supplementary/Foundations|coverage ledger]] and [[Supplementary/Sources and Code Anchors|source record]] retain source numbering separately from the lesson.
-
-For teaching, make four passes: state the problem; reconstruct the example; observe the implementation; change one assumption and diagnose the result. A **trace** shows intermediate states. An **invariant** remains true across a procedure. A **contract** states valid inputs, promised output, and failure conditions. These are tools for reasoning, not instructions to trust a result because it worked once.
+A **trace** shows intermediate states. An **invariant** remains true across a procedure. A **contract** states valid inputs, promised output, and failure conditions. These are tools for reasoning, not instructions to trust a result because it worked once.
 
 Examples use eight-bit octets and a C++23 laboratory baseline. Address diagrams are teaching models. Hardware behavior, language validity, operating-system policy, and external schemas stay separate. Reported repository excerpts remain unverified unless explicitly marked otherwise.
 

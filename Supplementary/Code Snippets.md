@@ -2,6 +2,25 @@
 
 ## Source-reported C++ project excerpts
 
+### Value-transfer anchors added by M009
+
+The attachment reports KairoRenderer/Texture.cppm TextureHandle as a uint64_t identifier and TextureSampler as two enum fields, and KairoMath/Vector.cppm Vector2 with ordinary constructors but no custom copy/move/destruction operations. These are **To verify** in a live checkout. They motivate different semantic categories—cheap identifier/configuration values versus actual resource owners—without proving current layouts, traits or performance.
+
+No production class was changed. Independent TexturePayload, sink, raw-byte-owner and event-recorder examples remain in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Complete runnable value-transfer laboratory|the continuous laboratory]]. A later project audit should check whether copied handles retain non-owning semantics, whether domain invariants survive generated moves, and whether any user-declared special member suppresses an intended move. Do not add boilerplate merely to make a Rule-of-Five checklist look complete.
+
+### Borrow-contract anchors added by M008
+
+These are attachment-reported audit targets, not live findings. No production source was changed:
+
+| Reported project/API | Contract to inspect before relying on a borrow |
+|---|---|
+| KairoECS Registry Get/TryGet | Does returned component access point into a movable dense vector? Which operations invalidate it? |
+| KairoECS Registry Emplace / SparseSet removal | Can growth reallocate, and can removal move-assign the last element into a live earlier slot? |
+| KairoECS Entity versus KairoEngineCore Entity | The attachment reports differing handle representations; check the actual definitions and validation policy rather than equating their names. |
+| KairoMath Vector Data/operator[] | Named members are not an array even if adjacent. Use actual array storage or explicit member selection under the API's contract. |
+
+An independently written, standard-library-only witness for growth and logical slot repurposing is inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Complete runnable borrow laboratory|the borrow laboratory]]. It is not a patch to Registry. A proposed pool-epoch wrapper would require an owner-lifetime contract, mutation coverage, synchronization and counter-wrap policy before implementation; none is silently supplied here.
+
 These fragments came from M007, not from a live checkout. Reported names, ranges and APIs are **To verify**. They are separate here because they belong to projects with their own module/build dependencies. This merge does not authorize production edits. All independent C++ examples and the complete object laboratory are in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
 
 Reported KairoMath/Vector.cppm module opening (source range 1–14):

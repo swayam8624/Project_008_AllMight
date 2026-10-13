@@ -19,6 +19,8 @@ Alignment A restricts valid object starts to addresses divisible by A. alignof r
 
 ## Used by
 
+- [[Vector storage SIMD and boundary layouts]] — Phase 6 uses this established foundation in its geometry narrative.
+
 - [[ABI and object layout]] — uses this mechanism as stated in its prerequisites.
 - [[Internal and tail padding]] — uses this mechanism as stated in its prerequisites.
 - [[Packed structures and misaligned access]] — uses this mechanism as stated in its prerequisites.

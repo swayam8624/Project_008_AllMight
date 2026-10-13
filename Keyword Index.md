@@ -1,26 +1,120 @@
 # Keyword Index
 
+## Phase 6 - Geometry and vector implementation
+
+Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 is reconstructed enrichment rather than a standalone received lesson; Parts 148–500 remain unreceived. These filled nodes support the new continuous story and future development without claiming learner mastery.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Scalars fields and real-number models]] | Introduced | Phase6 | Phase6 |
+| [[Vectors coordinates and affine points]] | Introduced | Phase6 | Phase6 |
+| [[Vector spaces subspaces and span]] | Introduced | Phase6 | Phase6 |
+| [[Basis coordinates and dimension]] | Introduced | Phase6 | Phase6 |
+| [[Norms lengths and induced distances]] | Introduced | Phase6 | Phase6 |
+| [[Unit directions and safe normalization]] | Introduced | Phase6 | Phase6 |
+| [[Dot products and orthogonality]] | Introduced | Phase6 | Phase6 |
+| [[Projection rejection and scalar components]] | Introduced | Phase6 | Phase6 |
+| [[Gram matrices and coordinate metrics]] | Introduced | Phase6 | Phase6 |
+| [[Complex numbers and planar rotations]] | Introduced | Phase6 | Phase6 |
+| [[Cross products and oriented area]] | Introduced | Phase6 | Phase6 |
+| [[Coordinate handedness and orientation]] | Introduced | Phase6 | Phase6 |
+| [[Triple products and signed volume]] | Introduced | Phase6 | Phase6 |
+| [[Robust vector angles]] | Introduced | Phase6 | Phase6 |
+| [[Surface tangents normals and bitangents]] | Introduced | Phase6 | Phase6 |
+| [[Orthonormal frames and Gram-Schmidt]] | Introduced | Phase6 | Phase6 |
+| [[Reflection refraction and shading directions]] | Introduced | Phase6 | Phase6 |
+| [[Barycentric coordinates and interpolation]] | Introduced | Phase6 | Phase6 |
+| [[Robust geometric predicates]] | Introduced | Phase6 | Phase6 |
+| [[Convex combinations and convex hulls]] | Introduced | Phase6 | Phase6 |
+| [[Minkowski sums and support mappings]] | Introduced | Phase6 | Phase6 |
+| [[Homogeneous coordinates and perspective division]] | Introduced | Phase6 | Phase6 |
+| [[Covectors linear functionals and normal transforms]] | Introduced | Phase6 | Phase6 |
+| [[Exterior products and geometric algebra]] | Introduced | Phase6 | Phase6 |
+| [[Vector value types and component access]] | Introduced | Phase6 | Phase6 |
+| [[Vector storage SIMD and boundary layouts]] | Introduced | Phase6 | Phase6 |
+| [[Vector tolerances and finite-state diagnostics]] | Introduced | Phase6 | Phase6 |
+| [[Coordinate-space types and validated invariants]] | Introduced | Phase6 | Phase6 |
+
+## Independent XR series
+
+XR labels are source identifiers for the separate seeing/representation series, not numbered curriculum chunks. Definitions are filled now; later sources deepen these same nodes.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Light spectra and radiometry]] | Introduced | XR01 | XR01 |
+| [[Reflectance and rendering equation]] | Introduced | XR01 | XR01 |
+| [[Retinal encoding and receptive fields]] | Introduced | XR01 | XR01 |
+| [[Optical focus and binocular conflict]] | Introduced | XR01 | XR01 |
+| [[Visual angle and calibrated rays]] | Introduced | XR01 | XR01 |
+| [[Visual acuity and eccentricity]] | Introduced | XR01 | XR01 |
+| [[Contrast sensitivity adaptation and masking]] | Introduced | XR01 | XR01 |
+| [[Eye movements and display-time gaze]] | Introduced | XR01 | XR01 |
+| [[Continuous signals and discrete samples]] | Introduced | XR01 | XR01 |
+| [[Fourier analysis and spectral phase]] | Introduced | XR01 | XR01 |
+| [[Sampling aliasing and reconstruction]] | Introduced | XR01 | XR01 |
+| [[Convolution and filter footprints]] | Introduced | XR01 | XR01 |
+| [[PSF OTF and MTF]] | Introduced | XR01 | XR01 |
+| [[Multiscale texture filtering]] | Introduced | XR01 | XR01 |
+| [[Spatiotemporal sampling and retinal motion]] | Introduced | XR01 | XR01 |
+| [[Antialiasing and sample allocation]] | Introduced | XR01 | XR01 |
+| [[Temporal reprojection and history validation]] | Introduced | XR01 | XR01 |
+| [[Color encoding and linear-light operations]] | Introduced | XR01 | XR01 |
+| [[Perceptual metrics and display calibration]] | Introduced | XR01 | XR01 |
+| [[Psychophysics and threshold inference]] | Introduced | XR01 | XR01 |
+| [[Foveated rendering and uncertainty]] | Introduced | XR01 | XR01 |
+| [[Stereoacuity and binocular foveation]] | Introduced | XR01 | XR01 |
+| [[Research validity and ablation]] | Introduced | XR01 | XR01 |
+
+## Main curriculum and shared foundations
+
 Every keyword below links to a real concept note in `Concepts/`, so it appears as its own Obsidian graph node. Concept notes contain definitions, examples, prerequisite links, downstream uses, source-chunk backlinks, and an explicit next-depth question. Later chunks update these same files.
 
 See [[Dependency Map]] for the learning order. `Forward` describes curriculum depth still pending; it never means the definition is blank. `Owned` requires demonstrated reconstruction, not merely a written note.
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
+| [[Parameter passing and sink contracts]] | Introduced | C009 | C009 |
+| [[Return values and copy elision]] | Introduced | C009 | C009 |
+| [[Constructors and invariant establishment]] | Introduced | C009 | C009 |
+| [[Default and value initialization]] | Introduced | C009 | C009 |
+| [[Member order and delegating constructors]] | Introduced | C009 | C009 |
+| [[Destruction and partial construction]] | Introduced | C009 | C009 |
+| [[Copy semantics and resource identity]] | Introduced | C009 | C009 |
+| [[Assignment and exception guarantees]] | Introduced | C009 | C009 |
+| [[Move operations and moved-from states]] | Introduced | C009 | C009 |
+| [[Special member generation and traits]] | Introduced | C009 | C009 |
+| [[Noexcept and transfer selection]] | Introduced | C009 | C009 |
+| [[Rules of Three Five and Zero]] | Introduced | C009 | C009 |
+| [[Relocation versus move]] | Introduced | C009 | C009 |
+| [[References and aliases]] | Introduced | C008 | C008 |
+| [[Value categories and materialization]] | Developed | C008 | C009 |
+| [[Reference binding and converted temporaries]] | Introduced | C008 | C008 |
+| [[Temporary lifetime extension]] | Introduced | C008 | C008 |
+| [[Auto decltype and reference collapsing]] | Introduced | C008 | C008 |
+| [[Move casts and forwarding references]] | Developed | C008 | C009 |
+| [[Null pointers and optional access]] | Introduced | C008 | C008 |
+| [[Borrow invalidation and logical identity]] | Introduced | C008 | C008 |
+| [[Borrow contracts and pool epochs]] | Introduced | C008 | C008 |
+| [[Deferred captures and borrowed views]] | Introduced | C008 | C008 |
+| [[Const qualification and shallow constness]] | Introduced | C008 | C008 |
+| [[Multilevel pointer qualification]] | Introduced | C008 | C008 |
+| [[Ref-qualified accessors]] | Developed | C008 | C009 |
+| [[Logical constness and mutable caches]] | Introduced | C008 | C008 |
 | [[Translation units and linking]] | Introduced | C007 | C007 |
 | [[Declarations and definitions]] | Introduced | C007 | C007 |
 | [[One Definition Rule]] | Introduced | C007 | C007 |
 | [[Linkage and entity ownership]] | Introduced | C007 | C007 |
-| [[Scopes and name lookup]] | Introduced | C007 | C007 |
+| [[Scopes and name lookup]] | Developed | C007 | C008 |
 | [[Argument-dependent lookup]] | Introduced | C007 | C007 |
 | [[C++ modules and reachability]] | Introduced | C007 | C007 |
 | [[Preprocessing and macro boundaries]] | Introduced | C007 | C007 |
-| [[Object construction and storage reuse]] | Introduced | C007 | C007 |
-| [[Object identity and generation handles]] | Introduced | C007 | C007 |
+| [[Object construction and storage reuse]] | Developed | C007 | C009 |
+| [[Object identity and generation handles]] | Developed | C007 | C008 |
 | [[Scoped enums and validated domains]] | Introduced | C007 | C007 |
 | [[Aggregate initialization]] | Introduced | C007 | C007 |
-| [[Class access and invariants]] | Introduced | C007 | C007 |
-| [[Standard-layout and trivial copyability]] | Introduced | C007 | C007 |
-| [[Named members versus array elements]] | Introduced | C007 | C007 |
+| [[Class access and invariants]] | Developed | C007 | C009 |
+| [[Standard-layout and trivial copyability]] | Developed | C007 | C009 |
+| [[Named members versus array elements]] | Developed | C007 | C008 |
 | [[Thread-local storage]] | Introduced | C007 | C007 |
 | [[Fixed-point representation]] | Developed | C006 | C006 |
 | [[Fixed-point range and resolution]] | Developed | C006 | C006 |
@@ -86,7 +180,7 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Shift-and-add multiplication]] | Introduced | C002 | C002 |
 | [[Binary long division]] | Introduced | C002 | C002 |
 | [[Saturating arithmetic]] | Introduced | C002 | C002 |
-| [[Fixed-width integer types]] | Developed | C002 | C007 |
+| [[Fixed-width integer types]] | Developed | C002 | C008 |
 | [[Usual arithmetic conversions]] | Introduced | C002 | C002 |
 | [[Mixed signedness]] | Introduced | C002 | C002 |
 | [[Arithmetic policies]] | Introduced | C002 | C002 |
@@ -101,7 +195,7 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Internal and tail padding]] | Introduced | C003 | C003 |
 | [[Field reordering and AoS versus SoA]] | Introduced | C003 | C003 |
 | [[Packed structures and misaligned access]] | Introduced | C003 | C003 |
-| [[Pointer arithmetic and provenance]] | Developed | C003 | C007 |
+| [[Pointer arithmetic and provenance]] | Developed | C003 | C008 |
 | [[Pages and page offsets]] | Introduced | C003 | C003 |
 | [[Page tables and MMU]] | Introduced | C003 | C003 |
 | [[TLB]] | Introduced | C003 | C003 |
@@ -111,10 +205,10 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Call stack and stack frames]] | Introduced | C003 | C003 |
 | [[Dynamic allocation and heap]] | Introduced | C003 | C003 |
 | [[Allocator fragmentation]] | Introduced | C003 | C003 |
-| [[Storage duration and object lifetime]] | Developed | C003 | C007 |
+| [[Storage duration and object lifetime]] | Developed | C003 | C008 |
 | [[Static storage and initialization]] | Developed | C003 | C007 |
 | [[Read-only data and code]] | Introduced | C003 | C003 |
-| [[Ownership and non-owning views]] | Developed | C003 | C007 |
+| [[Ownership and non-owning views]] | Developed | C003 | C009 |
 | [[Virtual and physical contiguity]] | Introduced | C003 | C003 |
 | [[Memory-mapped files]] | Introduced | C003 | C003 |
 | [[Atomic publication and durability]] | Introduced | C003 | C003 |
