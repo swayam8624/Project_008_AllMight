@@ -2,7 +2,7 @@
 
 ## Phase 6 - Geometry and vector implementation
 
-Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 is reconstructed enrichment rather than a standalone received lesson; Parts 148–500 remain unreceived. These filled nodes support the new continuous story and future development without claiming learner mastery.
+Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 is reconstructed enrichment rather than a standalone received lesson; Parts 161–500 remain unreceived. These filled nodes support the continuous story and future development without claiming learner mastery.
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
@@ -86,6 +86,10 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Noexcept and transfer selection]] | Introduced | C009 | C009 |
 | [[Rules of Three Five and Zero]] | Introduced | C009 | C009 |
 | [[Relocation versus move]] | Introduced | C009 | C009 |
+| [[RAII and resource handles]] | Introduced | C010 | C010 |
+| [[Exclusive and shared smart-pointer ownership]] | Introduced | C010 | C010 |
+| [[Weak observation and ownership cycles]] | Introduced | C010 | C010 |
+| [[Placement construction and explicit lifetime management]] | Introduced | C010 | C010 |
 | [[References and aliases]] | Introduced | C008 | C008 |
 | [[Value categories and materialization]] | Developed | C008 | C009 |
 | [[Reference binding and converted temporaries]] | Introduced | C008 | C008 |

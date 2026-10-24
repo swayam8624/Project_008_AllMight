@@ -1,0 +1,1203 @@
+---
+tags:
+  - scriptwriting
+  - screenplay-format
+  - continuous-notes
+source_playlist: StudioBinder screenplay playlist
+coverage: Playlist synthesis plus Fountain and Beat documentation; Video 32 partial evidence from chapters/comments
+---
+
+# Screenplay Format: From Reading Rhythm to Production Blueprint
+
+A screenplay is a story written in a form that actors and a film crew can turn into time, sound, movement, locations, props, costumes, performances, and edits. Its format is therefore not decoration. Format tells a reader **what kind of information they are looking at**, while its spacing makes the document scannable and gives production a rough relationship between page length and screen time.
+
+This volume merges the formatting instruction distributed across the playlist into one continuous system. The foundation comes from [Anatomy of a Screenplay — Movie Script Format Explained](https://www.youtube.com/watch?v=6PLSJBTzaGw) and [How to Format a Screenplay: Screenplay Formatting 101](https://www.youtube.com/watch?v=_2uZ7IabVOM). Less universal devices—phone calls, overlapping speech, text messages, flashbacks, dreams, rapid cuts, and screen media—are developed in [The Anatomy of a Screenplay Part 2](https://www.youtube.com/watch?v=KUnclLt2RqQ). Television differences come from [How to Write a Script for TV — Anatomy of a Screenplay Part 3](https://www.youtube.com/watch?v=h4imidyLecA). The formatting guidance is also compared with the Academy's note that professional scripts follow a recognizable range but no single absolute format. [Academy Nicholl Screenwriting Resources](https://www.oscars.org/nicholl/screenwriting-resources)
+
+This is one of four connected Script volumes. Use [[02 - Scenes, Dialogue and Character]] for what the formatted parts must accomplish dramatically, [[03 - Story Devices and Placement]] for when to introduce a device, and [[04 - Story Design, Structure and Practice]] for the larger story architecture.
+
+The central rule is simple:
+
+> **A reader should always understand what is happening, where it is happening, when it is happening, who is speaking, and how the page relates to the experience on screen.**
+
+Some conventions are stable industry norms. Others have several accepted solutions. This volume marks the difference instead of inventing one rigid answer where the sources explicitly allow variation.
+
+## The page is a time-and-production map
+
+## Fountain and Beat: write the script as portable text
+
+**Fountain** is screenplay markup written as plain text. The file stays human-readable and portable; a compatible app recognizes screenplay elements and renders them with screenplay typography and spacing. **Beat** is one such editor: it edits Fountain text and previews a formatted screenplay. The source text and the rendered PDF are two views of the same draft. Fountain syntax labels elements; it does not choose a lens, invent a cut, or guarantee identical rendering in every app. Before delivery, preview and export in the application you intend to use. [Fountain syntax](https://fountain.io/syntax/), [Beat: What is Fountain?](https://www.beat-app.fi/docs/what-is-fountain/syntax/what-is-fountain/)
+
+### A minimal working Fountain screenplay
+
+~~~fountain
+Title: THE LAST SIGNAL
+Credit: Written by
+Author: Asha Rao
+Draft date: 24 October 2026
+Contact: asha@example.com
+
+INT. APARTMENT - KITCHEN - NIGHT
+
+Rain needles the window. MAYA RAO, 32, sets a wet envelope beside the phone.
+
+The phone RINGS.
+
+MAYA
+(barely audible)
+I said I would come back.
+
+The line goes dead.
+
+CUT TO:
+
+EXT. TRAIN PLATFORM - DAWN
+
+Maya steps onto the empty platform.
+~~~
+
+### Element-to-code quick map
+
+| On-screenplay element | Fountain source text | Reader sees | Use and guardrail |
+|---|---|---|---|
+| Title page | `Title:`, `Credit:`, `Author:`, `Draft date:`, `Contact:`; indented continuation values | Formatted title page | Put metadata before the first scene. Key values are app-rendered; verify the title page after export. |
+| Scene heading / slug | `INT. ROOM - NIGHT`; `.FLASHBACK` forces a nonstandard slug | Scene heading | Standard `INT`, `EXT`, `EST`, `INT./EXT`, `INT/EXT`, `I/E` headings are recognized. Prefix `.` when a deliberate slug does not match the normal patterns. |
+| Action | Ordinary prose paragraph; `!ALL CAPS ACTION` forces action | Action / description | Present tense and visible/audible behavior are craft choices, not markup. `!` resolves ambiguity when all-caps action could look like a character cue. |
+| First character introduction | Ordinary action with name uppercased conventionally | Action | Fountain does not infer cast importance from capitalization; the uppercase convention is a reader/production signal. |
+| Character cue | `MAYA`; `@McCLANE` forces a cue | Character | Usually uppercase. The `@` is removed in formatted output. |
+| Dialogue | Text immediately following a character cue | Dialogue | New lines within dialogue are treated as deliberate line breaks. Use blank-line behavior intentionally. |
+| Parenthetical | `(quietly)` under the cue or within dialogue | Parenthetical | Use sparingly for an essential delivery/action clarification. The syntax cannot judge whether it is needed. |
+| Extension | `MAYA (O.S.)`, `MAYA (V.O.)`, `MAYA (PRE-LAP)` | Cue with extension | Conventional labels work as character extensions; exact labels and rendering can vary by application. |
+| Dual / simultaneous dialogue | Put `^` after the second cue: `MAYA ^` | Side-by-side dialogue | Use only when simultaneity matters. Check the renderer's result. |
+| Sound or important visual emphasis | Ordinary action, often selective ALL CAPS; `*italic*`, `**bold**`, `_underline_` | Action with emphasis | Emphasis is typography, not a camera instruction. Too much emphasis cancels itself. |
+| Lyrics | Prefix each lyric line with `~` | Lyric element | Explicitly marks song words; use only when lyrics need to appear on the page. |
+| Transition | `CUT TO:`; arbitrary forced transition: `>BURN TO WHITE.` | Transition | Standard transition must be uppercase, stand alone, and end in `TO:`. `>` forces a transition; a leading `>` is syntax, not part of the printed line. |
+| Centered text / end card | `> THE END <` | Centered action | The closing `<` distinguishes centered text from a forced transition. |
+| Invisible note | `[[Check the year on the letter.]]` | Nothing in screenplay output | Draft reminder for collaborators; remove or resolve before a clean submission. |
+| Omitted draft section | `/* abandoned scene */` around text | Nothing in screenplay output | Boneyard is not a substitute for version history; keep a recoverable draft. |
+| Structural heading | `# ACT TWO`, `## Sequence B` | Nothing in screenplay output | Organizes the working file; does not create a printed act card by itself. |
+| Scene/section synopsis | `= Maya discovers the signal is a warning.` | Nothing in screenplay output | Outline aid. Verify app support before collaboration/export. |
+| Page break | `===` on a line by itself | New page | Use for intentional act breaks or special layout; ordinary pagination belongs to the formatter. |
+| Scene number | `INT. ROOM - NIGHT #12#` | Numbered slug (if renderer supports) | Most useful in a locked/production draft. Avoid manually numbering a changing spec draft. |
+
+### Beat-specific and production-stage additions
+
+Beat is a Fountain editor, but not every feature is portable Fountain syntax. Its preview, screenplay layout, outline, timeline, revision mode, scene numbering, page numbering, export, and macros are software functions; the portable text is still the readable `.fountain` source. Beat's own documentation says revision marks do not serve as an archive of previous drafts, so keep named snapshots or version control. Check current platform/version support before relying on any Beat-specific feature. [Beat documentation](https://www.beat-app.fi/docs/what-is-fountain/), [Beat revisions](https://www.beat-app.fi/docs/what-is-fountain/revisions/)
+
+| Stage / need | In Fountain | In Beat / rendered delivery | Boundary |
+|---|---|---|---|
+| Spec/read draft | Unnumbered slugs, core elements, selective transitions | Preview/PDF | The Academy says submission drafts usually have no scene numbers and few camera shots. Follow the target's rules. |
+| Development outline | `# ACT ONE`, `## Sequence`, `= synopsis`, `[[note]]` | Outline/index-card/timeline views where supported | Sections/synopses are hidden in normal print; verify an app preserves them on import. |
+| Shooting/locked draft | Optional `#12#` on slug | Scene numbering, locked pages, revisions depend on software | Number/lock only when production requires; numbers are references, not decoration. |
+| Visual planning | No standard inline storyboard code | Separate board, shot list, or storyboard app | A storyboard is a series of framed panels; a shot list is a written coverage plan. Link by scene identifier rather than pretending they are Fountain markup. |
+| Deliverable | `.fountain` source | PDF for fixed page layout; FDX as editable handoff | Reopen the PDF and inspect all unusual elements. Export compatibility is application-dependent. |
+
+The scene heading, character cue, dialogue, parenthetical, transition, section, note, boneyard, title page, and page-break rules above follow the [Fountain specification](https://fountain.io/syntax/). Beat-specific conveniences (outline/timeline, revision display, export choices, macros) are application features, not guaranteed syntax in every Fountain tool. Keep a plain-text `.fountain` master and a separately versioned, exported PDF/FDX when collaborators need those delivery formats. Beat documents its import/export behavior and advises saving an imported screenplay under a new Fountain filename; imported metadata may need review. [Beat importing](https://www.beat-app.fi/docs/syncing/importing-screenplays/)
+
+### Transitions: name the edit only when it carries meaning
+
+In a master-scene draft, a normal cut is implied when one scene ends and another begins. A written transition is an editorial emphasis: it can signal a meaningful comparison, abrupt shock, passage of time, ending, or deliberately continuous movement. Do not add a transition after every scene as decoration. The named forms below are common screenplay vocabulary; Fountain recognizes how to mark them, but does not validate their dramatic need.
+
+| Transition | Typical dramatic use | Fountain example |
+|---|---|---|
+| `CUT TO:` | Explicit abrupt change of scene or emphasis; often unnecessary between ordinary slugs | `CUT TO:` |
+| `SMASH CUT TO:` | Sharp tonal, visual, or temporal collision; use when the jolt is part of the effect | `SMASH CUT TO:` |
+| `MATCH CUT TO:` | A shape, motion, sound, phrase, or idea bridges distinct images | `MATCH CUT TO:` |
+| `JUMP CUT TO:` | Deliberate discontinuity/time compression within related material | `JUMP CUT TO:` |
+| `DISSOLVE TO:` | Images overlap to imply passage, association, or a soft transition | `DISSOLVE TO:` |
+| `FADE OUT.` / `FADE IN:` | Strong passage, ending, or opening convention; confirm house style because variants exist | `>FADE OUT.` / `>FADE IN:` |
+| `WIPE TO:` / `IRIS OUT.` | A conspicuous, stylistic transition whose look is story-relevant or period-specific | `>WIPE TO:` / `>IRIS OUT.` |
+| `CUT TO BLACK.` / `FADE TO BLACK.` | Black image is itself the beat: shock, finality, pause, or deliberate void | `>CUT TO BLACK.` / `>FADE TO BLACK.` |
+| `BURN TO WHITE.` | Stylized overexposure/white-out, if that precise effect matters | `>BURN TO WHITE.` |
+
+Canonical Fountain's automatic transition rule recognizes uppercase lines ending `TO:` with blank lines around them. For other forms, force with `>`; ordinary prose can also describe a change without an explicit transition. Do not confuse **CUT TO** (an edit) with **CUT TO: CLOSE ON…** (a shot instruction) or a simple new slug. Unless you are preparing a director's/production draft, describe the indispensable story information and leave routine coverage to the collaborators. [Fountain transition syntax](https://fountain.io/syntax/#transition)
+
+Do not teach `FADE IN:` as a universally mandatory first-page instruction. It is common, but contemporary scripts may begin directly with the opening scene. Follow the submission or production house style.
+
+### Read an actual screenplay as a visual reference
+
+An accessible copy of Darren Aronofsky's *The Fountain* November 2003 draft identifies itself as a 98-page screenplay. It demonstrates a mythic prologue, distinct time/world labels, scene headings and subheadings, sound cues, a flashback/recollection, and a forceful `SMASH TO:` between sequences. The screenplay is a worked artifact, not a rulebook: its shot labels, action density, and stylized transitions show authorial choices. The title is shared with the Fountain markup language by coincidence; the film's script was not used as proof of Fountain syntax. [*The Fountain* screenplay draft (PDF)](https://thismortalcoil.weebly.com/uploads/2/6/3/7/26372717/2.3.5._the_fountain_script.pdf); catalog metadata independently lists the November 6, 2003, 98-page draft. [Los Angeles Film School Library catalog](https://librarycatalog.lafilm.edu/cgi-bin/koha/opac-detail.pl?biblionumber=12292)
+
+**What to study in the draft:** the opening overlays an image, scripture, setting, and immediate threat before explaining the whole mythology. A ring triggers an earlier scene; repeated motifs bridge separate worlds. The pattern to borrow is the craft problem-solving: label orientation, use an image or object as a bridge, and enter/exit a time shift at a meaningful beat. Do not copy its full prose, special style, or structure into your own script.
+
+### Reusable patterns for screen elements
+
+~~~fountain
+INT. MAYA'S CAR - NIGHT
+
+The red light changes. Maya doesn't move.
+
+MAYA (V.O.)
+I thought the city would sound different at night.
+
+The PHONE VIBRATES in the cup holder.
+
+MAYA
+(into phone)
+I'm outside.
+
+INTERCUT - MAYA'S CAR / DISPATCH OFFICE
+
+DISPATCHER
+No, you're not.
+
+MAYA ^
+I can see the door.
+
+DISPATCHER ^
+You're looking at the wrong building.
+
+END INTERCUT.
+
+SMASH CUT TO:
+
+INT. DISPATCH OFFICE - NIGHT
+
+The dispatcher watches Maya's car on a live camera feed.
+~~~
+
+`INTERCUT` and `END INTERCUT` here are readable labels in action; they are not a special automatic pair in core Fountain. An intercut may also be represented with a shared slug and repeated character blocks. Choose one clear method and retain it consistently. The `^` makes the paired dialogue simultaneous; it does not itself create an intercut. In the car example, the first line is voiceover, the phone voice is heard through the device, and the intercut establishes simultaneous locations. Each signal answers a different reader question.
+
+**On-screen text, messages, calls, split screen, montage, flashback, dream, and passage of time** are commonly written as action, headings, or transitions, not as a separate universal Fountain element. Example: `ON THE PHONE: “DON'T OPEN THE DOOR.”` remains action unless the app provides a specialized extension. For device-specific formats see [[03 - Story Devices and Placement]].
+
+### The formatted output is a view, not the source of truth
+
+Fountain is plain text; Beat previews the formatted result. Use the plain text for durable, diffable drafting; inspect the rendered page for line wraps, scene breaks, title-page layout, page counts, and any special element. When importing from another program, retain the original file until you have checked headings, dialogue, page breaks, and title metadata. A PDF or Final Draft export is a delivery copy; the `.fountain` source remains the editable master. App support differs for advanced syntax, so open the same source in a second Fountain renderer when cross-tool compatibility matters. [Beat: What is Fountain?](https://www.beat-app.fi/docs/what-is-fountain/syntax/what-is-fountain/), [Fountain FAQ](https://fountain.io/faq/)
+
+The playlist teaches the **master scene screenplay**, the modern script form that describes scenes and story action without predetermining every shot. It inherited useful production discipline from older continuity scripts while leaving directors, designers, actors, cinematographers, editors, and sound teams room to do their work.
+
+The commonly taught estimate is:
+
+$$
+1\text{ formatted screenplay page}\approx 1\text{ minute of finished screen time}.
+$$
+
+This is an average, not a conversion law. A page of rapid dialogue may play quickly. A page containing one sustained look, a musical passage, a chase, or a complex stunt may play much longer. The estimate works because monospaced type and standardized spacing reduce variation enough to make page count useful for planning.
+
+### The physical page
+
+[Anatomy of a Screenplay](https://www.youtube.com/watch?v=6PLSJBTzaGw) gives these baseline measurements:
+
+| Page property | Convention taught in the source | Why it exists |
+|---|---:|---|
+| Paper | Standard screenplay page, conventionally US Letter | Gives all readers the same physical reference |
+| Typeface | 12-point Courier | Monospaced characters make line and page density more predictable |
+| Left margin | 1.5 inches | Leaves binding space and a stable action boundary |
+| Right margin | 1 inch | Preserves readable white space |
+| Top margin | 1 inch | Leaves room for page number and revision information |
+| Bottom margin | 1 inch | Keeps text away from the physical edge |
+| Page numbers | Upper right on every script page except page one | Lets departments coordinate references |
+
+The sources specify an approximate **3.7-inch indentation** for a character cue and place dialogue about **2.5 inches from the left edge**. They do not give every dialogue, parenthetical, or transition width. Screenwriting software normally supplies those remaining tab stops. The important lesson is to select the correct element instead of simulating alignment with spaces.
+
+### Figure F1 — visual map of a screenplay page
+
+The diagram below is schematic. It shows hierarchy and placement; the measurements in the labels are the authoritative values supplied by the videos.
+
+```text
+                    8.5-inch page width
+    ┌──────────────────────────────────────────────────────┐
+    │  1-inch top margin                         PAGE NO.  │
+    │                                                      │
+    │← 1.5 in → ACTION / SCENE HEADING        ← 1 in →    │
+    │           INT. APARTMENT - KITCHEN - NIGHT           │
+    │                                                      │
+    │           Rain needles the dark window. MAYA, 28,    │
+    │           sets a WATER-STAINED ENVELOPE beside       │
+    │           the silent phone.                          │
+    │                                                      │
+    │                         MAYA                          │
+    │                    (barely audible)                   │
+    │              I said I would come back.               │
+    │                                                      │
+    │                                           CUT TO:    │
+    │                                                      │
+    │  1-inch bottom margin                                │
+    └──────────────────────────────────────────────────────┘
+
+    Character cue begins near 3.7 inches from the left edge.
+    Dialogue begins near 2.5 inches from the left edge.
+    Transitions sit on the right side.
+```
+
+The white space is functional. A reader can identify scene, action, speaker, delivery note, spoken words, and transition before reading the sentences.
+
+## The title page opens the document, not the story
+
+The title page is the first physical page of the screenplay. It is not screenplay page 1 and does not receive a page number.
+
+### Figure F2 — title-page map
+
+```text
+    ┌──────────────────────────────────────────────────────┐
+    │                                                      │
+    │                                                      │
+    │                    THE LAST SIGNAL                   │
+    │                                                      │
+    │                       Written by                     │
+    │                       Asha Rao                       │
+    │                                                      │
+    │              Based on "The Last Signal"             │
+    │                    by Morgan Lee                     │
+    │                                                      │
+    │                                                      │
+    │                                                      │
+    │  Asha Rao                                Draft date  │
+    │  asha@example.com                      24 Oct 2026   │
+    │  Representation/contact                             │
+    └──────────────────────────────────────────────────────┘
+```
+
+Use the following order:
+
+1. Put the title in uppercase at the center of the page. The source notes that it is sometimes underlined.
+2. Beneath it, write `Written by`, followed by the writer or writers.
+3. If the screenplay adapts an existing property, add `Based on` and identify that property.
+4. Put writer or representative contact information in the lower-left corner.
+5. Put an optional draft date in the lower-right corner.
+
+The title page should identify the work cleanly. A synopsis, logline, copyright argument, casting wish list, personal statement, or design treatment belongs elsewhere unless a specific submission process requests it.
+
+## Page one begins with a producible moment
+
+The first page after the title page is screenplay page 1. It usually starts with a scene heading or another clearly formatted opening element. The six core elements taught in [Anatomy of a Screenplay](https://www.youtube.com/watch?v=6PLSJBTzaGw) are:
+
+```mermaid
+flowchart LR
+    A[Scene heading<br/>Where and when?] --> B[Action<br/>What can be seen or heard?]
+    B --> C[Character cue<br/>Who speaks?]
+    C --> D[Parenthetical<br/>Only necessary delivery or action]
+    D --> E[Dialogue<br/>What is spoken?]
+    E --> F[Transition<br/>Only when the change matters]
+```
+
+These elements are a vocabulary. The page becomes clear because each type of information has a recognizable position and form.
+
+## The final page follows the same page contract
+
+The formatting videos do not prescribe a separate margin, font, or layout for the last page. It uses the same body elements as earlier pages; page numbering continues in the upper-right position. If a character's dialogue continues across a page break, a continuation cue may clarify that it is the same speech. The dramatic ending belongs in the final scene's action and dialogue. The videos do not establish a compulsory final-page label such as “THE END,” so use an end marker only when the chosen script style or production needs it. Keep this distinction clear: page geometry is explained by the formatting lesson; a universal end-marker rule is not.
+
+## Scene headings establish the production unit
+
+### Scene-heading patterns in Fountain
+
+~~~fountain
+INT. ARCHIVE - NIGHT
+EXT. CITY HALL - DAY
+INT./EXT. MAYA'S CAR - NIGHT
+.THE MEMORY ROOM
+~~~
+
+Standard interior/exterior abbreviations are automatically recognized by Fountain. A leading period forces a heading when a deliberately stylized slug such as `THE MEMORY ROOM` would otherwise be parsed as action. In rendered output the forcing period disappears. Use forced headings sparingly; headings should keep locations and times trackable for both reader and production.
+
+A scene heading, or **slug line**, identifies the scene’s broad location and time.
+
+```text
+INT. APARTMENT - KITCHEN - NIGHT
+EXT. TRAIN PLATFORM - DAWN
+INT./EXT. MOVING CAR - CONTINUOUS
+```
+
+Build it in three steps:
+
+1. **Interior or exterior**
+   - `INT.` for an interior.
+   - `EXT.` for an exterior.
+   - `INT./EXT.` when the scene genuinely occupies both, often a moving vehicle whose inside and outside are both relevant.
+2. **Location**
+   - Use a concise, repeatable production location.
+   - Add a more specific area after a dash when useful: `MUSEUM - EAST GALLERY`.
+3. **Time**
+   - Usually `DAY`, `NIGHT`, `DAWN`, or another useful time marker.
+   - Use relational time such as `CONTINUOUS` or `MOMENTS LATER` when the relationship to the prior scene matters more than clock time.
+
+Keep a full scene heading on one line when possible. Consistent location names help production know that `MAYA'S KITCHEN` on page 5 is the same set as `KITCHEN AT MAYA'S` on page 73.
+
+### Continuous means uninterrupted
+
+`CONTINUOUS` says that the new scene follows directly from the previous action.
+
+```text
+INT. APARTMENT - HALLWAY - NIGHT
+
+Maya runs from the kitchen.
+
+INT. APARTMENT - BEDROOM - CONTINUOUS
+
+She slams the door and braces it with a chair.
+```
+
+It should not be used as a generic replacement for `DAY` or `NIGHT`. Its value is the temporal connection.
+
+### Subheadings move within an established scene
+
+A subheading shifts attention within a larger continuous place or skips time without restating a complete slug line.
+
+```text
+INT. RESEARCH LAB - NIGHT
+
+Maya enters the deserted lab.
+
+AT THE SERVER RACK
+
+One status light blinks red.
+
+MOMENTS LATER
+
+The entire rack goes black.
+```
+
+Subheadings are uppercase but lack the full `INT./EXT.` construction. [Screenplay Formatting 101](https://www.youtube.com/watch?v=_2uZ7IabVOM) warns that a subheading is not the same thing as a **shot**. A subheading relocates or advances the scene; a shot explicitly directs the reader’s eye to a particular visual.
+
+## Action turns imagined events into visible behavior
+
+Action is everything in the scene that is not dialogue. Its default grammar is:
+
+- Present tense.
+- Concrete, filmable description.
+- Short paragraphs that expose changes and beats.
+- Selective capitalization for production-significant information.
+
+```text
+Maya lifts the envelope. Water runs from one corner.
+
+Inside: a POLAROID of Maya asleep in this room.
+
+The phone RINGS.
+```
+
+This tells the crew what must be visible or audible. It does not tell the reader an unfilmable private fact such as “Maya remembers that she has always feared abandonment” unless the screenplay supplies behavior, speech, image, or sound through which that fact reaches the audience.
+
+### Capitalization has a job
+
+The sources recommend uppercase for:
+
+- A character’s name at first appearance.
+- Important sound effects.
+- Essential props or story details.
+- Interjections or moments that need production attention.
+
+```text
+MAYA RAO, 28, practical clothes and sleepless eyes, steps inside.
+
+The GENERATOR COUGHS, then dies.
+
+On the desk: the only BLUE KEYCARD in the building.
+```
+
+Capitalization is a spotlight. If every noun is uppercase, the spotlight illuminates nothing. Capitalize because a reader or department needs to register the element, not because the sentence feels insufficiently exciting.
+
+### Paragraph shape controls reading rhythm
+
+One dense block hides beats:
+
+```text
+Maya enters the lab and crosses to the console and sees the warning while the lights fail and someone moves behind the glass and she tries the door but it is locked.
+```
+
+Beat-aware formatting makes the same progression visible:
+
+```text
+Maya enters the lab and crosses to the console.
+
+The display flashes: CONTAINMENT FAILURE.
+
+The lights die.
+
+A silhouette moves behind the glass.
+
+Maya grabs the exit handle. Locked.
+```
+
+This is not a demand that every sentence receive its own paragraph. The paragraph break should expose a meaningful change in perception, action, tactic, or danger.
+
+### Camera directions are exceptional
+
+The master scene script generally describes what the audience experiences rather than prescribing every lens and cut. Avoid routine directions such as `CLOSE ON`, `PAN TO`, or `WE TRACK` unless the way information is revealed is essential.
+
+Compare:
+
+```text
+CLOSE ON the keycard. PAN LEFT as Maya's hand enters frame.
+```
+
+with:
+
+```text
+The BLUE KEYCARD rests beneath the security camera.
+
+Maya's hand reaches for it.
+```
+
+The second version preserves the reveal and leaves staging open. A shot direction becomes justified when the shot itself carries indispensable story logic, as in an insert whose readable text changes the plot.
+
+## Character cues identify the speaker
+
+When a character speaks, put the character cue in uppercase at its dedicated tab position.
+
+```text
+                         MAYA
+```
+
+Use one stable speaking name. If the action introduces `DR. MAYA RAO` but every cue alternates among `MAYA`, `DR. RAO`, and `RAO`, the reader may briefly wonder whether three people exist.
+
+An unnamed character can use a functional label:
+
+```text
+                         DISPATCHER
+                         MASKED WOMAN
+                         PARAMEDIC
+```
+
+Change the cue when the story reveals an identity, but make the change easy to follow.
+
+## Dialogue records spoken language, not hidden explanation
+
+Dialogue sits beneath the character cue at its own narrower margins.
+
+```text
+                         MAYA
+              I said I would come back.
+```
+
+Formatting cannot rescue dialogue that exists only to explain information everyone in the scene already knows. Format makes the line readable; story craft gives it motive, conflict, voice, and subtext.
+
+### Dialogue extensions explain how the audience hears a voice
+
+The playlist demonstrates several extensions next to the character cue:
+
+```text
+                         MAYA (V.O.)
+                         MAYA (O.S.)
+                         MAYA (PRE-LAP)
+```
+
+- **Voice-over (`V.O.`):** the voice is not ordinary speech from a visible speaker in the immediate scene. Narration and a voice heard over another image commonly use it.
+- **Off-screen (`O.S.`):** the character belongs to the present physical scene but is outside the frame.
+- **Pre-lap:** dialogue from the coming scene begins before the image changes.
+
+The exact label can vary among productions and software. Preserve the conceptual distinction: unseen narrator, present-but-unseen speaker, and next-scene sound are different relationships.
+
+### Continued dialogue
+
+The foundational video notes that `CONT'D` may appear when a character speaks again after an interruption or when dialogue crosses a page boundary. Software often manages this automatically. Do not hand-build it with spaces.
+
+## Parentheticals provide only necessary local direction
+
+A parenthetical appears below the character cue and before or inside dialogue.
+
+```text
+                         MAYA
+                    (into the phone)
+              The west stairwell is clear.
+
+                         MAYA
+              The west stairwell is --
+                    (she listens)
+              no. Forget it.
+```
+
+Use it when the line’s delivery or accompanying action would otherwise be genuinely ambiguous. Parentheticals can clarify:
+
+- Who receives the line.
+- A small action during speech.
+- A necessary pause or shift.
+- Delivery whose contradiction creates meaning.
+
+Avoid specifying the emotion of every line. Actors and directors need playable circumstances, not a second script of adverbs.
+
+```text
+                         MAYA
+                    (angrily)
+              Leave.
+```
+
+may be weaker than:
+
+```text
+Maya opens the door and drops his coat into the rain.
+
+                         MAYA
+              Leave.
+```
+
+The action produces the emotion instead of naming it.
+
+## Transitions describe a meaningful relationship between scenes
+
+Traditional transitions sit on the right and end with a colon:
+
+```text
+                                               CUT TO:
+                                          DISSOLVE TO:
+                                         MATCH CUT TO:
+```
+
+Most ordinary scene changes do not require `CUT TO:` because a new slug line already implies a cut. Use an explicit transition when its quality matters:
+
+- `DISSOLVE TO:` can communicate temporal or visual blending.
+- `MATCH CUT TO:` depends on a designed visual or conceptual match.
+- A deliberately abrupt `CUT TO:` may create a joke, shock, or collision.
+
+This is one of the clearest places where restraint preserves force.
+
+## A complete basic page in context
+
+```text
+INT. APARTMENT - KITCHEN - NIGHT
+
+Rain needles the dark window. MAYA RAO, 28, sets a
+WATER-STAINED ENVELOPE beside the silent phone.
+
+The phone RINGS.
+
+                         MAYA
+                    (into the phone)
+              You said this address was clean.
+
+                         ELIAS (V.O.)
+              It was.
+
+Maya opens the envelope. A POLAROID shows her asleep at
+this table. Tonight's newspaper lies beside her in the image.
+
+                         MAYA
+              Then who took this?
+
+Silence. The kitchen light switches off behind her.
+
+                                               CUT TO:
+
+EXT. APARTMENT BUILDING - NIGHT
+
+A lone figure watches Maya's window go dark.
+```
+
+What the format communicates:
+
+- Two production scenes and their locations.
+- Night continuity.
+- Maya’s first appearance.
+- A significant envelope, ring, and photograph.
+- Elias is heard but not present in the immediate location.
+- Maya speaks into a phone.
+- The final cut is emphasized because it reveals an observer and changes the audience’s knowledge.
+
+## Phone calls: choose the format from what the audience sees and hears
+
+[The Anatomy of a Screenplay Part 2](https://www.youtube.com/watch?v=KUnclLt2RqQ) treats phone formatting as a choice governed by presentation.
+
+### Only one side is shown and heard
+
+Write ordinary dialogue, optionally using a concise parenthetical:
+
+```text
+                         MAYA
+                    (into the phone)
+              Elias? Are you there?
+
+She listens. Nothing.
+```
+
+### One person is visible; the other is heard
+
+Use an extension appropriate to the production’s convention:
+
+```text
+                         ELIAS (V.O.)
+              Do not turn on the hall light.
+```
+
+### Both locations are shown
+
+Establish both locations, then use `INTERCUT` so the script does not repeat a slug line before every reply.
+
+```text
+INT. MAYA'S APARTMENT - NIGHT
+
+Maya grips the phone.
+
+INT. ELIAS'S CAR - NIGHT
+
+Elias checks the empty rear seat.
+
+INTERCUT MAYA / ELIAS
+
+                         MAYA
+              Where are you?
+
+                         ELIAS
+              Closer than I should be.
+```
+
+Intercutting is efficient only after the spatial alternatives are clear.
+
+## Interruptions, overlap, and simultaneous dialogue
+
+Spoken conversation is not always orderly.
+
+### Interruption
+
+The source notes Aaron Sorkin’s use of two dashes to show one line being cut off:
+
+```text
+                         MAYA
+              If you would let me finish --
+
+                         ELIAS
+              We don't have time.
+```
+
+### True overlap
+
+When two characters speak substantially at once, scripts can use side-by-side **dual dialogue**. Most screenwriting software provides a dual-dialogue command. Do not imitate it with an unstable grid of spaces.
+
+```text
+              MAYA                         ELIAS
+      Shut the system down.        Open the west door.
+```
+
+Use dual dialogue only when simultaneous hearing is intended. Rapid alternation is ordinary dialogue with short lines, not dual dialogue.
+
+## Other languages and subtitles
+
+The advanced-formatting source presents language and subtitle treatment as flexible. State the listening rule clearly in action, then keep it consistent.
+
+```text
+They speak in Hindi. Subtitles appear throughout the exchange.
+
+                         MAYA
+              The archive was never empty.
+```
+
+or, for a brief line:
+
+```text
+                         GUARD
+                    (in Hindi; subtitled)
+              The archive was never empty.
+```
+
+The screenplay may present the translated line in English so its readers understand it while the action tells production what the audience hears and reads. If subtitles stop for a dramatic reason, identify that change.
+
+## Music, lyrics, and musical time
+
+A music cue can be a song named in action. A musical may distinguish song titles with a consistent typographic convention. The source cites bracketed, bold song titles in *La La Land* as one approach, not a universal mandate.
+
+Lyrics create a timing problem: a few narrow lines may take much longer to sing than to speak. Two source-supported solutions are:
+
+1. Space lyrics so page length better reflects performance time.
+2. Describe the musical sequence rather than print every lyric.
+
+Whichever form is chosen, make clear when music begins, what dramatic action continues during it, and when it ends.
+
+## Montages, series of shots, and rapid cuts
+
+The foundational source uses explicit bookends:
+
+```text
+BEGIN MONTAGE
+
+-- Maya photographs every lock in the building.
+-- Elias maps the photographs across his motel wall.
+-- A red line connects three doors on three different floors.
+
+END MONTAGE
+```
+
+The advanced source shows alternatives such as `SERIES OF SHOTS`, action lists, and short shots placed beside continuing dialogue. The right form depends on what the sequence must communicate.
+
+Use a montage when compressed images collectively show development, repetition, preparation, passage of time, or thematic comparison. Do not use one merely to avoid writing causal scenes.
+
+Charlie Kaufman’s *Eternal Sunshine of the Spotless Mind* is a deliberate exception discussed in [Anatomy of a Screenplay](https://www.youtube.com/watch?v=6PLSJBTzaGw): memories blur together in one flowing paragraph because the lack of separation creates the intended experience. The convention is bent for a specific cognitive effect.
+
+## Chyrons, titles, documents, and readable inserts
+
+For screen text, [Screenplay Formatting 101](https://www.youtube.com/watch?v=_2uZ7IabVOM) uses `CHYRON:` or `TITLE:` in an action line:
+
+```text
+CHYRON: MUMBAI — 18 HOURS EARLIER
+```
+
+A document or object whose exact text matters can receive an insert:
+
+```text
+INSERT - SECURITY LOG
+
+03:17: WEST DOOR OPENED FROM INSIDE.
+
+BACK TO SCENE
+```
+
+An insert is valuable when the audience must read the information. If only the fact matters, ordinary action is cleaner:
+
+```text
+The log says the west door opened from inside at 3:17 A.M.
+```
+
+The advanced source notes that *The Bourne Identity* offsets important passport text to attract production attention. This is an example of purposeful page design, not a command to right-align every document.
+
+## Text messages, books, and computer screens
+
+There is no single mandatory format for screen media. [The Anatomy of a Screenplay Part 2](https://www.youtube.com/watch?v=KUnclLt2RqQ) shows several solutions.
+
+### Text messages
+
+You can describe the exchange in action:
+
+```text
+Her phone lights up.
+
+ELIAS: DON'T USE THE ELEVATOR.
+
+Maya types: WHY?
+
+The reply indicator appears. Vanishes.
+```
+
+Or use a consistent distinct style when a long exchange requires quick scanning. The page should communicate the wording and dramatic timing while allowing the director to decide whether messages appear as inserts, overlays, or another visual system.
+
+### Books and letters
+
+Options include:
+
+- Insert the important page.
+- Describe the relevant content in action.
+- Use voice-over while the text or its effect is shown.
+
+Choose according to what the audience experiences. A voice-over is inappropriate if the point is that the character silently misreads a sentence.
+
+### Computer screens
+
+Describe essential screen action in clear action prose. A film that takes place substantially on screens may add medium labels to scene headings or parentheticals, such as webcam, desktop, or phone footage. Consistency becomes more important as the number of interfaces increases.
+
+## Flashbacks and flash-forwards: chronology must be readable
+
+The mechanics of a flashback are introduced in [The Anatomy of a Screenplay Part 2](https://www.youtube.com/watch?v=KUnclLt2RqQ); its dramatic purpose is developed elsewhere in the playlist. Formatting options include:
+
+### A full scene with time marked in the heading
+
+```text
+FLASHBACK - INT. MAYA'S CHILDHOOD HOME - NIGHT - 2008
+
+Twelve-year-old Maya hides beneath the dining table.
+```
+
+### Explicit entry and exit
+
+```text
+BEGIN FLASHBACK
+
+INT. CHILDHOOD HOME - NIGHT
+
+The same envelope slides beneath the door.
+
+END FLASHBACK
+```
+
+### A brief inserted memory
+
+```text
+FLASHBACK - A child's hand reaches for the blue keycard.
+
+BACK TO MAYA.
+```
+
+### A differentiated timeline
+
+The source notes that *Memento* differentiates timelines typographically and labels individual inserted memories. A repeated structural device can use a repeated page treatment if it remains clear.
+
+### An intentionally unmarked shift
+
+Some scripts omit the label because discovering that a scene belongs to another time is itself a story effect. *Slumdog Millionaire* is cited as moving across time without always announcing the device. This is controlled ambiguity: the reader must eventually be able to reconstruct the chronology.
+
+Do not label a scene `FLASHBACK` merely because a character remembers something while remaining in the present. Format the experience the audience actually sees.
+
+## Dreams and subjective sequences
+
+A dream may be declared in a scene heading, introduced in action, or intentionally left unlabeled. *Total Recall* marks dream material; *The BFG* uses action; *A Nightmare on Elm Street* may conceal the boundary.
+
+The decision depends on audience knowledge:
+
+- Label it when orientation is more important than surprise.
+- Conceal it when uncertainty is the intended experience.
+- Supply enough later evidence that the ambiguity feels designed rather than accidental.
+
+## Prologues use ordinary scene grammar
+
+[How to Write a Prologue](https://www.youtube.com/watch?v=5yWnsDiU04s) defines a prologue by its **position and temporal relationship**, not by a special page template. Format it like other scenes. If its time differs from the main story, make that difference clear through a heading or title.
+
+```text
+PROLOGUE
+
+EXT. COASTAL TRANSMITTER - NIGHT - 1998
+
+A storm bends the radio mast toward the sea.
+```
+
+After the prologue:
+
+```text
+TITLE: TWENTY-EIGHT YEARS LATER
+
+INT. MAYA'S APARTMENT - KITCHEN - NIGHT
+```
+
+The source urges writers to ask whether the prologue earns its delay of the main narrative. It should establish necessary world rules, introduce a crucial character, or make the tone and premise vivid.
+
+## Fight scenes: readable action before exhaustive choreography
+
+[How to Write Fight Scenes like John Wick](https://www.youtube.com/watch?v=oWUJt_dYFNw) frames fight formatting around readability, timing, and production use.
+
+Plan the dramatic shape:
+
+```mermaid
+flowchart LR
+    A[Enter with a clear objective] --> B[First wave<br/>establish skill and style]
+    B --> C[Track remaining threats]
+    C --> D[Reversal or cost<br/>the hero gets hit]
+    D --> E[Change space or tactic]
+    E --> F[More formidable opponent]
+    F --> G[Decisive result and consequence]
+```
+
+The tutorial’s John Wick-inspired sequence mixes gunplay with close combat, tracks how many opponents remain, transitions to another setting, and culminates in a harder one-on-one encounter. Tracking opponents serves both the reader and stunt team.
+
+Write major impacts with selective sound emphasis:
+
+```text
+The guard swings.
+
+Maya ducks. The baton SLAMS into the steel rail.
+
+Two guards remain.
+```
+
+Give the protagonist resistance. A fighter who executes choreography without tactical change, injury, cost, or danger may demonstrate ability but produce little drama.
+
+The tutorial estimates its sample fight at approximately 30–40 seconds and checks page length against that duration. It does not support the claim that every move needs its own line or that a writer must dictate a finished stunt routine. Describe enough to communicate geography, progress, character style, reversals, and indispensable story beats.
+
+## The logline is a separate compressed format
+
+[How to Write a Logline](https://www.youtube.com/watch?v=pMj8xUa1jOA) defines a logline as a sentence that encapsulates the pilot. It is not placed inside screenplay scenes, but it belongs to the presentation package.
+
+Two formulas taught are:
+
+$$
+\text{Inciting incident}+\text{protagonist}+\text{action}+\text{antagonist}
+$$
+
+and
+
+$$
+\text{Protagonist}+\text{action}+\text{antagonist}+\text{goal}+\text{stakes}.
+$$
+
+Example:
+
+> After an impossible transmission predicts her own murder, a disgraced radio engineer must break into the coastal station that ruined her career before its unseen operator broadcasts the final instruction.
+
+The sentence supplies disruption, protagonist, action, opposition, goal, and implied life-and-reputation stakes. Specific words such as “disgraced radio engineer” also carry tone and character. A logline is compressed story causality, not a list of events.
+
+## Television begins with feature grammar, then diverges by production model
+
+[How to Write a Script for TV](https://www.youtube.com/watch?v=h4imidyLecA) separates **single-camera** and **multi-camera** scripts.
+
+### Single-camera television
+
+Single-camera layout largely resembles a feature screenplay, but act divisions may be explicit because acts historically lead into commercial breaks.
+
+```text
+                         ACT ONE
+
+INT. MAYA'S APARTMENT - NIGHT
+
+...
+
+                       END OF ACT ONE
+```
+
+The video describes act labels as centered, bold, and underlined in the examples. Streaming scripts may retain act beats while omitting visible act headings.
+
+#### Teaser or cold open
+
+A short opening sequence precedes the principal acts. “Teaser” is common in drama and “cold open” in comedy, though these labels are not absolute.
+
+```text
+                         TEASER
+
+EXT. COASTAL TRANSMITTER - NIGHT
+
+...
+
+                       END OF TEASER
+```
+
+#### Tag
+
+A short sequence after the main resolution can deliver a final joke or cliffhanger.
+
+```text
+                           TAG
+
+INT. EMPTY CONTROL ROOM - NIGHT
+
+The dead transmitter begins to speak.
+
+                       END OF SHOW
+```
+
+The source gives **25–35 pages** as a general half-hour single-camera range while explicitly citing shorter and longer exceptions. Page target follows show, platform, and production convention rather than a universal law.
+
+### Multi-camera television
+
+Multi-camera comedy is produced more like theater: several cameras record longer performances, commonly before a live audience. Its page layout makes rehearsal and stage production information prominent.
+
+Conventions taught:
+
+- Acts centered, uppercase, and underlined.
+- Scenes lettered and underlined.
+- Scene heading includes **story day** in parentheses.
+- Scene or act number may appear below the page number.
+- Characters present may be listed in parentheses at the scene opening.
+- Action appears in uppercase.
+- Sound effects and character references in action are underlined.
+- Dialogue is double-spaced.
+- A half-hour script commonly reaches **50–60 pages** because of the expanded spacing.
+
+Schematic example:
+
+```text
+                              ACT ONE
+
+                              SCENE A
+
+INT. MAYA'S APARTMENT - NIGHT (DAY 1)
+
+(MAYA, ELIAS)
+
+MAYA OPENS THE WATER-STAINED ENVELOPE. THE PHONE RINGS.
+
+                         MAYA
+
+              Please tell me that's you.
+
+                         ELIAS
+
+              Would that make this better?
+```
+
+Story-day numbering supports continuity. A change from `(DAY 1)` to `(DAY 2)` may require costume, hair, makeup, and prop changes even when the scenes are shot out of sequence.
+
+Do not combine feature, single-camera, and multi-camera conventions indiscriminately. Match the production form and, for an existing show, study that show’s own script style.
+
+## Frame narratives need visible timeline ownership
+
+[What Is a Frame Narrative?](https://www.youtube.com/watch?v=e9_Ize7ZDwg) recommends using scene headings and character cues to keep outer and embedded stories distinct.
+
+```text
+INT. INTERVIEW ROOM - PRESENT DAY
+
+                         MAYA, 52
+              I had heard the signal once before.
+
+EXT. COASTAL TRANSMITTER - NIGHT - 2026
+
+MAYA, 28, runs toward the collapsing mast.
+```
+
+The *Life of Pi* example distinguishes `ADULT PI` from younger Pi and puts dates in non-present headings. These choices answer two questions immediately:
+
+1. Which story level are we in?
+2. Which version of the character is present?
+
+Transitions between frame and embedded story require deliberate frequency. Too many can destroy immersion; too few can make the outer story feel ornamental. The format should expose the structure without overwhelming the dramatic reason for it.
+
+## Locked scripts, scene numbers, and revisions
+
+The screenplay written for reading and sale becomes a **shooting script** when the production locks a draft as the common crew reference.
+
+### Scene numbers
+
+Scene numbers are added to locked scripts. The foundational source describes them with approximately **0.75-inch margins on the left** and **1-inch margins on the right**, so the number appears beside the same scene heading on both sides.
+
+```text
+42   INT. APARTMENT - KITCHEN - NIGHT                    42
+```
+
+Writers normally do not number speculative scenes before production asks for a shooting draft. Numbers exist for schedules, breakdowns, call sheets, revisions, and departmental coordination.
+
+### Locked numbering protects references
+
+Once a draft is locked, new scenes receive letters so existing references do not shift. The source’s example names a scene inserted before scene 44 as `A44`.
+
+```text
+A44  INT. SERVICE CORRIDOR - CONTINUOUS                 A44
+44   INT. CONTROL ROOM - CONTINUOUS                      44
+```
+
+Some productions/software may display letter placement differently. Preserve the production’s established numbering scheme.
+
+If a scene is deleted, its number remains with `OMITTED`:
+
+```text
+57   OMITTED                                              57
+```
+
+The crew can now understand that the scene was deliberately removed; every later scene retains its existing reference.
+
+### Revision colors
+
+The source gives the sequence beginning:
+
+1. White original.
+2. Blue revision.
+3. Pink revision.
+4. Yellow revision.
+5. Further colors according to the production/WGA sequence.
+
+The revision date and color appear in the upper-right corner of revised pages and on the title page. Only changed pages need to be redistributed, producing a multi-colored **rainbow script** over repeated revisions.
+
+Revision control is operational truth. A beautiful changed page is dangerous if half the crew works from yesterday’s version.
+
+## The script breakdown explains why exact formatting matters
+
+An assistant director can divide a page into eighths to estimate screen and shooting time. Departments identify and tag elements such as:
+
+- Cast.
+- Background performers.
+- Costumes.
+- Props.
+- Set dressing.
+- Stunts.
+- Sound.
+- Special production requirements.
+
+The script’s stripped-down language is part of this collaboration. If an important prop is on the page, the art and property departments can plan for it. If a stunt is hidden inside vague metaphor, production may not discover the requirement until too late.
+
+### Figure F3 — one page, many readers
+
+```mermaid
+flowchart TD
+    S[Screenplay page] --> D[Director<br/>story, performance, staging possibilities]
+    S --> AD[Assistant director<br/>scene, eighths, schedule, breakdown]
+    S --> ACT[Actors<br/>objective, behavior, dialogue, subtext]
+    S --> ART[Art and props<br/>locations, objects, set dressing]
+    S --> W[Wardrobe and makeup<br/>characters, time, continuity]
+    S --> ST[Stunts and effects<br/>risk, action, special requirements]
+    S --> ED[Editorial and sound<br/>transitions, timing, audio events]
+```
+
+Correct formatting is therefore both a reading courtesy and a production interface.
+
+## Exceptions work when they create a precise reading experience
+
+The rules are strict enough to make the document communal, but not so strict that every writer sounds the same.
+
+Examples from [Anatomy of a Screenplay](https://www.youtube.com/watch?v=6PLSJBTzaGw):
+
+- Charlie Kaufman compresses montage scenes into a dense paragraph when memories are meant to blur.
+- Aaron Sorkin sometimes runs pages of dialogue with little action to preserve verbal rhythm.
+- Spike Lee uses action lines for authorial perspective and social context.
+- Todd Field uses unusually dense musical detail in *Tár*, then warns readers that the 94-page script will produce a substantially longer film.
+- Greta Gerwig directly asks the reader to remember a short driving moment because it pays off at the ending.
+- *Halloween* underlines frightening actions to guide reading emphasis.
+
+These are effective because each deviation answers a clear dramatic need. “I prefer it” is not yet a functional reason. Ask:
+
+1. What conventional reading would occur without the deviation?
+2. What specific experience does the deviation create?
+3. Does the new form remain understandable to cast and crew?
+4. Can the effect be achieved more clearly within the standard grammar?
+
+## A practical formatting decision tree
+
+```mermaid
+flowchart TD
+    A[What must the audience experience?] --> B{New place or time?}
+    B -- Yes --> C[Full scene heading]
+    B -- No --> D{Shift within established scene?}
+    D -- Yes --> E[Subheading or action beat]
+    D -- No --> F{Spoken information?}
+    F -- Yes --> G[Character cue + dialogue]
+    G --> H{Special listening relation?}
+    H -- Unseen narration --> I[V.O.]
+    H -- Present but outside frame --> J[O.S.]
+    H -- Next scene starts early --> K[Pre-lap]
+    H -- Both locations alternate --> L[Establish both + INTERCUT]
+    F -- No --> M{Readable screen text?}
+    M -- Yes --> N[CHYRON, TITLE, insert, or clear action]
+    M -- No --> O[Present-tense visual/action description]
+    C --> P{Nonlinear time?}
+    P -- Orientation matters --> Q[Label flashback/date/timeline]
+    P -- Discovery matters --> R[Controlled unmarked shift with later clarity]
+```
+
+## Before handing the script to another reader
+
+### Page and document check
+
+- Is the font 12-point Courier or the requested industry-compatible Courier variant?
+- Are the foundational margins correct?
+- Is the title page separate and unnumbered?
+- Does screenplay page 1 omit a printed number while later pages number at upper right?
+- Did software, rather than manual spaces, create element alignment?
+
+### Scene check
+
+- Does every new production location/time receive a clear heading?
+- Are location names consistent?
+- Does `CONTINUOUS` actually mean uninterrupted action?
+- Are subheadings distinguishable from shot directions?
+
+### Action check
+
+- Is action in present tense?
+- Can the audience see or hear the information?
+- Do paragraph breaks expose meaningful beats?
+- Are capitals selective?
+- Are essential props, sounds, stunts, and screen text discoverable?
+
+### Dialogue check
+
+- Is each speaker stable and unambiguous?
+- Are `V.O.`, `O.S.`, pre-lap, and intercut used for the correct relationship?
+- Are parentheticals necessary?
+- Is overlap distinct from rapid alternation?
+
+### Special-structure check
+
+- Can a reader identify every timeline and story level?
+- Is ambiguity deliberate, and does the script later supply enough evidence?
+- Do montages have readable entry, progression, and exit?
+- Does a phone, text, document, or computer sequence communicate both wording and timing?
+
+### Production check
+
+- If this is a speculative/read draft, have unnecessary scene numbers and revision marks been omitted?
+- If this is a locked shooting script, have numbers been preserved through insertions and omissions?
+- Does the revision date/color identify the correct changed pages?
+- For television, does the format match single-camera or multi-camera production and the target show’s convention?
+
+## Source coverage and limits
+
+| Playlist item | Source contribution to this volume | Evidence used | Limits and cautions |
+|---|---|---|---|
+| [5 — Anatomy of a Screenplay — Movie Script Format Explained (And Why It Matters)](https://www.youtube.com/watch?v=6PLSJBTzaGw) | Master scene history; 12-point Courier; margins; title page; six basic elements; scene headings; action; capitalization; cue/dialogue placement; parentheticals; transitions; montage/chyron; page-time estimate; shooting scripts; scene numbers; revisions; breakdowns; purposeful exceptions | English caption file `005-6PLSJBTzaGw.en-US.vtt` | Captions give approximate tab positions but not every element width. Revision and numbering practices can vary by production software and current production agreement. |
+| [19 — How to Format a Screenplay: Screenplay Formatting 101](https://www.youtube.com/watch?v=_2uZ7IabVOM) | Condensed reinforcement of slug lines, action, capitals, extensions, pre-lap, parentheticals, transitions, intercut, subheaders, shots, montage, lyrics, chyrons | English caption file `019-_2uZ7IabVOM.en-en.vtt` | Automatic captions omit or garble several labels shown visually on screen. This volume uses only distinctions recoverable from narration and does not invent unseen sample text. |
+| [20 — The Anatomy of a Screenplay Part 2 — Formatting Techniques to Elevate Your Script](https://www.youtube.com/watch?v=KUnclLt2RqQ) | Phone-call options; dual dialogue and interruption; languages/subtitles; music; messages; documents; books; computers; flashbacks; dreams; rapid cuts; readability rule | English caption file `020-KUnclLt2RqQ.en-US.vtt` | The video explicitly says several forms have no single fixed rule. Examples here preserve that flexibility rather than declaring one house style universal. |
+| [21 — How to Write a Prologue — Writing Tips and Tricks](https://www.youtube.com/watch?v=5yWnsDiU04s) | Prologues use normal scene formatting; time shift can be stated in heading or screen text; prologue must earn its placement | English caption file `021-5yWnsDiU04s.en-US.vtt` | Most of this video concerns dramatic purpose, not page geometry. This volume uses only its formatting-relevant claims. |
+| [22 — How to Write Fight Scenes like John Wick](https://www.youtube.com/watch?v=oWUJt_dYFNw) | Fight readability; opponent tracking; sounds; scene shape; timing estimate; incorporating production notes | English caption file `022-oWUJt_dYFNw.en-en.vtt` | Much of the sample fight is visible inside writing software and absent from captions. Exact line breaks and complete choreography are therefore not claimed. |
+| [26 — How to Write a Logline — TV Writing & Development Course: Ep4](https://www.youtube.com/watch?v=pMj8xUa1jOA) | One-sentence logline purpose; two component formulas; specificity and tone | English caption file `026-pMj8xUa1jOA.en-en.vtt` | A logline is packaging/development material, not an element placed inside screenplay scenes. Automatic captions are imperfect but the formulas are explicit. |
+| [29 — How to Write a Script for TV — Anatomy of a Screenplay Part 3](https://www.youtube.com/watch?v=h4imidyLecA) | Single-camera acts, teaser/cold open, tag, page ranges; multi-camera acts, scenes, story days, action/dialogue treatment, page range; structural conventions | English caption file `029-h4imidyLecA.en-US.vtt` | Television norms evolve by network, platform, show, and production. The source itself identifies exceptions. A target show’s current script remains the best house-style reference. |
+| [30 — What is a Frame Narrative? — Why Writers Use the Literary Device](https://www.youtube.com/watch?v=e9_Ize7ZDwg) | Scene headings, dates, and character cues for distinguishing frame and embedded narratives; transition-frequency tradeoff | English caption file `030-e9_Ize7ZDwg.en-US.vtt` | Primarily a narrative-device lesson. Only its script-clarity guidance belongs in this formatting volume. |
+| [32 — Master Screenwriting: How to Write a Fight Scene](https://www.youtube.com/watch?v=tulAaKl2vL0) | Fight-page pacing, alternating advantage, name/prop subheadings, selective visual/sound cues | Chapter titles and creator reply in comments | Partial evidence only; no full caption/transcript. See [[03 - Story Devices and Placement]] for cautiously framed teaching. |
+
+## Closing principle
+
+Formatting is successful when it disappears into comprehension. A reader does not stop to decode whether a line is location, behavior, speech, a delivery note, a transition, an embedded message, or a new timeline. They understand immediately, continue imagining the film, and can later break that imagined film into work.
+
+This volume synthesizes captions, Fountain/Beat documentation, and linked screenplay examples; it does not reproduce full transcripts. The Academy notes a recognizable professional format range rather than a single absolute micro-standard, so follow target submission, employer, competition, or production rules. For missing-caption videos, Video 32 has partial chapter/comment evidence, Video 98 has a StudioBinder companion article, Video 84 remains limited to sparse description/chapter metadata, and Video 69 remains unverified because no usable transcript, chapters, or relevant comments were found. Video 68 contains montage material but no instructional narration. Industry practices vary; clarity and target house style govern.
+
+For a fuller lesson on cutting, pacing, and sound/image transitions, see [[03 - Story Devices and Placement]]. For scene purpose, character pressure, and dialogue delivery, see [[02 - Scenes, Dialogue and Character]]. For the story, drafting, revision, and industry voices, see [[04 - Story Design, Structure and Practice]].
+
+Use convention to create trust. Bend it when the page must produce a specific experience. In both cases, make the intention readable.

@@ -641,3 +641,34 @@ Final M004 structural audit: 117 Markdown files, 107 filled concept nodes, 189 a
 - `git rev-parse --is-inside-work-tree`: exit 128, not a Git repository. This vault has no build/CI workflow; canonical teaching snippets were compiled instead. No commit, push or PR.
 
 **Limits:** no visual Obsidian rendering pass is claimed in this turn; delimiter/link audits are syntax/structure checks. No PDF export, live repository test, exhaustive four-billion-word binary32 enumeration, exhaustive floating arithmetic, signaling-NaN execution, special-value payload transport across platforms, FTZ/DAZ target-mode experiment, performance benchmark, or learner-mastery claim. Existing M001/M002 implementations compile in the cumulative build, but their older exhaustive harness was not rebuilt or rerun in this merge.
+
+## C010 - M010 resource ownership - 2026-10-23
+
+### M010 - Resource ownership
+
+The subsequent visual pass is recorded in [[#Visual revision - 2026-10-23|the visual verification record]].
+
+- **Primary source:** `/Users/swayamsingal/.codex/attachments/e69bce48-1f4c-4574-ab89-9be936574baa/Pasted text.txt`.
+- **Coverage:** thirteen part headings, 148–160 exactly once and in order. The source title is “RAII, Ownership Models, Smart Pointers, Placement Construction, and Lifetime Restart.”
+- **Integrated:** continuous Volume 02 narrative plus a visual-recall board; per-part coverage is recorded in [[Supplementary/Foundations#M010 - Parts 148-160|Foundations]]. The narrative is concept-led and keeps examples in the subject file.
+- **Evidence boundary:** supplied source mentions `KairoRenderer/VulkanBuffer.cppm` and `Maveb/engine/metal/include/aether/metal/MetalPtr.hpp` as laboratories. Those repositories/files were not inspected in this task; all claims about their current contents remain **To verify**.
+- **Primary language/design checks consulted 2026-10-23:** [C++ Core Guidelines resource-management rules](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-resource), especially R.1 and owner/borrow distinctions; the [live C++ working draft, object lifetime](https://eel.is/c++draft/basic.life), [new-expressions and allocation functions](https://eel.is/c++draft/expr.new), [smart-pointer library specification](https://eel.is/c++draft/util.smartptr), and [specialized memory algorithms](https://eel.is/c++draft/specialized.algorithms). These support general language/design distinctions in the notes; the live draft may evolve beyond the project's targeted language version, so version-specific claims should be checked against that selected standard.
+- **Verification:** source-heading count and range, local wiki links, headings, code fences, MathJax delimiters and Mermaid fence inventory checked with vault-local scripts/commands in the current task. No C++ compiler test was run for illustrative snippets; the `Mutex` example is an interface sketch, not a standalone program. Mermaid rendering was not visually inspected in Obsidian.
+
+## Visual revision - 2026-10-23
+
+Processed the continuous volumes in order: Bits, C++, Phase 6, XR. Added sixteen compact horizontal Mermaid figures beside their teaching explanations (B1–B4, CPP-01–CPP-04, G1–G4, X1–X4), with figure headings, captions, worked values, assumptions and direct recall backlinks. Added G0 and X0 illustrative scenes. Existing prose and retrieval material are retained; diagram replacements correct layout or causal ordering. The C++ coverage banner now agrees with its accepted M010 content.
+
+The recall companions contain concise topic briefs and direct links to the corresponding chapter figures and explanations. They retain their longer retrieval desks; the page-sized units are individual overview/figure cards, rather than squeezing the entire retained recall note onto one physical sheet.
+
+**Verification performed:**
+
+- `node /tmp/vault-render.cjs <continuous-file> <recall-file>` was run for each volume using Mermaid 11 in headless Google Chrome. Bits: 13 diagrams, C++: 10, Phase 6: 10, XR: 8; all 41 rendered without errors. The sixteen new analytical figures were inspected from rendered screenshots at a 1300-pixel landscape width, including text, arrow direction, branches and worked values. No Obsidian-theme-specific rendering or physical PDF pagination is claimed.
+- `node /tmp/vault-math-check.cjs` rendered 1,316 expressions from the eight note files with MathJax 3; zero expression errors.
+- A Python target/heading audit checked 477 file, image and heading references across the eight notes; zero missing targets after correcting the M010 source-record heading. C++ attributes inside inline code were excluded from wiki-link checks.
+- Worked numerical checks passed for `AD→9D`, the barycentric temperature 35, transformed normal/tangent orthogonality, 13-Hz/3-Hz aliasing at 10-Hz sampling, and linear 0.5 encoding to sRGB 0.7353569831. FMA and virtual-address figures retain their local assumptions.
+- Mechanically escaped 67 wiki-link alias separators in Markdown table cells, preserving the labels and destinations while preventing extra columns. Code fences and `git diff --check` passed.
+
+**Original imagery:** the built-in image-generation tool produced `Visual Recall/geometry_robot_panel.png`, embedded in Phase 6 and its recall companion. Prompt sent: “Use case: scientific-educational. Asset type: original teaching illustration for a vector geometry chapter. Wide landscape editorial illustration of one robot workcell: small industrial robot arm reaches toward a triangular flat metal panel bolted on a workbench, a camera sensor observes the panel. Clear three corners of triangle, spatial depth, visible front and rear surfaces, subtle cyan light emphasizing the panel plane. Clean off-white background, restrained navy, teal and amber colors. No text, no letters, no arrows, no numerical scale, no equations, no infographic boxes. Perspective should help readers imagine the concrete scene used for points, displacement vectors, surface normals and barycentric interpolation; it must not pretend to be a quantitative geometric plot. Calm, precise modern textbook visual, uncluttered, no decorative extra objects.” Its caption treats the cyan cone as schematic camera field of view, not a measured emission pattern. The existing `Visual Recall/xr_perception_pipeline.png` is now embedded from the vault in both XR files with qualitative-collage limits; precise optical relationships are provided by X1 and its explanation.
+
+These checks validate the added figures, numerical examples, rendering syntax and navigation. They do not re-certify every historical repository claim, benchmark, source quotation or executable laboratory in the continuous volumes.

@@ -7,11 +7,11 @@ This library entry point leads to self-contained teaching stories. Definitions, 
 | Volume | Source coverage | Current state | Read |
 |---|---|---|---|
 | 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory|Open volume 01]] |
-| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–147 · M007–M009; planned Parts 101–300 · M007–M018 | 3/12 sources integrated; objects, borrows, value transfer and cleanup, inline examples and laboratories | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Open volume 02]] |
+| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–160 · M007–M010; planned Parts 101–300 · M007–M018 | 4/12 sources integrated; objects, borrows, value transfer, ownership and lifetime, inline examples and laboratories | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Open volume 02]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Visual recall]] |
 | Phase 6 · From Movement to Meaning: Vectors, Geometry, and Reliable Code | Parts 501–600 · user-labeled M031–M036 | All phase topics developed; 99 supplied lesson headings plus explicit Part 542 reconstruction; panel narrative and inline tested C++ | [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|Open Phase 6]] |
 | Later subjects | Remaining integrated curriculum | Boundaries follow real subject continuity | No empty volume files |
 
-Numbered coverage is disjoint: Parts 1–147 and 501–600. Parts 148–500 remain unreceived. The Phase 6 file number follows the curriculum phase and does not imply missing volumes have been created or completed.
+Numbered coverage is disjoint: Parts 1–160 and 501–600. Parts 161–500 remain unreceived. The Phase 6 file number follows the curriculum phase and does not imply missing volumes have been created or completed.
 
 ## Independent learning series
 
@@ -32,7 +32,7 @@ Numbered coverage is disjoint: Parts 1–147 and 501–600. Parts 148–500 rema
 
 ## Visual active recall
 
-[[Visual Recall/01 - Bits, Numbers and Memory - Visual Recall|Volume 01 visual recall · Parts 1–100]] provides compact Mermaid relationships, bit/byte strips, comparison tables, reconstruction questions and collapsible answer keys. One companion per continuous volume; only Volume01 is included so far.
+Visual-recall companions now cover all four continuous volumes: [[Visual Recall/01 - Bits, Numbers and Memory - Visual Recall|Volume 01 · Parts 1–100]], [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Volume 02 · Parts 101–160]], [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Independent XR foundations]], and [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Phase 6 · Parts 501–600]]. Each uses diagrams, captions and retrieval prompts; the existing Volume 01 board remains intact.
 
 ## Cumulative companions
 

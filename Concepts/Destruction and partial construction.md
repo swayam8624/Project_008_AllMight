@@ -6,11 +6,13 @@ tags:
 
 # Destruction and partial construction
 
-**Curriculum depth:** Introduced · **First seen:** C009 · **Latest development:** C009
+**Curriculum depth:** Developed · **First seen:** C009 · **Latest development:** C010
 
 ## Definition and mechanism
 
 The destructor body precedes reverse member/base cleanup. Ordinary constructor failure destroys completed subobjects but not the incomplete whole; failure after a delegating target completed has a distinct cleanup case. RAII binds resource release to an owning object's lifetime.
+
+M010 extends the cleanup invariant to files, locks and native handles, and distinguishes destruction from external resource completion. A destructor can enqueue deferred release when an asynchronous user still holds the resource. Constructor failure remains safe when each acquired duty is immediately represented by a completed owner member.
 
 ## Prerequisites
 
@@ -21,6 +23,7 @@ The destructor body precedes reverse member/base cleanup. Ordinary constructor f
 
 - [[Assignment and exception guarantees]]
 - [[Move operations and moved-from states]]
+- [[RAII and resource handles]]
 
 ## Recall and next depth
 

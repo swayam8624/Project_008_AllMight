@@ -6,13 +6,15 @@ tags:
 
 # Object construction and storage reuse
 
-**Curriculum depth:** Developed · **First seen:** C007 · **Latest development:** C009
+**Curriculum depth:** Developed · **First seen:** C007 · **Latest development:** C010
 
 ## Definition and mechanism
 
 Initialization creates an occupant whereas assignment replaces an existing occupant's state. Ordinary constructor failure and post-target delegation failure have different complete-object cleanup behavior.
 
 Storage needs sufficient size/alignment before object initialization can complete and start an ordinary lifetime. construct_at and destroy_at separate object life from backing storage. A cast alone does not construct arbitrary types. Some specified operations implicitly create implicit-lifetime objects; replacement and launder have additional preconditions.
+
+M010 adds the resource-management view: placement construction or `construct_at` uses already-provided storage; it does not allocate that storage. `destroy_at` ends the occupant's lifetime, while an arena separately decides when to reuse or release its bytes. Explicit destruction is safe only inside a protocol that prevents accidental second destruction. See [[Placement construction and explicit lifetime management]].
 
 ## Prerequisites
 
@@ -24,6 +26,7 @@ Storage needs sufficient size/alignment before object initialization can complet
 - [[Return values and copy elision]]
 - [[Constructors and invariant establishment]]
 - [[Relocation versus move]]
+- [[Placement construction and explicit lifetime management]]
 
 ## Recall and next depth
 

@@ -145,6 +145,21 @@ $$
 
 Our earlier byte `AD` has unsigned value 173. Its high bit is set, so its signed eight-bit value is $173-256=-83$. Nothing moved in memory; only the interpretation changed.
 
+### Figure B1 - One pattern, two integer readings
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8f4f3','primaryTextColor':'#163747','lineColor':'#51768a','fontFamily':'Arial'}}}%%
+flowchart LR
+    P["AD hexadecimal<br/>10101101"] --> U["Unsigned weights<br/>128 + 32 + 8 + 4 + 1"]
+    P --> S["Two's-complement weights<br/>−128 + 32 + 8 + 4 + 1"]
+    U --> UP["173"]
+    S --> SP["−83"]
+    classDef result fill:#fff0d4,stroke:#b68229,color:#403015
+    class UP,SP result
+```
+
+**Read the figure:** the branches change the interpretation, never the stored pattern. The high position contributes either $+128$ or $-128$ at this eight-bit width. Equivalently, the signed branch subtracts 256 from unsigned 173. **Limit:** this is a fixed-width integer example; floating fields and packed application flags follow different decoding rules. Reconstruct both answers before opening [[Visual Recall/01 - Bits, Numbers and Memory - Visual Recall#Figure-linked pocket notes|the pocket notes]].
+
 ### Why invert-and-add-one works
 
 A **residue** is the representative left after division by a modulus. At width $N$, retaining only the low bits is arithmetic modulo $2^N$. For positive $x$, its negative residue is $2^N-x$. Since an all-ones word has value $2^N-1$:
@@ -255,6 +270,22 @@ readback: (9D >> 4) & 3    1
 ```
 
 Outside-mask bits remain equal: `AD & CF = 9D & CF = 8D`. That is the preservation invariant. OR-only insertion fails whenever the new field needs to clear an old one; it cannot perform replacement generally.
+
+### Figure B2 - Replace a field without damaging its neighbors
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8f4f3','primaryTextColor':'#163747','lineColor':'#51768a','fontFamily':'Arial'}}}%%
+flowchart LR
+    A["Old byte AD"] --> C["Clear field<br/>AD AND CF = 8D"]
+    V["New quality 1<br/>fits two bits"] --> I["Position at bit 4<br/>1 shifted left 4 = 10 hex"]
+    C --> O["Combine disjoint bits<br/>8D OR 10 = 9D"]
+    I --> O
+    O --> R["Read back<br/>quality = 1"]
+    classDef result fill:#fff0d4,stroke:#b68229,color:#403015
+    class O,R result
+```
+
+**Read the figure:** the destination field mask is `30` hexadecimal, so its eight-bit complement is `CF`. Clear first, insert second. The invariant is `AD AND CF = 9D AND CF = 8D`: all outside positions survive. **Limit:** the figure assumes a validated two-bit value and an eight-bit unsigned model; actual C++ promotions and legal shift counts still need checking. Extraction and replacement formulas appear immediately above.
 
 ### Packing several meanings and unpacking them
 
@@ -376,7 +407,7 @@ This is the **invariant** that makes the unsigned algorithm testable. Signed div
 | Policy for eight-bit unsigned $250+20$ | Result | Intended use |
 |---|---|---|
 | Wrap modulo 256 | 14 | residue counters, emulated register arithmetic |
-| [[Saturating arithmetic|Saturate]] at the upper bound | 255 | bounded intensities or controls |
+| [[Saturating arithmetic\|Saturate]] at the upper bound | 255 | bounded intensities or controls |
 | Check and reject | no value; report failure | sizes, allocation counts, external input |
 | Widen the carrier | 270 in a wider type | preserve the exact intermediate result |
 
@@ -455,7 +486,7 @@ IEEE-754 includes formats, special values, arithmetic and rounding rules, and ex
 | Exponent positions | 30–23: 8 bits | 62–52: 11 bits |
 | Fraction positions | 22–0: 23 bits | 51–0: 52 bits |
 | Normal significand precision $p$ | 24 bits | 53 bits |
-| [[Exponent bias|Bias]] $B$ | 127 | 1023 |
+| [[Exponent bias\|Bias]] $B$ | 127 | 1023 |
 | Normal exponent $e$ | −126 through 127 | −1022 through 1023 |
 | Smallest positive normal | $2^{-126}$ | $2^{-1022}$ |
 | Smallest positive subnormal | $2^{-149}$ | $2^{-1074}$ |
@@ -818,6 +849,21 @@ The laboratory explicitly stores the product and disables contraction for the se
 
 FMA can help dot products, interpolation, and Horner polynomial evaluation. It is not a universally correctly rounded multi-term dot product: other products/additions may still round, and poor input data/conditioning remain. FMA policy is also a reproducibility choice because a better answer can differ bitwise from the unfused reference.
 
+### Figure B3 - Rounding points change the answer
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8f4f3','primaryTextColor':'#163747','lineColor':'#51768a','fontFamily':'Arial'}}}%%
+flowchart LR
+    A["a = b = 1 + p<br/>c = −1 − 2p"] --> M["Separate product<br/>round ab to 1 + 2p"]
+    M --> Z["Add c and round<br/>0"]
+    A --> F["Fused ab + c<br/>keep product detail"]
+    F --> T["Round once<br/>p squared"]
+    classDef result fill:#fff0d4,stroke:#b68229,color:#403015
+    class Z,T result
+```
+
+**Read the figure:** here $p=2^{-23}$ and all inputs are exact binary32 values. The exact product is $1+2p+p^2$. Separate binary32 multiplication discards $p^2$; FMA retains it until the addition cancels $1+2p$, leaving exactly $2^{-46}$. **Limit:** the separate path assumes an actual intermediate binary32 rounding with contraction disabled. FMA does not recover inaccurate input data or make a general dot product exact. The preceding example gives the full arithmetic contract.
+
 ### Algebra changes when rounding points move
 
 [[Floating-point reassociation|Reassociation]] changes grouping. In binary32, choose $a=10^{20}$, $b=-a$, $c=3.14f$:
@@ -1157,7 +1203,7 @@ An **address** identifies a location in an address space. In our octet-based exa
 
 Store the 32-bit unsigned value `0x12345678` at address `0x1000`:
 
-| Address | [[Little endian|Little-endian]] byte | [[Big endian|Big-endian]] byte |
+| Address | [[Little endian\|Little-endian]] byte | [[Big endian\|Big-endian]] byte |
 |---|---|---|
 | `0x1000` | `78` — lowest significance | `12` — highest significance |
 | `0x1001` | `56` | `34` |
@@ -1278,6 +1324,23 @@ Translation changes the page identity but preserves the offset. For $P=4096=2^{1
 [[Virtual and physical contiguity|Contiguous]] means adjacent without gaps in the relevant address space. A vector's contiguous virtual buffer can occupy consecutive virtual pages backed by scattered physical frames. Do not infer physical adjacency from `data()[i+1]` being the next element.
 
 A useful scaling quantity is **TLB reach**: the approximate memory span represented by $E$ translation entries of page size $P$, namely $EP$ for a uniform-page simplified model. [[Huge pages and TLB reach|Larger pages]] can increase that span, but trade mapping granularity and allocation flexibility. No universal speedup follows.
+
+### Figure B4 - Translation preserves the offset
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8f4f3','primaryTextColor':'#163747','lineColor':'#51768a','fontFamily':'Arial'}}}%%
+flowchart LR
+    V["Virtual address<br/>12345ABC hex"] --> P["Page number<br/>12345 hex"]
+    V --> O["Page offset<br/>ABC hex"]
+    P --> T["Permitted mapping<br/>frame 987 hex"]
+    T --> B["Frame base<br/>987000 hex"]
+    B --> A["Physical address<br/>987ABC hex"]
+    O --> A
+    classDef result fill:#fff0d4,stroke:#b68229,color:#403015
+    class A result
+```
+
+**Read the figure:** assume 4-KiB pages, a present mapping, and permitted access. Replace the page identity with its physical frame identity and retain the low 12 offset bits. The arithmetic is $\mathtt{0x987000}+\mathtt{0xABC}=\mathtt{0x987ABC}$. **Limit:** frame 987 is an example mapping, not a prediction about a real process. A TLB caches translations; the data cache holds contents. Neither this translation nor a mapped address establishes C++ object lifetime or valid typed access.
 
 ### A fault is a request for intervention, not necessarily a crash
 

@@ -4,7 +4,7 @@
 
 The user supplied the Phase 6 group identified as M031–M036 in nineteen pasted documents, including a supplemental panel analogy. Explicit lesson headings cover 99 distinct parts: 501–541 and 543–600. Part 542 is referenced as the next cross-product definition but has no standalone lesson; its mechanism is explicitly reconstructed from adjacent material in the new volume. The narrative therefore develops all 100 phase topics without falsely claiming 100 standalone source lessons.
 
-Main coverage is now the disjoint ranges 1–147 and 501–600: 247 developed topic entries, of which 246 have supplied standalone numbered lessons and one is identified reconstruction. Parts 148–500 and 601 onward remain pending. Accepted chunk groups are M001–M009 and the user-labeled M031–M036, 15 of 180; no unverified per-chunk subdivision of this phase's parts is imposed. XR01/Modules 1–19 remain separate.
+Main coverage is now the disjoint ranges 1–160 and 501–600: 260 developed topic entries, of which 259 have supplied standalone numbered lessons and one is identified reconstruction. Parts 161–500 and 601 onward remain pending. Accepted chunk groups are M001–M010 and the user-labeled M031–M036, 16 of 180; no unverified per-chunk subdivision of this phase's parts is imposed. XR01/Modules 1–19 remain separate.
 
 [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|Read the continuous Phase 6 story]]. Source part numbers are an audit ledger, not lesson segmentation.
 
@@ -113,7 +113,7 @@ Main coverage is now the disjoint ranges 1–147 and 501–600: 247 developed to
 
 ## XR01 - Independent seeing and representation source
 
-This source is outside the 3,000-part curriculum. Module labels below preserve the attachment's coverage without assigning it main part numbers. XR01 is one accepted source in a separate anticipated 3–4-source continuous series; future inputs are pending. Main coverage is recorded separately above: Parts 1–147 and 501–600, with the Part 542 source gap identified.
+This source is outside the 3,000-part curriculum. Module labels below preserve the attachment's coverage without assigning it main part numbers. XR01 is one accepted source in a separate anticipated 3–4-source continuous series; future inputs are pending. Main coverage is recorded separately above: Parts 1–160 and 501–600, with the Part 542 source gap identified.
 
 | Independent source module | Mechanism and teaching location |
 |---|---|
@@ -141,7 +141,7 @@ Source numbering is a coverage ledger, not the narrative's teaching order. The c
 
 ## M007 - Parts 101-112
 
-The supplied source has exactly twelve parts, 101–112. The revised M007 was integrated into the same coverage, not counted as new parts. M008 supplies 113–126 and M009 supplies127–147. Volume02 is3/12 sources, not completed Parts101–300.
+The supplied source has exactly twelve parts, 101–112. The revised M007 was integrated into the same coverage, not counted as new parts. M008 supplies 113–126, M009 supplies 127–147, and M010 supplies 148–160. Volume 02 is 4/12 accepted sources, not completed Parts 101–300.
 
 | Part | Definition, mechanism, and concrete reconstruction cue |
 |---|---|
@@ -194,7 +194,7 @@ All fourteen supplied parts are accepted. Source numbering audits coverage; it d
 
 ## M009 - Parts 127-147
 
-The supplied source contains exactly twenty-one parts. It extends Volume02 to Parts101–147 and3/12 accepted C++ sources. Teaching headings remain concept-led; Parts148 onward are not accepted.
+The supplied source contains exactly twenty-one parts. At acceptance, it extended Volume02 to Parts101–147; M010 subsequently added Parts148–160. Teaching headings remain concept-led; exact coverage is recorded in the current ledger.
 
 | Part | Definition, mechanism, and reconstruction cue |
 |---|---|
@@ -219,6 +219,30 @@ The supplied source contains exactly twenty-one parts. It extends Volume02 to Pa
 | 145 | [[Rules of Three Five and Zero]] — Destructor/copy constructor/copy assignment are coordinated raw-owner decisions; copying may instead be deleted. It is a design heuristic, not a compiler mandate. |
 | 146 | [[Special member generation and traits]] — Five adds both moves. User-declared versus user-provided matters; a defaulted destructor suppresses dedicated implicit moves, while move-constructible traits can still classify copying as viable. |
 | 147 | [[Rules of Three Five and Zero]] — Compose tested member owners rather than repeat transfer/release logic. Zero does not forbid ordinary constructors or prove cross-member invariants; [[Relocation versus move]] remains a versioned research bridge. |
+
+## M010 - Parts 148-160
+
+M010 continues the same Volume 02 story from Rule-of-Zero composition into the concrete ownership and lifetime protocols underneath it. The source specifies Parts 148–160. Repository paths named in the pasted lesson are source-provided examples and remain **To verify** until their repositories/revisions are inspected. These entries identify coverage; the expanded teaching narrative is in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From a live object to responsible resource ownership|Volume 02]].
+
+| Part | Definition, mechanism, and concrete reconstruction cue |
+|---|---|
+| 148 | [[RAII and resource handles]] — Bind matched acquisition/release responsibility to a live owner; scope exit handles early return and unwinding. External asynchronous use can require deferred reclamation. |
+| 149 | [[RAII and resource handles]] — Each fully acquired resource must immediately enter an owner; completed subobjects clean up if construction fails. CPU ownership does not alone establish GPU completion. |
+| 150 | [[Ownership and non-owning views]] — Ownership means responsibility for ending use/lifetime; a borrow provides access without extending lifetime. |
+| 151 | [[Exclusive and shared smart-pointer ownership]] — `unique_ptr` is a move-only exclusive owner; `get()` borrows while `release()` transfers responsibility. |
+| 152 | [[Exclusive and shared smart-pointer ownership]] — A custom deleter pairs a native handle with its actual release protocol; deleter state/type can affect representation and conversion safety. |
+| 153 | [[Exclusive and shared smart-pointer ownership]] — `shared_ptr` copies join a control block's strong ownership group; object and control-block lifetimes may differ. |
+| 154 | [[Exclusive and shared smart-pointer ownership]] — Reference-count operations have costs; control-block coordination does not synchronize arbitrary pointee operations. |
+| 155 | [[Weak observation and ownership cycles]] — A weak edge avoids extending object lifetime; `lock()` safely attempts to obtain a temporary strong owner and can break cycles. |
+| 156 | [[Weak observation and ownership cycles]] — `enable_shared_from_this` joins an existing owner group; never build an independent `shared_ptr` control block from `this`. |
+| 157 | [[Placement construction and explicit lifetime management]] — Allocation functions acquire raw storage; new-expressions combine allocation and initialization. Size, alignment, construction, failure cleanup and deallocation must match. |
+| 158 | [[Placement construction and explicit lifetime management]] — Arrays require correct count-aware construction/destruction and matching `new[]`/`delete[]`; containers usually own this protocol more safely. |
+| 159 | [[Placement construction and explicit lifetime management]] — Placement construction/`construct_at` begins an object lifetime in adequate pre-existing storage; it does not allocate that storage. |
+| 160 | [[Placement construction and explicit lifetime management]] — Explicit destruction ends an occupant's lifetime, not necessarily storage. Reuse, transparent replacement and laundering have distinct conditions. |
+
+The source discusses resource owners, smart pointers, manual allocation, placement construction, array ownership and lifetime restart. Its repository examples (`KairoRenderer/VulkanBuffer.cppm`, `Maveb/.../MetalPtr.hpp`) are **not** represented as live-inspected code findings here.
+
+[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From a live object to responsible resource ownership|Continuous teaching narrative]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Active-recall visual board]] · [[Keyword Index]] · [[Dependency Map]]
 
 ### Value-transfer source-to-story navigation
 

@@ -16,7 +16,56 @@ Cover the visual, sketch it from memory, answer the numbered prompts, then expan
 
 Mermaid shows relationships; byte strips show placement; tables show exact distinctions; state/sequence diagrams show what changes over time. Diagrams are conceptual models, not fixed CPU/OS layouts. Answer keys use collapsible Obsidian callouts.
 
-## The entire story on one board
+## Short-form recall — the whole route
+
+**Pattern is not meaning.** A representation contract assigns weights and interpretation. → **Bits become decisions.** Masks select fields; packing needs widths, ranges, and a policy. → **Arithmetic is finite.** Choose wrap, saturation, rejection, or widening before calculation. → **Real values use a ruler.** Floating point trades spacing against range; fixed point chooses a scale. → **Operations expose error.** Rounding, cancellation, conditioning, and reproducibility matter. → **Keep the needed information.** Quantization/codebooks spend precision deliberately. → **Bytes occupy places.** Alignment, lifetime, ownership, and virtual mapping are distinct. → **Files are agreements.** Define schema, validate lengths, then decode and check integrity.
+
+```mermaid
+flowchart LR
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e8f4f3','primaryTextColor':'#163747','lineColor':'#51768a','fontFamily':'Arial'}}}%%
+    S["Signal"] --> R["Representation"]
+    R --> F["Fields"]
+    F --> A["Arithmetic"]
+    A --> FP["Floating ruler"]
+    FP --> E["Error"]
+    E --> Q["Retained detail"]
+    Q --> M["Memory"]
+    M --> D["External format"]
+```
+
+**Caption:** Follow one value from physical signal to stored bytes and back. At every transition ask: *Which bits? What meaning? What range/error policy? Where and during which lifetime? What format contract?* For the end-to-end laboratory, see [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|the complete journey]].
+
+> [!abstract] Compact teaching notes
+> **Represent:** bits are patterns; interpretation supplies meaning. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#One bit, several bits, and an interpretation|Bit-pattern example]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Why invert-and-add-one works|Two's-complement derivation]]
+>
+> **Select and compute:** mask = select; shift = reposition; pack = preserve neighbors plus insert validated fields. Arithmetic needs an explicit overflow policy. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Fields: select, normalize, replace|Field figure/formulas]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Test the packed meaning|Packing lab]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the overflow policy before calculating|Overflow choices]]
+>
+> **Approximate:** floating point has nonuniform spacing; fixed point has a chosen scale. Rounding is part of each operation; tolerance is a domain rule, not a universal epsilon. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Encode 10.625, then decode −13.25|Worked encoding]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Cancellation can expose errors made earlier|Cancellation figure]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A fixed ruler for fractional values|Fixed-point example]]
+>
+> **Store and exchange:** address alone does not prove valid access; alignment, lifetime, ownership, and permissions are separate. A file needs an explicit schema and checked lengths. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Virtual memory translates page identity|Address translation]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Storage, lifetime, ownership, and placement are different axes|Memory model]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Validate lengths before performing the arithmetic they request|Parser safety lab]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Read a dump by reversing the contract|Hex-dump lab]]
+
+## Figure-linked pocket notes
+
+Read one row, reconstruct its example, then follow the **figure** for the diagram and caption or **explanation** for the full teaching account. These four figures also live inside the continuous chapter, so the teaching text and recall desk share one reference. Each figure is a separate compact horizontal panel; the complete volume covers more than one printable page.
+
+| Topic | Smallest useful note | Return to the teaching chapter |
+|---|---|---|
+| Interpretation | Same bits, different weights: `AD` is unsigned 173 or signed −83. State width and encoding first. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B1 - One pattern, two integer readings\|Figure B1]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The same bits can mean different integers\|Explanation]] |
+| Field replacement | Validate → clear → position → OR. `AD→9D` changes quality 2→1; outside-mask bits remain `8D`. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B2 - Replace a field without damaging its neighbors\|Figure B2]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Fields: select, normalize, replace\|Formulas and trace]] |
+| Finite arithmetic | Exact $250+20=270$: eight-bit wrap gives 14, saturation 255, rejection no value. Widen before evaluating. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the overflow policy before calculating\|Policy table]] |
+| Floating fields | Classify exponent/fraction first; normal binary32 has 24 precision bits, including its implicit leading one. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The two formats and their interpretation\|Field table]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Encode 10.625, then decode −13.25\|Encoding trace]] |
+| Rounding graph | FMA rounds once; separate multiply/add rounds twice. For the stated example: $2^{-46}$ versus zero. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B3 - Rounding points change the answer\|Figure B3]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#One rounding rather than two\|Explanation]] |
+| Error | Cancellation can expose previous input errors even when subtraction of stored operands is exact. Tolerance needs units and a policy. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Cancellation can expose errors made earlier\|Worked trace]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Epsilon is one spacing, not a tolerance\|Spacing table]] |
+| Representation choice | Fixed point chooses a constant step; floats choose a changing step; quantization chooses a finite codebook. Packing valid codes loses no further information. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the contract before choosing the type\|Comparison]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#An INT4 group, from numbers to nibbles and back\|Nibble trace]] |
+| Translation | Mapping changes page identity and preserves offset: `12345ABC→987ABC` under the example 4-KiB mapping. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B4 - Translation preserves the offset\|Figure B4]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Virtual memory translates page identity\|Explanation]] |
+| Valid access | Bounds, alignment, lifetime, permitted access and mapping are separate obligations; old bytes prove none alone. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Storage, lifetime, ownership, and placement are different axes\|Lifetime/ownership table]] |
+| External bytes | Specify schema → validate arithmetic/limits → decode. Integrity, authenticity and durability require their own contracts. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Validate lengths before performing the arithmetic they request\|Bounds rules]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Read a dump by reversing the contract\|Full dump]] |
+
+**Recall checkpoint:** draw B1–B4 without looking. Label one assumption and one failure in each. For example: decoding `AD` as a float is the wrong contract; OR-only insertion cannot clear a field; contraction can erase the intended two-rounding path; a valid address translation does not establish a live C++ object.
+
+## The entire story on one board — archived original
+
+The original vertical overview is retained here for comparison; use the horizontal map above for the one-page route.
 
 ```mermaid
 flowchart TD

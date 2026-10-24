@@ -15,6 +15,12 @@ We will answer it by building a small robot workcell. A robot must inspect a tri
 
 ## The panel gives us a reason to learn
 
+### Figure G0 - The robot and its inspection panel
+
+![[Visual Recall/geometry_robot_panel.png]]
+
+**Figure G0.** This original AI-generated scene gives the robot, triangular panel and sensor task a physical setting. It is a qualitative illustration, not calibrated geometry: use the coordinates and equations below for measurements, axes, corner identities and numerical work. The cyan cone schematically indicates the camera's field of view; it does not represent a measured beam or active emitted light. The following figures turn this scene into explicit mathematical relationships.
+
 Place the panel's corners at
 
 $$
@@ -224,6 +230,22 @@ $$
 An **inverse** undoes a mapping. We display it to explain the relationship, not to recommend explicitly forming inverses for every numerical solve.
 
 A **passive change** changes the description while preserving the physical vector. An **active transform** moves or changes the physical object while keeping the describing frame fixed. They may use related matrices but answer different questions.
+
+### G1 - One movement, two descriptions
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#15304a','lineColor':'#64748b','fontFamily':'sans-serif'}}}%%
+flowchart LR
+    P["Points P and Q<br/>locations in one frame"] -->|"Q minus P"| V["Displacement v<br/>origin cancels"]
+    V --> W["World basis<br/>components 3, 2"]
+    V --> S["Slanted basis<br/>components 1, 2"]
+    W --> R["Same arrow<br/>length squared = 13"]
+    S -->|"reconstruct with basis"| R
+    classDef result fill:#dcfce7,stroke:#15803d,color:#14532d;
+    class R result;
+```
+
+**Figure G1.** The two coordinate lists encode the same movement because $\mathbf b_1=(1,0)$ and $\mathbf b_2=(1,1)$ give $\mathbf v=1\mathbf b_1+2\mathbf b_2=(3,2)$. Points carry locations; their difference carries movement. **Limit:** all inputs must refer to a common frame before subtraction. Squaring slanted-basis coefficients gives $5$, which is not the physical squared length; use $c^\mathsf TGc=13$. See [[#The same arrow can have different coordinates|the reconstruction]] and [[#A Gram matrix remembers the geometry of a slanted basis|the metric calculation]].
 
 ### Why a basis can become unreliable
 
@@ -556,6 +578,23 @@ Take $\mathbf a=(3,4,0)$ and rail vector $\mathbf b=(2,0,0)$:
 | Signed scalar projection | $s=6/2=3$ |
 
 The remainder dotted with the rail is zero. The squared lengths satisfy $25=9+16$. Scaling the rail vector to $(20,0,0)$ changes the coefficient but not the vector projection: the geometric line is unchanged.
+
+### G2 - Split the request into rail travel and sideways travel
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#15304a','lineColor':'#64748b','fontFamily':'sans-serif'}}}%%
+flowchart LR
+    A["Request a = 3, 4, 0<br/>rail b = 2, 0, 0"] --> K["Dot = 6<br/>rail length squared = 4"]
+    K --> C["Coefficient = 1.5"]
+    C --> P["Along rail<br/>p = 3, 0, 0"]
+    A --> R["Sideways remainder<br/>r = a minus p = 0, 4, 0"]
+    P --> Q["Reconstruct a = p + r<br/>r dot b = 0"]
+    R --> Q
+    classDef result fill:#dcfce7,stroke:#15803d,color:#14532d;
+    class Q result;
+```
+
+**Figure G2.** Each box is a checkable stage, not a drawing to scale. The coefficient $1.5$ is dimensionless here; the signed along-rail length is $3$, and the projected vector is $(3,0,0)$. **Limit:** $\mathbf b\ne\mathbf0$ and Euclidean measurement are required. For a unit axis $\widehat{\mathbf b}$, use $\mathbf p=(\mathbf a\cdot\widehat{\mathbf b})\widehat{\mathbf b}$. Extreme arithmetic ranges and a tiny cancellation residual still need the policies explained below.
 
 Projection onto zero is undefined because zero defines no line. Projecting zero onto a valid line is fine and gives zero.
 
@@ -1107,6 +1146,21 @@ $$
 
 All weights are nonnegative, so the sensor lies inside or on the triangle. An edge has one zero weight; a vertex has one weight equal to one and the others zero. The triangle's **centroid**, its uniform geometric center, has three equal weights $1/3$. A **barycenter**, also spelled barycentre, is a weighted center. With nonnegative masses at the corners, normalized mass weights describe their center of mass. Barycentric weights in general are not distances, and need not be mass fractions. Do not confuse a triangle's centroid with an unweighted average of vertices for every possible shape.
 
+### G3 - Reconstruct a sensor location from the corners
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#15304a','lineColor':'#64748b','fontFamily':'sans-serif'}}}%%
+flowchart LR
+    A["Corner A<br/>0, 0, 0"] -->|"weight 5/12"| P["Sensor P = 1, 1, 0<br/>weights sum to 1"]
+    B["Corner B<br/>4, 0, 0"] -->|"weight 1/4"| P
+    C["Corner C<br/>0, 3, 0"] -->|"weight 1/3"| P
+    P --> T["Temperatures 20, 40, 50<br/>weighted value = 35"]
+    classDef result fill:#dcfce7,stroke:#15803d,color:#14532d;
+    class P,T result;
+```
+
+**Figure G3.** This is a weighted reconstruction diagram, not a perspective view of the panel. The point equation is $P=\frac5{12}A+\frac14B+\frac13C$; the same weights interpolate an attribute assumed affine on the triangle. **Limit:** corners must be noncollinear and $P$ must lie in their plane for an exact point reconstruction. Nonnegative weights then locate the point in the closed triangle. For an off-plane input, the Gram solve gives its planar projection; check the residual. Screen-space interpolation under perspective needs [[#Perspective changes the interpolation weights|reciprocal clip-depth correction]].
+
 ### Derive the weights in a tilted triangle
 
 Let $\mathbf e_1=B-A$, $\mathbf e_2=C-A$, and $\mathbf q=P-A$. Dot the reconstruction equation with each edge:
@@ -1399,6 +1453,24 @@ The inverse compensates for transformed motion; the transpose converts row measu
 Use tangent $\mathbf t=(1,1,0)$ and normal $\mathbf n=(1,-1,0)$. Their dot is zero. Under $A=\operatorname{diag}(2,1,1)$, the tangent becomes $(2,1,0)$. Naively applying $A$ to the normal gives $(2,-1,0)$, whose dot with the new tangent is $3$. The correct normal $(1/2,-1,0)$ gives dot zero.
 
 Re-normalize if a unit shading normal is needed. Translation does not enter this tangent calculation. Under a pure rotation, $A^{-\mathsf T}=A$, which explains why the bug stays hidden until nonuniform scale or shear appears.
+
+### G4 - Transform the normal and prove the relationship survived
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#15304a','lineColor':'#64748b','fontFamily':'sans-serif'}}}%%
+flowchart LR
+    I["Tangent 1, 1, 0<br/>normal 1, -1, 0"] --> F{"Finite inputs;<br/>usable inverse?"}
+    F -->|yes| T["Stretch x by 2<br/>tangent becomes 2, 1, 0"]
+    T --> N["Inverse transpose<br/>normal becomes 1/2, -1, 0"]
+    N --> V["Check dot = 0<br/>then normalize if needed"]
+    F -->|no| E["Report failure or reconstruct<br/>from surviving tangents"]
+    classDef result fill:#dcfce7,stroke:#15803d,color:#14532d;
+    classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+    class V result;
+    class E caution;
+```
+
+**Figure G4.** The inverse transpose compensates for the tangent stretch: $(2,1,0)\cdot(1/2,-1,0)=0$. Applying the original stretch to both instead gives dot product $3$, breaking perpendicularity. **Limit:** an invertible matrix is mathematically sufficient, but an ill-conditioned numerical inverse can still be unreliable. Check finite output, conditioning and an appropriate normalized dot residual. Reconstructed normals require independent transformed tangents; collapsed surfaces have no unique normal. Cross-derived area normals also retain the determinant's area scale and orientation sign, as derived below.
 
 If $A$ is singular, the inverse does not exist. Some surviving surfaces still have geometric normals that can be reconstructed from transformed tangents, but there is no general invertible normal-map formula. Decide how collapsed geometry is represented rather than forcing an inverse.
 
@@ -1944,4 +2016,4 @@ When reading a paper, record the input assumptions, measured outcome, adversaria
 
 This phase's achievement is a connected model: numbers provide scalars; vector laws provide movement; bases provide descriptions; inner products provide measurement; exterior products provide orientation; affine weights provide locations; projective representatives support perspective; and types preserve the distinctions at computational boundaries. The implementation is valuable because we can now explain both what it computes and why it sometimes must refuse to compute it.
 
-[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Supplementary/Derivations#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]]
+[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Supplementary/Derivations#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]] · [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Visual-recall board]]

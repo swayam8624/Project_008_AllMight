@@ -80,6 +80,10 @@ XR01 is outside the3,000-part progression. Physical interpretation, angular geom
 | [[Move operations and moved-from states]], [[Assignment and exception guarantees]], [[Special member generation and traits]] | [[Noexcept and transfer selection]] | Traits, failure policy and relocation must distinguish source survival from source destruction. |
 | [[Special member generation and traits]], [[Assignment and exception guarantees]], [[Ownership and non-owning views]] | [[Rules of Three Five and Zero]] | The actual usable construction expression determines trait-controlled transfer selection. |
 | [[Move operations and moved-from states]], [[Object construction and storage reuse]] | [[Relocation versus move]] | Traits, failure policy and relocation must distinguish source survival from source destruction. |
+| [[Destruction and partial construction]], [[Storage duration and object lifetime]] | [[RAII and resource handles]] | Cleanup responsibility follows completed object lifetimes; reused storage and external resources need separate protocols. |
+| [[Ownership and non-owning views]], [[RAII and resource handles]] | [[Exclusive and shared smart-pointer ownership]] | Borrows must be distinguished from sole ownership and a deliberately shared lifetime. |
+| [[Exclusive and shared smart-pointer ownership]] | [[Weak observation and ownership cycles]] | A non-owning observer can break an ownership cycle and must acquire a strong owner before access. |
+| [[Object construction and storage reuse]], [[RAII and resource handles]] | [[Placement construction and explicit lifetime management]] | Storage, object construction/destruction and storage release are distinct operations. |
 
 ## Borrowing, categories and const access
 
@@ -102,7 +106,7 @@ XR01 is outside the3,000-part progression. Physical interpretation, angular geom
 
 ## C++ - From buildable text to live objects
 
-The C++ volume accepts Parts 101–147. Construction/value transfer now develop the object-and-borrow foundation without conflating lifetime, identity, category, ownership, failure guarantees or expression traits. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+The C++ volume accepts Parts 101–160. Construction/value transfer and M010 resource ownership develop the object-and-borrow foundation without conflating lifetime, identity, category, storage, external use or disposal. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
 
 | Prerequisite | Dependent | Reason |
 |---|---|---|
@@ -152,7 +156,7 @@ An edge from prerequisite to dependent means the dependent explanation uses the 
 
 ## Narrative order and source coverage
 
-The first six sources cover Parts 1–100. Volume 01 follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Source order remains in Foundations. M007 now opens Volume 02 with supplied Parts 101–112; the earlier prediction of 101–116 is not accepted coverage.
+The first six sources cover Parts 1–100. Volume 01 follows physical state → interpretation → decisions/fields → finite arithmetic → floating representation/error → deliberate precision choices → placement/lifetime → serialization/integrity/dump. Source order remains in Foundations. M007–M010 now cover C++ Parts 101–160; exact source ranges remain in Foundations.
 
 Future connections already have definitions: [[IEEE-754 floating point]], [[Cache lines and memory bandwidth]], [[Atomic operations and write contention]], [[SIMD and GPU data layouts]], [[Quantization and compressed weights]], [[Compiler IR and machine instructions]], and [[Guest and host integer domains]]. Update these same notes when their curriculum parts arrive.
 
