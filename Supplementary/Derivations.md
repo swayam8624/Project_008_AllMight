@@ -37,7 +37,9 @@ This is an algebraic identity and a numerical warning: forming the Gram matrix c
 
 ### The pseudoinverse conditions select least-squares then minimum norm
 
-For $A=U\Sigma V^T$, define $A^+=V\Sigma^+U^T$ by reciprocating only retained positive singular values. The coordinates of $b$ along left-singular vectors with positive retained values determine $x$; components orthogonal to $\operatorname{Col}(A)$ remain residual. Null-space components of $x$ do not affect $Ax$, and choosing them as zero gives the minimum Euclidean norm. The numerical threshold controls which near-null directions are treated as absent; it belongs to the stated problem scale and precision.
+For $A=U\Sigma V^T$, define the exact $A^+=V\Sigma^+U^T$ by reciprocating every positive singular value. The coordinates of $b$ along left-singular vectors with positive singular values determine $x$; components orthogonal to $\operatorname{Col}(A)$ remain residual. Null-space components of $x$ do not affect $Ax$, and choosing them as zero gives the minimum Euclidean norm.
+
+A numerical threshold instead defines $A_\tau^+$ by discarding directions with $\sigma_i\le\tau$. When the discarded values include positive singular values, this is the pseudoinverse of a truncated matrix $A_\tau$, and its result need not minimize the original residual for $A$. The threshold belongs to a declared problem scale and precision.
 
 ### PCA through covariance and through the centered data SVD
 

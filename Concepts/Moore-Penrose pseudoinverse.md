@@ -1,6 +1,6 @@
 # Moore-Penrose pseudoinverse
 
-The SVD defines $A^+$ by reciprocating trusted nonzero singular values and transposing the orthogonal factors. $A^+b$ minimizes residual first and Euclidean solution norm among minimizers second. Numerical thresholding makes the meaning of weak directions explicit.
+The exact SVD defines $A^+$ by reciprocating every positive singular value and transposing the orthogonal factors. $A^+b$ minimizes residual first and Euclidean solution norm among minimizers second. A numerical cutoff instead produces $A_\tau^+$: if it discards a positive singular value, it solves a retained-rank approximation and can increase the residual of the original system. The cutoff makes the treatment of weak directions explicit.
 
 **Use it when:** rectangular or rank-deficient least squares needs a minimum-norm answer.
 

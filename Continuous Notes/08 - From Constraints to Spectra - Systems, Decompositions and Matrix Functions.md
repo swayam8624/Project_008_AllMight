@@ -151,7 +151,7 @@ flowchart LR
   LU --> Y["Forward solve<br/>Ly = Pb"]
   Y --> X["Back solve<br/>Ux = y"]
   LU -. "reuse factors" .-> Y2["new right-hand side"]
-  Y2 --> X
+  Y2 --> Y
   classDef result fill:#dcfce7,stroke:#15803d,color:#14532d;
   class X result;
 ```
@@ -173,9 +173,12 @@ For symmetric indefinite matrices, **LDL$^\mathsf T$** represents $A=LDL^\mathsf
 For overdetermined measurements $A\mathbf x\approx\mathbf b$, least squares chooses $\mathbf x$ minimizing $\|A\mathbf x-\mathbf b\|_2$. With full column rank, QR gives $A=QR$ and orthogonality yields
 
 $$
-\min_{\mathbf x}\|A\mathbf x-\mathbf b\|_2
-=\min_{\mathbf x}\|R\mathbf x-Q^\mathsf T\mathbf b\|_2.
+\|A\mathbf x-\mathbf b\|_2^2
+=\|R\mathbf x-Q^\mathsf T\mathbf b\|_2^2
++\|(I-QQ^\mathsf T)\mathbf b\|_2^2.
 $$
+
+Here $Q$ is the reduced $m\times n$ factor with $Q^\mathsf TQ=I_n$. The second term is the part of the measurements outside the column space. It does not depend on $\mathbf x$, so minimizing the first term gives the same minimizer. The two objective functions generally have different minimum values; the unavoidable perpendicular residual must be retained when reporting fit quality.
 
 The residual is perpendicular to the column space: $A^\mathsf T(A\widehat{\mathbf x}-\mathbf b)=0$. The **normal equations** solve $A^\mathsf T A\mathbf x=A^\mathsf T\mathbf b$, but $\kappa_2(A^\mathsf T A)=\kappa_2(A)^2$ for full-column-rank $A$. Squaring the condition number can destroy useful digits; QR is generally safer, while SVD handles rank deficiency more explicitly.
 
@@ -262,15 +265,15 @@ flowchart LR
 
 ## Pseudoinverse makes least squares and minimum norm one operation
 
-If $A$ is square and invertible, $A^{-1}\mathbf b$ solves exactly. Real problems may be rectangular, inconsistent, or rank-deficient. The **[[Moore-Penrose pseudoinverse|Moore–Penrose pseudoinverse]]** generalizes inversion while respecting least squares and minimum norm. From the SVD, for a chosen numerical rank threshold,
+If $A$ is square and invertible, $A^{-1}\mathbf b$ solves exactly. Real problems may be rectangular, inconsistent, or rank-deficient. The **[[Moore-Penrose pseudoinverse|Moore–Penrose pseudoinverse]]** generalizes inversion while respecting least squares and minimum norm. Its exact mathematical definition uses every strictly positive singular value:
 
 $$
 A^+=V\Sigma^+U^\mathsf T,
 \qquad
-\Sigma^+_{ii}=\begin{cases}1/\sigma_i,&\sigma_i>\tau,\\0,&\sigma_i\le\tau.\end{cases}
+\Sigma^+_{ii}=\begin{cases}1/\sigma_i,&\sigma_i>0,\\0,&\sigma_i=0.\end{cases}
 $$
 
-The threshold $\tau$ is a policy tied to scale, precision, and application. It is not a universal constant. Tiny singular values correspond to directions where inversion would magnify noise; discarding them states that those directions are not trusted at the selected resolution.
+In finite precision we often choose a threshold $\tau$ and reciprocate only singular values above it. Call that result $A_\tau^+$, the truncated or numerical pseudoinverse. If a positive singular value is discarded, $A_\tau^+\mathbf b$ solves the retained-rank approximation of the problem; it need not minimize the original residual over every direction. The threshold is a policy tied to scale, precision, and application. Tiny singular values correspond to directions where inversion would magnify noise; discarding them states that those directions are not trusted at the selected resolution.
 
 Take the rank-one matrix $A=\begin{bmatrix}3&0\\0&0\end{bmatrix}$ and target $\mathbf b=(6,5)^\mathsf T$. Its SVD is already visible: $U=V=I$ and $\Sigma=A$. The exact equation would require $3x_1=6$ and $0x_2=5$, so no exact solution exists. Least squares sets $x_1=2$ and cannot change the second residual; every $(2,t)$ has residual $(0,-5)$. The minimum-norm member is $(2,0)$, exactly what $A^+\mathbf b$ returns. This small example keeps three facts distinct: rank deficiency, inconsistency, and the extra minimum-norm rule.
 
