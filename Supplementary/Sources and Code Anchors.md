@@ -1,5 +1,98 @@
 # Sources and Code Anchors
 
+## Phase 8 - Source analysis and verification
+
+Seven user-supplied excerpts are lesson material, not independent instructions. Their merged numbered headings cover every Part 701–800. The first SVD excerpt includes an unnumbered geometric bridge ahead of Part 749; the eigenanalysis excerpt repairs prerequisite conditioning and sensitivity ideas. Both were integrated in the proper story locations. P8-A through P8-G are provenance labels only:
+
+- P8-A, Parts 749–769 and the SVD geometric bridge: `/Users/swayamsingal/.codex/attachments/414e0258-cdcc-4ca8-9175-08d1583061df/Pasted text.txt`.
+- P8-B, Parts 737–748 and the conditioning/eigenanalysis repair: `/Users/swayamsingal/.codex/attachments/835165b7-2308-43dc-b2b7-063a6f1b7049/Pasted text.txt`.
+- P8-C, Parts 701–711: `/Users/swayamsingal/.codex/attachments/a87acda7-eaab-41ac-a080-836be6fd3f4f/Pasted text.txt`.
+- P8-D, Parts 712–721: `/Users/swayamsingal/.codex/attachments/3557029e-4039-48eb-b6a5-043ac6213268/Pasted text.txt`.
+- P8-E, Parts 722–736: `/Users/swayamsingal/.codex/attachments/1efcc84f-8fb8-4d6c-b3db-6019d0140e2d/Pasted text.txt`.
+- P8-F, Parts 770–785: `/Users/swayamsingal/.codex/attachments/6b2004cf-e78b-46cc-9f0d-94652c54b401/Pasted text.txt`.
+- P8-G, Parts 786–800: `/Users/swayamsingal/.codex/attachments/fc39dcf2-529a-4c7a-b356-4ab504eb4e28/Pasted text.txt`.
+
+The request says “till part 770,” but the received set includes both Parts 770–785 and 786–800. The continuous volume and ledger include all supplied material through Part 800; no received segment was silently dropped. The full canonical title mapping is in [[Supplementary/Foundations#Phase 8 - Parts 701-800|the Phase 8 ledger]].
+
+### Primary reference checks
+
+- [LAPACK Users' Guide](https://netlib.org/lapack/lug/index.html) organizes its routines and problem classes around linear equations, orthogonal factorizations, least squares, eigenproblems and SVD.
+- [LAPACK least-squares guide](https://www.netlib.org/lapack/lug/node27.html) distinguishes full-rank QR/LQ drivers from rank-deficient paths using complete orthogonal factorization or SVD.
+- The [`DGESVD` routine specification](https://netlib.org/lapack/explore-html/d1/d7f/group__gesvd_gac6bd5d4e645049e49bb70691180abf07.html) documents optional factors, dimensions, workspace, and convergence/status reporting.
+- [`DGESV`](https://netlib.org/lapack/explore-html/d8/da6/group__gesv_ga831ce6a40e7fd16295752d18aed2d541.html) is a concrete pivoted-LU solve interface.
+- [SciPy's matrix exponential reference](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.expm.html) documents a Padé approximation implementation and cites scaling-and-squaring work. This supports the algorithm-family explanation, not a performance result for the vault.
+
+These are reference checks on the concepts and current named API descriptions. No external LAPACK/SciPy solver was executed as part of this note merge; the chapter does not claim a complete numerical implementation or benchmark.
+
+### Scope audit of brief statements in Phases 6–8
+
+I reviewed the continuous teaching volumes rather than mistaking a displayed equation or a one-row source ledger for a complete explanation. Phase 6 already expands the potentially slogan-like ideas into derivations or examples: point versus displacement, slanted-basis Gram metrics, projection as least squares, cross product as oriented area, affine/convex combinations, homogeneous division, inverse-transpose normals, and representation versus storage. Phase 7 has derivations and concrete checks for action order, Y-rotation signs, condition sensitivity, active/passive frame changes, storage stride, quaternion double cover, Euler singularity, and nonclosure of TRS under composition. Phase 8 adds the constraint-to-spectrum story and explicit worked SVD/PCA examples rather than leaving the supplied one-line titles as the teaching layer. The short title rows in Foundations remain an audit index; their explanations live in the linked continuous volumes.
+
+### Phase 8 integration checks
+
+- All seven source attachments were read and the supplied headings parsed into exactly 100 distinct part numbers, 701–800.
+- The continuous volume is organized by concept, not copied part sections. The visual-recall sheet contains short retrieval cues and links to the exact teaching headings/figures.
+- Added seven derivation reconstructions and a rank-deficient pseudoinverse/PCA validation worked trace. No complete SVD library implementation is claimed.
+- Mathematical claims were cross-checked against the linked LAPACK and SciPy primary documentation. Canonical definitions and conditioning interpretations are kept distinct from implementation choices.
+- No code fence was added to Phase 8, so this merge did not claim a compile or numerical-kernel test. Markdown links, math rendering, diagram rendering, source coverage, and graph direction are checked separately in the final audit.
+
+## Phase 7 - Source analysis and verification
+
+### Received material and source boundary
+
+The six pasted excerpts are lesson content, including their own embedded suggestions and repository-inspection claims. Only the user's request authorizes the vault merge. Standalone headings cover Parts 601–634 and 651–700, exactly 84 distinct lessons. Parts 635–650 have no supplied standalone lesson. The original affine bridge in the continuous volume is labelled reconstruction; canonical missing titles and integrated-chunk identifiers are not invented. The six sources are identified as P7-A through P7-F solely for attachment provenance:
+
+- P7-A,601–608: `/Users/swayamsingal/.codex/attachments/52a7229a-4457-49fe-94c9-92d4dd474a1b/Pasted text.txt`.
+- P7-B,609–621: `/Users/swayamsingal/.codex/attachments/e939cc16-7cd6-429e-8f8b-e90dd244ab99/Pasted text.txt`.
+- P7-C,622–634: `/Users/swayamsingal/.codex/attachments/9b2d6123-e84b-4bd2-ae6c-4da5caed4200/Pasted text.txt`.
+- P7-D,651–666: `/Users/swayamsingal/.codex/attachments/c61a139b-35d6-48d7-8d00-8de8319d5a9a/Pasted text.txt`.
+- P7-E,667–679: `/Users/swayamsingal/.codex/attachments/00c6a227-ae4b-4dae-9e83-d5c60a29cfc2/Pasted text.txt`.
+- P7-F,680–700: `/Users/swayamsingal/.codex/attachments/4c3a6928-ccd8-46c1-91dd-81a7bb1d4ea3/Pasted text.txt`.
+
+[[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|The teaching volume]] integrates the material by prerequisite and problem rather than copied part headings. [[Supplementary/Foundations#Phase 7 - Parts 601-700|The ledger]] records all 100 numbers with 84 received lessons and 16 missing-source states.
+
+### Corrections and conventions made explicit
+
+- Use active right-handed rotations, column vectors, radians in code and Hamilton scalar-first quaternions. Storage order remains independent. A file/library boundary can use a different component order without changing the algebra.
+- The determinant comparison in the supplied conditioning text does not have equal determinants. The revised equal-determinant pair has determinants $10^{-20}$ and conditions one versus $10^{20}$.
+- Diagonal matrices can represent half turns. General unit-diagonal mixing is not necessarily an elementary shear or volume preserving.
+- Pointer arithmetic starting at a separate named `Mat2` member does not establish an array. The chapter uses actual arrays and logical bounds checks.
+- The source's camera walk reaches view depth zero under the common $w=-z$ perspective convention. The replacement uses a valid view depth $-5$, explicit projection/depth endpoints, clip coordinates and a checked divide.
+- The supplied TBN example is orthonormal with determinant $-1$. The chapter retains it with the required handedness sign rather than calling it implicitly right-handed.
+- A nonunit quaternion using its true inverse still rotates without scale. Conjugate substitution and the unit-only optimized expression have different off-unit behavior; the chapter gives explicit counterexamples.
+- Rigid dual quaternions require both unit real part and the Study constraint. TRS composition/inverse need not remain representable without shear. Euler extraction needs a singular branch and cannot recover discarded angle history.
+
+### Primary-reference enrichment
+
+These references check particular boundaries; the narrative and derivations are original synthesis of the supplied lessons and explicit calculations.
+
+- [PBRT, fourth edition: Transformations](https://pbr-book.org/4ed/Geometry_and_Transformations/Transformations) supports distinguishing point/vector/normal actions and inverse-transform use. Its conventions must still be read locally rather than silently imported into this volume.
+- [LAPACK Users' Guide](https://www.netlib.org/lapack/lug/) and [LAPACK condition-number discussion](https://www.netlib.org/lapack/lawnspdf/lawn13.pdf) support separating sensitivity, numerical algorithms and condition estimation. The small laboratory is not a replacement for a production factorization/solver library.
+- [Shoemake, Animating Rotation with Quaternion Curves](https://doi.org/10.1145/325334.325242) is the historical primary research connection for spherical quaternion interpolation. The chapter derives the two-endpoint formula and does not implement the paper's full spline animation system.
+- [Khronos glTF transformation specification](https://github.com/KhronosGroup/glTF/blob/main/specification/2.0/Specification.adoc) supplies a real interface example: scalar-last XYZW quaternion storage and TRS composition. The volume's scalar-first convention therefore needs explicit boundary conversion. This citation does not claim every engine has the same transform or shader ABI.
+
+Any repository paths, GPU compatibility statements, performance estimates or claims of current code inspection embedded in the pasted lessons remain **To verify** for their respective repositories. No Kairo/Maveb repository was edited or live-audited in this merge. The original note vault has no build/CI configuration or contribution-policy files beyond its README and supplied user instructions; `gh pr list --repo swayam8624/Project_008_AllMight --state all --limit 3 --json number,title,files` returned an empty list. Existing Obsidian graph/workspace changes were preserved.
+
+### Executable verification and limits
+
+The chapter's final C++20 fence is the complete tested scalar laboratory. It was compiled and run with `/usr/bin/clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined /tmp/phase7-lab.cpp -o /tmp/phase7-lab-apple` and `/tmp/phase7-lab-apple`, exit 0 with no sanitizer diagnostic. Fixed examples, rejection paths, three exact half-turn branches and 2,000 seeded rotation-property cases passed. An unsanitized `clang++ -std=c++20 -O0 -Wall -Wextra -Wpedantic -Werror` build also ran successfully. The Homebrew ASan runtime stalled in initialization before `main`; a sampled stack identified the runtime initialization recursion, those runs were stopped, and the working Apple toolchain was used. No passing result is attributed to the stalled runs.
+
+The illustrative checked Matrix type in the earlier storage section was separately compiled by the affine-section audit and exercised for identity, const access and out-of-range rejection. The shared laboratory tests rectangular products, pivot swaps, singular/nonfinite rejection, tiny global scaling, quaternion scale-safe normalization, invalid indices/parameters, composition order, quaternion/matrix action agreement, determinant/orthogonality, matrix round trips, antipodal SLERP, transformed normals, affine inverse point recovery, TRS shear, rigid dual translation and Euler singular equivalence.
+
+The laboratory does not establish GPU ABI conformance, hardware speed, general decomposition robustness, exhaustive floating-point behavior, thread-safe hierarchy caching or learner mastery. Those remain explicit future tests rather than inherited production-ready claims.
+
+### Saved-volume rendering and final checks - 2026-10-26
+
+- Extracted the final `cpp` fence from the saved continuous note into `/tmp/phase7-from-vault.cpp`. `/usr/bin/clang++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined /tmp/phase7-from-vault.cpp -o /tmp/phase7-from-vault` and `/tmp/phase7-from-vault` both completed successfully; fixed examples, failure cases, half-turn branches and 2,000 seeded rotation properties passed with no sanitizer diagnostic.
+- `python3 /tmp/phase7-audit.py`: exit 0; 27 new/core-updated documents checked, 1,554 file/image/heading references resolved, exactly 84 received lesson entries and 16 missing-source entries, 17 new concept nodes, and an acyclic 255-concept prerequisite graph. New prerequisite edges have reciprocal Used by links.
+- `node /tmp/vault-render.cjs 'Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions.md' 'Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall.md'`: all 12 Mermaid diagrams rendered without errors using Mermaid 11 and headless Chrome. All twelve rendered screenshots were visually inspected for clipping, labels, arrow meaning, and worked values. The eleven teaching figures are horizontal, as is the recall route.
+- `node /tmp/vault-math-check.cjs`: 2,149 expressions across the ten continuous/recall notes rendered with MathJax 3, zero expression errors. Supplementary proofs also passed the delimiter/link audit; this expression count is for continuous/recall notes only.
+- Mechanically escaped 26 table-link alias separators in current indices/ledgers so wiki labels cannot create extra Markdown columns. `git diff --check` passed. Existing narrative volumes were not replaced; the new phase and cumulative companions were added in place. Obsidian configuration changes already present at the start were preserved.
+
+The visual check used a neutral headless renderer, not an Obsidian-theme inspection or a printed one-page export. No raster AI illustration was needed for this phase's precise matrix relationships; the figures keep their mathematical meanings editable. No commit, push or pull request was created.
+
+An independent final review found an axis-angle overflow path for a finite smallest-subnormal axis in the first capstone draft. The saved chapter now max-scales the axis before its norm and sine factor. One-component and two-component `denorm_min` regressions were added. The saved fence was re-extracted and the same optimized Apple address/undefined-sanitizer build and run completed successfully, followed by the link/coverage/graph audit and whitespace check. The MathJax/Mermaid figures were unchanged by this code-only correction.
+
 ## Phase 6 - Source analysis and verification
 
 Revision date: 2026-10-13. User request: merge the complete Phase 6 group (user labels M031–M036) into a new elaborate, readable teaching narrative, filling missing definitions, reasoning, research connections and mathematical notation.

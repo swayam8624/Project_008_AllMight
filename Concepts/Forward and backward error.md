@@ -20,7 +20,7 @@ Forward error measures output discrepancy. Backward error measures how much the 
 ## Used by
 
 Connect later dependent concepts here when their lessons arrive.
-
+- [[Matrix norms and numerical error]] — Extends this foundation into linear-systems and decomposition analysis.
 ## Recall and next depth
 
 Reconstruct the definition's example and name the assumptions that make it valid.

@@ -22,7 +22,7 @@ For input $(3,4,0)$ and target $(2,0,0)$, coefficient is $1.5$, scalar projectio
 
 - [[Surface tangents normals and bitangents]] — Builds on this mechanism in the connected geometry story.
 - [[Reflection refraction and shading directions]] — Builds on this mechanism in the connected geometry story.
-
+- [[Linear systems and fundamental subspaces]] — Extends this foundation into linear-systems and decomposition analysis.
 ## Recall and next depth
 
 Derive the denominator, closest-point property and idempotence without assuming a unit target. Full production proofs, target-specific integration and learner mastery require further evidence.

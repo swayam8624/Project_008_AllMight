@@ -22,6 +22,7 @@ A pointer is a typed access path constrained by array bounds, alignment, and obj
 - [[Storage duration and object lifetime]] — Access requires an object and backing storage that are still valid.
 
 ## Used by
+- [[Matrix storage indexing and strides]]
 
 - [[Named members versus array elements]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
 - [[Null pointers and optional access]]

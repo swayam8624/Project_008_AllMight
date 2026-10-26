@@ -1,5 +1,115 @@
 # Derivations
 
+## Phase 8 - Linear systems and decompositions
+
+These compact reconstructions support [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|the full Phase 8 narrative]].
+
+### The solution set is one solution plus the null space
+
+If $A\mathbf x_0=\mathbf b$, then $A\mathbf x=\mathbf b$ exactly when $A(\mathbf x-\mathbf x_0)=0$. Hence
+
+$$
+\{\mathbf x:A\mathbf x=\mathbf b\}=\mathbf x_0+\operatorname{Null}(A).
+$$
+
+Rank-nullity follows by choosing a basis of the null space, extending it to a basis of the input space, and observing that the images of the added basis vectors form a basis of the column space. Therefore $\dim\operatorname{Null}(A)+\operatorname{rank}(A)=n$.
+
+### The least-squares residual is perpendicular to the reachable output
+
+Let $\widehat x$ minimize $\|Ax-b\|_2^2$. For any direction $h$, differentiate along $x(t)=\widehat x+th$:
+
+$$
+\frac{d}{dt}\|A(\widehat x+th)-b\|_2^2\bigg|_{t=0}
+=2h^\mathsf T A^\mathsf T(A\widehat x-b)=0.
+$$
+
+Since this holds for every $h$, $A^\mathsf T(A\widehat x-b)=0$. Thus the residual is orthogonal to every column of $A$. With thin QR $A=QR$ and full column rank, $Q^TQ=I$ preserves the norm and reduces the minimizer to $R\widehat x=Q^Tb$.
+
+### Why normal equations square the 2-norm condition number
+
+For full-column-rank $A$, the symmetric eigenvalues of $A^TA$ are the squared singular values of $A$. Therefore
+
+$$
+\kappa_2(A^TA)=\frac{\sigma_{\max}^2}{\sigma_{\min}^2}=\kappa_2(A)^2.
+$$
+
+This is an algebraic identity and a numerical warning: forming the Gram matrix can make small singular directions harder to distinguish.
+
+### The pseudoinverse conditions select least-squares then minimum norm
+
+For $A=U\Sigma V^T$, define $A^+=V\Sigma^+U^T$ by reciprocating only retained positive singular values. The coordinates of $b$ along left-singular vectors with positive retained values determine $x$; components orthogonal to $\operatorname{Col}(A)$ remain residual. Null-space components of $x$ do not affect $Ax$, and choosing them as zero gives the minimum Euclidean norm. The numerical threshold controls which near-null directions are treated as absent; it belongs to the stated problem scale and precision.
+
+### PCA through covariance and through the centered data SVD
+
+For centered sample rows $X\in\mathbb R^{N\times d}$ and $X=U\Sigma V^T$,
+
+$$
+C=\frac{X^TX}{N-1}
+=V\frac{\Sigma^T\Sigma}{N-1}V^T.
+$$
+
+Thus the right singular vectors of $X$ are covariance eigenvectors, and covariance eigenvalues equal $\sigma_i^2/(N-1)$. The identity explains PCA; computing SVD directly can avoid explicitly forming a Gram matrix with squared conditioning.
+
+### Right polar decomposition from the SVD
+
+For nonsingular square $A=U\Sigma V^T$, set $Q=UV^T$ and $H=V\Sigma V^T$. Then $Q$ is orthogonal, $H$ is symmetric positive definite, and
+
+$$
+QH=UV^TV\Sigma V^T=U\Sigma V^T=A.
+$$
+
+Also $H^2=V\Sigma^2V^T=A^TA$, so $H=(A^TA)^{1/2}$. If $A$ is singular, the positive-semidefinite square root still exists but the orthogonal completion may not be unique.
+
+### Scaling and squaring identity
+
+For any square matrix and integer $s\ge0$, the exponential's composition law gives
+
+$$
+e^A=\left(e^{A/2^s}\right)^{2^s}.
+$$
+
+The method chooses $s$ so a rational or polynomial approximation is accurate for the smaller-norm matrix, then squares. In floating point the identity motivates an algorithm; approximation and repeated rounding still need to be bounded and tested.
+
+## Phase 7 - Transform reconstruction proofs
+
+Essential proofs are in [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
+
+### A change of basis changes a map on both sides
+
+Let $A$ represent one endomorphism in a reference basis, and let the columns of invertible $P$ be a new basis expressed in that reference. A new-coordinate input $x'$ represents $x=Px'$. Applying the map gives $y=APx'$, and expressing its output in the new basis gives $y'=P^{-1}APx'$. Thus its new matrix is $A'=P^{-1}AP$. This is a similarity transform, not a spatial motion of the object.
+
+The determinant is invariant under this change because
+
+$$
+\det(P^{-1}AP)=\det(P)^{-1}\det(A)\det(P)=\det(A).
+$$
+
+The trace is invariant because cyclically moving the first factor gives $\operatorname{tr}(P^{-1}AP)=\operatorname{tr}(APP^{-1})=\operatorname{tr}(A)$. These invariants do not identify the entire map: many distinct maps share trace and determinant. A row-major/column-major storage conversion is not a similarity transform; it changes address mapping, not the chosen basis.
+
+### A scaled quaternion separates the three rotation formulas
+
+For nonzero $q=m\widehat q$ with $\|\widehat q\|=1$ and $m>0$, the true-inverse sandwich is
+
+$$
+q(0,v)q^{-1}=\widehat q(0,v)\widehat q^*.
+$$
+
+Its scale cancels. The conjugate sandwich instead equals $m^2\widehat q(0,v)\widehat q^*$. For $q=2q_Z$, where $q_Z$ is the positive-Z quarter turn, the actions on X are respectively $(0,1,0)$ and $(0,4,0)$. The optimized unit-only expression $v+w(2u\times v)+u\times(2u\times v)$ gives $(-3,4,0)$ on that same invalid input. This demonstrates why describing every nonunit failure as uniform scaling is inaccurate: it depends on the actual formula used.
+
+### Why a restricted TRS representation is not closed
+
+The columns of $RD$ are pairwise perpendicular when $R$ is orthogonal and $D$ diagonal: $(RD)^T(RD)=D^2$ is diagonal. Let $S=\operatorname{diag}(2,1)$ and let $R$ rotate by $45^\circ$. The column dot product of $SR$ is $-3/2$, which is nonzero. Therefore no orthogonal $R'$ and diagonal $D'$ can satisfy $SR=R'D'$. Embedding this example in three dimensions proves the same limitation for general nonuniform-scale transform hierarchies. The affine matrix still exists; only the restricted storage promise fails.
+
+### Coupled normalization of a rigid dual quaternion
+
+Let a finite blended pair be $(r,d)$ with $a=\|r\|>0$. Define $r'=r/a$, $d_0=d/a$ and $d'=d_0-r'(r'\cdot d_0)$. Then
+
+$$
+\|r'\|=1,\qquad r'\cdot d'=r'\cdot d_0-(r'\cdot r')(r'\cdot d_0)=0.
+$$
+
+The recovered $2d'r'^*$ has zero scalar part, as a translation pure quaternion requires. This is projection onto the rigid constraints, not a claim that every weighted blend has the desired animation path. Sign-align both halves together before blending, handle cancellation of the real part, and keep scale/shear outside the rigid representation.
+
 ## Phase 6 - Geometry reconstruction proofs
 
 These extensions belong to [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.

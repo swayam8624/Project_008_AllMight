@@ -1,10 +1,121 @@
 # Foundations
 
+## Phase 7 - Parts 601-700
+
+Six pasted source excerpts (P7-A through P7-F, identifiers for these attachments only) contain 84 standalone lessons: 601–634 and 651–700. Parts 635–650 have no supplied lesson. The continuous volume reconstructs the affine prerequisite bridge without inventing those missing canonical titles. The table is a source ledger, not the teaching order.
+
+[[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|Read the connected teaching volume]] · [[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Visual recall]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Source provenance and corrections]]
+
+| Part | Source state and supplied title | Developed mechanism / navigation |
+|---|---|---|
+| 601 | P7-A · Matrices as rectangular arrays of scalars | [[Matrices as linear maps and basis images]] |
+| 602 | P7-A · Matrices as linear transformations | [[Matrices as linear maps and basis images]] |
+| 603 | P7-A · Matrix dimensions and compatibility | [[Matrices as linear maps and basis images]] |
+| 604 | P7-A · Matrix element indexing | [[Matrices as linear maps and basis images]] |
+| 605 | P7-A · Row vectors versus column vectors | [[Matrices as linear maps and basis images]] |
+| 606 | P7-A · Row-major storage versus column-major storage | [[Matrix storage indexing and strides]] |
+| 607 | P7-A · Matrix addition | [[Matrix multiplication and composition order]] |
+| 608 | P7-A · Scalar multiplication of matrices | [[Matrix multiplication and composition order]] |
+| 609 | P7-B · Matrix-vector multiplication | [[Matrix multiplication and composition order]] |
+| 610 | P7-B · Matrix-matrix multiplication | [[Matrix multiplication and composition order]] |
+| 611 | P7-B · Deriving matrix multiplication from function composition | [[Matrix multiplication and composition order]] |
+| 612 | P7-B · Why matrix multiplication is not commutative | [[Matrix multiplication and composition order]] |
+| 613 | P7-B · Associativity of matrix multiplication | [[Matrix multiplication and composition order]] |
+| 614 | P7-B · Identity matrices | [[Matrices as linear maps and basis images]] |
+| 615 | P7-B · Zero matrices | [[Matrices as linear maps and basis images]] |
+| 616 | P7-B · Diagonal matrices | [[Matrices as linear maps and basis images]] |
+| 617 | P7-B · Scaling matrices | [[Matrices as linear maps and basis images]] |
+| 618 | P7-B · Shear matrices | [[Matrices as linear maps and basis images]] |
+| 619 | P7-B · Two-dimensional rotation matrices | [[Matrices as linear maps and basis images]] |
+| 620 | P7-B · Deriving the 2D rotation matrix from sine and cosine | [[Matrices as linear maps and basis images]] |
+| 621 | P7-B · Three-dimensional axis rotation matrices | [[Matrices as linear maps and basis images]] |
+| 622 | P7-C · Matrix transpose | [[Matrix transpose symmetry and trace]] |
+| 623 | P7-C · Symmetric matrices | [[Matrix transpose symmetry and trace]] |
+| 624 | P7-C · Skew-symmetric matrices | [[Matrix transpose symmetry and trace]] |
+| 625 | P7-C · Trace of a matrix | [[Matrix transpose symmetry and trace]] |
+| 626 | P7-C · Determinants in 2D | [[Determinants orientation and volume]] |
+| 627 | P7-C · Determinants in 3D | [[Determinants orientation and volume]] |
+| 628 | P7-C · Determinant as oriented area or volume scale | [[Determinants orientation and volume]] |
+| 629 | P7-C · Determinant and handedness flips | [[Determinants orientation and volume]] |
+| 630 | P7-C · Singular matrices | [[Matrix inversion pivoting and residuals]] |
+| 631 | P7-C · Matrix minors and cofactors | [[Matrix inversion pivoting and residuals]] |
+| 632 | P7-C · Adjugate inverse formula | [[Matrix inversion pivoting and residuals]] |
+| 633 | P7-C · Gaussian-elimination matrix inversion | [[Matrix inversion pivoting and residuals]] |
+| 634 | P7-C · Condition sensitivity of matrix inversion | [[Conditioning and singularity]] |
+| 635 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 636 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 637 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 638 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 639 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 640 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 641 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 642 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 643 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 644 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 645 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 646 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 647 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 648 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 649 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 650 | **Missing source**; no canonical title inferred. | Reconstructed affine prerequisite bridge; no received-lesson claim. |
+| 651 | P7-D · Basis matrices | [[Coordinate frames and change of basis]] |
+| 652 | P7-D · Coordinate-frame matrices | [[Coordinate frames and change of basis]] |
+| 653 | P7-D · Change-of-basis matrices | [[Coordinate frames and change of basis]] |
+| 654 | P7-D · Active versus passive transformations | [[Coordinate frames and change of basis]] |
+| 655 | P7-D · Object space | [[Camera view and clip-space pipeline]] |
+| 656 | P7-D · World space | [[Camera view and clip-space pipeline]] |
+| 657 | P7-D · View or camera space | [[Camera view and clip-space pipeline]] |
+| 658 | P7-D · Tangent space | [[Camera view and clip-space pipeline]] |
+| 659 | P7-D · Clip space | [[Camera view and clip-space pipeline]] |
+| 660 | P7-D · Matrix storage in C++ | [[Matrix storage indexing and strides]] |
+| 661 | P7-D · Fixed-size Mat2 design | [[Matrix storage indexing and strides]] |
+| 662 | P7-D · Fixed-size Mat3 design | [[Matrix storage indexing and strides]] |
+| 663 | P7-D · Fixed-size Mat4 design | [[Matrix storage indexing and strides]] |
+| 664 | P7-D · Dynamic matrix storage and strides | [[Matrix storage indexing and strides]] |
+| 665 | P7-D · SIMD matrix multiplication | [[Matrix SIMD tiling and cache reuse]] |
+| 666 | P7-D · Matrix multiplication loop ordering and cache behavior | [[Matrix SIMD tiling and cache reuse]] |
+| 667 | P7-E · Quaternion motivation from 3D rotation composition | [[Quaternion algebra and Hamilton product]] |
+| 668 | P7-E · Quaternion scalar-vector representation | [[Quaternion algebra and Hamilton product]] |
+| 669 | P7-E · Component representation $w,x,y,z$ | [[Quaternion algebra and Hamilton product]] |
+| 670 | P7-E · Hamilton product derivation | [[Quaternion algebra and Hamilton product]] |
+| 671 | P7-E · Quaternion conjugate | [[Quaternion algebra and Hamilton product]] |
+| 672 | P7-E · Quaternion norm | [[Quaternion algebra and Hamilton product]] |
+| 673 | P7-E · Quaternion inverse | [[Quaternion algebra and Hamilton product]] |
+| 674 | P7-E · Unit quaternions | [[Quaternion matrix and axis-angle conversion]] |
+| 675 | P7-E · Axis-angle rotation representation | [[Quaternion matrix and axis-angle conversion]] |
+| 676 | P7-E · Axis-angle to quaternion derivation | [[Quaternion matrix and axis-angle conversion]] |
+| 677 | P7-E · Quaternion to axis-angle conversion | [[Quaternion matrix and axis-angle conversion]] |
+| 678 | P7-E · Rotating a vector with a quaternion | [[Quaternion rotation and double cover]] |
+| 679 | P7-E · Quaternion rotation sandwich product | [[Quaternion rotation and double cover]] |
+| 680 | P7-F · Optimized quaternion-vector rotation | [[Quaternion rotation and double cover]] |
+| 681 | P7-F · Quaternion to rotation-matrix derivation | [[Quaternion matrix and axis-angle conversion]] |
+| 682 | P7-F · Rotation matrix to quaternion conversion | [[Quaternion matrix and axis-angle conversion]] |
+| 683 | P7-F · Composition order for quaternion rotations | [[Quaternion rotation and double cover]] |
+| 684 | P7-F · $q$ and $-q$ represent the same physical rotation | [[Quaternion rotation and double cover]] |
+| 685 | P7-F · The quaternion interpolation problem | [[Quaternion interpolation and shortest paths]] |
+| 686 | P7-F · Quaternion linear interpolation | [[Quaternion interpolation and shortest paths]] |
+| 687 | P7-F · Normalized linear interpolation, NLERP | [[Quaternion interpolation and shortest paths]] |
+| 688 | P7-F · SLERP: spherical linear interpolation | [[Quaternion interpolation and shortest paths]] |
+| 689 | P7-F · Deriving SLERP from great-circle interpolation | [[Quaternion interpolation and shortest paths]] |
+| 690 | P7-F · Antipodal quaternion handling | [[Quaternion interpolation and shortest paths]] |
+| 691 | P7-F · Small-angle SLERP fallback | [[Quaternion interpolation and shortest paths]] |
+| 692 | P7-F · Quaternion numerical drift | [[Quaternion rotation and double cover]] |
+| 693 | P7-F · Quaternion renormalization | [[Quaternion rotation and double cover]] |
+| 694 | P7-F · Euler angles and coordinate-order conventions | [[Euler angles and gimbal singularity]] |
+| 695 | P7-F · Gimbal lock in Euler representations | [[Euler angles and gimbal singularity]] |
+| 696 | P7-F · Euler-to-quaternion conversion | [[Euler angles and gimbal singularity]] |
+| 697 | P7-F · Quaternion-to-Euler ambiguity | [[Euler angles and gimbal singularity]] |
+| 698 | P7-F · Dual-quaternion motivation for rigid transforms | [[Dual quaternions and rigid motion]] |
+| 699 | P7-F · Comparing matrices, Euler angles, quaternions and dual quaternions | [[Transform hierarchies TRS and shear]] |
+| 700 | P7-F · Implementing a complete transform type | [[Transform hierarchies TRS and shear]] |
+
+At the Phase 7 ledger snapshot, numbered topics with developed source/reconstruction entries totaled 344: Parts1–160,501–634,651–700. Of those,343 have supplied numbered lessons; Part542 remains explicitly reconstructed. The16 missing Phase7 sources are recorded as gaps rather than counted as received lessons. Parts161–500 and all parts after 700 were unreceived at that Phase 7 snapshot; Phase 8 coverage is recorded below. Phase7 attachment boundaries are not silently assigned integrated-chunk identifiers.
+
 ## Phase 6 - Parts 501-600
 
 The user supplied the Phase 6 group identified as M031–M036 in nineteen pasted documents, including a supplemental panel analogy. Explicit lesson headings cover 99 distinct parts: 501–541 and 543–600. Part 542 is referenced as the next cross-product definition but has no standalone lesson; its mechanism is explicitly reconstructed from adjacent material in the new volume. The narrative therefore develops all 100 phase topics without falsely claiming 100 standalone source lessons.
 
-Main coverage is now the disjoint ranges 1–160 and 501–600: 260 developed topic entries, of which 259 have supplied standalone numbered lessons and one is identified reconstruction. Parts 161–500 and 601 onward remain pending. Accepted chunk groups are M001–M010 and the user-labeled M031–M036, 16 of 180; no unverified per-chunk subdivision of this phase's parts is imposed. XR01/Modules 1–19 remain separate.
+Before Phase 7, coverage was Parts 1–160 and 501–600: 260 developed entries, including the Part 542 reconstruction. The Phase 7 snapshot extended developed numbered coverage to 344 entries and recorded its 16 missing source lessons separately. The explicitly identified chunk groups remain M001–M010 and user-labeled M031–M036; the six new Phase 7 excerpts are not assigned unverified integrated-chunk identifiers. XR01/Modules 1–19 remain separate.
 
 [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|Read the continuous Phase 6 story]]. Source part numbers are an audit ledger, not lesson segmentation.
 
@@ -109,11 +220,11 @@ Main coverage is now the disjoint ranges 1–160 and 501–600: 260 developed to
 | 597 | DEBUGGING NaN VECTORS — Catch the first invalid input or operation using finite checks; NaN propagation can silently skip decisions. [[Vector tolerances and finite-state diagnostics]] |
 | 598 | VECTOR INVARIANTS IN ENGINE APIs — Validated wrappers establish finite/unit promises and operations must preserve or explicitly drop them. [[Coordinate-space types and validated invariants]] |
 | 599 | DISTINGUISHING WORLD-SPACE AND LOCAL-SPACE VECTOR TYPES — Space-tagged points, vectors and transforms reject broad frame mistakes; dynamic local-frame identity remains a separate issue. [[Coordinate-space types and validated invariants]] |
-| 600 | Reconstructing a Production-Ready `Vec3` Library from First Principles — Reconstruct the scalar library from the mathematics, then verify contracts with edge cases and seeded properties. [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#A complete scalar laboratory makes the story executable|Inline capstone and tests]] |
+| 600 | Reconstructing a Production-Ready `Vec3` Library from First Principles — Reconstruct the scalar library from the mathematics, then verify contracts with edge cases and seeded properties. [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#A complete scalar laboratory makes the story executable\|Inline capstone and tests]] |
 
 ## XR01 - Independent seeing and representation source
 
-This source is outside the 3,000-part curriculum. Module labels below preserve the attachment's coverage without assigning it main part numbers. XR01 is one accepted source in a separate anticipated 3–4-source continuous series; future inputs are pending. Main coverage is recorded separately above: Parts 1–160 and 501–600, with the Part 542 source gap identified.
+This source is outside the 3,000-part curriculum. Module labels below preserve the attachment's coverage without assigning it main part numbers. XR01 is one accepted source in a separate anticipated 3–4-source continuous series; future inputs are pending. Main coverage is recorded separately in the current Phase 7 ledger above, with the Part 542 reconstruction and missing 635–650 sources identified.
 
 | Independent source module | Mechanism and teaching location |
 |---|---|
@@ -130,11 +241,11 @@ This source is outside the 3,000-part curriculum. Module labels below preserve t
 | XR01/11 - Temporal | [[Temporal reprojection and history validation]]: weights, motion/jitter conventions, disocclusion and changing-quality history. |
 | XR01/12 - Color | [[Color encoding and linear-light operations]]: transfer/primaries, XYZ, relative luminance, HDR and distinct noise mechanisms. |
 | XR01/13 - Quality | [[Perceptual metrics and display calibration]]: reference, MSE/PSNR/SSIM, gaze weighting and model limits. |
-| XR01/14 - Papers | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Read research as a chain of questions, methods and bounded conclusions|Bounded paper-reading anchors]]; coefficients/study details not fully inspected remain source-reported. |
-| XR01/15 - Experiment | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Complete numerical and image-space laboratory|Tested proxy experiment]], explicitly not saved GPU work or a human study. |
-| XR01/16 - Use cases | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Diagnose a symptom by the quantity that failed|Failure-to-measurement table]]. |
+| XR01/14 - Papers | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Read research as a chain of questions, methods and bounded conclusions\|Bounded paper-reading anchors]]; coefficients/study details not fully inspected remain source-reported. |
+| XR01/15 - Experiment | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Complete numerical and image-space laboratory\|Tested proxy experiment]], explicitly not saved GPU work or a human study. |
+| XR01/16 - Use cases | [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Diagnose a symptom by the quantity that failed\|Failure-to-measurement table]]. |
 | XR01/17 - Further vision | [[Stereoacuity and binocular foveation]], retinal velocity, flicker/task dependence and bias/variance distinctions. |
-| XR01/18 - Vocabulary | Definitions appear at first use; filled Concepts and [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Teach the distinctions from a blank board|Recall desk]] preserve operational distinctions. |
+| XR01/18 - Vocabulary | Definitions appear at first use; filled Concepts and [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Teach the distinctions from a blank board\|Recall desk]] preserve operational distinctions. |
 | XR01/19 - Understanding checks | Alias/phase, nonlinear filtering, additive-cost and evidence-reconstruction examples; [[Research validity and ablation]]. |
 
 Source numbering is a coverage ledger, not the narrative's teaching order. The copied “START CHUNK2” footer is not a supplied second source or an instruction to invent it.
@@ -187,10 +298,10 @@ All fourteen supplied parts are accepted. Source numbering audits coverage; it d
 
 | Mechanism | Teaching position |
 |---|---|
-| Alias, type/category, conversion and deduction | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving another name to a live object|Binding story]] |
-| Temporary lifetime, moves and forwarding | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A temporary needs an explicit lifetime story|Lifetime story]] |
-| Pointer validity, container mutation and pool identity | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing|Borrow story]] |
-| Const paths, getters, cache invariants | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Read-only is a path, not an ownership or synchronization promise|Access story]] |
+| Alias, type/category, conversion and deduction | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving another name to a live object\|Binding story]] |
+| Temporary lifetime, moves and forwarding | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A temporary needs an explicit lifetime story\|Lifetime story]] |
+| Pointer validity, container mutation and pool identity | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing\|Borrow story]] |
+| Const paths, getters, cache invariants | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Read-only is a path, not an ownership or synchronization promise\|Access story]] |
 
 ## M009 - Parts 127-147
 
@@ -248,11 +359,11 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 
 | Teaching question | Narrative location |
 |---|---|
-| What crosses a call, and what can the callee retain? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A value crosses the function boundary|Parameter and sink contracts]] |
-| How can a result become an owning object without a hidden copy? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Return a result without handing out a lifetime problem|Result construction]] |
-| How does initial state become valid, then get cleaned up? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Construction establishes a usable state|Construction-to-cleanup story]] |
-| What does copying or moving this value mean? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Copy a meaning rather than just its bytes|Copy, assignment and transfer story]] |
-| Which boilerplate should exist at all? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From three repairs to five decisions to zero boilerplate|Composition and ownership]] |
+| What crosses a call, and what can the callee retain? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A value crosses the function boundary\|Parameter and sink contracts]] |
+| How can a result become an owning object without a hidden copy? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Return a result without handing out a lifetime problem\|Result construction]] |
+| How does initial state become valid, then get cleaned up? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Construction establishes a usable state\|Construction-to-cleanup story]] |
+| What does copying or moving this value mean? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Copy a meaning rather than just its bytes\|Copy, assignment and transfer story]] |
+| Which boilerplate should exist at all? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From three repairs to five decisions to zero boilerplate\|Composition and ownership]] |
 
 ## M001 - Parts 1-20
 
@@ -414,11 +525,121 @@ Source numbering is an audit ledger, not lesson segmentation. The complete teach
 
 | Source material | Teaching position |
 |---|---|
-| Binary states, bases, unsigned/signed encodings | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|Interpretation]] |
-| Boolean rules, masks, shifts and packed fields | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields|Decisions and fields]] |
-| Adders, integer algorithms, range policies and language conversions | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|Finite arithmetic]] |
-| IEEE fields, special classes and representable spacing | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|Floating representation]] |
-| Rounding paths, cancellation, error and reproducibility | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|Arithmetic uncertainty]] |
-| Fixed point, FP16/BF16, quantizers and normalized formats | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep|Representation choices]] |
-| Addresses, layout, page translation and storage lifetime | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|Placement]] |
-| Bit transfer, schemas, checked parsing, integrity and dumps | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement|External bytes]] |
+| Binary states, bases, unsigned/signed encodings | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation\|Interpretation]] |
+| Boolean rules, masks, shifts and packed fields | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields\|Decisions and fields]] |
+| Adders, integer algorithms, range policies and language conversions | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy\|Finite arithmetic]] |
+| IEEE fields, special classes and representable spacing | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities\|Floating representation]] |
+| Rounding paths, cancellation, error and reproducibility | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty\|Arithmetic uncertainty]] |
+| Fixed point, FP16/BF16, quantizers and normalized formats | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep\|Representation choices]] |
+| Addresses, layout, page translation and storage lifetime | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live\|Placement]] |
+| Bit transfer, schemas, checked parsing, integrity and dumps | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement\|External bytes]] |
+
+
+## Phase 8 - Parts 701-800
+
+Seven supplied excerpts cover every numbered lesson from 701 through 800. The attached set includes an unnumbered eigenanalysis-conditioning repair and an SVD geometric bridge; both are integrated into the teaching narrative without being counted as numbered parts. The final supplied excerpt continues through Part 800, even though the request described the current stopping point as Part 770. This ledger follows the complete supplied set. Source letters P8-A through P8-G are provenance labels only.
+
+[[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|Read the connected Phase 8 teaching volume]] · [[Visual Recall/08 - Linear Algebra - Visual Recall|Visual recall]] · [[Supplementary/Sources and Code Anchors#Phase 8 - Source analysis and verification|Source provenance]]
+
+| Part | Source state and supplied title | Developed mechanism / navigation |
+|---|---|---|
+| 701 | P8-C · Linear equations as hyperplanes | [[Linear systems and fundamental subspaces]] |
+| 702 | P8-C · Systems of linear equations | [[Linear systems and fundamental subspaces]] |
+| 703 | P8-C · Matrix form $A\mathbf x=\mathbf b$ | [[Linear systems and fundamental subspaces]] |
+| 704 | P8-C · Consistent versus inconsistent systems | [[Linear systems and fundamental subspaces]] |
+| 705 | P8-C · Underdetermined versus overdetermined systems | [[Linear systems and fundamental subspaces]] |
+| 706 | P8-C · Matrix rank | [[Linear systems and fundamental subspaces]] |
+| 707 | P8-C · Row space | [[Linear systems and fundamental subspaces]] |
+| 708 | P8-C · Column space | [[Linear systems and fundamental subspaces]] |
+| 709 | P8-C · Null space | [[Linear systems and fundamental subspaces]] |
+| 710 | P8-C · Rank–nullity theorem | [[Linear systems and fundamental subspaces]] |
+| 711 | P8-C · Elementary row operations | [[Linear systems and fundamental subspaces]] |
+| 712 | P8-D · ROW-ECHELON FORM | [[Gaussian elimination and pivoting]] |
+| 713 | P8-D · REDUCED ROW-ECHELON FORM | [[Gaussian elimination and pivoting]] |
+| 714 | P8-D · GAUSSIAN ELIMINATION | [[Gaussian elimination and pivoting]] |
+| 715 | P8-D · PARTIAL PIVOTING | [[Gaussian elimination and pivoting]] |
+| 716 | P8-D · COMPLETE PIVOTING | [[Gaussian elimination and pivoting]] |
+| 717 | P8-D · FORWARD SUBSTITUTION | [[Gaussian elimination and pivoting]] |
+| 718 | P8-D · BACK SUBSTITUTION | [[Gaussian elimination and pivoting]] |
+| 719 | P8-D · LU DECOMPOSITION | [[LU factorization and reusable solves]] |
+| 720 | P8-D · DOOLITTLE LU FACTORIZATION | [[LU factorization and reusable solves]] |
+| 721 | P8-D · LUP DECOMPOSITION WITH PIVOT PERMUTATION | [[LU factorization and reusable solves]] |
+| 722 | P8-E · CHOLESKY DECOMPOSITION | [[Symmetric positive-definite matrices and Cholesky]] |
+| 723 | P8-E · POSITIVE-DEFINITE MATRICES | [[Symmetric positive-definite matrices and Cholesky]] |
+| 724 | P8-E · POSITIVE-SEMIDEFINITE MATRICES | [[Symmetric positive-definite matrices and Cholesky]] |
+| 725 | P8-E · LDLᵀ DECOMPOSITION | [[Symmetric positive-definite matrices and Cholesky]] |
+| 726 | P8-E · QR DECOMPOSITION | [[QR factorization and least squares]] |
+| 727 | P8-E · GRAM–SCHMIDT QR | [[QR factorization and least squares]] |
+| 728 | P8-E · HOUSEHOLDER REFLECTIONS | [[QR factorization and least squares]] |
+| 729 | P8-E · HOUSEHOLDER QR | [[QR factorization and least squares]] |
+| 730 | P8-E · GIVENS ROTATIONS | [[QR factorization and least squares]] |
+| 731 | P8-E · SOLVING LEAST-SQUARES SYSTEMS WITH QR | [[QR factorization and least squares]] |
+| 732 | P8-E · NORMAL EQUATIONS AND THEIR CONDITIONING PROBLEM | [[QR factorization and least squares]] |
+| 733 | P8-E · EIGENVALUE DEFINITION | [[Eigenvalues and eigenspaces]] |
+| 734 | P8-E · EIGENVECTOR DEFINITION | [[Eigenvalues and eigenspaces]] |
+| 735 | P8-E · CHARACTERISTIC POLYNOMIAL | [[Eigenvalues and eigenspaces]] |
+| 736 | P8-E · ALGEBRAIC VERSUS GEOMETRIC MULTIPLICITY | [[Eigenvalues and eigenspaces]] |
+| 737 | P8-B · DIAGONALIZABLE MATRICES | [[Eigenvalues and eigenspaces]] |
+| 738 | P8-B · EIGENDECOMPOSITION | [[Eigenvalues and eigenspaces]] |
+| 739 | P8-B · SPECTRAL THEOREM FOR REAL SYMMETRIC MATRICES | [[Eigenvalues and eigenspaces]] |
+| 740 | P8-B · ORTHOGONAL MATRICES | [[Eigenvalues and eigenspaces]] |
+| 741 | P8-B · ORTHONORMAL EIGENVECTORS OF SYMMETRIC MATRICES | [[Eigenvalues and eigenspaces]] |
+| 742 | P8-B · POWER ITERATION | [[Eigenvalues and eigenspaces]] |
+| 743 | P8-B · INVERSE ITERATION | [[Eigenvalues and eigenspaces]] |
+| 744 | P8-B · RAYLEIGH QUOTIENT | [[Eigenvalues and eigenspaces]] |
+| 745 | P8-B · QR EIGENVALUE ITERATION | [[Eigenvalues and eigenspaces]] |
+| 746 | P8-B · JACOBI EIGENVALUE ALGORITHM FOR SYMMETRIC MATRICES | [[Eigenvalues and eigenspaces]] |
+| 747 | P8-B · CONVERGENCE CRITERIA FOR ITERATIVE EIGEN SOLVERS | [[Eigenvalues and eigenspaces]] |
+| 748 | P8-B · EIGENVALUE SENSITIVITY | [[Eigenvalues and eigenspaces]] |
+| 749 | P8-A · SVD MOTIVATION | [[Singular value decomposition]] |
+| 750 | P8-A · THE SVD EQUATION | [[Singular value decomposition]] |
+| 751 | P8-A · GEOMETRIC INTERPRETATION: ORTHOGONAL → SCALE → ORTHOGONAL | [[Singular value decomposition]] |
+| 752 | P8-A · SINGULAR VALUES | [[Singular value decomposition]] |
+| 753 | P8-A · RIGHT SINGULAR VECTORS | [[Singular value decomposition]] |
+| 754 | P8-A · LEFT SINGULAR VECTORS | [[Singular value decomposition]] |
+| 755 | P8-A · RELATIONSHIP BETWEEN SVD AND $A^TA$ | [[Singular value decomposition]] |
+| 756 | P8-A · WHY $A^TA$ IS POSITIVE SEMIDEFINITE | [[Singular value decomposition]] |
+| 757 | P8-A · FULL SVD DIMENSIONS | [[Singular value decomposition]] |
+| 758 | P8-A · THIN / ECONOMY SVD | [[Singular value decomposition]] |
+| 759 | P8-A · SVD OF RECTANGULAR MATRICES | [[Singular value decomposition]] |
+| 760 | P8-A · SVD OF RANK-DEFICIENT MATRICES | [[Singular value decomposition]] |
+| 761 | P8-A · ZERO SINGULAR VALUES AND NULL SPACES | [[Singular value decomposition]] |
+| 762 | P8-A · PSEUDOINVERSE DEFINITION | [[Singular value decomposition]] |
+| 763 | P8-A · CONSTRUCTING THE PSEUDOINVERSE FROM SVD | [[Singular value decomposition]] |
+| 764 | P8-A · LEAST-SQUARES SOLUTION FROM THE PSEUDOINVERSE | [[Singular value decomposition]] |
+| 765 | P8-A · MINIMUM-NORM SOLUTIONS | [[Singular value decomposition]] |
+| 766 | P8-A · CONDITION NUMBER FROM SINGULAR VALUES | [[Singular value decomposition]] |
+| 767 | P8-A · LOW-RANK APPROXIMATION | [[Singular value decomposition]] |
+| 768 | P8-A · ECKART–YOUNG THEOREM INTUITION | [[Singular value decomposition]] |
+| 769 | P8-A · SINGULAR-VALUE TRUNCATION | [[Singular value decomposition]] |
+| 770 | P8-F · PCA CONNECTION TO EIGENDECOMPOSITION AND SVD | [[PCA and covariance eigensystems]] |
+| 771 | P8-F · COVARIANCE MATRIX EIGENSYSTEMS | [[PCA and covariance eigensystems]] |
+| 772 | P8-F · POLAR DECOMPOSITION | [[Polar decomposition]] |
+| 773 | P8-F · POLAR DECOMPOSITION INTO ROTATION AND STRETCH | [[Polar decomposition]] |
+| 774 | P8-F · SVD RELATIONSHIP TO POLAR DECOMPOSITION | [[Polar decomposition]] |
+| 775 | P8-F · BIDIAGONALIZATION FOR SVD | [[Singular value decomposition]] |
+| 776 | P8-F · GOLUB–KAHAN BIDIAGONALIZATION CONCEPT | [[Singular value decomposition]] |
+| 777 | P8-F · JACOBI SVD ALGORITHM | [[Singular value decomposition]] |
+| 778 | P8-F · ONE-SIDED JACOBI SVD | [[Singular value decomposition]] |
+| 779 | P8-F · ITERATIVE SVD CONVERGENCE TESTS | [[Singular value decomposition]] |
+| 780 | P8-F · SIGN AND ORDERING CONVENTIONS IN SVD OUTPUT | [[Singular value decomposition]] |
+| 781 | P8-F · NUMERICAL STABILITY OF SVD | [[Singular value decomposition]] |
+| 782 | P8-F · TESTING SVD RECONSTRUCTION ERROR | [[Singular value decomposition]] |
+| 783 | P8-F · TESTING ORTHOGONALITY OF $U$ | [[Singular value decomposition]] |
+| 784 | P8-F · TESTING ORTHOGONALITY OF $V$ | [[Singular value decomposition]] |
+| 785 | P8-F · DYNAMIC-MATRIX REPRESENTATION FOR DECOMPOSITIONS | [[Singular value decomposition]] |
+| 786 | P8-G · IN-PLACE VERSUS OUT-OF-PLACE FACTORIZATION | [[Matrix factorization choices]] |
+| 787 | P8-G · WORKSPACE ALLOCATION FOR NUMERICAL ROUTINES | [[Matrix factorization choices]] |
+| 788 | P8-G · MATRIX NORMS | [[Matrix norms and numerical error]] |
+| 789 | P8-G · FROBENIUS NORM | [[Matrix norms and numerical error]] |
+| 790 | P8-G · SPECTRAL NORM | [[Matrix norms and numerical error]] |
+| 791 | P8-G · MATRIX EXPONENTIAL | [[Matrix functions]] |
+| 792 | P8-G · MATRIX LOGARITHM CONCEPT | [[Matrix functions]] |
+| 793 | P8-G · MATRIX SQUARE ROOT CONCEPT | [[Matrix functions]] |
+| 794 | P8-G · MATRIX POWERS | [[Matrix functions]] |
+| 795 | P8-G · TAYLOR-SERIES MATRIX FUNCTIONS AND THEIR LIMITS | [[Matrix functions]] |
+| 796 | P8-G · SCALING-AND-SQUARING FOR THE MATRIX EXPONENTIAL | [[Matrix functions]] |
+| 797 | P8-G · SPARSE VERSUS DENSE LINEAR SYSTEMS | [[Sparse and iterative solvers]] |
+| 798 | P8-G · ITERATIVE VERSUS DIRECT SOLVERS | [[Sparse and iterative solvers]] |
+| 799 | P8-G · CHOOSING A DECOMPOSITION BASED ON MATRIX STRUCTURE | [[Sparse and iterative solvers]] |
+| 800 | P8-G · IMPLEMENTING AND VALIDATING AN SVD API FOR A GRAPHICS MATH LIBRARY | [[Sparse and iterative solvers]] |

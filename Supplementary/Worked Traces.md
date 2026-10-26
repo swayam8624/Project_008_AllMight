@@ -1,5 +1,57 @@
 # Worked Traces
 
+## Phase 8 - From constraints to a stable SVD contract
+
+Follow one small rank-deficient fit through its geometry, answer, and checks. This supplements [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|the Phase 8 story]].
+
+Let
+
+$$
+A=\begin{bmatrix}3&0\\0&0\end{bmatrix},\qquad
+b=\begin{bmatrix}6\\5\end{bmatrix}.
+$$
+
+The first row observes $x_1$ with gain three. The second row has zero coefficients, so it cannot produce the requested measurement five. The rank is one, the column space is the horizontal axis, and $b$ lies outside it. The null space is the vertical axis: changing $x_2$ is invisible to the map.
+
+The SVD is already diagonal: $U=V=I$, $\Sigma=A$. The pseudoinverse is $A^+=\operatorname{diag}(1/3,0)$. Therefore $A^+b=(2,0)$. Every $(2,t)$ has the same residual $(0,-5)$; $t=0$ is its minimum-norm choice. This trace separately answers consistency, rank, nullity, residual, and the pseudoinverse policy.
+
+For $k=1$ truncation, $A_1=\operatorname{diag}(3,0)$. Here the input already has rank one, so the approximation is exact. If instead $A=\operatorname{diag}(3,2)$, then keeping only the first singular direction gives $A_1=\operatorname{diag}(3,0)$, spectral error $2$, and Frobenius error $2$. The norm names state which reconstruction discrepancy is being reported.
+
+Now use centered planar samples $(-1,0),(0,0),(1,0)$. Their sample covariance with divisor $N-1$ is $\operatorname{diag}(1,0)$. The first component follows the horizontal line; the zero second eigenvalue says the observed samples have no vertical spread. Add small measurement noise and that zero becomes small, making the rank or PCA cutoff a scale-aware modeling decision.
+
+An SVD routine should return dimensions and status, not just three arrays. Check $\|A-U\Sigma V^T\|$ relative to a declared input scale; check $U^TU$ and $V^TV$ separately, with identity sizes matching full/thin conventions; verify descending nonnegative singular values; enforce a maximum iteration count and surface nonconvergence. Passing these checks establishes those measured properties at the tested scale; it does not certify every singular value or guarantee an accurate solution for an ill-conditioned application.
+
+## Phase 7 - The moving-panel tracebook
+
+Use active right-handed rotations, column vectors, radians in code, and the [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions#Figure M6 - Follow one point through named spaces|declared illustrative minus-Z projection]] with near 1, far 10 and NDC depth $[-1,1]$.
+
+### One local point reaches a screen-relative description
+
+Let local scale be $(2,1,1)$, orientation a positive-Z quarter turn, translation $(10,0,0)$, and point $p=(1,0,0)$. The camera sits at world $(10,0,5)$ with identity orientation.
+
+| Stage | Value | Check |
+|---|---|---|
+| Scale local point | $(2,0,0)$ | Scaling occurs in the declared local axes. |
+| Rotate | $(0,2,0)$ | Right-hand positive Z maps X toward Y. |
+| Translate | $(10,2,0)$ | World location; $M=TRS$. |
+| Inverse camera pose | $(0,2,-5)$ | Camera is five units above the world plane and looks along $-Z$. |
+| Projection to clip | $(0,2,35/9,5)$ | Keep all four homogeneous coordinates. |
+| Perspective divide | $(0,2/5,7/9)$ | Finite nonzero divisor; this point is within the selected clip volume. |
+
+Reconstructing local coordinates undoes translation, then rotation, then scale. Applying the inverse orientation with a guessed untranslated offset would mix frames. The same row-major scalar array could implement every operation if logical access and upload conventions remain correct.
+
+### The tangent and normal take different paths
+
+Take local tangent $u=(1,1,0)$ and local normal $n=(1,-1,0)$. Scale then rotate gives $u'=(-1,2,0)$. Reciprocal-scale then rotate gives $n'=(1,1/2,0)$. Their dot is $-1+1=0$. Normalizing $n'$ for shading changes its length, not the perpendicularity. Neither vector receives translation. A mirrored model additionally needs an explicit winding/orientation policy.
+
+### Diagnose interpolation using a quarter point
+
+Interpolate identity to a positive-Z $120^\circ$ orientation. At $t=1/4$, ideal SLERP gives a $30^\circ$ turn. NLERP normalizes coefficients $(7/8,0,0,\sqrt3/8)$, yielding about $27.795772496^\circ$. The midpoint alone would not expose this speed difference. With endpoints $q$ and $-q$, sign-aligning first avoids a zero midpoint and preserves the common orientation.
+
+### A parent edit invalidates only actual dependencies
+
+For car → door → mirror, editing the door's local transform makes door-local and door-world caches stale, along with mirror-world and derived inverse/normal caches. Mirror-local and car caches remain valid. Reparenting the mirror changes its world dependency even if its local coefficients remain identical. Preserving world pose during reparenting instead requires solving the new local map and checking whether the result still fits the allowed TRS representation.
+
 ## Phase 6 - The robot panel tracebook
 
 This cumulative trace extends [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the self-contained Phase 6 volume]]. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.

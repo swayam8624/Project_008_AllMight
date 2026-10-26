@@ -20,6 +20,7 @@ An application binary interface (ABI) specifies implementation-level calling and
 - [[Fixed-width integer types]] — The representation width fixes byte count and valid shift range.
 
 ## Used by
+- [[Matrix storage indexing and strides]]
 
 - [[Standard-layout and trivial copyability]] — uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
 

@@ -19,7 +19,7 @@ GitHub repository: `Project_008_AllMight`.
 |---|---|
 | Graphics Engine Mastery - Continuous Notes.md | Library index and subject-volume navigation |
 | Continuous Notes/ | Connected, self-contained teaching volumes |
-| Visual Recall/ | One concise visual active-recall companion per subject volume; Volume 01, Volume 02, XR and Phase 6 now have companions |
+| Visual Recall/ | One concise visual active-recall companion per subject volume; Volume 01, Volume 02, XR, and Phases 6–8 now have companions |
 | Supplementary/Derivations.md | Cumulative full proofs and mathematical reconstruction |
 | Supplementary/Code Snippets.md | Existing canonical drivers and project-specific excerpts; independent C++ examples stay inline in Volume 02 |
 | Supplementary/Worked Traces.md | Extended reusable traces; essential traces also appear in the volume |
@@ -35,6 +35,14 @@ Volume 01, **From Signals to Meaning: Bits, Numbers, and Memory**, now integrate
 Volume 02, **C++: From Objects to Reliable Programs**, is planned for Parts 101–300 / M007–M018: two related hundred-part phases, twelve chunks. M007–M010 currently cover Parts 101–160. Do not create empty future chapters or mark previews complete. Later volumes normally follow a hundred-part/six-chunk phase, with adjacent phases combined only when subject continuity warrants it. The curriculum has 180 integrated chunks, not the earlier assumed 150 uniform batches.
 
 Phase 6, **From Movement to Meaning: Vectors, Geometry, and Reliable Code**, integrates Parts 501–600 in [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|its own continuous volume]]. Its `06` identifies the curriculum phase, not six completed vault volumes. The user labels this received phase group M031–M036; individual chunk boundaries are not inferred from the nineteen pasted excerpts. Part 542 has no standalone source lesson and is explicitly reconstructed. Parts 161–500 remain unreceived, not silently completed.
+
+## Phase 7 - Matrices, transforms and quaternions
+
+Phase 7, **From Basis Images to Moving Worlds: Matrices, Transforms and Quaternions**, has [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|its own continuous volume]] and linked visual recall. Six supplied excerpts cover 84 standalone lessons, Parts 601–634 and 651–700. Parts 635–650 remain missing source lessons; an explicitly reconstructed affine bridge supplies the prerequisite narrative without inventing their canonical titles or integrated-chunk boundaries.
+
+## Phase 8 - Linear systems, decompositions, and matrix functions
+
+Phase 8, **From Constraints to Spectra: Systems, Decompositions, and Matrix Functions**, has [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|its own continuous volume]] and [[Visual Recall/08 - Linear Algebra - Visual Recall|active-recall companion]]. Seven supplied excerpts cover every lesson from Parts 701–800. The last excerpt extends beyond the request's “till Part 770” description, so the supplied material through Part 800 is included. The exact titles and provenance are in [[Supplementary/Foundations#Phase 8 - Parts 701-800|the ledger]].
 
 ## Independent XR foundations series
 
@@ -65,11 +73,13 @@ Technical concept links point to real files. Heading links locate chapter/proof 
 
 Forward means useful current context exists but deeper treatment is pending. Introduced means recognizable and usable at the present level. Developed means later material has added mechanism or implementation. Owned means the notes support independent reconstruction; it is not a claim about personal mastery.
 
-- Expanded topic coverage: Parts 1–160 and 501–600, 260 disjoint entries. Standalone supplied lessons cover 259 entries; Part 542 is explicitly reconstructed enrichment.
+- Expanded numbered topic coverage: Parts 1–160, 501–634, 651–700 and 701–800, 444 disjoint entries. Standalone supplied lessons cover 443 entries; Part 542 remains explicitly reconstructed enrichment. Parts 635–650 remain source gaps, with an unnumbered reconstructed affine bridge.
 - Accepted chunk groups: M001–M010 and the user-labeled M031–M036, 16 of 180. C++ volume remains 4 of 12 sources. Revised M007 updates the same Parts 101–112 without double counting.
-- M010 supplies Parts 148–160. Parts 161–500 and 601 onward remain pending; do not infer a uniform chunk size.
+- M010 supplies Parts 148–160. Parts 161–500 and 635–650 remain source gaps; Phase 8 Parts 701–800 are now integrated. Do not infer a uniform chunk size.
 - First volume: complete source coverage, with concept-led teaching organization.
 - Phase 6: connected panel/workcell narrative, inline scalar implementation and tested capstone; Part 542 source gap remains visible.
+- Phase 7: all six received excerpts integrated; 84 supplied lesson headings, explicit 635–650 gap, convention-led matrix/frame/quaternion narrative, figures and scalar laboratory. No per-excerpt integrated-chunk IDs are inferred.
+- Phase 8: seven received excerpts cover all 100 lessons from Parts 701–800; constraint geometry, factorizations, eigenanalysis, SVD, PCA, matrix functions, and solver/API decisions form a connected story.
 - Independent XR series: XR01 accepted; source Modules1–19 mapped to its separate narrative. This is not additional main-curriculum progress.
 
 [[Graphics Engine Mastery - Continuous Notes]] · [[Keyword Index]] · [[Dependency Map]]

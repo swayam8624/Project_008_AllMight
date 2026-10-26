@@ -22,7 +22,7 @@ For $(3,-4)$, the three norms are $7$, $5$ and $4$. Squared length scales quadra
 
 - [[Unit directions and safe normalization]] — Builds on this mechanism in the connected geometry story.
 - [[Dot products and orthogonality]] — Builds on this mechanism in the connected geometry story.
-
+- [[Matrix norms and numerical error]] — Extends this foundation into linear-systems and decomposition analysis.
 ## Recall and next depth
 
 Draw the three unit balls; explain which comparisons can safely use squared length. Full production proofs, target-specific integration and learner mastery require further evidence.

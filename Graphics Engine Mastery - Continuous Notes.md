@@ -6,12 +6,14 @@ This library entry point leads to self-contained teaching stories. Definitions, 
 
 | Volume | Source coverage | Current state | Read |
 |---|---|---|---|
-| 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory|Open volume 01]] |
-| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–160 · M007–M010; planned Parts 101–300 · M007–M018 | 4/12 sources integrated; objects, borrows, value transfer, ownership and lifetime, inline examples and laboratories | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Open volume 02]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Visual recall]] |
-| Phase 6 · From Movement to Meaning: Vectors, Geometry, and Reliable Code | Parts 501–600 · user-labeled M031–M036 | All phase topics developed; 99 supplied lesson headings plus explicit Part 542 reconstruction; panel narrative and inline tested C++ | [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|Open Phase 6]] |
+| 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory\|Open volume 01]] |
+| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–160 · M007–M010; planned Parts 101–300 · M007–M018 | 4/12 sources integrated; objects, borrows, value transfer, ownership and lifetime, inline examples and laboratories | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs\|Open volume 02]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall\|Visual recall]] |
+| Phase 6 · From Movement to Meaning: Vectors, Geometry, and Reliable Code | Parts 501–600 · user-labeled M031–M036 | All phase topics developed; 99 supplied lesson headings plus explicit Part 542 reconstruction; panel narrative and inline tested C++ | [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code\|Open Phase 6]] |
+| Phase 7 · From Basis Images to Moving Worlds: Matrices, Transforms and Quaternions | Received Parts 601–634 and 651–700 · six excerpts | 84 supplied lesson headings; missing 635–650 sources explicitly distinguished from reconstructed affine bridge; figures and scalar laboratory | [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions\|Open Phase 7]] · [[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall\|Visual recall]] |
+| Phase 8 · From Constraints to Spectra: Systems, Decompositions, and Matrix Functions | Parts 701–800 · seven excerpts | All 100 supplied lesson titles integrated; constraints through a validated numerical API; 10 horizontal figures and active recall | [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions\|Open Phase 8]] · [[Visual Recall/08 - Linear Algebra - Visual Recall\|Visual recall]] |
 | Later subjects | Remaining integrated curriculum | Boundaries follow real subject continuity | No empty volume files |
 
-Numbered coverage is disjoint: Parts 1–160 and 501–600. Parts 161–500 remain unreceived. The Phase 6 file number follows the curriculum phase and does not imply missing volumes have been created or completed.
+Numbered developed coverage is disjoint: Parts 1–160, 501–634, 651–700, and 701–800. Parts 161–500 and the missing Phase 7 source interval 635–650 remain unreceived. Phase numbers identify curriculum phases; they do not imply missing volumes have been created or completed.
 
 ## Independent learning series
 
@@ -32,13 +34,13 @@ Numbered coverage is disjoint: Parts 1–160 and 501–600. Parts 161–500 rema
 
 ## Visual active recall
 
-Visual-recall companions now cover all four continuous volumes: [[Visual Recall/01 - Bits, Numbers and Memory - Visual Recall|Volume 01 · Parts 1–100]], [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Volume 02 · Parts 101–160]], [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Independent XR foundations]], and [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Phase 6 · Parts 501–600]]. Each uses diagrams, captions and retrieval prompts; the existing Volume 01 board remains intact.
+Visual-recall companions cover every current continuous volume and the independent XR series: [[Visual Recall/01 - Bits, Numbers and Memory - Visual Recall|Volume 01 · Parts 1–100]], [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Volume 02 · Parts 101–160]], [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Independent XR foundations]], [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Phase 6 · Parts 501–600]], [[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Phase 7 · received 601–634 and 651–700]], and [[Visual Recall/08 - Linear Algebra - Visual Recall|Phase 8 · Parts 701–800]]. Each uses diagrams, captions and retrieval prompts.
 
 ## Cumulative companions
 
 [[Supplementary/Derivations]] contains longer proofs. [[Supplementary/Code Snippets]] contains canonical implementations and experiments. [[Supplementary/Worked Traces]] adds deeper traces; essential ones remain in the volume.
 
-[[Supplementary/Foundations]] retains the 247 developed topic entries and their narrative locations, including the identified Part 542 source gap. [[Supplementary/Sources and Code Anchors]] records source claims, primary-reference enrichment, corrections, commands, results and limitations. [[Keyword Index]], [[Dependency Map]] and Concepts hold the reusable graph. Independent C++ examples and runnable laboratories remain inside their teaching volumes; only project-dependent excerpts are separated.
+[[Supplementary/Foundations]] retains 344 developed numbered topic entries and their narrative locations, plus explicit source-gap records for Parts 635–650. Part 542 remains identified reconstruction. [[Supplementary/Sources and Code Anchors]] records source claims, primary-reference enrichment, corrections, commands, results and limitations. [[Keyword Index]], [[Dependency Map]] and Concepts hold the reusable graph. Independent C++ examples and runnable laboratories remain inside their teaching volumes; only project-dependent excerpts are separated.
 
 ## Follow the Phase 6 story
 

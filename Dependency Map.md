@@ -1,5 +1,53 @@
 # Dependency Map
 
+## Phase 8 - From constraints to spectra
+
+Read prerequisite → dependent. Phase 8 reuses the vector, matrix, metric, storage, and conditioning foundations from Phases 6–7; those connections are kept explicit here.
+
+| Prerequisites | Dependent | Why the dependency exists |
+|---|---|---|
+| [[Matrices as linear maps and basis images]], [[Basis coordinates and dimension]] | [[Linear systems and fundamental subspaces]] | Rows measure inputs; columns span reachable outputs, while rank-nullity counts invisible input changes. |
+| [[Linear systems and fundamental subspaces]], [[Conditioning and singularity]] | [[Gaussian elimination and pivoting]] | Elimination exposes equivalent constraints; pivot choices control division risk but cannot cure sensitivity. |
+| [[Gaussian elimination and pivoting]], [[Matrix storage indexing and strides]] | [[LU factorization and reusable solves]] | Elimination multipliers and triangular entries become reusable factors in an explicit storage layout. |
+| [[Matrix transpose symmetry and trace]], [[Gram matrices and coordinate metrics]] | [[Symmetric positive-definite matrices and Cholesky]] | Symmetry and positive quadratic energy justify the triangular square-root factorization. |
+| [[Linear systems and fundamental subspaces]], [[Dot products and orthogonality]], [[Conditioning and singularity]] | [[QR factorization and least squares]] | Orthogonal coordinates preserve residual length and separate fitted from perpendicular components. |
+| [[Matrices as linear maps and basis images]], [[Linear systems and fundamental subspaces]] | [[Eigenvalues and eigenspaces]] | An invariant direction is the null-space solution of $A-\lambda I$. |
+| [[Matrix multiplication and composition order]], [[Eigenvalues and eigenspaces]], [[Dot products and orthogonality]] | [[Singular value decomposition]] | SVD pairs distinct input and output orthonormal directions for any rectangular map. |
+| [[Singular value decomposition]], [[Linear systems and fundamental subspaces]], [[Matrix norms and numerical error]] | [[Moore-Penrose pseudoinverse]] | Reciprocating selected singular values gives least-squares and minimum-norm solutions while exposing sensitivity. |
+| [[Eigenvalues and eigenspaces]], [[Singular value decomposition]] | [[PCA and covariance eigensystems]] | Centered data covariance eigenvectors and data-matrix singular vectors encode the same principal directions. |
+| [[Singular value decomposition]], [[Eigenvalues and eigenspaces]], [[Determinants orientation and volume]] | [[Polar decomposition]] | SVD assembles an orthogonal factor and a positive-semidefinite stretch; determinant exposes reflection. |
+| [[Norms lengths and induced distances]], [[Singular value decomposition]], [[Forward and backward error]] | [[Matrix norms and numerical error]] | Norm choice defines residual scale, maximum stretch, and error amplification. |
+| [[Eigenvalues and eigenspaces]], [[Matrix multiplication and composition order]], [[Matrix norms and numerical error]] | [[Matrix functions]] | Spectral decompositions explain scalar functions of a matrix; norms and branches constrain computation. |
+| [[Linear systems and fundamental subspaces]], [[Symmetric positive-definite matrices and Cholesky]], [[Matrix norms and numerical error]] | [[Sparse and iterative solvers]] | Large sparse structure motivates matrix-vector iteration, with convergence and residual contracts. |
+| [[Gaussian elimination and pivoting]], [[LU factorization and reusable solves]], [[Symmetric positive-definite matrices and Cholesky]], [[QR factorization and least squares]], [[Singular value decomposition]] | [[Matrix factorization choices]] | The task and verified matrix structure determine a method; no one factorization fits every case. |
+| [[Matrix storage indexing and strides]], [[Sparse and iterative solvers]] | [[Matrix factorization choices]] | Sparse algorithms and their storage/convergence costs inform workload selection. |
+
+The Phase 8 concepts point back to their teaching sections and include reciprocal “Used by” navigation. The full 100-part source ledger is in [[Supplementary/Foundations#Phase 8 - Parts 701-800|Foundations]].
+
+## Phase 7 - From basis images to moving worlds
+
+Read prerequisite → dependent. Storage layout does not determine algebraic action, and quaternion component order does not determine multiplication convention.
+
+| Prerequisites | Dependent | Why |
+|---|---|---|
+| [[Basis coordinates and dimension]] | [[Matrices as linear maps and basis images]] | A matrix is a rectangular scalar array. |
+| [[Matrices as linear maps and basis images]] | [[Matrix multiplication and composition order]] | The product AB applies B first for column-vector actions. |
+| [[Matrix multiplication and composition order]] | [[Matrix transpose symmetry and trace]] | Transpose exchanges row and column indices and reverses product order. |
+| [[Cross products and oriented area]], [[Matrices as linear maps and basis images]] | [[Determinants orientation and volume]] | A square matrix determinant measures oriented volume scale. |
+| [[Determinants orientation and volume]], [[Conditioning and singularity]] | [[Matrix inversion pivoting and residuals]] | Inversion reconstructs input coordinates from output for an invertible square map. |
+| [[Matrices as linear maps and basis images]], [[Homogeneous coordinates and perspective division]] | [[Linear affine and projective transformations]] | Linear maps preserve linear combinations and fix zero. |
+| [[Linear affine and projective transformations]], [[Matrix inversion pivoting and residuals]] | [[Coordinate frames and change of basis]] | A frame gives an origin and independent axes relative to another frame. |
+| [[Coordinate frames and change of basis]] | [[Camera view and clip-space pipeline]] | A camera pose maps camera coordinates to world coordinates; its inverse is the view map. |
+| [[ABI and object layout]], [[Pointer arithmetic and provenance]], [[Matrices as linear maps and basis images]] | [[Matrix storage indexing and strides]] | Matrix row/column semantics are independent of physical row-major or column-major storage. |
+| [[Matrix storage indexing and strides]], [[Floating-point reassociation]] | [[Matrix SIMD tiling and cache reuse]] | Loop ordering and tiling change memory traffic and reuse while preserving the exact scalar algebra. |
+| [[Dot products and orthogonality]], [[Cross products and oriented area]] | [[Quaternion algebra and Hamilton product]] | A quaternion has scalar w and vector u. |
+| [[Quaternion algebra and Hamilton product]] | [[Quaternion rotation and double cover]] | For a unit quaternion q, the sandwich q(0,v)conjugate(q) rotates v. |
+| [[Quaternion rotation and double cover]], [[Matrices as linear maps and basis images]] | [[Quaternion matrix and axis-angle conversion]] | A unit axis and angle give q=(cos(theta/2),axis sin(theta/2)). |
+| [[Quaternion rotation and double cover]] | [[Quaternion interpolation and shortest paths]] | Quaternion interpolation must account for the double cover. |
+| [[Quaternion matrix and axis-angle conversion]], [[Matrix multiplication and composition order]] | [[Euler angles and gimbal singularity]] | Euler/Tait-Bryan angles are coordinates for rotation with a specified axis/order convention. |
+| [[Quaternion algebra and Hamilton product]], [[Linear affine and projective transformations]] | [[Dual quaternions and rigid motion]] | A rigid dual quaternion consists of a unit real quaternion and a dual quaternion part satisfying real dot dual equals zero. |
+| [[Coordinate frames and change of basis]], [[Quaternion matrix and axis-angle conversion]], [[Dual quaternions and rigid motion]] | [[Transform hierarchies TRS and shear]] | A TRS transform stores translation, rotation and diagonal scale, with an explicit application order. |
+
 ## Phase 6 - From movement to reliable geometry
 
 This spine integrates Parts 501–600 without assuming the unreceived Parts 148–500 are complete. Shared numeric and C++ nodes supply explicit prerequisites; independent XR material remains a separate series. Concept notes contain reciprocal downstream links. Read this table from prerequisite to dependent.

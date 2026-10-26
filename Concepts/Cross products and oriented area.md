@@ -19,6 +19,8 @@ Panel edges $(4,0,0)$ and $(0,3,0)$ give $(0,0,12)$, so triangle area is $6$. Th
 - [[Dot products and orthogonality]] — Inner-product measurements supply the perpendicularity and alignment constraints.
 
 ## Used by
+- [[Determinants orientation and volume]]
+- [[Quaternion algebra and Hamilton product]]
 
 - [[Coordinate handedness and orientation]] — Builds on this mechanism in the connected geometry story.
 - [[Triple products and signed volume]] — Builds on this mechanism in the connected geometry story.

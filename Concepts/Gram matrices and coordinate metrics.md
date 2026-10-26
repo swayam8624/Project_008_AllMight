@@ -23,7 +23,7 @@ The basis $(1,0),(1,1)$ has $G=\begin{pmatrix}1&1\\1&2\end{pmatrix}$. Coordinate
 
 - [[Orthonormal frames and Gram-Schmidt]] — Builds on this mechanism in the connected geometry story.
 - [[Barycentric coordinates and interpolation]] — Builds on this mechanism in the connected geometry story.
-
+- [[Symmetric positive-definite matrices and Cholesky]] — Extends this foundation into linear-systems and decomposition analysis.
 ## Recall and next depth
 
 Explain the residual equations for span projection and why normal equations can worsen conditioning. Full production proofs, target-specific integration and learner mastery require further evidence.

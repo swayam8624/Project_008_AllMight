@@ -6,9 +6,11 @@ tags:
 
 # Covectors linear functionals and normal transforms
 
-**Curriculum depth:** Introduced · **First seen:** Phase6 · **Latest development:** Phase6
+**Curriculum depth:** Developed · **First seen:** Phase6 · **Latest development:** Phase7
 
 ## Definition and mechanism
+
+Phase 7 derives $(RS)^{-T}=RS^{-1}$ for orthogonal $R$ and nonzero diagonal scales $S$, explains why zero scale invalidates inverse-based normal transport, and distinguishes shading-normal direction from determinant-signed cross-derived area. [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions#Normals undo scale before following rotation|TRS normal derivation]].
 
 A covector is a linear scalar-valued measurement rule. Surface normals represent rules annihilating tangent movement. Under an invertible active linear transform, preserved measurements require inverse-transpose normal transformation. A metric identifies vector and covector representations.
 

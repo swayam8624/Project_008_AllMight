@@ -18,6 +18,7 @@ Changing grouping moves rounding points. With binary32 1e20,−1e20,3.14, groupi
 - [[Fused multiply-add]] — Contraction changes intermediate rounding in a multiplication/addition graph.
 
 ## Used by
+- [[Matrix SIMD tiling and cache reuse]]
 
 - [[Compensated and pairwise summation]] — uses this mechanism to establish its numerical contract.
 

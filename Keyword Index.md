@@ -1,5 +1,50 @@
 # Keyword Index
 
+## Phase 8 - Linear systems, decompositions, and matrix functions
+
+All supplied Phase 8 excerpts cover Parts 701–800. Their canonical titles and provenance are tracked in Foundations; the concept links point into a connected teaching narrative.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Linear systems and fundamental subspaces]] | Introduced | Phase8 | Phase8 |
+| [[Gaussian elimination and pivoting]] | Introduced | Phase8 | Phase8 |
+| [[LU factorization and reusable solves]] | Introduced | Phase8 | Phase8 |
+| [[Symmetric positive-definite matrices and Cholesky]] | Introduced | Phase8 | Phase8 |
+| [[QR factorization and least squares]] | Introduced | Phase8 | Phase8 |
+| [[Eigenvalues and eigenspaces]] | Introduced | Phase8 | Phase8 |
+| [[Singular value decomposition]] | Introduced | Phase8 | Phase8 |
+| [[Moore-Penrose pseudoinverse]] | Introduced | Phase8 | Phase8 |
+| [[PCA and covariance eigensystems]] | Introduced | Phase8 | Phase8 |
+| [[Polar decomposition]] | Introduced | Phase8 | Phase8 |
+| [[Matrix norms and numerical error]] | Introduced | Phase8 | Phase8 |
+| [[Matrix functions]] | Introduced | Phase8 | Phase8 |
+| [[Sparse and iterative solvers]] | Introduced | Phase8 | Phase8 |
+| [[Matrix factorization choices]] | Introduced | Phase8 | Phase8 |
+
+## Phase 7 - Matrices, transforms and quaternions
+
+Received lesson headings cover 601–634 and 651–700. The 635–650 source gap is explicit; the affine bridge is original reconstruction without invented canonical part titles.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Matrices as linear maps and basis images]] | Introduced | Phase7 | Phase7 |
+| [[Matrix multiplication and composition order]] | Introduced | Phase7 | Phase7 |
+| [[Matrix transpose symmetry and trace]] | Introduced | Phase7 | Phase7 |
+| [[Determinants orientation and volume]] | Introduced | Phase7 | Phase7 |
+| [[Matrix inversion pivoting and residuals]] | Introduced | Phase7 | Phase7 |
+| [[Linear affine and projective transformations]] | Introduced | Phase7 | Phase7 |
+| [[Coordinate frames and change of basis]] | Introduced | Phase7 | Phase7 |
+| [[Camera view and clip-space pipeline]] | Introduced | Phase7 | Phase7 |
+| [[Matrix storage indexing and strides]] | Introduced | Phase7 | Phase7 |
+| [[Matrix SIMD tiling and cache reuse]] | Introduced | Phase7 | Phase7 |
+| [[Quaternion algebra and Hamilton product]] | Introduced | Phase7 | Phase7 |
+| [[Quaternion rotation and double cover]] | Introduced | Phase7 | Phase7 |
+| [[Quaternion matrix and axis-angle conversion]] | Introduced | Phase7 | Phase7 |
+| [[Quaternion interpolation and shortest paths]] | Introduced | Phase7 | Phase7 |
+| [[Euler angles and gimbal singularity]] | Introduced | Phase7 | Phase7 |
+| [[Dual quaternions and rigid motion]] | Introduced | Phase7 | Phase7 |
+| [[Transform hierarchies TRS and shear]] | Introduced | Phase7 | Phase7 |
+
 ## Phase 6 - Geometry and vector implementation
 
 Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 is reconstructed enrichment rather than a standalone received lesson; Parts 161–500 remain unreceived. These filled nodes support the continuous story and future development without claiming learner mastery.
@@ -9,7 +54,7 @@ Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 i
 | [[Scalars fields and real-number models]] | Introduced | Phase6 | Phase6 |
 | [[Vectors coordinates and affine points]] | Introduced | Phase6 | Phase6 |
 | [[Vector spaces subspaces and span]] | Introduced | Phase6 | Phase6 |
-| [[Basis coordinates and dimension]] | Introduced | Phase6 | Phase6 |
+| [[Basis coordinates and dimension]] | Developed | Phase6 | Phase7 |
 | [[Norms lengths and induced distances]] | Introduced | Phase6 | Phase6 |
 | [[Unit directions and safe normalization]] | Introduced | Phase6 | Phase6 |
 | [[Dot products and orthogonality]] | Introduced | Phase6 | Phase6 |
@@ -27,8 +72,8 @@ Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 i
 | [[Robust geometric predicates]] | Introduced | Phase6 | Phase6 |
 | [[Convex combinations and convex hulls]] | Introduced | Phase6 | Phase6 |
 | [[Minkowski sums and support mappings]] | Introduced | Phase6 | Phase6 |
-| [[Homogeneous coordinates and perspective division]] | Introduced | Phase6 | Phase6 |
-| [[Covectors linear functionals and normal transforms]] | Introduced | Phase6 | Phase6 |
+| [[Homogeneous coordinates and perspective division]] | Developed | Phase6 | Phase7 |
+| [[Covectors linear functionals and normal transforms]] | Developed | Phase6 | Phase7 |
 | [[Exterior products and geometric algebra]] | Introduced | Phase6 | Phase6 |
 | [[Vector value types and component access]] | Introduced | Phase6 | Phase6 |
 | [[Vector storage SIMD and boundary layouts]] | Introduced | Phase6 | Phase6 |
@@ -240,7 +285,7 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[ULP distance policies]] | Introduced | C004 | C004 |
 | [[Numerical tolerance policies]] | Developed | C004 | C005 |
 | [[Robust norm and intermediate range]] | Introduced | C004 | C004 |
-| [[Conditioning and singularity]] | Developed | C004 | C005 |
+| [[Conditioning and singularity]] | Developed | C004 | Phase7 |
 | [[Floating-point canonicalization]] | Developed | C004 | C006 |
 | [[Interval arithmetic]] | Introduced | C004 | C004 |
 | [[Terminating fractions and dyadic rationals]] | Introduced | C005 | C005 |
