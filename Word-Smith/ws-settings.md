@@ -6,7 +6,7 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-27 16:07:46
+- written: 2026-10-27 16:22:49
 
 ```json
 {
@@ -43,7 +43,7 @@ not the plugin folder — can get everything back.
   ],
   "menuRuleStyles": {},
   "menuDock": true,
-  "orgTargetShow": "percent",
+  "orgTargetShow": "ratio",
   "fileIconsOffOnce": true,
   "orgFolderIcons": true,
   "orgFileIcons": false,
@@ -124,7 +124,7 @@ not the plugin folder — can get everything back.
   "statusBarBorderBottom": false,
   "statusBarFontSize": 14,
   "statusBarFontFollowNote": false,
-  "statusBarUiFont": false,
+  "statusBarUiFont": true,
   "statusBarHeight": 20,
   "statusBarPadTop": 4,
   "statusBarPadBottom": 4,
@@ -221,7 +221,7 @@ not the plugin folder — can get everything back.
   "hemFlashTarget": "both",
   "syntaxSkipCode": true,
   "syntaxStyle": "text",
-  "checksEnabled": false,
+  "checksEnabled": true,
   "checkStyle": "line",
   "checkFiller": false,
   "checkFillerSoft": false,
@@ -236,7 +236,7 @@ not the plugin folder — can get everything back.
   "checkPronounColor": "#4f9dde",
   "checkDialogue": false,
   "checkDialogueColor": "#4f9dd9",
-  "checkRhythm": false,
+  "checkRhythm": true,
   "checkRhythmHardColor": "#d4a017",
   "checkRhythmVeryHardColor": "#c2544d",
   "checkRhythmShortColor": "#5aa469",
@@ -261,14 +261,14 @@ not the plugin folder — can get everything back.
   "citeCustomAround": "parens",
   "citeCustomEntry": "{authors-full}. {year}. {title*}.[ {place}:][ {publisher}.]",
   "citeMarks": true,
-  "posEnabled": true,
+  "posEnabled": false,
   "posDimOthers": true,
   "checkDimOthers": false,
-  "posNoun": true,
+  "posNoun": false,
   "posNounColor": "#4f9dde",
-  "posVerb": true,
+  "posVerb": false,
   "posVerbColor": "#4caf7d",
-  "posAdjective": true,
+  "posAdjective": false,
   "posAdjectiveColor": "#d98cc4",
   "posAdverb": false,
   "posAdverbColor": "#e0913a",
