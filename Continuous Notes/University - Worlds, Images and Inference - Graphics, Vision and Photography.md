@@ -6901,6 +6901,8 @@ The Instant Field-Aligned Meshes presentation shows the method as two coupled fi
 
 ![[Visual Recall/University Graphics and Vision/volume-compositing.png]]
 
+The color swatch is encoded for an sRGB display. The printed RGB values remain linear-light values.
+
 *The checked weights sum to the visible contribution plus residual background transmittance for the illustrated ray. The diagram is a one-ray compositing example, not a full trained NeRF or a density-estimation guarantee.*
 
 ### Figure U13 - A local Gaussian covariance projects to an ellipse

@@ -6,7 +6,7 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-27 16:25:59
+- written: 2026-10-27 18:51:50
 
 ```json
 {
@@ -261,14 +261,14 @@ not the plugin folder — can get everything back.
   "citeCustomAround": "parens",
   "citeCustomEntry": "{authors-full}. {year}. {title*}.[ {place}:][ {publisher}.]",
   "citeMarks": true,
-  "posEnabled": false,
+  "posEnabled": true,
   "posDimOthers": true,
   "checkDimOthers": false,
-  "posNoun": false,
+  "posNoun": true,
   "posNounColor": "#4f9dde",
-  "posVerb": false,
+  "posVerb": true,
   "posVerbColor": "#4caf7d",
-  "posAdjective": false,
+  "posAdjective": true,
   "posAdjectiveColor": "#d98cc4",
   "posAdverb": false,
   "posAdverbColor": "#e0913a",
