@@ -6,7 +6,7 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-13 04:48:44
+- written: 2026-10-27 16:07:46
 
 ```json
 {
@@ -79,7 +79,7 @@ not the plugin folder — can get everything back.
   "vimPanelHeight": 23,
   "barBottomGap": 23,
   "focusedFileMode": false,
-  "enableTypewriter": true,
+  "enableTypewriter": false,
   "editorPaddingH": 100,
   "zenEnabled": false,
   "zenTitlebarMatch": true,
@@ -207,7 +207,7 @@ not the plugin folder — can get everything back.
   "markTabs": false,
   "markParagraphs": false,
   "markEndOfLines": false,
-  "markBlankLines": true,
+  "markBlankLines": false,
   "hemingwayEnabled": false,
   "hemBlockBackspace": true,
   "hemBlockDelete": true,

@@ -21,6 +21,8 @@ A frame gives an origin and independent axes relative to another frame. Its matr
 
 - [[Camera view and clip-space pipeline]]
 - [[Transform hierarchies TRS and shear]]
+- [[Manifold polygon meshes and boundary structure]]
+- [[Constrained optimization and inverse kinematics]]
 
 ## Recall and next depth
 

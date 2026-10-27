@@ -6,20 +6,20 @@ All supplied Phase 8 excerpts cover Parts 701–800. Their canonical titles and 
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
-| [[Linear systems and fundamental subspaces]] | Introduced | Phase8 | Phase8 |
-| [[Gaussian elimination and pivoting]] | Introduced | Phase8 | Phase8 |
-| [[LU factorization and reusable solves]] | Introduced | Phase8 | Phase8 |
-| [[Symmetric positive-definite matrices and Cholesky]] | Introduced | Phase8 | Phase8 |
-| [[QR factorization and least squares]] | Introduced | Phase8 | Phase8 |
-| [[Eigenvalues and eigenspaces]] | Introduced | Phase8 | Phase8 |
-| [[Singular value decomposition]] | Introduced | Phase8 | Phase8 |
-| [[Moore-Penrose pseudoinverse]] | Introduced | Phase8 | Phase8 |
-| [[PCA and covariance eigensystems]] | Introduced | Phase8 | Phase8 |
-| [[Polar decomposition]] | Introduced | Phase8 | Phase8 |
-| [[Matrix norms and numerical error]] | Introduced | Phase8 | Phase8 |
-| [[Matrix functions]] | Introduced | Phase8 | Phase8 |
-| [[Sparse and iterative solvers]] | Introduced | Phase8 | Phase8 |
-| [[Matrix factorization choices]] | Introduced | Phase8 | Phase8 |
+| [[Linear systems and fundamental subspaces]] | Developed | Phase8 | Phase8 |
+| [[Gaussian elimination and pivoting]] | Developed | Phase8 | Phase8 |
+| [[LU factorization and reusable solves]] | Developed | Phase8 | Phase8 |
+| [[Symmetric positive-definite matrices and Cholesky]] | Developed | Phase8 | Phase8 |
+| [[QR factorization and least squares]] | Developed | Phase8 | Phase8 |
+| [[Eigenvalues and eigenspaces]] | Developed | Phase8 | Phase8 |
+| [[Singular value decomposition]] | Developed | Phase8 | University |
+| [[Moore-Penrose pseudoinverse]] | Developed | Phase8 | Phase8 |
+| [[PCA and covariance eigensystems]] | Developed | Phase8 | Phase8 |
+| [[Polar decomposition]] | Developed | Phase8 | Phase8 |
+| [[Matrix norms and numerical error]] | Developed | Phase8 | Phase8 |
+| [[Matrix functions]] | Developed | Phase8 | Phase8 |
+| [[Sparse and iterative solvers]] | Developed | Phase8 | Phase8 |
+| [[Matrix factorization choices]] | Developed | Phase8 | Phase8 |
 
 ## Phase 7 - Matrices, transforms and quaternions
 
@@ -30,15 +30,15 @@ Received lesson headings cover 601–634 and 651–700. The 635–650 source gap
 | [[Matrices as linear maps and basis images]] | Introduced | Phase7 | Phase7 |
 | [[Matrix multiplication and composition order]] | Introduced | Phase7 | Phase7 |
 | [[Matrix transpose symmetry and trace]] | Introduced | Phase7 | Phase7 |
-| [[Determinants orientation and volume]] | Introduced | Phase7 | Phase7 |
+| [[Determinants orientation and volume]] | Developed | Phase7 | University |
 | [[Matrix inversion pivoting and residuals]] | Introduced | Phase7 | Phase7 |
 | [[Linear affine and projective transformations]] | Introduced | Phase7 | Phase7 |
 | [[Coordinate frames and change of basis]] | Introduced | Phase7 | Phase7 |
-| [[Camera view and clip-space pipeline]] | Introduced | Phase7 | Phase7 |
+| [[Camera view and clip-space pipeline]] | Developed | Phase7 | University |
 | [[Matrix storage indexing and strides]] | Introduced | Phase7 | Phase7 |
 | [[Matrix SIMD tiling and cache reuse]] | Introduced | Phase7 | Phase7 |
 | [[Quaternion algebra and Hamilton product]] | Introduced | Phase7 | Phase7 |
-| [[Quaternion rotation and double cover]] | Introduced | Phase7 | Phase7 |
+| [[Quaternion rotation and double cover]] | Developed | Phase7 | University |
 | [[Quaternion matrix and axis-angle conversion]] | Introduced | Phase7 | Phase7 |
 | [[Quaternion interpolation and shortest paths]] | Introduced | Phase7 | Phase7 |
 | [[Euler angles and gimbal singularity]] | Introduced | Phase7 | Phase7 |
@@ -67,12 +67,12 @@ Parts 501–600 are integrated as the user-labeled M031–M036 group. Part 542 i
 | [[Robust vector angles]] | Introduced | Phase6 | Phase6 |
 | [[Surface tangents normals and bitangents]] | Introduced | Phase6 | Phase6 |
 | [[Orthonormal frames and Gram-Schmidt]] | Introduced | Phase6 | Phase6 |
-| [[Reflection refraction and shading directions]] | Introduced | Phase6 | Phase6 |
-| [[Barycentric coordinates and interpolation]] | Introduced | Phase6 | Phase6 |
+| [[Reflection refraction and shading directions]] | Developed | Phase6 | University |
+| [[Barycentric coordinates and interpolation]] | Developed | Phase6 | University |
 | [[Robust geometric predicates]] | Introduced | Phase6 | Phase6 |
 | [[Convex combinations and convex hulls]] | Introduced | Phase6 | Phase6 |
 | [[Minkowski sums and support mappings]] | Introduced | Phase6 | Phase6 |
-| [[Homogeneous coordinates and perspective division]] | Developed | Phase6 | Phase7 |
+| [[Homogeneous coordinates and perspective division]] | Developed | Phase6 | University |
 | [[Covectors linear functionals and normal transforms]] | Developed | Phase6 | Phase7 |
 | [[Exterior products and geometric algebra]] | Introduced | Phase6 | Phase6 |
 | [[Vector value types and component access]] | Introduced | Phase6 | Phase6 |
@@ -86,8 +86,8 @@ XR labels are source identifiers for the separate seeing/representation series, 
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
-| [[Light spectra and radiometry]] | Introduced | XR01 | XR01 |
-| [[Reflectance and rendering equation]] | Introduced | XR01 | XR01 |
+| [[Light spectra and radiometry]] | Developed | XR01 | University |
+| [[Reflectance and rendering equation]] | Developed | XR01 | University |
 | [[Retinal encoding and receptive fields]] | Introduced | XR01 | XR01 |
 | [[Optical focus and binocular conflict]] | Introduced | XR01 | XR01 |
 | [[Visual angle and calibrated rays]] | Introduced | XR01 | XR01 |
@@ -95,15 +95,15 @@ XR labels are source identifiers for the separate seeing/representation series, 
 | [[Contrast sensitivity adaptation and masking]] | Introduced | XR01 | XR01 |
 | [[Eye movements and display-time gaze]] | Introduced | XR01 | XR01 |
 | [[Continuous signals and discrete samples]] | Introduced | XR01 | XR01 |
-| [[Fourier analysis and spectral phase]] | Introduced | XR01 | XR01 |
-| [[Sampling aliasing and reconstruction]] | Introduced | XR01 | XR01 |
-| [[Convolution and filter footprints]] | Introduced | XR01 | XR01 |
+| [[Fourier analysis and spectral phase]] | Developed | XR01 | University |
+| [[Sampling aliasing and reconstruction]] | Developed | XR01 | University |
+| [[Convolution and filter footprints]] | Developed | XR01 | University |
 | [[PSF OTF and MTF]] | Introduced | XR01 | XR01 |
 | [[Multiscale texture filtering]] | Introduced | XR01 | XR01 |
 | [[Spatiotemporal sampling and retinal motion]] | Introduced | XR01 | XR01 |
 | [[Antialiasing and sample allocation]] | Introduced | XR01 | XR01 |
 | [[Temporal reprojection and history validation]] | Introduced | XR01 | XR01 |
-| [[Color encoding and linear-light operations]] | Introduced | XR01 | XR01 |
+| [[Color encoding and linear-light operations]] | Developed | XR01 | University |
 | [[Perceptual metrics and display calibration]] | Introduced | XR01 | XR01 |
 | [[Psychophysics and threshold inference]] | Introduced | XR01 | XR01 |
 | [[Foveated rendering and uncertainty]] | Introduced | XR01 | XR01 |
@@ -305,3 +305,33 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Capped weighted updates]] | Introduced | C005 | C005 |
 | [[Numerical decision boundaries]] | Introduced | C005 | C005 |
 | [[Dot and cross-product rounding]] | Introduced | C005 | C005 |
+
+## University graphics vision and photography - independent series
+
+This source series develops the graph without advancing numbered curriculum coverage. Its complete lessons are in [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]].
+
+| Keyword | State | First seen | Latest development |
+|---|---|---|---|
+| [[Spline bases and curve evaluation]] | Developed | University | University |
+| [[Manifold polygon meshes and boundary structure]] | Developed | University | University |
+| [[Half-edge mesh connectivity]] | Developed | University | University |
+| [[Subdivision surface masks]] | Developed | University | University |
+| [[Quadric error mesh simplification]] | Developed | University | University |
+| [[Triangle rasterization and coverage tests]] | Developed | University | University |
+| [[Depth buffering and visibility order]] | Developed | University | University |
+| [[Ray-triangle intersection]] | Developed | University | University |
+| [[Bounding volume hierarchies]] | Developed | University | University |
+| [[Lens optics and depth of field]] | Developed | University | University |
+| [[Exposure and sensor response]] | Developed | University | University |
+| [[Probability density and change of measure]] | Developed | University | University |
+| [[Monte Carlo rendering estimators and variance]] | Developed | University | University |
+| [[Optical flow and time to contact]] | Developed | University | University |
+| [[Edge localization and subpixel contours]] | Developed | University | University |
+| [[Hough transform and geometric voting]] | Developed | University | University |
+| [[Template matching and distance transforms]] | Developed | University | University |
+| [[Camera calibration and bundle adjustment]] | Developed | University | University |
+| [[Stereo correspondence and epipolar geometry]] | Developed | University | University |
+| [[PDE fields and discrete Laplacians]] | Developed | University | University |
+| [[ODE integration and stability]] | Developed | University | University |
+| [[Constrained optimization and inverse kinematics]] | Developed | University | University |
+| [[Surface orientation from image brightness]] | Developed | University | University |

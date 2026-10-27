@@ -4,6 +4,8 @@ The spectral norm is the largest 2-norm stretch and equals the largest singular 
 
 **Use it when:** setting scaled tolerances or interpreting numerical diagnostics.
 
+**Developed in Phase 8:** The spectral norm measures worst-case amplification, while the Frobenius norm accumulates squared energy across entries. The chapter uses them to scale residuals, reconstruction errors, and orthogonality defects, and separates backward error in a nearby problem from forward error in the requested answer. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Matrix norms put scale into error statements|norms and scale]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Residuals distinguish backward accuracy from forward certainty|residuals and error interpretation]]
+
 ## Prerequisites
 
 [[Norms lengths and induced distances]], [[Singular value decomposition]], [[Forward and backward error]].

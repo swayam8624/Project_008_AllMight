@@ -4,6 +4,8 @@ A linear system $A\mathbf x=\mathbf b$ asks which inputs satisfy all row measure
 
 **Use it when:** explaining consistency, underdetermination, least squares, parameter observability, or constraints in geometry.
 
+**Developed in Phase 8:** The expanded treatment connects each row to a hyperplane and the complete matrix to a map: consistency asks whether the target lies in the column space, while the null space describes every invisible change to a solution. Rank then counts constrained directions and determines the dimension of the solution family. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#A system is an intersection of constraints|constraint geometry]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Rank, the four spaces, and the shape of the answer|rank and solution families]]
+
 ## Prerequisites
 
 [[Matrices as linear maps and basis images]], [[Basis coordinates and dimension]], [[Projection rejection and scalar components]].

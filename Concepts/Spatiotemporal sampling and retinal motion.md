@@ -21,6 +21,7 @@ Motion turns spatial variation into temporal variation: a scalar moving grating 
 ## Used by
 
 - [[Temporal reprojection and history validation]]
+- [[Optical flow and time to contact]]
 
 ## Recall and next depth
 

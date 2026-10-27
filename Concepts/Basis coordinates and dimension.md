@@ -27,6 +27,8 @@ $(3,2)=1(1,0)+2(1,1)$, so its slanted-basis coordinates are $(1,2)$. A plane ins
 - [[Gram matrices and coordinate metrics]] — Builds on this mechanism in the connected geometry story.
 - [[Covectors linear functionals and normal transforms]] — Builds on this mechanism in the connected geometry story.
 - [[Linear systems and fundamental subspaces]] — Extends this foundation into linear-systems and decomposition analysis.
+- [[Spline bases and curve evaluation]]
+
 ## Recall and next depth
 
 Separate passive coordinate change from active transformation and explain near-dependent basis sensitivity. Full production proofs, target-specific integration and learner mastery require further evidence.

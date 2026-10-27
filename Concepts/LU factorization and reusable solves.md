@@ -4,6 +4,8 @@ LU stores elimination as triangular factors. With row pivoting in this vault's c
 
 **Use it when:** solving square general systems, especially with multiple right-hand sides.
 
+**Developed in Phase 8:** The multipliers used to eliminate entries become the lower factor, while the remaining upper triangle records the reduced system; with row exchanges the convention is $PA=LU$. The runnable pivoted LU reference traces permutation, factor storage, status, and repeated forward/back substitution on actual values. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#A runnable pivoted LU reference preserves the elimination history|runnable pivoted LU lab]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Triangular solves perform the cheap second half|forward and backward solves]]
+
 ## Prerequisites
 
 [[Gaussian elimination and pivoting]], [[Matrix storage indexing and strides]].

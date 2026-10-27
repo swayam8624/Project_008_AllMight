@@ -4,6 +4,8 @@ The right polar form $A=QH$ separates an orthogonal factor from a positive-semid
 
 **Use it when:** separating local rigid-like motion from symmetric deformation.
 
+**Developed in Phase 8:** Polar decomposition factors a map into an orthogonal part and a positive-semidefinite stretch. The SVD constructs both left and right forms, separates reflection from a proper rotation, and gives the nearest orthogonal or special-orthogonal factor when the singular directions allow a unique choice; zero singular values leave completion freedom. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Polar decomposition separates frame dependent stretch from orientation|left and right stretch]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Two-sided rotations, nearest proper rotation, and nonunique directions|nearest proper rotation and ambiguity]]
+
 ## Prerequisites
 
 [[Singular value decomposition]], [[Eigenvalues and eigenspaces]], [[Determinants orientation and volume]].

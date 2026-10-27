@@ -4,6 +4,8 @@ The exact SVD defines $A^+$ by reciprocating every positive singular value and t
 
 **Use it when:** rectangular or rank-deficient least squares needs a minimum-norm answer.
 
+**Developed in Phase 8:** The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#The Moore–Penrose inverse and its four identities|the exact pseudoinverse]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Thresholding and regularization are different choices|truncation and regularization]]
+
 ## Prerequisites
 
 [[Singular value decomposition]], [[Linear systems and fundamental subspaces]], [[Matrix norms and numerical error]].

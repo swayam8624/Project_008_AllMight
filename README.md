@@ -79,7 +79,11 @@ Forward means useful current context exists but deeper treatment is pending. Int
 - First volume: complete source coverage, with concept-led teaching organization.
 - Phase 6: connected panel/workcell narrative, inline scalar implementation and tested capstone; Part 542 source gap remains visible.
 - Phase 7: all six received excerpts integrated; 84 supplied lesson headings, explicit 635–650 gap, convention-led matrix/frame/quaternion narrative, figures and scalar laboratory. No per-excerpt integrated-chunk IDs are inferred.
-- Phase 8: seven received excerpts cover all 100 lessons from Parts 701–800; constraint geometry, factorizations, eigenanalysis, SVD, PCA, matrix functions, and solver/API decisions form a connected story.
+- Phase 8: seven received excerpts cover all 100 lessons from Parts 701–800. Each title links directly to its expanded teaching mechanism. The volume includes full derivations, worked traces, an inline tested LU reference, checked storage/API examples, and linked recall.
 - Independent XR series: XR01 accepted; source Modules1–19 mapped to its separate narrative. This is not additional main-curriculum progress.
 
 [[Graphics Engine Mastery - Continuous Notes]] · [[Keyword Index]] · [[Dependency Map]]
+
+## Independent university graphics and vision volume
+
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]] integrates all 70 entries from the three supplied CMU/MIT playlists and all 18 entries from the added Marc Levoy photography playlist. The concept-led volume retains definitions, derivations, worked examples and complete inline labs; its final source legend records all 88 positions and evidence types. [[Visual Recall/University - Graphics Vision and Photography - Visual Recall|Its concise recall companion]] links back to lessons and figures. This is independent enrichment and does not advance the numbered 3,000-part curriculum.

@@ -29,6 +29,8 @@ Subtraction of nearby inputs exposes input uncertainty relative to a small diffe
 Connect later dependent concepts here as their lessons arrive.
 - [[Gaussian elimination and pivoting]] — Extends this foundation into linear-systems and decomposition analysis.
 - [[QR factorization and least squares]] — Extends this foundation into linear-systems and decomposition analysis.
+- [[ODE integration and stability]]
+
 ## Recall and next depth
 
 Reconstruct the concrete example in the definition and identify its validity assumptions.

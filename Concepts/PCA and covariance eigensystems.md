@@ -4,6 +4,8 @@ Center sample rows, then find the orthogonal directions of greatest variance. Fo
 
 **Use it when:** describing point clouds, reducing dimensions, or estimating a best-fit plane.
 
+**Developed in Phase 8:** PCA first centers observations so the covariance measures variation around the sample mean. The right singular vectors of centered data give principal directions, $U\Sigma$ gives scores, and squared singular values scaled by sample count give covariance eigenvalues; feature units and small eigengaps affect interpretation. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Centered measurements reveal principal directions|centering and principal axes]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Plane fits, eigengaps, and interpretation of uncertain components|plane fits and eigengaps]]
+
 ## Prerequisites
 
 [[Eigenvalues and eigenspaces]], [[Singular value decomposition]], [[Symmetric positive-definite matrices and Cholesky]].

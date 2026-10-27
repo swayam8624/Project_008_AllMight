@@ -21,6 +21,7 @@ The panel is the convex hull of its corners. A filled disk is convex; its bounda
 ## Used by
 
 - [[Minkowski sums and support mappings]] — Builds on this mechanism in the connected geometry story.
+- [[Subdivision surface masks]]
 
 ## Recall and next depth
 
