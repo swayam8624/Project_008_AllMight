@@ -22,6 +22,7 @@ Subdivision refines a control mesh and updates old and newly inserted vertices w
 
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 
+- [[Local rigidity and mesh orientation fields]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Meshes, connectivity, and geometry processing|Meshes, connectivity, and geometry processing]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Surface descriptions and Gaussian images|Surface descriptions and Gaussian images]]

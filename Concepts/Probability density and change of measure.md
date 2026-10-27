@@ -22,6 +22,11 @@ A probability density describes probability per unit of a chosen measure, not pr
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 - [[Monte Carlo rendering estimators and variance]]
 
+- [[Attention and visual transformers]]
+- [[Contrastive vision and image-language alignment]]
+- [[Latent-variable models and generative flows]]
+- [[Perception feedback and robot learning]]
+- [[Radiance fields and Gaussian splatting]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Light measurement and radiometry|Light measurement and radiometry]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Numerical integration and Monte Carlo estimation|Numerical integration and Monte Carlo estimation]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Lens optics, focus, and image formation|Lens optics, focus, and image formation]]

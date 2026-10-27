@@ -23,6 +23,7 @@ Rasterization converts triangle geometry into a finite set of image samples. A p
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 - [[Depth buffering and visibility order]]
 
+- [[Homogeneous clipping and perspective interpolation]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A scene description becomes an image|A scene description becomes an image]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Rasterization, coverage, and depth|Rasterization, coverage, and depth]]

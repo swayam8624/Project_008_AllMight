@@ -22,6 +22,7 @@ Reprojection aligns history with a current target; disocclusion exposes content 
 
 - [[Foveated rendering and uncertainty]]
 
+- [[Reservoir resampling and ReSTIR]]
 ## Recall and next depth
 
 Derive ideal history variance and identify every violated assumption. Pending: motion/depth/jitter conventions and robust implementation. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

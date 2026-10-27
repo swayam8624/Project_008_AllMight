@@ -26,6 +26,9 @@ Uniform samples identify frequencies only modulo sample rate and corresponding r
 - [[Edge localization and subpixel contours]]
 - [[PDE fields and discrete Laplacians]]
 
+- [[Learned image features and CNNs]]
+- [[Radiance fields and Gaussian splatting]]
+- [[Reservoir resampling and ReSTIR]]
 ## Recall and next depth
 
 Prove 13Hz and 3Hz sample identity at 10Hz. Pending: anisotropic/nonuniform sampling and actual reconstruction errors. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

@@ -23,6 +23,7 @@ A ray is a parametric half-line $r(t)=o+td$, where $o$ is its origin, $d$ is its
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 - [[Bounding volume hierarchies]]
 
+- [[Radiance fields and Gaussian splatting]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Visibility queries and ray intersections|Visibility queries and ray intersections]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Acceleration structures and robust queries|Acceleration structures and robust queries]]

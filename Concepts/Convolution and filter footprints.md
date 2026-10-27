@@ -27,6 +27,8 @@ Convolution combines shifted values with a weighting kernel; its spectrum multip
 - [[Template matching and distance transforms]]
 - [[PDE fields and discrete Laplacians]]
 
+- [[Attention and visual transformers]]
+- [[Learned image features and CNNs]]
 ## Recall and next depth
 
 Derive the three-tap filter's gain and constant preservation. Pending: implementation cost, padding and spatially varying kernels. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

@@ -23,6 +23,8 @@ Matrix row/column semantics are independent of physical row-major or column-majo
 - [[Matrix SIMD tiling and cache reuse]]
 - [[LU factorization and reusable solves]] — Extends this foundation into linear-systems and decomposition analysis.
 - [[Sparse and iterative solvers]] — Extends this foundation into linear-systems and decomposition analysis.
+
+- [[GPU vertex specification]]
 ## Recall and next depth
 
 Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.

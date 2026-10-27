@@ -22,6 +22,11 @@ Optimization chooses parameters to minimize an objective while satisfying constr
 
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 
+- [[Automatic differentiation and backpropagation]]
+- [[Collision barriers and continuous detection]]
+- [[Latent-variable models and generative flows]]
+- [[Local rigidity and mesh orientation fields]]
+- [[Perception feedback and robot learning]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Optimization, constraints, and inverse kinematics|Optimization, constraints, and inverse kinematics]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Scene graphs and articulated geometry|Scene graphs and articulated geometry]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Pose estimation, transforms, and robust fitting|Pose estimation, transforms, and robust fitting]]

@@ -23,6 +23,7 @@ The chapter establishes this foundation directly; no earlier accepted phase is a
 - [[Vectors coordinates and affine points]] — Builds on this mechanism in the connected geometry story.
 - [[Complex numbers and planar rotations]] — Builds on this mechanism in the connected geometry story.
 
+- [[Additive energy and approximate structure]]
 ## Recall and next depth
 
 Explain why zero has no reciprocal, and separate field laws from machine reassociation. Full production proofs, target-specific integration and learner mastery require further evidence.

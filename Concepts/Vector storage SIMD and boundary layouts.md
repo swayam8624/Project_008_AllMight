@@ -24,6 +24,7 @@ One million twelve-byte vectors occupy four million fewer payload bytes than six
 
 Later curriculum sources can deepen this same node; no future coverage is marked complete.
 
+- [[GPU vertex specification]]
 ## Recall and next depth
 
 Measure size/stride and shader offsets separately; benchmark before claiming an optimized representation wins. Full production proofs, target-specific integration and learner mastery require further evidence.

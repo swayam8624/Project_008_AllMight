@@ -335,3 +335,17 @@ This source series develops the graph without advancing numbered curriculum cove
 | [[ODE integration and stability]] | Developed | University | University |
 | [[Constrained optimization and inverse kinematics]] | Developed | University | University |
 | [[Surface orientation from image brightness]] | Developed | University | University |
+| [[GPU vertex specification]] | Developed | University | University |
+| [[Homogeneous clipping and perspective interpolation]] | Developed | University | University |
+| [[Automatic differentiation and backpropagation]] | Developed | University | University |
+| [[Learned image features and CNNs]] | Developed | University | University |
+| [[Attention and visual transformers]] | Developed | University | University |
+| [[Contrastive vision and image-language alignment]] | Developed | University | University |
+| [[Latent-variable models and generative flows]] | Developed | University | University |
+| [[Radiance fields and Gaussian splatting]] | Developed | University | University |
+| [[Reservoir resampling and ReSTIR]] | Developed | University | University |
+| [[Collision barriers and continuous detection]] | Developed | University | University |
+| [[Exceptional projections and dimension]] | Developed | University | University |
+| [[Additive energy and approximate structure]] | Developed | University | University |
+| [[Local rigidity and mesh orientation fields]] | Developed | University | University |
+| [[Perception feedback and robot learning]] | Developed | University | University |

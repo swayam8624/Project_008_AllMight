@@ -23,6 +23,7 @@ A triangle can have an accurately small area estimate yet an uncertified orienta
 
 Later curriculum sources can deepen this same node; no future coverage is marked complete.
 
+- [[Collision barriers and continuous detection]]
 ## Recall and next depth
 
 Distinguish tolerance-based geometry, measurements and certified predicates; the Phase 6 lab implements only ordinary tests. Full production proofs, target-specific integration and learner mastery require further evidence.

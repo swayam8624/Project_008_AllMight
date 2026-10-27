@@ -6,12 +6,12 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-27 16:22:49
+- written: 2026-10-27 16:25:59
 
 ```json
 {
   "barThemeEnabled": true,
-  "barTheme": "tokyonight",
+  "barTheme": "dracula",
   "barThemeOrder": [],
   "barThemeHidden": [
     "modus",
@@ -188,9 +188,9 @@ not the plugin folder — can get everything back.
   "arrowLightColor": "#080808",
   "lineDarkColor": "#faf8f5",
   "lineLightColor": "#030303",
-  "miscEnabled": false,
+  "miscEnabled": true,
   "layoutZenOnly": false,
-  "pageView": false,
+  "pageView": true,
   "enableParagraphIndent": false,
   "paragraphIndentEm": 4,
   "paragraphIndentMode": "single",
@@ -201,7 +201,7 @@ not the plugin folder — can get everything back.
   "maxLineChars": 64,
   "justifyText": true,
   "centerHeadings": false,
-  "paragraphNumbers": false,
+  "paragraphNumbers": true,
   "markSpaces": false,
   "markersEnabled": true,
   "markTabs": false,

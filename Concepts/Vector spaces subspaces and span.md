@@ -22,6 +22,8 @@ The plane $z=0$ is a subspace of $\mathbb R^3$; $z=1$ is an affine translate, no
 
 - [[Basis coordinates and dimension]] — Builds on this mechanism in the connected geometry story.
 
+- [[Additive energy and approximate structure]]
+- [[Exceptional projections and dimension]]
 ## Recall and next depth
 
 Distinguish generators from their span; prove the one-step subspace criterion. Full production proofs, target-specific integration and learner mastery require further evidence.

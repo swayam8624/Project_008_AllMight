@@ -25,6 +25,7 @@ The product AB applies B first for column-vector actions. Its entries sum A(i,k)
 - [[Matrix functions]] — Extends this foundation into linear-systems and decomposition analysis.
 - [[Gaussian elimination and pivoting]] — Extends this foundation into the Phase 8 dependency spine.
 
+- [[Automatic differentiation and backpropagation]]
 ## Recall and next depth
 
 Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.

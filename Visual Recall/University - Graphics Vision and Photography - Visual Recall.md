@@ -109,3 +109,52 @@ These briefs are deliberately compact retrieval notes for a 35-chapter continuou
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U7 - Independent gradients resolve the aperture ambiguity|Figure U7 - Independent gradients resolve the aperture ambiguity]]: From one local edge, draw the whole set of permissible velocities. Add an independent gradient constraint and predict when noisy constraints make the estimate unstable.
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U8 - Stereo disparity uses local image coordinates|Figure U8 - Stereo disparity uses local image coordinates]]: Measure both feature positions relative to their own camera axes. Explain why subtracting the two world positions on the drawing would give the wrong disparity.
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U9 - Homogeneous depth changes interpolation weights|Figure U9 - Homogeneous depth changes interpolation weights]]: Recover the screen weights, divide each by its clip-space denominator, renormalize, and obtain the attribute 2/11 rather than 1/4.
+
+
+## New mechanisms to retrieve
+
+A vertex buffer is a byte array interpreted by a draw command. The stride says how many bytes separate successive vertices; the attribute offset says where one field begins inside a vertex. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Rasterization, coverage, and depth|Rasterization and vertex layout]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U10 - Vertex fetch uses a stride and byte offset|U10]]. **Ask:** For 24-byte float32 vertices with RGB after XYZ, what are the position stride and color offset?
+
+A mathematical projection of a finite point set is a map to a line. Small image size means many collisions. Scale, spacing, and additive structure determine whether many directions can compress the same set. This is separate from a camera's projection matrix. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Finite-field projections turn image size into collision counts|Finite-field collisions]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Real projections add scale, spacing, and incidence geometry|Real projection scales]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U11 - Finite-grid projections expose collision counts|U11]]. **Ask:** Is the obstruction arithmetic, spatial clustering, or an incidence pattern?
+
+A classifier maps an image representation to scores; a loss compares those scores with the target. The gradient sends a local change backward through each operation by the chain rule. Convolution shares a local filter over the image; attention instead builds content-dependent weights between tokens. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Learning a visual classifier from examples|Learning basics]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Convolutional models preserve image neighborhoods|CNNs]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Sequence models and attention|Attention]]. **Ask:** Which shape changes at each layer, and where does the chain rule multiply upstream and local derivatives?
+
+Dense prediction assigns an output to every pixel; detection also predicts object locations and categories. Video adds temporal alignment, motion, and compute cost. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Predict pixels and localize objects|Dense prediction and detection]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Video adds motion and temporal cost|Video]]. **Ask:** Does the evaluation measure pixel accuracy, object matching, or temporal consistency?
+
+Self-supervision creates training targets from the data; generative objectives instead define how a model represents or samples possible outputs. Evaluation must match the claim: reconstruction quality, likelihood, sample quality, and downstream usefulness are different measurements. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Self-supervision and evaluation|Self-supervision]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Generative models learn distributions and samplers|Generative models]]. **Ask:** What observable target trains the model, and what test would falsify the capability claim?
+
+NeRF represents a scene with a learned field queried along rays; Gaussian splatting stores explicit 3D elements and composites their projected contributions. A planar Gaussian gives a direct local surface normal, while 3D Gaussian splats need geometric regularization to recover reliable surfaces. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Learned representations of 3D shape and scenes|Learned 3D representations]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From scene representations to research methods|research methods]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U12 - Volume compositing accumulates visible contributions|U12]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U13 - A local Gaussian covariance projects to an ellipse|U13]]. **Ask:** Which representation is queried per ray and which is explicitly rasterized?
+
+An environment map supplies incoming illumination by direction. ReSTIR uses weighted reservoirs to reuse light candidates, but the final estimator still needs correct proposal support and normalization. LoD changes also change geometry, so reused paths need a surface correspondence and its area Jacobian. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Light measurement and radiometry|Image-based lighting]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Numerical integration and Monte Carlo estimation|Monte Carlo reuse]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U14 - A reservoir selects a candidate by its weight|U14]]. **Ask:** What distribution was each candidate drawn from, and what normalization makes reuse valid?
+
+Mitsuba 2 shows how a renderer can change execution mode and differentiate through image formation. It is a 2019 Enoki-based system; its API details are historical and should not be treated as Mitsuba 3 guidance. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#The rendering equation and light transport|Differentiable rendering]]. **Ask:** Which quantities are differentiated and which sampling decisions are held fixed?
+
+ARAP editing alternates local rigid rotations with a global sparse position solve. Field-aligned remeshing uses orientation and position fields to guide edge direction and placement. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Meshes, connectivity, and geometry processing|Mesh processing]]. **Ask:** Which part is local per vertex and which system is solved globally?
+
+IPC combines a contact barrier with continuous collision detection and a feasibility-preserving line search. A positive barrier alone is not a proof that a finite time step cannot cross a contact. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Dynamics, forces, and numerical integration|Contact dynamics]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure U15 - The contact barrier grows near zero separation|U15]]. **Ask:** What checks the entire path between the current and proposed configurations?
+
+```mermaid
+flowchart LR
+    I[Image and task] --> R[Representation]
+    R --> F[Forward model]
+    F --> L[Loss or measurement]
+    L --> G[Gradient or estimator]
+    G --> R
+    F -->|rendered output| E[Evaluation]
+    E -->|failure analysis| R
+```
+
+Read the loop as a diagnostic map: representation, forward model, objective, and evaluation can each limit the result. It is not a single training algorithm; Monte Carlo rendering and supervised learning use different estimators and losses.
+
+```mermaid
+flowchart LR
+    S[Scene and geometry] --> V[Visibility]
+    V --> T[Surface or volume response]
+    T --> Q[Sampling and compositing]
+    Q --> P[Pixels]
+    P --> O[Observed image]
+    O -->|inverse constraints| S
+```
+
+This rendering/inference loop joins the original image-formation chapters to learned 3D methods. The reverse arrow indicates an inference problem; it does not imply a unique reconstruction.
+

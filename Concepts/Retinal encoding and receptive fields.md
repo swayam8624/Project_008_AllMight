@@ -22,6 +22,7 @@ Rods/cones transduce light into neural signals; they are not passive RGB pixels.
 - [[Visual acuity and eccentricity]]
 - [[Contrast sensitivity adaptation and masking]]
 
+- [[Learned image features and CNNs]]
 ## Recall and next depth
 
 Explain why unequal Gaussian gains retain DC. Pending: calibrated physiological models and cortical processing. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

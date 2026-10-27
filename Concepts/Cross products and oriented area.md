@@ -29,6 +29,7 @@ Panel edges $(4,0,0)$ and $(0,3,0)$ give $(0,0,12)$, so triangle area is $6$. Th
 - [[Robust geometric predicates]] — Builds on this mechanism in the connected geometry story.
 - [[Exterior products and geometric algebra]] — Builds on this mechanism in the connected geometry story.
 
+- [[Local rigidity and mesh orientation fields]]
 ## Recall and next depth
 
 Prove perpendicularity and the area identity; distinguish a two-dimensional signed area from a vector cross. Full production proofs, target-specific integration and learner mastery require further evidence.

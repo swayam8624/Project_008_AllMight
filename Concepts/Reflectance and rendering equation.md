@@ -23,6 +23,7 @@ Later independent XR sources will extend this same node.
 - [[Monte Carlo rendering estimators and variance]]
 - [[Surface orientation from image brightness]]
 
+- [[Reservoir resampling and ReSTIR]]
 ## Recall and next depth
 
 Explain Lambertian rho/pi and identify what sampled shading approximates. Pending: transport estimators and actual workload profiling. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

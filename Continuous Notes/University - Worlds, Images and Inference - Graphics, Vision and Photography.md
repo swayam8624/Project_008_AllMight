@@ -49,7 +49,7 @@ flowchart LR
 
 The chapters follow problems and prerequisites, not the order in which four instructors presented overlapping topics. We build and move a scene, decide what is visible, calculate its light, understand the camera, and recover information from images. When courses explain the same operation, their explanations meet in one place. The source legend still identifies each course.
 
-The CMU welcome suggests a useful learning loop: answer short conceptual questions, implement missing routines in a modeling, rendering, and animation package, then inspect the results. Its four Scotty3D assignments connect the math to visible output. This volume adapts that loop through worked traces and runnable labs. Enrollment and administration details apply only to the 2020 offering. [[#CMU-WELCOME - Course welcome and learning workflow|CMU-WELCOME]]
+The CMU welcome suggests a useful learning loop: answer short conceptual questions, implement missing routines in a modeling, rendering, and animation package, then inspect the results. Its four Scotty3D assignments connect the math to visible output. This volume adapts that loop through worked traces and runnable labs. 
 
 Study a new mechanism in four passes. Identify the question it answers. Draw the quantities and state the assumptions. Work through the equations and a numerical example. Then break one assumption and predict what fails. For example, [[Stereo correspondence and epipolar geometry|stereo triangulation]] is easier to remember after seeing how a one-pixel disparity error can create a large depth error for a distant object.
 
@@ -146,7 +146,7 @@ The course overview then closes the loop between image evidence and action. A ma
 
 The truck-approach demonstrations make the time-to-contact idea concrete. As the vehicle approaches, the image expands; a plotted computed time-to-contact tracks the known value. The vehicle approaches the truck door rather than the center, so its focus of expansion is off-center and reveals oblique travel. In a second time-lapse, manually moving the camera in nominal 10 mm increments introduces more measurement noise. These examples highlight both a useful invariance—ratio-based TTC does not require focal length in this setup—and practical sensitivity to camera motion and measurement accuracy. Horn also shows an analog chip calculating FOE nearly instantaneously and recounts cooling an overheating prototype with an ice-filled cooler and aquarium pump. This makes clear that computational constraints and physical implementation shape the algorithm, not just abstract mathematics. [[#MITV-01 - Introduction to Machine Vision|MITV-01]] (video 00:26:42–00:32:46)
 
-A camera obscura in Santa Monica is used as an intuitive pinhole camera: light enters a darkened room through a small aperture and projects an inverted scene on the opposite wall. The brightness discussion then cautions against treating pixel values as direct reflectance. The Moon appears bright without a nearby white reference, although the lecture gives its reflected solar fraction as about 11 percent; its apparent brightness depends on context. Likewise, the inverse-square falloff of a point source does not mean a uniformly lit extended wall becomes one-quarter as bright when viewed from twice the distance: the area of wall represented by a pixel grows with distance and offsets the per-source falloff. Foreshortening changes illumination per surface area with the cosine of incident angle, but reflectance can be more complicated.
+A camera obscura in Santa Monica serves as an intuitive pinhole-camera model: light passes through a small opening into a dark room and projects an inverted scene on the opposite wall. The brightness discussion warns against treating pixel values as direct reflectance. The Moon looks bright without a nearby white reference even though the lecture says it reflects about 11 percent of incoming sunlight; apparent brightness depends on context. Similarly, inverse-square falloff for a point source does not mean that a uniformly lit extended wall looks one-quarter as bright from twice the distance: each pixel then represents a larger wall area, offsetting the per-source falloff. Foreshortening changes illumination per unit surface area by the cosine of the incident angle, but reflectance can be more complex.
 
  For an ideal thin lens with focal length $f$, pupil diameter $D$, and scene radiance $L$ at field angle $\alpha$, sensor-plane irradiance is $E_{\mathrm{img}}=(\pi/4)L(D/f)^2\cos^4\alpha$ under fixed-pupil geometric-optics assumptions. The fourth power combines projection and distance factors; this is image-plane irradiance, not the irradiance on the surface. The normal’s two degrees of freedom versus one brightness measurement motivates photometric stereo and the course’s recurring constraint-counting argument. [[#MITV-01 - Introduction to Machine Vision|MITV-01]] (video 00:51:15–00:52:27, 01:05:34–01:13:48)
 
@@ -225,6 +225,22 @@ In two dimensions, scalar curl is closely related to the divergence of a field r
 | Boundary condition | Constraint specifying a field’s value or flux at a domain edge. |
 
 These terms recur across subfields. A Jacobian can transform texture footprints, describe a camera projection locally, or map joint-angle changes to hand movement. A PDF can describe a hemisphere direction, a light sample, or a discrete alias-table choice. A mesh Laplacian can smooth geometry or discretize heat diffusion. The vocabulary is shared because the computational structures are shared. [[#CMU-02 - Linear Algebra (P)Review|CMU-02]] · [[#CMU-03 - Vector Calculus (P)Review|CMU-03]] · [[#CMU-07 - Perspective Projection and Texture Mapping|CMU-07]] · [[#CMU-11 - Digital Geometry Processing|CMU-11]] · [[#CMU-18 - Monte Carlo Rendering|CMU-18]] · [[#CMU-22 - Optimization|CMU-22]] · [[#CMU-23 - Physically Based Animation and PDEs|CMU-23]]
+
+### Additional geometric and rendering mechanisms from the graphics course
+
+#### Points and vectors obey different operations
+
+A vector space is a set closed under two operations: add two members and get another member, or multiply a member by a scalar and remain in the set. Usual vector laws (commutativity, associativity, distributivity, and so on) make those operations behave consistently. In graphics, vectors commonly represent directions and displacements. Points represent locations. Although both may be stored as triples, they are not interchangeable geometric objects.
+
+The permitted point operations express this distinction:
+
+- Point plus vector gives a point: $Q=P+v$.
+- Point minus point gives a vector: $v=Q-P$.
+- A point can be formed as an affine combination of points, provided the weights sum to one.
+
+The sum-to-one condition keeps the result independent of an arbitrary choice of origin. If every point is shifted by the same vector $d$, then $\sum_i\alpha_i(P_i+d)=\sum_i\alpha_iP_i+d\sum_i\alpha_i=\sum_i\alpha_iP_i+d$. When $\sum_i\alpha_i=1$, the combination shifts exactly with the geometry. (P3-01)
+
+For two points, $P(t)=(1-t)P_0+tP_1$ has weights that sum to one. At $t=0$ it is $P_0$; at $t=1$ it is $P_1$; at $t=1/2$ it is their midpoint. Rewriting it as $P_0+t(P_1-P_0)$ exposes the vector: $P_1-P_0$ is the displacement from the start point, and $t$ scales that displacement. Both forms trace the same line segment for $0\leq t\leq1$. Values outside that interval extend along the line beyond the segment. (P3-01)
 
 ## Coordinate frames, transformations, and pose
 
@@ -311,6 +327,207 @@ Normals require an extra rule. A tangent vector transforms by $A$, but a normal 
 
 **Read the figure.** The same input vectors pass through a coordinate change, independent stretches, and output placement. The colored points keep their identities. Read the axis labels: each panel has equal horizontal/vertical scale, while different panels use different ranges. The illustrated map has singular values four and two; rotation factors alone preserve length.
 
+### Matrix composition as a worked graphics pipeline
+
+#### Matrix transforms build reusable models
+
+Model-space coordinates describe one object's own convenient frame. World-space coordinates place many reusable models into a common scene. A soldier model can be translated to a location, rotated to face a direction, and scaled to match its intended size; repeating this operation creates a battlefield from one reusable asset. Transformations therefore separate asset construction from scene placement. (P1-22–26)
+
+For a 2D point p=(x,y), translation by (a,b) gives (x+a,y+b). Scaling by (s_x,s_y) gives (s_x x,s_y y). Rotation by angle θ about the origin gives (x cosθ − y sinθ, x sinθ + y cosθ). At θ=90° counterclockwise, (2,1) becomes (−1,2). A rotation about a center c is performed by translating c to the origin, rotating, then translating back. Order matters: translating then rotating generally differs from rotating then translating. For example, rotate (1,0) by 90° to (0,1), then translate by (2,0) to (2,1); translate first to (3,0), then rotate to (0,3). (P1-22–26)
+
+Homogeneous coordinates encode translation with matrices. Represent (x,y) as column vector (x,y,1). Then
+
+$$
+T(a,b)=\begin{bmatrix}1&0&a\\0&1&b\\0&0&1\end{bmatrix},\quad
+S(s_x,s_y)=\begin{bmatrix}s_x&0&0\\0&s_y&0\\0&0&1\end{bmatrix},\quad
+R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta&0\\\sin\theta&\cos\theta&0\\0&0&1\end{bmatrix}.
+$$
+
+With column vectors, applying A and then B means p' = BAp. The rightmost matrix acts first. This convention should be stated because row-vector conventions reverse the written product order. In 3D, use (x,y,z,1) and 4×4 matrices; translation occupies the last column under the column-vector convention. Rotation, scaling, shear, and reflection extend to 3D, with axis and handedness conventions made explicit. (P1-22–26)
+
+#### Why homogeneous coordinates are useful
+
+A 2×2 matrix can scale or rotate a point because each output coordinate is a weighted sum of the input coordinates. It cannot add the same fixed offset to every point: $ax+by$ always depends on $x$ and $y$. Add a constant coordinate $w=1$ and represent the point as $(x,y,1)^T$. Now the last matrix column contributes constants: the first two rows can produce $x+t_x$ and $y+t_y$, while the final row keeps $w=1$. For example, translating $(2,-1)$ by $(3,2)$ is
+
+$$
+\begin{bmatrix}1&0&3\\0&1&2\\0&0&1\end{bmatrix}
+\begin{bmatrix}2\\-1\\1\end{bmatrix}
+=
+\begin{bmatrix}5\\1\\1\end{bmatrix}.
+$$
+
+The added coordinate is a calculation device; this affine translation does not change the point's displayed dimension. It also gives translation, scale, and rotation the same 3×3 shape, so they can be multiplied into one matrix. In 3D the same argument uses $(x,y,z,1)^T$ and 4×4 matrices. (P1-22–23)
+
+Uniform scale multiplies both axes by one factor and preserves shape and aspect ratio. Nonuniform scale uses different factors, such as $(2,0.5)$, making an object twice as wide and half as tall. This changes shape. Scaling about the origin also moves points relative to the origin; scaling around a chosen center requires moving the center to the origin first, scaling, and moving it back. (P1-22–23)
+
+#### Rotation from a circle and angle addition
+
+For a point at radius $r$ and angle $\alpha$ from the positive x axis, $x=r\cos\alpha$ and $y=r\sin\alpha$. Rotating counterclockwise by $\theta$ changes the angle to $\alpha+\theta$, so $x'=r\cos(\alpha+\theta)$ and $y'=r\sin(\alpha+\theta)$. Expanding with the angle-addition identities and substituting $r\cos\alpha=x$ and $r\sin\alpha=y$ yields
+
+$$
+x'=x\cos\theta-y\sin\theta,\qquad y'=x\sin\theta+y\cos\theta.
+$$
+
+That pair of equations is the rotation matrix acting on a column vector. For a quarter-turn, $\cos90^\circ=0$ and $\sin90^\circ=1$, so $(2,1)$ becomes $(-1,2)$. Positive angles are counterclockwise in the lecture's stated OpenGL/right-hand convention; use a negative angle for clockwise motion. In 3D, choose the rotation axis explicitly. Rotation about x leaves x fixed and rotates the yz-plane; about y, it leaves y fixed and rotates xz; about z, it leaves z fixed and rotates xy. The lecture contrasts this right-hand convention with the left-hand convention it attributes to Direct3D. (P1-22–23)
+
+#### Shear, reflection, and affine structure
+
+A shear parallel to x maps $(x,y)$ to $(x+ay,y)$: the horizontal displacement depends on height, while y stays fixed. A shear parallel to y maps $(x,y)$ to $(x,y+bx)$. It slants a shape but keeps straight lines straight and parallel lines parallel. These are affine transformations. The P1-22 speaker momentarily calls shear non-affine, then explicitly corrects that statement; use the corrected classification. Reflection across the x axis changes $(x,y)$ to $(x,-y)$; reflection across y changes it to $(-x,y)$. Reflection across the diagonal $y=x$ swaps the coordinates. In 3D, reflecting across the xy plane negates z; across xz it negates y; across yz it negates x. The coordinate sign that changes is the one normal to the mirror plane. (P1-22–23)
+
+#### Composing operations: order and a numerical trace
+
+With column vectors, the rightmost matrix acts first. Thus $M=TRS$ means scale, then rotate, then translate. Matrix multiplication is associative, so $(TR)S=T(RS)$, but it is not generally commutative: $TR$ and $RT$ usually move a point to different places. This matters because a model's intended placement depends on operation order. A rotation around a model's own center can be made by translating that center to the origin, rotating, then translating back. (P1-23)
+
+Work the lecture's stated triangle example with $S_x=2$, $S_y=1$, a $45^\circ$ counterclockwise rotation, and translation $(3,2)$. For the sample vertex $(1,0,1)^T$, scaling gives $(2,0,1)^T$. Rotation then gives $(\sqrt2,\sqrt2,1)^T$. Translation gives $(3+\sqrt2,2+\sqrt2,1)^T$, approximately $(4.4142,3.4142,1)^T$. The combined matrix is
+
+$$
+TRS=\begin{bmatrix}1&0&3\\0&1&2\\0&0&1\end{bmatrix}
+\begin{bmatrix}\frac{\sqrt2}{2}&-\frac{\sqrt2}{2}&0\\\frac{\sqrt2}{2}&\frac{\sqrt2}{2}&0\\0&0&1\end{bmatrix}
+\begin{bmatrix}2&0&0\\0&1&0\\0&0&1\end{bmatrix}
+=\begin{bmatrix}\sqrt2&-\frac{\sqrt2}{2}&3\\\sqrt2&\frac{\sqrt2}{2}&2\\0&0&1\end{bmatrix}.
+$$
+
+Multiplying this by the homogeneous sample point reproduces the trace. The transcript's spoken final coordinates appear inconsistent with its declared point and transforms; the arithmetic above is recalculated from those declared inputs, rather than copying the spoken numerical result. It also demonstrates why numerical examples should be checked against their stated operations. (P1-23)
+
+#### From one point to a hierarchy of objects
+
+A model matrix applies the same transform to every vertex in an object's mesh; hundreds or millions of points move together and appear as one translated, rotated, or scaled object. In a hierarchy, child transforms are relative to a parent. For a tank, the body can be placed in the world, then the turret positioned relative to the body and rotated around its own pivot. The turret can turn while the body remains still. This differs from rotating both parts around the world origin. The same idea applies to limbs attached to a torso or wheels attached to a vehicle. (P1-23)
+
+P1-22–23 introduce transforms through the course's legacy PyOpenGL/immediate-mode setting and NumPy matrix arithmetic; they do not teach modern shader-side model matrices. Keep that implementation context separate from contemporary OpenGL core-profile practice. The transform mathematics generalizes, but the API calls and programmable pipeline do not. (P1-22–23)
+
+### Additional geometry notes for coordinate frames
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### A fixed matrix separates parameter, basis, and geometry
+
+Expand the cubic formula by powers of $t$:
+
+$$
+C(t)=(1-3t+3t^2-t^3)P_0+(3t-6t^2+3t^3)P_1+(3t^2-3t^3)P_2+t^3P_3.
+$$
+
+For 2D or 3D points stored as rows in a $4\times d$ matrix $G$, the same computation is
+
+$$
+C(t)=\begin{bmatrix}1&t&t^2&t^3\end{bmatrix}
+\begin{bmatrix}1&0&0&0\\-3&3&0&0\\3&-6&3&0\\-1&3&-3&1\end{bmatrix}G.
+$$
+
+The first row depends on $t$; the middle matrix is fixed; $G$ holds the four control points. This factorization turns a polynomial curve evaluation into matrix and vector operations, a form that is easy to implement and repeat for many parameter values. It also allows the derivative to be found by differentiating only the parameter basis:
+
+$$
+C'(t)=\begin{bmatrix}0&1&2t&3t^2\end{bmatrix}
+\begin{bmatrix}1&0&0&0\\-3&3&0&0\\3&-6&3&0\\-1&3&-3&1\end{bmatrix}G.
+$$
+
+An equivalent expression obtained by differentiating the Bernstein form is
+
+$$
+C'(t)=3(1-t)^2(P_1-P_0)+6t(1-t)(P_2-P_1)+3t^2(P_3-P_2).
+$$
+
+Thus $C'(0)=3(P_1-P_0)$ and $C'(1)=3(P_3-P_2)$: endpoint tangent directions are determined by the first and last control-polygon edges. The instructor motivates derivatives as a way to obtain curve properties while preserving a compact representation in terms of only a few control points. (P3-01)
+
+The course overview emphasizes a mix of geometry and matrix mathematics, light and material physics, and software that produces pictures through APIs such as OpenGL and Qt. It describes visual refinement as a substantial part of graphics work: a program that runs may still need careful tuning before its image looks right. The instructor encourages students to discuss and debug collaboratively while requiring submitted code to be each student's own. These are course-method statements, not geometric theorems. (P3-01)
+
+#### Coordinate frames make object motion composable
+
+A coordinate frame is an origin plus a set of independent basis vectors. In 2D, with origin $O$ and basis vectors $U,V$, a point with frame coordinates $(x,y)$ is
+
+$$
+P=xU+yV+O.
+$$
+
+The familiar Cartesian frame is the special case $U=(1,0)$, $V=(0,1)$, and $O=(0,0)$. A frame can also be skewed: $U$ and $V$ need not be perpendicular, but they must not point along the same line, or coordinates cease to be unique. In 3D, add a third independent basis vector $W$ and coordinate $z$: $P=xU+yV+zW+O$. Every moving object can carry a local frame; articulated figures can use a frame per body part. Transforming between object, parent, world, and camera frames is then a matrix-composition problem. (P3-03)
+
+The P3-03 equations use **row vectors**: a point is written $[x\;y\;1]$ and multiplied by a matrix on the right. The homogeneous $1$ supplies the origin/translation term. For example,
+
+$$
+T(a,b)=\begin{bmatrix}1&0&0\\0&1&0\\a&b&1\end{bmatrix},\qquad
+[x\;y\;1]T(a,b)=[x+a\;y+b\;1].
+$$
+
+Scaling is $S(a,b)=\begin{bmatrix}a&0&0\\0&b&0\\0&0&1\end{bmatrix}$. The row-vector rotation matrix is
+
+$$
+R(\theta)=\begin{bmatrix}\cos\theta&\sin\theta&0\\-\sin\theta&\cos\theta&0\\0&0&1\end{bmatrix},
+$$
+
+which produces $(x\cos\theta-y\sin\theta,\;x\sin\theta+y\cos\theta)$. A $90^\circ$ positive turn sends $(1,0)$ to $(0,1)$. Translation, scale, and rotation matrices are sparse, and a point on the right-hand side of an operation chain uses the row-vector convention. To apply $A$ and then $B$, compute $pAB$. This order is opposite to the column-vector convention in the earlier P1 teaching draft, where $BAp$ applies $A$ then $B$. The matrices are transposes of one another; the geometry is the same. This is a mathematical vector convention, not a claim about row-major versus column-major memory storage. (P3-03)
+
+Scaling about center $c$ is $T(-c)ST(c)$ in this row-vector notation: subtract the center, scale about the origin, then add the center back. Rotation around a non-origin point uses the same pattern, replacing $S$ with $R$. For example, a square centered at $(2,2)$ should not be scaled directly about $(0,0)$ if the goal is to enlarge it in place; direct scaling moves its center outward too. The same matrix is applied to every vertex/control point, so a polygon or Bezier curve moves as a whole. A scene with many models means many points must be transformed; the lecture connects this regular workload to parallel GPU computation. (P3-03)
+
+In 3D, the homogeneous point is $[x\;y\;z\;1]$. Translation stores $(a,b,c)$ in the final row; scaling uses diagonal factors $(s_x,s_y,s_z,1)$. To rotate around a known axis, leave the coordinate along the axis unchanged and use a 2D sine/cosine rotation on the perpendicular plane. For row vectors:
+
+$$
+R_x(\theta)=\begin{bmatrix}1&0&0&0\\0&\cos\theta&\sin\theta&0\\0&-\sin\theta&\cos\theta&0\\0&0&0&1\end{bmatrix},\quad
+R_y(\theta)=\begin{bmatrix}\cos\theta&0&-\sin\theta&0\\0&1&0&0\\\sin\theta&0&\cos\theta&0\\0&0&0&1\end{bmatrix},\quad
+R_z(\theta)=\begin{bmatrix}\cos\theta&\sin\theta&0&0\\-\sin\theta&\cos\theta&0&0\\0&0&1&0\\0&0&0&1\end{bmatrix}.
+$$
+
+A worked check for $R_x(90^\circ)$ sends $(0,1,0)$ to $(0,0,1)$; $R_z(90^\circ)$ sends $(1,0,0)$ to $(0,1,0)$. The lecture catches and fixes a sign in the y-axis example while checking the right-hand cupping direction. Earlier it once says “left-hand rule,” but its concrete rotation checks and repeated convention are right-handed. Do not silently copy a sign without testing a known axis vector. (P3-03)
+
+Rotating around an arbitrary 3D line is not the same as rotating around a point. The next lecture's construction is previewed: translate the axis to the origin, rotate it onto a coordinate axis whose matrix is already known, perform that simple rotation, then undo the alignment and translation in reverse order. That composition is the route to an arbitrary-axis rotation matrix. (P3-03; P3-04)
+
+The 2009 recording frames these transforms through C++ matrix classes and an OpenGL course; it does not demonstrate modern shader-based OpenGL or specify core-profile buffer APIs. Keep its row-vector derivations distinct from contemporary column-vector shader examples, and follow the convention required by the chosen math library/API. (P3-01; P3-03)
+
+#### Homogeneous coordinates turn perspective into a projection
+
+An ordinary 3D point is often embedded as $(x,y,z,1)$. More generally, a homogeneous point $(X,Y,Z,W)$ with $W\ne0$ represents the projected point $(X/W,Y/W,Z/W)$ on the $W=1$ plane. Geometrically, draw a line from the 4D origin through $(X,Y,Z,W)$; where that ray meets $W=1$ gives the normalized coordinates. This projective divide is different from the orthogonal drop-to-$W=1$ projection: perspective uses the line through the origin, which is why farther geometry can appear smaller. The same idea provides a compact mathematical model for a pinhole camera. (P3-04)
+
+The lecture's rational circle illustrates the benefit. Consider homogeneous coordinates
+
+$$
+(X,Y,W)=(1-t^2,\;2t,\;1+t^2).
+$$
+
+Before dividing by $W$, plotting $(X,Y)$ gives a parabola because $X=1-t^2$ and $Y=2t$. After the projective divide,
+
+$$
+x=\frac{1-t^2}{1+t^2},\qquad y=\frac{2t}{1+t^2}.
+$$
+
+Then
+
+$$
+x^2+y^2=\frac{(1-t^2)^2+4t^2}{(1+t^2)^2}
+=\frac{1+2t^2+t^4}{(1+t^2)^2}=1.
+$$
+
+So a rationally represented curve projects to a unit circle, even though its unprojected coordinates form a parabola. Rational splines exploit this extra homogeneous coordinate to represent conic shapes such as circles exactly. (P3-04)
+
+This same divide appears in perspective viewing. A pinhole camera projects scene points radially through its center onto an image plane. In the graphics pipeline, projection produces clip coordinates; a later perspective divide by clip $w$ obtains normalized coordinates. Geometry behind the camera can project in front after division, and geometry outside the viewing pyramid must be clipped before rasterization. The lecture previews these ideas but defers the full camera and clipping derivations to later sources. Keep the explanatory $W=1$ plane picture separate from the exact clip-space rules of a particular OpenGL version. (P3-04)
+
+#### Rotation matrices, gimbal lock, and quaternions
+
+The lecture warns that chained rotations can encounter gimbal lock and previews quaternions as another way to represent orientation. More precisely, gimbal lock is a singular configuration of a three-angle Euler parameterization in which two rotation axes align; it is not a failure of matrix multiplication itself. Quaternions can represent and interpolate orientations without that Euler-angle singularity, and can be converted to rotation matrices for rendering. P3-09 develops quaternions. This note corrects the oversimplified causal wording in the 2009 lecture while preserving its motivating issue. (P3-04; P3-09)
+
+#### Quaternions: a compact way to compose orientation
+
+Rotations depend on order. Rotate $(1,0,0)$ by $90^\circ$ around x and then y, and the result differs from doing y then x. In matrix terms, generally $R_yR_x\ne R_xR_y$ (the written order depends on row/column convention). This is why an Euler-angle camera can become awkward: at certain orientations, two of the three parameterized axes align, so one independent rotational degree of freedom is lost. Gimbal lock is a singularity of that three-angle representation; the underlying 3D rotation remains valid. (P3-09)
+
+A quaternion packages one scalar and one 3D vector: $q=(a,\mathbf v)$, or $a+bi+cj+dk$. Its product combines a dot product and a cross product:
+
+$$
+(a_1,\mathbf v_1)(a_2,\mathbf v_2)=
+(a_1a_2-\mathbf v_1\cdot\mathbf v_2,\ a_1\mathbf v_2+a_2\mathbf v_1+\mathbf v_1\times\mathbf v_2).
+$$
+
+The dot product contributes to the scalar part; the oriented cross product contributes to the vector part. Since $\mathbf v_1\times\mathbf v_2=-\mathbf v_2\times\mathbf v_1$, quaternion multiplication is not generally commutative. The conjugate is $q^*=(a,-\mathbf v)$, the norm is $|q|=\sqrt{a^2+\mathbf v\cdot\mathbf v}$, and for nonzero $q$, $q^{-1}=q^*/|q|^2$. For a unit quaternion, inverse and conjugate are the same. These rules let us combine scalar/vector algebra into a representation that can encode 3D orientation. (P3-09)
+
+To encode a rotation by angle $\theta$ around unit axis $\mathbf u$, use
+
+$$
+q=\left(\cos\frac{\theta}{2},\ \mathbf u\sin\frac{\theta}{2}\right).
+$$
+
+The half-angle is essential: a 3D vector is represented by pure quaternion $p=(0,\mathbf x)$, and the rotated vector is $p'=q p q^{-1}$. Applying q on both sides doubles the half-angle into the intended rotation. For a $90^\circ$ z rotation, $q=(\sqrt2/2,(0,0,\sqrt2/2))$ and $p=(0,(1,0,0))$ gives $p'=(0,(0,1,0))$. The scalar part alone is $\cos(\theta/2)$, so recover the principal angle with $\theta=2\arccos(a)$; normalize the vector part to get its axis when $\sin(\theta/2)\ne0$. The 2009 captions appear to use “cosine of the angle” without consistently showing the half-angle. This note uses the standard half-angle form. Hamilton, not Heisenberg, introduced quaternions; the captions’ “Heisenberg” is likely an ASR error. Hamilton’s 1843 letter and first paper are preserved in [Trinity College Dublin’s historical quaternion archive](https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/QLetter/) and [the archival paper](https://www.maths.tcd.ie/pub/HistMath/People/Hamilton/Quatern1/). (P3-09)
+
+Composition is simple but order still matters. If q1 acts first and q2 second, the combined active rotation is $q_2q_1$, because $q_2(q_1pq_1^{-1})q_2^{-1}=(q_2q_1)p(q_2q_1)^{-1}$. Products of unit quaternions remain unit, aside from numerical drift; renormalize after many updates. A quaternion avoids the Euler-angle gimbal-lock singularity, but it does not make rotations commute, and it does not eliminate representation details: q and −q describe the same orientation. Convert the final quaternion to a 3×3 or 4×4 rotation matrix when feeding a traditional matrix-based renderer. The lecture’s C++ code uses 4×4 matrices after accumulating orientation. (P3-09)
+
+A trackball turns mouse motion into these small rotations. Map a cursor point inside a virtual disk to a point on a virtual sphere: inside the disk, use the sphere surface; outside, clamp or project to the rim. Let the old and new unit vectors be $u_0$ and $u_1$. Their cross product gives the rotation axis; their dot product gives $\cos\theta$. A robust angle is $\operatorname{atan2}(|u_0\times u_1|,u_0\cdot u_1)$. Build the incremental quaternion and multiply it into the accumulated orientation. Repeating this on mouse drags lets the user “grab” and turn the model. A timer can keep applying a small orientation update after release to simulate inertia, as the lecture’s Qt timer example suggests. (P3-09)
+
 ## Curves as controllable functions
 
 A curve is a function with a controllable design space; its representation determines interpolation, subdivision, and sampling.
@@ -323,7 +540,7 @@ Rotational animation needs a rotation-space interpolation. Interpolating Euler a
 
 ### One cubic polynomial has several design languages
 
-A cubic curve is not tied to one formula. Its coordinates are degree-three polynomials, so the same curve can be specified by four monomial coefficients, by its two endpoint positions and two endpoint tangents (the Hermite basis), or by four Bézier control points (the Bernstein basis). These are different coordinate systems for the same four-dimensional space of cubic functions. They are useful for different tasks: coefficients make evaluation and algebra direct; Hermite data makes endpoint conditions explicit; Bézier data gives an intuitive control polygon and convex-hull bounds. The Fall 2021 lecture moves from the monomial basis to an endpoint-and-tangent basis, then to Bernstein/Bézier data, and asks what each representation makes easy [[#MITG-02 - Cubic curves|MITG-02]] (00:25:00–00:51:00; 01:10:00–01:16:00). Its auto-caption transcript mangles the word “Hermite” as “air meet”; interpreting that phrase as Hermite is consistent with the described endpoint/tangent data and is a cautious reconstruction, rather than a claim that the caption transcribed it correctly.
+A cubic curve is not tied to one formula. Its coordinates are degree-three polynomials, so the same curve can be specified by four monomial coefficients, by its two endpoint positions and two endpoint tangents (the Hermite form), or by four Bézier control points (the Bernstein form). These are three coordinate systems for the same four-dimensional space of cubic functions. Each makes a different task convenient: coefficients make evaluation and algebra direct; Hermite data make endpoint conditions explicit; Bézier data give an intuitive control polygon and convex-hull bounds. The Fall 2021 lecture moves from the monomial form to endpoint-and-tangent data, then to Bernstein/Bézier data, and asks what each representation makes easy [[#MITG-02 - Cubic curves|MITG-02]] (00:25:00–00:51:00; 01:10:00–01:16:00). Its auto-caption transcript mangles “Hermite” as “air meet”; interpreting that phrase as Hermite fits the described endpoint/tangent data, but is a cautious reconstruction, not a claim that the caption transcribed it correctly.
 
 For endpoint positions $P_0,P_1$ and endpoint derivatives $M_0,M_1$, the Hermite form is
 
@@ -511,6 +728,95 @@ The denominator is what lets a rational cubic represent a circle exactly; a poly
 A renderer or modeling tool eventually needs a finite approximation, but uniformly choosing a large number of parameter steps wastes work on nearly straight regions and may still undersample a tight bend. De Casteljau subdivision gives an adaptive alternative. For each subcurve, measure how far its interior controls depart from the endpoint chord in screen space. If the maximum departure is below a pixel tolerance, draw the chord; otherwise split at $t=1/2$ and recurse on each half. A stronger bound accounts for perspective projection and pixel footprint, but the core idea remains: use the control polygon to bound the curve, and spend samples where the bound says the approximation could be visible. The lecture motivates tessellation as a conversion from high-level geometry to a renderable polyline and points out that one cannot know a curve's interesting regions without some sampling [[#MITG-02 - Cubic curves|MITG-02]] (00:08:32–00:13:18; 01:06:40–01:10:15).
 
 An implementation can avoid infinite recursion by including a maximum depth and testing for a degenerate chord. It can also use a flatness measure such as the maximum perpendicular distance of $P_1,P_2$ to the line through $P_0,P_3$. A tiny projected curve may need only one segment; a curve that fills a large part of the image may require many. This ties geometric approximation to viewing conditions: the right tessellation depends on the projected error, not solely on world-space curvature.
+
+### Additional geometry notes for curves
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### Bernstein polynomials turn affine combinations into curves
+
+A curve can be made by varying the affine weights continuously with a parameter $t$. The quadratic Bernstein weights are $(1-t)^2$, $2t(1-t)$, and $t^2$. They sum to one:
+
+$$
+(1-t)^2+2t(1-t)+t^2=((1-t)+t)^2=1.
+$$
+
+With control points $P_0,P_1,P_2$, the quadratic Bezier curve is
+
+$$
+C(t)=(1-t)^2P_0+2t(1-t)P_1+t^2P_2,\qquad 0\leq t\leq1.
+$$
+
+It starts at $P_0$ and ends at $P_2$ because the endpoint weights reduce to $(1,0,0)$ and $(0,0,1)$. It is a parabola (or a line in degenerate cases). The middle control point influences the bend; it is not generally a point the curve must pass through. These are affine combinations at every parameter value, so translation of the control points translates the whole curve without changing its shape. (P3-01)
+
+For four control points, the cubic Bernstein weights are
+
+$$
+(1-t)^3,\quad 3t(1-t)^2,\quad 3t^2(1-t),\quad t^3.
+$$
+
+The binomial coefficients $1,3,3,1$ come from Pascal's triangle; their sum is $(1-t+t)^3=1$. The cubic Bezier curve is their weighted sum of $P_0,P_1,P_2,P_3$. It reaches the first and last control points at the endpoints and bends according to the two interior controls. For example, take $P_0=(0,0)$, $P_1=(1,2)$, $P_2=(3,2)$, $P_3=(4,0)$. At $t=1/2$, the weights are $(1/8,3/8,3/8,1/8)$ and $C(1/2)=(2,1.5)$. This calculation comes directly from the Bernstein formula.
+
+#### Design curves: smooth without passing through every control point
+
+The P3-02 lecture contrasts an **interpolating curve**—which passes through every specified sample—with a **design curve** whose control points shape the result. Interpolation is appropriate when each sample is a required value, but it can be a poor shape-design tool: a small noisy displacement in one sample can produce a large wiggle even when the intended outline is nearly straight. A design curve lets the artist place a small set of handles to steer a smooth result. This distinction complements the affine and Bezier foundations above: both use point combinations, but interpolation constraints and design-control semantics differ. (P3-02)
+
+##### Chaikin corner cutting
+
+For each polygon edge from $P_i$ to $P_{i+1}$, place two new points one-quarter and three-quarters of the way along it:
+
+$$
+Q_i=\tfrac34P_i+\tfrac14P_{i+1},\qquad
+R_i=\tfrac14P_i+\tfrac34P_{i+1}.
+$$
+
+Connect the new points in order and repeat. Each step replaces sharp corners with shorter cut-off edges. The number of points grows with each iteration, so do only as many rounds as needed for the chosen screen scale; an unbounded loop can create vastly more segments than the image can show. The lecture describes the limiting curve as passing through edge midpoints with tangent direction matching the original edge there. For open curves, endpoint handling depends on the chosen variant; the recording does not specify a single boundary rule. (P3-02)
+
+A drawn curve can be approximated by control points and local tangent handles. Chaikin's repeated smoothing can then produce a visually smooth curve from a coarse polygon. Since each span in the construction behaves as a quadratic piece, a curve with an inflection needs a join at that inflection; a single parabola cannot change concavity internally. This is a design rule the lecture motivates by inspecting tangent and curvature changes. (P3-02)
+
+##### de Casteljau: evaluate the Bezier curve by repeated interpolation
+
+P3-01 introduced Bernstein weights and the cubic curve's matrix form. P3-02 gives a geometric method that evaluates the same curve without expanding a polynomial. Start with control points $P_i^{(0)}=P_i$. At each level, interpolate adjacent points by the same parameter $t$:
+
+$$
+P_i^{(j)}=(1-t)P_i^{(j-1)}+tP_{i+1}^{(j-1)}.
+$$
+
+For a cubic, first form three interpolants, then two, then one. That final point is $C(t)$. This triangular construction is called de Casteljau's algorithm. Each operation is an affine interpolation, so it preserves the geometric meaning of points and behaves consistently under translation and scaling. The lecture emphasizes midpoint ($t=1/2$) because it makes the construction especially visual; the recurrence works for any $t$ in $[0,1]$. Repeated midpoint operations can also split a cubic into two smaller cubic Bezier curves, useful for recursive subdivision and adaptive drawing. (P3-02)
+
+For $P_0=(0,0)$, $P_1=(1,2)$, $P_2=(3,2)$, and $P_3=(4,0)$ at $t=1/2$, the first level is $(0.5,1)$, $(2,2)$, $(3.5,1)$. Interpolating again gives $(1.25,1.5)$ and $(2.75,1.5)$. Their midpoint is $(2,1.5)$, the same result as the cubic Bernstein calculation above. Splitting at this point produces left controls $P_0,(0.5,1),(1.25,1.5),(2,1.5)$ and right controls $(2,1.5),(2.75,1.5),(3.5,1),P_3$. A renderer can recursively split only spans that are still too curved or too large on screen. (P3-02)
+
+Repeated linear interpolation also avoids directly computing high powers of $t$ at every recursive stage; the lecturer presents this as a numerically stable way to evaluate curves and as a basis for subdivision-based methods. A claim in the lecture connects subdivision to rapid cubic-root isolation, but no benchmark or implementation is included here. (P3-02)
+
+##### Joining curve segments and extending to surfaces
+
+A piecewise curve can remain position-continuous when the endpoint of one segment equals the start of the next. To avoid a visible corner, the adjacent tangent directions should also be collinear. For cubic Bezier pieces, endpoint tangents are controlled by the vectors from each endpoint to its neighboring handle; matching direction gives geometric tangent continuity. If their magnitudes are matched under the same parameterization, first derivatives also agree. The lecture highlights collinear, equal-length adjacent handles as a practical smooth-join condition. (P3-02)
+
+The recording previews applying corner cutting to a grid of control points to obtain a surface, then notes limitations and names Catmull–Clark as the common alternative. P3-16–17 later cover subdivision surfaces in detail; this preview is not a full surface algorithm specification. (P3-02; P3-16–17)
+
+#### Smooth curve and patch families
+
+A curve’s control points are design handles, not necessarily samples on the curve. A cubic Bezier curve has four controls $P_0,P_1,P_2,P_3$ and basis weights that sum to one:
+
+$$
+B(t)=(1-t)^3P_0+3t(1-t)^2P_1+3t^2(1-t)P_2+t^3P_3,\quad 0\le t\le1.
+$$
+
+It interpolates $P_0$ and $P_3$; its endpoint tangents are $B'(0)=3(P_1-P_0)$ and $B'(1)=3(P_3-P_2)$. De Casteljau’s repeated midpoint construction evaluates and splits the curve using only affine interpolation, making it numerically stable and easy to subdivide. As the control polygon is refined, its small segments approximate the smooth curve. If all controls are collinear, every affine combination stays on that line. More generally, the curve remains in the controls’ convex hull. A line cannot cross a Bezier curve more often than it crosses the control polygon (variation diminishing), so the curve does not make extra oscillations beyond its handles. These are design guarantees, not merely visual tendencies. (P3-02, P3-13)
+
+To join two cubic segments at $P_3=Q_0$, positional continuity is $C^0$. For a visually smooth tangent direction, require $P_2,P_3,Q_1$ to be collinear and pointing in the same direction; this is geometric continuity $G^1$. For the same derivative with respect to each segment’s parameter, also require $P_3-P_2=Q_1-Q_0$; this is parametric $C^1$. Higher-order matching constrains more control points. This distinction matters when a curve is used as a path or as a texture/parameter seam: matching direction can remove a visible cusp while still changing speed across the join. (P3-13)
+
+Bezier curves are convenient for isolated, small control nets but awkward to join in long models. B-splines and NURBS solve this by assembling polynomial or rational spans under a knot vector. For a degree-$p$ curve the order is $p+1$; cubic spans therefore have order four. The knot sequence partitions the parameter domain and its repeated values control how neighboring spans meet. A clamped end repeats an endpoint knot $p+1$ times so the curve reaches its endpoint controls. Uniform knots give repeated, evenly spaced spans; nonuniform knots let the designer concentrate parameter intervals or reduce continuity at selected joints. The local-support property means moving one control point affects only nearby spans rather than an entire high-degree polynomial. A NURBS curve is rational, which lets it represent circles and other conics exactly when weights are chosen appropriately. The 2009 captions use the ASR spelling “Beast blind” and compress several knot cases; use the standard term non-uniform rational B-spline and check endpoint multiplicity against the chosen degree. (P3-13)
+
+A tensor-product Bezier patch uses a grid of controls $P_{ij}$ and independent parameters $u,v$:
+
+$$
+S(u,v)=\sum_{i=0}^{m}\sum_{j=0}^{n}B_i^m(u)B_j^n(v)P_{ij}.
+$$
+
+Think of the surface as applying one curve basis in the u direction and another in v. Its four boundary curves are Bezier curves, and its corner controls are on the patch; interior controls generally only pull the surface. With positive basis weights, each point stays in the control net’s convex hull. Splitting once in each parameter produces four smaller patches while preserving the same surface, a useful adaptive representation. Two neighboring patches need matching boundary curves for $C^0$ continuity. Align tangent control rows for $G^1$; match derivative magnitudes as well for $C^1$. Patch stitching becomes difficult as a model grows, which motivates spline surfaces that encode many smooth spans with a compact net. (P3-13)
+
+The 2009 lecture also previews a three-dimensional Bezier solid: a 3D tensor-product control lattice shapes a volume, like a deformable block of jelly. It is a natural extension of the same basis idea, but surface patches are the common modeling tool. Exact polynomial Bezier subdivision cannot produce a perfect circle; rational quadratic Bezier/NURBS curves can. That is a practical reason CAD systems need rational splines. (P3-13, P3-16)
 
 ## Surfaces, patches, topology, and parameterization
 
@@ -725,6 +1031,88 @@ The algorithm stores the chosen quadric at the merged vertex as the sum $K_i+K_j
 
 **Read the figure.** Following next walks around one face; following twin crosses its shared edge. The shared edge has opposite directions in the two consistently oriented faces. This drawing omits outer boundary twins and boundary-loop records, so it illustrates the interior invariant rather than a complete boundary representation.
 
+### Additional geometry notes for surfaces and parameterization
+
+#### Subdivision meshes and the topology they need
+
+A regular grid can be refined by corner cutting in two directions. Apply the one-quarter/three-quarter rule along u-edges, then v-edges, connect the new points into a denser quad mesh, and repeat. The number of cells grows quickly, but each refinement uses local averages and the mesh approaches a smooth limit. The source motivates the limit as a patch made from quadratic behavior in both parameter directions. A four-corner cell has the bilinear interpolant
+
+$$
+P(u,v)=(1-u)(1-v)P_{00}+u(1-v)P_{10}+(1-u)vP_{01}+uvP_{11}.
+$$
+
+At $(u,v)=(0,0)$ the result is $P_{00}$; at $(1,0)$ it is $P_{10}$, and similarly for the other corners. The weights sum to one, so the patch is an affine combination. At $(1/2,1/2)$ all four weights are $1/4$, giving the cell center. This formula is bilinear interpolation over one face; it helps calculate the child grid but should not be mistaken for the complete quadratic subdivision limit. (P3-16)
+
+Regular quad grids are easy to store as an $N\times N$ array: neighboring cells follow from index arithmetic. Real meshes are not always regular quads. A Doo–Sabin-style refinement begins with each face, creates updated points around it, and connects them into a smaller face; adjacent original faces contribute a quad across each shared edge, while the neighborhood around an original vertex becomes a polygon whose side count reflects that vertex’s valence. Repeating the process makes those exceptional polygons shrink, leaving regular quad regions between them. The lecture sketches the construction through face centers and radial midpoints and calls the exceptional neighborhoods extraordinary points. Canonical Doo–Sabin implementations use a specific face-valence-dependent averaging mask; the transcript’s geometric sketch is an intuition for topology and convergence, not a full rule table. (P3-16)
+
+Catmull–Clark, introduced in the next lecture, produces cubic bicubic behavior in regular regions and is widely used in subdivision modeling. Doo–Sabin is associated with biquadratic pieces. In either family, one must keep the surface shape and the connectivity graph together: newly created vertices, face points and edge points change which faces meet at each edge. This is why subdivision is both geometry and a data-structure problem. (P3-16)
+
+A split-edge (half-edge-style) record stores local mesh adjacency. One record represents one oriented side of an edge and points to its vertex, the next oriented edge around its face, and its opposite record across the same geometric edge. The face record points to one boundary edge; the vertex record can point to one incident edge. From these links, an iterator walks a face boundary or a vertex’s one-ring without duplicating vertex coordinates in every polygon. A shared vertex is stored once in a vertex array, while faces reference it through adjacency pointers. When subdivision replaces edges and faces, every reciprocal link must be updated. A stale opposite pointer or broken cycle can cause an invalid walk or crash. The old lecture calls this “pointer hell”; the durable lesson is to state topology invariants and test every adjacency update. Modern libraries may use indexed arrays instead, but they still represent the same relationships. (P3-16)
+
+#### Catmull–Clark and Loop subdivision
+
+Catmull–Clark turns a polygon mesh into a smoother, denser mesh by creating three kinds of local points on every pass:
+
+1. A face point is the average of the face’s corner vertices. For a quad, $F=(V_0+V_1+V_2+V_3)/4$.
+2. An interior edge point is the average of the two edge endpoints and the face points on both sides: $E=(V_a+V_b+F_0+F_1)/4$. For a boundary edge, there is only one adjacent face, so production schemes use a boundary rule (often the midpoint or a boundary-curve mask).
+3. An updated old vertex point uses its surrounding face and edge neighborhood. For a regular interior vertex of valence $n$, a common Catmull–Clark rule is $V'=(F_{avg}+2E_{avg}+(n-3)V)/n$, where $F_{avg}$ averages adjacent face points and $E_{avg}$ averages edge midpoints. For a regular quad grid ($n=4$), this equals the familiar weighted average of the vertex, its four edge neighbors and four diagonal neighbors.
+
+Once these points exist, connect them consistently: each old face becomes a face around its face point, each old edge creates a quad joining its edge point to nearby face and vertex points, and each old vertex gets a new incident face. A programmer can process faces, edges and vertices in separate passes because the formulas depend on those preceding values. This creates many new faces in one iteration; repeating the same local recipe approaches a smooth limit surface. (P3-16, P3-17)
+
+The valence $n$ is the number of edges incident to a vertex. A regular quad-mesh vertex has valence four; a hand, nose or other irregular modeling feature may have a different valence. These extraordinary vertices have a different local limit behavior and are why the update weights cannot be chosen casually. The lecture reports a valence-dependent constant near $3/n$, but it does not fully derive the standard mask. Use the explicit rule above only for the stated regular interior scheme, and consult the chosen subdivision standard for boundaries and extraordinary points. (P3-17)
+
+For triangle meshes, Loop subdivision splits each triangle into four using edge points and then smooths the old vertices. Starting from an icosahedron gives a useful sphere approximation: 20 triangular faces become 80, then 320, then 1,280. Each new midpoint lies on the chord between old points, inside the sphere; normalize its vector from the center and scale to the radius to project it back onto the sphere. This is a distinct operation from Loop’s smoothing rule: projection gives a faceted sphere with vertices on the sphere, while Loop moves vertices according to a valence-dependent mask to form a smooth limit. The lecturer gives a $5/8$ old vertex plus $3/8$ average of neighboring edge points rule, which is the regular valence-six case, not the universal formula for every triangle vertex. (P3-17)
+
+### As-rigid-as-possible local shape preservation
+
+*Connect to:* meshes and connectivity; Laplacian operators; shape deformation; numerical optimization.
+
+[[Local rigidity and mesh orientation fields|As-Rigid-As-Possible]] (ARAP) surface modeling asks a simple question: when a user moves a few handle vertices, can each small mesh neighborhood move as close to a rigid transform as possible? A rigid transform rotates and translates a patch but does not scale or shear it. A whole surface usually cannot remain exactly rigid while bending around new constraints. ARAP instead finds the deformation whose local patches deviate from rigidity as little as possible.
+
+For each vertex $i$, define a cell from its incident triangles and one-ring neighbors. For an edge from $i$ to neighbor $j$, let the original edge be $\mathbf{e}_{ij}=\mathbf{p}_i-\mathbf{p}_j$ and its deformed version be $\mathbf{e}'_{ij}=\mathbf{p}'_i-\mathbf{p}'_j$. If this neighborhood moved rigidly, some rotation $R_i$ would satisfy $\mathbf{e}'_{ij}=R_i\mathbf{e}_{ij}$ for every neighbor. When it does not, measure the mismatch with
+
+$$E_i=\sum_{j\in N(i)}w_{ij}\|\mathbf{e}'_{ij}-R_i\mathbf{e}_{ij}\|^2.$$
+
+The total energy sums this residual over all cells. The weights matter: uniform weights can make the result depend on how triangles happen to be tessellated. The paper uses cotangent weights, $w_{ij}=\tfrac12(\cot\alpha_{ij}+\cot\beta_{ij})$, for angles opposite edge $(i,j)$. These weights reduce mesh bias and connect the method to the cotangent Laplace–Beltrami operator.
+
+The local rotations are unknown, as are the deformed vertex positions. ARAP alternates between two easier subproblems. First, hold the current positions fixed and find the best rotation for each cell. Form a weighted covariance matrix $S_i=\sum_jw_{ij}\mathbf{e}_{ij}\mathbf{e}'_{ij}{}^T$, compute its singular value decomposition $S_i=U_i\Sigma_iV_i^T$, then set $R_i=V_iU_i^T$. If the determinant is negative, flip the singular-vector sign associated with the smallest singular value so the result is a proper rotation, not a reflection. This is the weighted orthogonal Procrustes problem: the rotation that best aligns the original edges with the deformed edges.
+
+Second, hold the rotations fixed and solve for all vertex positions. Setting the energy gradient to zero gives, for each vertex,
+
+$$\sum_{j\in N(i)}w_{ij}(\mathbf{p}'_i-\mathbf{p}'_j)=\sum_{j\in N(i)}\frac{w_{ij}}{2}(R_i+R_j)(\mathbf{p}_i-\mathbf{p}_j).$$
+
+The left side is the sparse cotangent Laplacian applied to the unknown deformed positions. Handle vertices are fixed to user-specified targets; static anchors remove global translation and rotation ambiguity. The Laplacian matrix depends only on the original mesh and constraints. The method factors it once, then reuses that factorization for each coordinate and each alternating step. It updates the right-hand side as the local rotations change. Because each substep minimizes the same energy over one variable group, the energy does not increase across alternating updates.
+
+A practical example is bending a detailed bar by translating its handle. The user does not specify a handle rotation. Rotation-propagation methods that rely on an input rotation may not know how to twist nearby details. ARAP estimates the neighborhood rotations from the current geometry and finds a smooth field of rotations that best preserves edge lengths. A bar can bend while retaining its grooves and local shape. The result is not a physically simulated material: it is an editing energy that encodes a geometric preference.
+
+**Evidence and limits.** The 2007 paper reports C++ experiments on a Pentium 4 2.16 GHz laptop. Its unoptimized implementation ran interactively at about 10–30 frames per second for regions of interest up to 10,000 vertices, typically using two or three iterations per edit. Reported relative root-mean-square edge-length errors were small in the tested edits, though a twist that constrained the bar's height required some stretching. The nonlinear objective can have local minima, so a reasonable initialization matters; the prior interactive frame is the natural warm start. As the mesh is refined, the anchored Laplacian's condition number and solve cost increase, which can require more iterations. Multiresolution acceleration is a proposed remedy, not a result of this implementation. The paper says the same local-edge energy extends to volumetric cells such as tetrahedra, but its experiments focus on surface editing.
+
+**Source:** Sorkine and Alexa, “As-Rigid-As-Possible Surface Modeling” (2007), complete paper, PDF pp. 1–8. [Primary PDF](https://igl.ethz.ch/projects/ARAP/arap_web.pdf).
+
+### Field-aligned remeshing without a global parameterization
+
+*Connect to:* mesh connectivity and geometry processing; surface curvature; local coordinate fields; multiresolution optimization.
+
+Instant Field-Aligned Meshes creates triangle- or quad-dominant remeshes by solving for two local fields on a surface graph. The first field chooses edge directions. The second places the mesh vertices along those directions. Many global remeshing methods build a globally consistent parameterization before extracting a mesh. This paper instead works with discontinuous local fields and resolves their jumps as it goes. That avoids a global cut-and-parameterize stage and lets the same local operator work on triangle meshes or point clouds.
+
+The input is a graph $G=(V,E)$. A vertex stores a 3D position and a surface normal; edges encode mesh adjacency or, for point clouds, $K$-nearest neighbors. Each edge receives a weight. The algorithm repeatedly updates a field value at one vertex from its neighbors, in a Gauss–Seidel-like local smoothing step. Unlike ordinary Laplacian smoothing, the values have symmetries: an unoriented cross has four equivalent directions, and a six-direction field has six. The algorithm must compare directions after trying the allowed discrete rotations.
+
+For an $s_o$-fold rotationally symmetric orientation field, each vertex stores one tangent representative $o_i$. Its equivalent directions are rotations of $o_i$ by multiples of $2\pi/s_o$. A four-fold field, or 4-RoSy field, is a cross field suited to quad meshing. When comparing two neighbors, the algorithm selects the pair of equivalent rotations with the smallest angular difference, averages the aligned representatives with edge weights, projects back into the tangent plane, and normalizes. The paper uses an **extrinsic** comparison: it measures angle in 3D space instead of first rotating both directions into one vertex's tangent plane. This makes the field respond to the embedded shape. On a cube, for example, it can align to corners and curved features without the user specifying curvature constraints. The paper contrasts this with intrinsic smoothness, which is simpler but may miss surface features unless extra alignment constraints are added.
+
+After edge directions are chosen, a local position field places the lattice. Each vertex stores a representative local parameter position. Neighboring representatives can differ by integer lattice translations; the local comparison searches for the closest compatible representatives in their symmetry-related lattices. Those integer jumps are not an implementation nuisance: they record where the field is discontinuous and how many mesh edges separate neighboring representatives. A scale parameter $\rho$ sets the target edge length. The search is restricted to nearby candidate lattice points rather than solving an unbounded shortest-vector problem. Each local update averages aligned neighbor positions and rounds to the closest lattice representative near the input vertex.
+
+A field can be locally smooth but the repeated Gauss–Seidel updates often get trapped in poor minima. The authors build a multiresolution hierarchy by merging adjacent vertices with similar normals and comparable dual areas. They optimize both fields from the coarsest graph to the original one, using six iterations per level in their reported results. The coarse graph has fewer degrees of freedom and can move across larger regions; its result is then interpolated to the next level as a starting point. The authors explicitly treat this as a practical hypothesis about neighboring levels, not a formal convergence guarantee.
+
+The integer jumps around graph cycles reveal **singularities**. If their composition around a cycle is nonzero, the local field cannot return to its starting representative. In the orientation field, the singularity becomes a non-regular vertex in the output mesh. In the position field, a residual lattice shift inserts or removes an isoline. It can create triangles, pentagons, or T-junctions in a quad-dominant mesh. The method accepts additional singularities when they help improve element isotropy or reduce distortion; it does not try to eliminate all irregular vertices.
+
+The output mesh is extracted from the graph of representative positions and integer jumps. Vertices that appear to represent the same output position are merged, prioritizing short candidate links and skipping conflicts. The output position and normal are weighted combinations of the contributing input samples, with closer samples receiving more weight. A greedy walk extracts faces from the remaining oriented edges. This is intentionally simple, but it can produce non-manifold output for very coarse meshes of detailed or high-genus surfaces. The authors remove offending edges or vertices when manifold output is required, which can leave artifacts. Because the method does not build a volumetric scalar field, holes in regions absent from a point cloud remain holes.
+
+Brush tools constrain edge direction or make a position-field isoline follow a drawn stroke. A singularity attractor edits the integer jumps to move or collapse singularities. This editing operation is currently limited to triangle meshes and should be applied last: it freezes the discrete jumps and then optimizes only the continuous field values.
+
+**Published results and tradeoffs.** The paper reports remeshing a 13-million-vertex scanned dragon into roughly 80,000-vertex outputs in about 67–71 seconds. It remeshes a 4.9-million-point cloud in 34.4 seconds using ten nearest neighbors. Its local method scales near-linearly in the presented tests and is much faster than the compared global methods. It often obtains more uniform elements and better feature alignment than its chosen baselines, but it introduces more singularities. Those are measured comparisons on the paper's inputs and hardware. They do not establish equal quality for every topology or a guarantee of a manifold mesh.
+
+**Source:** Jakob et al., “Instant Field-Aligned Meshes” (2015), complete paper body and conclusion, PDF pp. 1–15. [Primary PDF](https://igl.ethz.ch/projects/instant-meshes/instant-meshes-SA-2015-jakob-et-al-compressed.pdf).
+
 ## Lens optics, focus, and image formation
 
 Optics forms an image before a sensor samples it; focus and blur follow from lens geometry and output tolerance.
@@ -830,7 +1218,7 @@ With signed transverse magnification $m=-v/u=-0.5$, an object height $h_o=20\,\m
 
 The pinhole camera is a geometric model: rays pass through one point, so any object distance can form a sharp projection. There is no finite lens focal surface, giving the ideal pinhole infinite geometric depth of field. But it does not capture infinite detail. A real hole has finite diameter and causes geometric blur. Making it smaller reduces that blur but increases diffraction. Together these effects set a practical resolution limit. A pinhole has no refractive lens surfaces, so it avoids chromatic aberration and lens distortion. Its image still has limited field of view and sensor resolution, plus diffraction blur. It models central perspective clearly, but not a full photographic camera. [[#PHOTO-01 - Photography session 01|PHOTO-01]]
 
-A lens’s f-number $N=f/D$ compares focal length $f$ with entrance-pupil diameter $D$. It describes geometric light-cone width and supports DoF reasoning. A real lens absorbs and reflects some light, so equal f-numbers do not guarantee equal transmitted exposure. A T-stop incorporates measured transmission loss: a lens with a geometric f-number $N$ and transmission fraction (	au) has approximately $T=N/\sqrt{\tau}$. For example, if $N=2$ and (	au=0.81), then $T\approx2.22$. Use the f-number to reason about pupil geometry and the T-stop to compare exposure transmission more directly. [[#PHOTO-01 - Photography session 01|PHOTO-01]] · [[#PHOTO-03 - Photography session 03|PHOTO-03]] · [[#PHOTO-04 - Photography session 04|PHOTO-04]]
+A lens’s f-number $N=f/D$ compares focal length $f$ with entrance-pupil diameter $D$. It describes geometric light-cone width and supports DoF reasoning. A real lens absorbs and reflects some light, so equal f-numbers do not guarantee equal transmitted exposure. A T-stop incorporates measured transmission loss: a lens with a geometric f-number $N$ and transmission fraction ($\tau$) has approximately $T=N/\sqrt{\tau}$. For example, if $N=2$ and ($\tau=0.81$), then $T\approx2.22$. Use the f-number to reason about pupil geometry and the T-stop to compare exposure transmission more directly. [[#PHOTO-01 - Photography session 01|PHOTO-01]] · [[#PHOTO-03 - Photography session 03|PHOTO-03]] · [[#PHOTO-04 - Photography session 04|PHOTO-04]]
 
 ### Aberrations, field falloff, and correction
 
@@ -1116,6 +1504,115 @@ This equation makes the interaction between format and focal length explicit. A 
 
 Perspective can be checked with a simple scene. Put a small cup one meter from the camera and a larger chair several meters behind it. From close up, the cup may dominate the frame. Move backward and use a longer lens to restore the cup’s apparent size; now the chair grows relative to the cup because the distance ratio changed less dramatically from the new viewpoint. The focal length changes the field and image scale, while the move changes the perspective. This distinction also matters in portraits, architecture, panorama capture, and product photography. A “compression” look comes from using a distant viewpoint and framing tightly, not from telephoto glass compressing depth independently. [[#PHOTO-01 - Photography session 01|PHOTO-01]]
 
+### From a camera view transform to viewport pixels
+
+#### A 2D world window mapped to a screen viewport
+
+Viewing starts by choosing which part of the world to show. In 2D, call the selected rectangle the **window**: $x_{min}\leq x\leq x_{max}$ and $y_{min}\leq y\leq y_{max}$. The **viewport** is the destination rectangle in screen coordinates: $u_{min}\leq u\leq u_{max}$ and $v_{min}\leq v\leq v_{max}$. They are both rectangles, but their coordinate units and locations differ. The mapping preserves each point's fractional position in the source window, then scales that fraction to the viewport and offsets it by the viewport's lower coordinate. (P1-25)
+
+For the horizontal coordinate, the fraction of the window's width to the right of the left edge is $(x-x_{min})/(x_{max}-x_{min})$. Multiply it by the viewport width and add $u_{min}$. The vertical formula is analogous:
+
+$$
+u=u_{min}+\frac{x-x_{min}}{x_{max}-x_{min}}(u_{max}-u_{min}),\qquad
+v=v_{min}+\frac{y-y_{min}}{y_{max}-y_{min}}(v_{max}-v_{min}).
+$$
+
+For a concrete mapping, take a world window $[-5,5]\times[-2,2]$ and viewport $[100,900]\times[50,650]$. Point $(0,1)$ is halfway across the window, so $u=100+0.5(800)=500$. It is three quarters of the way up the window, so $v=50+0.75(600)=500$. The world point maps to viewport coordinate $(500,500)$. If the target screen convention has y increasing downward, arrange the viewport's y endpoints or invert the mapping deliberately; mixing conventions flips the image. (P1-25)
+
+The same mapping is an affine transform. Define $s_x=(u_{max}-u_{min})/(x_{max}-x_{min})$, $s_y=(v_{max}-v_{min})/(y_{max}-y_{min})$, $t_x=u_{min}-s_xx_{min}$, and $t_y=v_{min}-s_yy_{min}$. Then $u=s_xx+t_x$, $v=s_yy+t_y$, represented with homogeneous coordinates by
+
+$$
+\begin{bmatrix}s_x&0&t_x\\0&s_y&t_y\\0&0&1\end{bmatrix}.
+$$
+
+This 2D window-to-viewport mapping answers how a selected planar rectangle fills a screen rectangle. It is distinct from the 3D camera view transform (which changes coordinates relative to a camera) and perspective projection (which maps 3D view geometry into clip coordinates). The lecture calls the destination camera/view space while developing this rectangle map; keep the concepts separate when building the full 3D pipeline. (P1-25)
+
+#### The 3D view transform moves the world around a fixed camera
+
+A view transform expresses world coordinates from the camera's point of view. In the OpenGL convention used in this course, view-space camera position is the origin and the camera looks down negative z. Instead of physically moving the camera in the coordinate calculation, transform the world so the camera lands at the origin. First translate every world point $P$ by $-E$, where $E$ is the camera eye position. For example, with eye $E=(3,4,5)$, world origin $(0,0,0)$ becomes $(-3,-4,-5)$ after this translation. Objects all move because they share this world-to-view operation. Then rotate the translated coordinates so camera right, up, and forward align with the view axes. This is the inverse of the camera's world pose: translation by negative eye followed by a change of basis. (P1-26)
+
+The camera is described by three vectors in world space: **eye** $E$ is its location, **target** $T$ is the point it looks toward, and **up** $U$ supplies an approximate vertical direction. Build an orthonormal camera frame:
+
+$$
+F=\frac{T-E}{\|T-E\|},\qquad
+R=\frac{F\times U}{\|F\times U\|},\qquad
+U'=R\times F.
+$$
+
+$F$ points from eye to target. The cross product $F\times U$ gives a direction perpendicular to both, which is camera-right under this handedness; normalization gives it unit length. $U'=R\times F$ corrects the supplied up direction so the three axes are mutually perpendicular. This correction matters because an approximate up vector may not be exactly perpendicular to the viewing direction. If $F$ and $U$ are parallel, the cross product is zero and cannot define right; choose a different approximate up direction. (P1-26; the degenerate case is a mathematical consequence of the cross product.)
+
+For column-vector points and a camera looking along negative z, put the camera basis vectors in the rows of the view rotation: right $R$, corrected up $U'$, and backward $-F$. Combine this with the translation by $-E$:
+
+$$
+V=\begin{bmatrix}
+R_x&R_y&R_z&-R\cdot E\\
+U'_x&U'_y&U'_z&-U'\cdot E\\
+-F_x&-F_y&-F_z&F\cdot E\\
+0&0&0&1
+\end{bmatrix}.
+$$
+
+The first row computes $R\cdot(P-E)=R\cdot P-R\cdot E$, so it measures the point's displacement along the camera's right axis after the eye translation. The other rows do the same for up and backward. This also clarifies the signs: a camera-facing point lies along $F$, so its view-space z coordinate is negative, consistent with OpenGL looking down $-z$. The camera-orientation matrix is orthogonal, so its inverse is its transpose; the translation is then composed with that basis change to form the full view matrix. (P1-26)
+
+As a small check, take $E=(3,4,5)$, $F=(0,0,-1)$, $U=(0,1,0)$, so $R=(1,0,0)$ and $U'=(0,1,0)$. The matrix is
+
+$$
+V=\begin{bmatrix}1&0&0&-3\\0&1&0&-4\\0&0&1&-5\\0&0&0&1\end{bmatrix}.
+$$
+
+It sends the eye $(3,4,5,1)^T$ to the view origin $(0,0,0,1)^T$, and sends target $(3,4,4,1)^T$ to $(0,0,-1,1)^T$. This numeric witness checks both the translation signs and the negative-z viewing direction. (P1-26)
+
+The camera pose transform is not the projection. In a 3D pipeline, model transforms place objects in world space; the view matrix expresses them relative to the camera; a later projection maps view-space geometry into clip space. A view frustum selects the visible volume, clipping handles geometry crossing its boundaries, and normalized device coordinates (NDC) place the clipped result in the canonical cube (lecture states −1 to 1 on each axis) before viewport mapping to screen pixels. The 2D window-to-viewport mapping from P1-25 is a simpler rectangle-to-rectangle case; it does not replace the 3D camera transform or perspective projection. P1-26 focuses on view-space construction and defers detailed projection, screen-space work, and code. (P1-26)
+
+A model matrix moves model-space points into world space. A view matrix expresses the world relative to the camera. A projection matrix maps view-space geometry into clip coordinates; after perspective division, normalized device coordinates are mapped to pixels by the viewport transform. Keep these roles separate: object placement, camera pose, and projection answer different questions. (P1-06–07; P1-22–26)
+
+### Additional geometry notes for meshes
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### From a camera frustum to the image-space cube
+
+A camera has a pose and a lens-like viewing volume. The pose says where the eye is, where it points, and which direction counts as up. The volume says what lies inside the field of view and which depths are retained. The 2009 lecture starts with a pinhole camera: rays pass through one point, so distant objects take less screen space. This is a useful model because perspective follows from a division by depth. A real lens can bend and focus rays, but this course deliberately leaves that richer optics model out. (P3-05–06)
+
+Use two transforms for two different jobs. First, the camera transform moves the eye to the origin and rotates the camera frame into a standard orientation. In this course’s convention the camera looks down negative Z. A practical camera is specified by eye $E$, target $T$, and an approximate up direction $U$. Compute forward $F=\operatorname{normalize}(T-E)$, right $R=\operatorname{normalize}(F\times U)$, then corrected up $U'=R\times F$. The cross products make an orthogonal frame; the input up direction only chooses a roll preference. If $U$ is parallel or nearly parallel to $F$, the cross product is zero or unstable, so choose a fallback up direction. The lecture’s “center of attention” is simply $T$; subtracting $E$ from $T$ gives the viewing direction. (P3-06)
+
+The second operation maps a truncated pyramid (the frustum) to a canonical cube. Let the vertical field of view be $\alpha$, near distance $n$, and far distance $f$, with $0<n<f$. At the near plane, the top edge is $y=n\tan(\alpha/2)$; this is the right-triangle link between the angle and the viewport. A point at camera depth $d=-z$ projects to $y_{screen}\propto y/d$, so twice as far away means half the projected height. This reciprocal-depth effect is exactly what homogeneous coordinates provide: place $-z$ in the output W coordinate, then divide x, y and z by W.
+
+For row points multiplied on the right, the lecture’s perspective matrix (square viewport, camera looks down $-Z$) is
+
+$$
+V=\begin{bmatrix}
+\cot(\alpha/2)&0&0&0\\
+0&\cot(\alpha/2)&0&0\\
+0&0&\frac{f+n}{f-n}&-1\\
+0&0&\frac{2fn}{f-n}&0
+\end{bmatrix}.
+$$
+
+For $Q=(x,y,z,1)$ this gives $Q V=(x\cot(\alpha/2),\ y\cot(\alpha/2),\ z\frac{f+n}{f-n}+\frac{2fn}{f-n},\ -z)$. Dividing by W makes the first two coordinates inversely proportional to depth. The depth coefficients are chosen by boundary conditions, not guesswork: set $z=-n$ and require the divided depth to be $+1$; set $z=-f$ and require it to be $-1$. Solving those two linear equations yields the fractions in the matrix. This near-to-$+1$, far-to-$-1$ convention is the lecture’s image-space convention. A modern API may use another clip-depth range or reverse-Z; use that API’s documented convention rather than copying these signs blindly. With a non-square viewport, use a separate horizontal scale. For vertical field of view and aspect ratio $a=\text{width}/\text{height}$, the horizontal scale is the vertical scale divided by $a$.
+
+A numerical check makes the divide visible. Take $n=1$, $f=10$, $\alpha=90^\circ$, and point $(1,0,-2)$. Since $\cot45^\circ=1$, the projected homogeneous point is $(1,0,-2/9,2)$. Divide by W=2: the image-space point is $(0.5,0,-1/9)$. At depth 2, x has halved; the near and far planes still map exactly to +1 and −1. A cube’s nearer face therefore appears larger than its farther face. (P3-05)
+
+In the lecture’s row-vector notation, first orient/translate the camera, then apply projection: $Q'=QCV$. Matrix order matters because the camera must be put in its canonical pose before the frustum is projected. This order is the transpose/reverse-composition counterpart of the column-vector convention used elsewhere in the teaching notes. The course calls the frustum-to-cube stage the “viewing transform”; many current APIs call it the projection matrix, reserving “view” for the camera pose. Keep the names and operation boundaries explicit when reading older OpenGL code. `gluLookAt` and `gluPerspective` were convenience calls in the 2009 fixed-function workflow; they do not replace understanding the matrices, and they are not modern core-profile shader setup. (P3-05–06, P3-08)
+
+#### Clipping as signed distance and interpolation
+
+Projection transforms every point whether it is visible or not. Clipping removes geometry outside a chosen half-space before rasterization. Define a plane by point $P$ and normal $N$. For any query point $Q$, the signed value $d(Q)=N\cdot(Q-P)$ says which side it lies on. Choose $N$ to point inward: $d>0$ is inside, $d<0$ is outside, and $d=0$ is on the plane. Reversing $N$ reverses the signs but not the plane. The common equation $ax+by+cz+d_0=0$ is the same test after expanding the dot product. (P3-06–07)
+
+Suppose a segment goes from $Q_1$ to $Q_2$. Every point on it is $Q(t)=Q_1+t(Q_2-Q_1)$, $0\le t\le1$. Let $d_1=N\cdot(Q_1-P)$ and $d_2=N\cdot(Q_2-P)$. At the crossing, the signed distance is zero:
+
+$$
+0=d_1+t(d_2-d_1),\qquad t=\frac{d_1}{d_1-d_2}.
+$$
+
+For example, clip against the plane $x=0$ with inside $x\ge0$. If $Q_1=(-2,1,0)$ and $Q_2=(4,1,0)$, then $d_1=-2$, $d_2=4$, and $t=1/3$. The intersection is $(-2,1,0)+(1/3)(6,0,0)=(0,1,0)$. The retained segment is the intersection-to-$Q_2$ part; the rejected part is $Q_1$ to the intersection. If an endpoint already lies on the plane, the formula returns $t=0$ or $t=1$, a useful sanity check. (P3-06)
+
+For a convex polygon, walk its edges in order and classify each endpoint. Keep inside vertices in an inside list and outside vertices in an outside list. When an edge crosses the plane, compute the intersection once and add it to both lists. The in-list remains an ordered polygon boundary; the out-list is the complementary clipped piece for this one plane. To clip to a frustum, repeat the operation plane by plane, feeding each surviving polygon to the next plane. Near/far plus the four side planes form six frustum boundaries. Exact floating-point equality to zero is rare; use a small tolerance and handle points near the boundary consistently so adjacent triangles do not develop cracks. Concave polygons can split into disconnected regions, so first triangulate or decompose them into convex pieces. Triangles are planar by construction; arbitrary polygon vertices must be coplanar for this geometry model. (P3-06)
+
+The lecture’s historical OpenGL pipeline delays clipping until homogeneous clip coordinates because the six canonical comparisons are cheap. For the conventional OpenGL clip cube, a clip point must satisfy $-W\le X,Y,Z\le W$ before perspective division; this rejects points behind the eye as well as outside the frustum. The lecture describes a preliminary $W=0$ test and then the six cube-plane tests, effectively counting seven operations. Treat that as a description of its implementation story, not an API-independent rule: clip-depth conventions differ, and [[Homogeneous clipping and perspective interpolation|homogeneous clipping]] should be done before dividing by W. After division, clipping the normalized cube is mathematically simple but the geometry must already have been handled correctly around the eye plane. (P3-06–07)
+
+Clipping is also a modeling tool. The instructor recounts cutting a strip of polygonal text with a plane, rotating the retained part, and repeating the cut so the text appears to wrap around a building. The same signed-distance test underlies both view-volume rejection and deliberate geometric slicing. (P3-07)
+
 ## Sampling continuous signals and image formation
 
 Finite image samples stand in for continuous signals and areas; aliasing appears when the sampling grid cannot represent the variation being measured.
@@ -1153,6 +1650,14 @@ Sampling is not quantization. Sampling chooses where measurements are taken; qua
 ![[Visual Recall/University Graphics and Vision/sampling-and-box-filter.png]]
 
 **Read the figure.** At sample times $t_n=n/8$ seconds, the nine-cycle and one-cycle cosines agree even though the continuous signals differ. The plotted endpoints span eight sample intervals. A box average of width 1/8 attenuates the nine-cycle signal by $\operatorname{sinc}(9/8)$, approximately $-0.1083$; a small alias survives. Prefilter design therefore concerns the whole frequency response, not merely choosing any blur.
+
+### Pixel count, storage, and bandwidth
+
+#### A raster is stored samples, not tiny squares
+
+A raster image is a rectangular grid of samples called pixels. A pixel stores a color value; it does not directly store a tiny physical square. If a raster has width W and height H, it stores WH samples. With three 8-bit RGB channels, each pixel uses 24 bits = 3 bytes, so an uncompressed pixel array needs 3WH bytes before row padding, headers, metadata, or compression. For 4000 by 3000 pixels, that is 12,000,000 pixels and 36,000,000 bytes (about 34.3 MiB). A compressed JPEG may be much smaller, but its file size depends on image content and quality settings. A grayscale 8-bit image uses WH bytes; a 1-bit monochrome image ideally uses WH/8 bytes, apart from padding and file overhead. These are storage calculations, not predictions of perceptual quality. P1-05 works through a 1,365×612 cropped Polyfield frame: 1,365×612 = 835,380 pixel samples. At 60 frames per second that is about 50,122,800 samples each second. For RGB8, the raw pixel payload alone is 835,380×3 = 2,506,140 bytes per frame; a compressed image file can be much smaller, while metadata and headers add file bytes. The lecture inconsistently says 1,635×612 later in the same example; that product is 1,000,620, so use the stated 1,365×612 dimensions for the 835,380 figure. (P1-05; P1-06; P1-03–04)
+
+An animation is a sequence of images shown over time. Resolution controls spatial sampling; frame rate controls temporal sampling. More samples can represent finer spatial or temporal variation, but they also increase bandwidth and processing costs. A displayed image is therefore the end of a chain that begins with numeric data and ends with a perceptual signal. The pixel count is width×height; aspect ratio is width/height. A 16:9, 4:3, or 20:9 display has a different shape even if its pixel count matches another display. Frame rate counts images per second, so resolution and frame rate together determine how many sample colors must be produced and transmitted. This is why selecting 144p, 360p, or 4K video changes both visual detail and data cost. (P1-05; P1-03–07)
 
 ## Image sampling, filtering, and efficient reconstruction
 
@@ -1254,7 +1759,7 @@ $$
 I'(p)=\frac{1}{Z_p}\sum_q \exp\!\left(-\frac{\|p-q\|^2}{2\sigma_s^2}\right)\exp\!\left(-\frac{\|I(p)-I(q)\|^2}{2\sigma_r^2}\right)I(q),
 $$
 
-with normalization Z_p. Spatial scale \sigma_s controls neighborhood reach; range scale \sigma_r controls which intensity differences count as similar. This can smooth noise while preserving boundaries better than a Gaussian blur, though it can create a cartoon-like flatness or halos if parameters are poorly chosen. The lecture explicitly reaches the bilateral filter and edge emphasis [[#MITG-21 - Image processing|MITG-21]] (01:00:00–01:15:00).
+with normalization Z_p. Spatial scale $\sigma_s$ controls neighborhood reach; range scale $\sigma_r$ controls which intensity differences count as similar. This can smooth noise while preserving boundaries better than a Gaussian blur, though it can create a cartoon-like flatness or halos if parameters are poorly chosen. The lecture explicitly reaches the bilateral filter and edge emphasis [[#MITG-21 - Image processing|MITG-21]] (01:00:00–01:15:00).
 
 ### Image processing changes pixels, neighborhoods, and exposure
 
@@ -1544,13 +2049,41 @@ The direction of a specular highlight tells a different story from diffuse shadi
 
 A reflected-light meter reading from an outdoor scene also folds source, surface, and geometry together. Direct sun is strong, while the blue sky fills shadows from a broad hemisphere. The lit side and the shadow side may differ by only a few stops, less than a viewer intuitively guesses because dark shadows feel dramatic. Under cloud cover, the whole visible sky becomes a giant source; shadows nearly disappear, but local contrast and color saturation change. On snow beneath a bright cloudy sky, sky and ground can have similar luminance and visual cues to the horizon weaken, producing a whiteout. These are consequences of source extent and reflectance, not just exposure. [[#PHOTO-15 - Photography session 15|PHOTO-15]]
 
+### Environment illumination and differential compositing
+
+*Connect to:* light measurement and radiometry; reflectance and BRDFs; the rendering equation and light transport; image formation and compositing.
+
+Debevec's 1998 method begins with a useful division of the scene. Put faraway illumination in an **environment**: the distant world is represented by a high-dynamic-range (HDR) radiance map. Put nearby surfaces in a **local scene**: they need geometry and reflectance estimates because the inserted object can cast shadows on them, reflect from them, or light them. This division is physical, not merely organizational. A distant light source is not blocked by a small inserted object in the same way a nearby wall is. If the new object can substantially change a surface's illumination, that surface belongs in the local model.
+
+A mirror-ball photograph records directions around the probe as reflected directions on the ball. The method places the ball near the object insertion point, captures several exposures, and combines them into an HDR environment map. The map must represent radiance, not the display values in one ordinary exposure. Camera response, exposure, probe location, camera pose, and the synthetic scene's coordinate frame must be aligned well enough that a rendered pixel refers to the same direction and place as the photograph. The probe is a compact measurement of incoming light; it does not by itself describe local walls, their reflectance, or occlusion.
+
+The key compositing step is to predict a *change*. Let $L_b$ be the observed background pixel. Let $L_0$ be the rendered local scene without the inserted object, and let $L_1$ be the same render with it. Then add the modeled change to the photographed pixel:
+
+$$L_{final}=L_b+(L_1-L_0).$$
+
+The difference $L_1-L_0$ includes effects caused by the new object: its visible radiance, its shadow on modeled surfaces, and changes in interreflection that the renderer captures. Subtracting the no-object render removes the model's estimate of the old local contribution; adding the difference preserves the photographed background's original detail. This is **differential rendering**. It is especially useful when the photograph is more detailed than the scene model. The model only has to predict how the insertion changes the image, rather than recreate every pixel in the photograph.
+
+A tiny numerical example makes the bookkeeping concrete. Suppose a photograph has pixel value $L_b=0.40$ in linear radiance units. The local-scene render predicts $L_0=0.10$ before insertion and $L_1=0.22$ after insertion. The modeled change is $0.12$, so the composite becomes $0.52$. The method does not replace the photographed value by $0.22$; that would discard the rest of the photograph's contribution at that pixel. In practice, values must be in compatible linear radiometric units. Applying this arithmetic directly to gamma-encoded display values is not physically correct.
+
+The subtraction can expose model errors. If $L_1-L_0$ is too negative, the composite can fall below zero even though radiance should not. The paper describes a relative alternative, $L_{final}=L_b(L_1/L_0)$, which scales the photographed contribution by the modeled ratio. This avoids some negative results, but it becomes unstable when $L_0$ is near zero and still depends on the model getting the ratio right. It is a compensation strategy, not a substitute for a good local model.
+
+Reflectance estimation is also tied to the same measurement logic. For a diffuse patch with known incident illumination, compare a photograph to a render of the same patch assigned unit diffuse reflectance. In the paper's Lambertian update, if $L_{r1}$ is the observed patch radiance and $L_{r2}$ is the rendered unit-reflectance radiance, update the diffuse reflectance estimate by
+
+$$\rho'_d=\frac{L_{r1}}{L_{r2}}.$$
+
+The render includes indirect illumination, so the ratio can be iterated as the scene's reflectance estimates change. This is a model-fitting loop: render a prediction, compare it with a measurement, and adjust the parameter that scales the diffuse response. It relies on a sufficiently accurate lighting estimate and on the patch being adequately described by a diffuse model.
+
+**Limits and assumptions.** The method needs a registered camera, probe, and local scene. A mirror ball has finite resolution and may include the camera, support, seams, or other artifacts. A probe far from the insertion point may measure the wrong illumination. Incorrect geometry or reflectance produces incorrect shadows and differences; differential compositing can preserve the plate but cannot make the predicted change correct. The paper's demonstrations used the Radiance renderer and two diffuse bounces. Treat the results as evidence for this measured-light compositing setup, not proof that a sparse local model captures every modern material or transport effect.
+
+**Source:** Paul Debevec, “Rendering Synthetic Objects into Real Scenes: Bridging Traditional and Image-based Graphics with Global Illumination and High Dynamic Range Photography” (1998), complete paper, PDF pp. 1–10. [Primary PDF](https://www.pauldebevec.com/Research/IBL/debevec-siggraph98.pdf).
+
 ## Reflectance, BRDFs, and shading
 
 Reflectance describes how incoming light is redirected, linking material response to visible shading.
 
 ### BRDF examples and angular response
 
-The BRDF takes a surface location and two directions. One direction is incoming light, the other is outgoing view. Lambertian response is independent of these directions: its outgoing radiance is the same for every view direction, once incoming irradiance is known. A mirror reflects only the direction that obeys equality of incidence and reflection angles; mathematically it is concentrated as a delta distribution. A glossy surface spreads reflection around that direction. Fresnel reflection varies with angle and refractive indices; dielectrics generally reflect more at grazing incidence. Microfacet models approximate a collection of tiny mirror-like facets and combine their distribution, masking, and Fresnel response.
+The bidirectional reflectance distribution function (BRDF) describes a surface location and two directions: incoming light and outgoing view. Lambertian response is independent of those directions: once incoming irradiance is known, outgoing radiance is the same for every view direction. A mirror reflects only the direction that obeys equality of incidence and reflection angles; mathematically, its response is concentrated as a delta distribution. A glossy surface spreads reflection around that direction. Fresnel reflection varies with angle and refractive indices; dielectrics generally reflect more at grazing incidence. Microfacet models approximate a collection of tiny mirror-like facets and combine their distribution, masking, and Fresnel response.
 
 An ideal delta-direction event is difficult for a sampler that draws arbitrary directions: the chance of sampling exactly one direction is zero. This is why path samplers need to represent specular events specially, and why a smooth density cannot describe every material. The rendering equation does not change; its integrand may contain both smooth lobes and singular contributions. [[#CMU-16 - The Rendering Equation|CMU-16]] · [[#CMU-18 - Monte Carlo Rendering|CMU-18]]
 
@@ -1570,7 +2103,7 @@ $$
 \max(0,n\cdot l).
 $$
 
-where (n) is a unit surface normal and (l) points from the surface toward the light. A point light's intensity also falls with distance; an idealized model uses inverse-square attenuation 1/r^2. Specular response adds a bright highlight near the mirror-reflection direction. In a Blinn–Phong model, with view vector (v), one uses half-vector (h=l+v/\|l+v\|) and a term (\max0,n\cdot h^s). The exponent (s) controls highlight width: a larger exponent yields a tighter highlight. This is an empirical model, not a full physical account, but it lets a renderer assign visible cues to matte, shiny, or metallic-looking surfaces.
+where (n) is a unit surface normal and (l) points from the surface toward the light. A point light's intensity also falls with distance; an idealized model uses inverse-square attenuation 1/r^2. Specular response adds a bright highlight near the mirror-reflection direction. In a Blinn–Phong model, with view vector (v), one uses half-vector $h=(l+v)/\|l+v\|$ and a term $\max(0,n\cdot h)^s$. The exponent (s) controls highlight width: a larger exponent yields a tighter highlight. This is an empirical model, not a full physical account, but it lets a renderer assign visible cues to matte, shiny, or metallic-looking surfaces.
 
 A more general material description is a BRDF f_r(x,ω_i,ω_o), the ratio relating incoming light from direction ω_i to outgoing light toward ω_o. It is constrained by energy conservation and reciprocity for physically plausible materials. The shading lecture builds a model from light direction, attenuation, diffuse and specular components, then asks what a material description must explain [[#MITG-13 - Shading|MITG-13]] (00:15:00–00:30:00; 00:50:00–01:10:00). The key separation is between geometry (where the point and normal are) and material (how the point scatters light). A bright pixel can result from a bright source, a facing normal, a reflective material, or several of these at once.
 
@@ -1708,6 +2241,151 @@ Subsurface scattering requires a broader material response than a BRDF. A BSSRDF
 
 Sampling plans matter because the integration domain is high dimensional: each bounce adds more coordinates. A regular grid can be effective in low dimensions, but grid cost scales like $m^d$ for $m$ samples per axis in dimension $d$, and regular patterns can alias against scene structure. Random Monte Carlo error has a weaker dimension dependence but converges slowly. Importance sampling chooses a density proportional to expected contribution—such as the BRDF lobe—then divides by that density to remain unbiased. A bright source outside the chosen lobe can still be missed, so hybrid samplers combine BRDF sampling with direct-light samples or broader exploration. Stratification divides the domain into cells and jitters one sample per cell to avoid accidentally leaving large regions empty. [[#MITG-16 - Global illumination|MITG-16]] (01:03:01–01:22:37)
 
+### Additional geometry notes for cameras
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### Rotate around an arbitrary line by aligning it to a known axis
+
+A 3D rotation needs an axis, which is a line specified by a point $P=(x_p,y_p,z_p)$ and direction $V=(x_v,y_v,z_v)$. The coordinate-axis rotation matrices from P3-03 are easy to construct, so transform the arbitrary axis until it coincides with the z axis, rotate by the desired angle $\alpha$, then undo those alignment transforms. For row vectors, the sequence is
+
+$$
+M=T(-P)\,R_y(-\theta)\,R_x(\phi)\,R_z(\alpha)\,R_x(-\phi)\,R_y(\theta)\,T(P).
+$$
+
+A row point is multiplied on the right: $Q'=QM$. The rightmost operation in this written row-vector product happens last. Reading from the left, the point is first translated so the axis passes through the origin. Then a y rotation removes the direction's x component, placing the axis in the yz plane. An x rotation removes its y component, aligning it with +z. After $R_z(\alpha)$, reverse the x and y alignments and translate the axis back. Seven 4×4 matrices can be composed into one matrix that performs the rotation. This is an example of using simple transformations as building blocks for a less obvious one. (P3-04)
+
+For direction $V$, a robust choice of alignment angles is
+
+$$
+\theta=\operatorname{atan2}(x_v,z_v),\qquad
+\phi=\operatorname{atan2}\left(y_v,\sqrt{x_v^2+z_v^2}\right).
+$$
+
+The lecture derives these angles from right triangles and corrects its diagram/sign setup while teaching. `atan2` preserves quadrant information more reliably than a one-argument inverse tangent. If the axis is already parallel to y, the first angle is unnecessary; if the direction is zero, it does not define an axis at all. These are useful implementation edge cases beyond the chalkboard walkthrough. (P3-04)
+
+Example: let the axis pass through $P=(1,2,0)$ in direction $V=(0,1,1)$, and rotate $Q=(2,2,0)$ by $90^\circ$. Here $\theta=0$ and $\phi=45^\circ$. Translate $Q$ relative to the axis to get $(1,0,0)$. The x alignment leaves that point unchanged; the z-axis quarter-turn changes it to $(0,1,0)$. Undoing the x alignment gives $(0,\frac{1}{\sqrt2},-\frac{1}{\sqrt2})$. Translating back yields
+
+$$
+Q'=(1,2+\tfrac{1}{\sqrt2},-\tfrac{1}{\sqrt2})\approx(1,2.707,-0.707).
+$$
+
+A direct right-hand check gives the same result: the unit axis is $(0,1/\sqrt2,1/\sqrt2)$, and rotating the offset $(1,0,0)$ by $90^\circ$ adds its cross product $(0,1/\sqrt2,-1/\sqrt2)$. This independently checks the sequence and sign convention. (P3-04; numeric example derived from the source construction.)
+
+#### Color and the simplified local-lighting model
+
+A physical surface does not simply “have” a color independent of illumination. Light has a spectrum; a material absorbs and reflects portions of it; the eye integrates the resulting spectrum. The course reduces this continuous process to three RGB channels because it is practical for graphics hardware. In normalized RGB, each channel ranges from 0 to 1: red is $(1,0,0)$, green $(0,1,0)$, blue $(0,0,1)$, white $(1,1,1)$, black $(0,0,0)$. Equal channel values lie along the gray diagonal. An 8-bit-per-channel buffer stores $256^3=2^{24}$ RGB combinations. RGB is additive light: red plus green light can appear yellow. Pigments and printing are better described with subtractive CMY/CMYK, so mixing crayon colors is not the same operation as adding display light. HLS/HSL and HSV-like models rearrange color coordinates into hue and intensity/saturation controls that are easier for a person to choose. HSL lightness and HSV value are not the same coordinate, despite the lecture’s shorthand. (P3-08)
+
+The full light-transport problem contains repeated bounces: a wall illuminates a table, the table illuminates another wall, and those contributions continue. Physically based global illumination can approximate this energy exchange, but the introductory fixed-function model makes a deliberately simple local approximation. It treats background illumination as a constant ambient term, a point light as a source with a position and RGB color, and a material as a set of per-channel response coefficients. This is a teaching model, not an accurate description of metals, glass, or all real surfaces. (P3-08)
+
+For diffuse reflection, let $N$ be a unit surface normal and $L$ a unit direction from the surface toward the light. Lambert’s cosine law gives the orientation factor $N\cdot L=\cos\theta$. When the light grazes the surface, the cosine approaches zero; when it faces the normal, it is one. The useful rendering form clamps the back-facing case: $D=\max(0,N\cdot L)$. If $N=(0,1,0)$ and $L=(0.6,0.8,0)$, then $D=0.8$. A red diffuse material with coefficient $k_d=0.6$ under unit red light contributes $1\times0.6\times0.8=0.48$ red before ambient and specular terms. A unit normal matters: otherwise the dot product also scales by vector lengths and ceases to be the cosine. Polygon normals can be found from the cross product of two edges; reverse edge order reverses the normal. (P3-08)
+
+Ambient light is a shortcut for many indirect bounces. It brightens surfaces even when the explicit point light does not reach them, but because it is constant it cannot create realistic spatially varying indirect illumination or cast shadows. The lecture’s per-channel local model can be written in an explanatory normalized form:
+
+$$
+C_{out}=k_a\odot C_{ambient}+k_d\odot C_{light}\,\max(0,N\cdot L)+k_s\odot C_{light}\,\max(0,N\cdot H)^m.
+$$
+
+Here each RGB triple is evaluated channel by channel, $\odot$ means component-wise multiplication, $k_a,k_d,k_s$ are material ambient/diffuse/specular responses, and $C_{light}$ colors the direct light. The first term is constant ambient, the second is Lambertian diffuse, and the third makes a view-dependent highlight. Clamp the final channels to the supported range. Exact coefficient names and multiplication order vary across legacy APIs; the equation captures the lecture’s simplified model. (P3-08)
+
+For a shiny highlight, classical Phong compares the view direction $V$ with the ideal reflected direction $R$ and raises their cosine to a gloss exponent. The power makes the peak narrow: for $0\le c\le1$, $c^{100}$ drops far more quickly away from $c=1$ than $c^5$. Blinn’s practical variant uses the halfway direction $H=\operatorname{normalize}(L+V)$ and the factor $\max(0,N\cdot H)^m$. The halfway vector is easy to compute and yields the Blinn–Phong model used in many introductory renderers. A larger exponent $m$ narrows the highlight and makes the object look glossier; it does not mean the material is physically more reflective at every angle. The highlight is tinted by the light and scaled by a specular material coefficient. (P3-08)
+
+This model explains why a plastic toy can look convincing but a metal or dielectric is harder: it compresses complex microfacet behavior into a few tunable values. The instructor maps those values to creative controls. A texture changes surface color; bump mapping perturbs the normal used by the lighting calculation, changing apparent small-scale relief without changing the silhouette; moving the light changes $L$ and highlight position; changing $m$ alters gloss. The orange example makes the normal role intuitive: perturb normals over a smooth orange-colored sphere and the light response starts to resemble textured peel. (P3-08)
+
+#### Shadow representations: geometry, volumes, and depth maps
+
+A shadow is a visibility question from the light. A surface point is directly lit if the segment from that point toward a light source is unobstructed. Three representation choices in the 2009 lectures answer that question in different spaces: project a fake shadow polygon onto a floor, construct a 3D shadow volume and count crossings, or render a depth map from the light and compare depths. (P3-18, P3-19)
+
+For a point light $L$, object point $P$, and receiver plane through $Q$ with normal $N$, the ray from the light through the object is $X(t)=L+t(P-L)$. A projected shadow point lies on the plane, so
+
+$$
+N\cdot(X(t)-Q)=0,\qquad t=\frac{N\cdot(Q-L)}{N\cdot(P-L)}.
+$$
+
+Then $X=L+t(P-L)$. If the denominator is zero, the line is parallel to the plane (or lies wholly in it), so there is no unique projected point. For a simple numeric check, let the floor be $z=0$, light $L=(0,0,4)$, and object point $P=(1,0,2)$. Along the ray the z coordinate is $4+t(2-4)=4-2t$. Setting it to zero gives $t=2$, so the projected point is $(2,0,0)$, farther from the light’s vertical axis than the object because the light ray diverges. The projected polygon can be drawn dark and offset slightly from the floor to avoid z-fighting. It is efficient and useful for contact shadows, but it cannot cast a shadow over a curved body or arbitrary receiver because its construction assumes one plane. A fuzzy texture or an ellipse under a character is a deliberate approximation, not a visibility solution. (P3-18)
+
+A shadow volume is the region behind a caster as seen from a light. For a polygonal caster, extrude its silhouette away from the light and close the resulting shape. To test a camera ray, count each entry into the volume as +1 and each exit as −1. If the ray reaches the visible surface with count zero, it is outside all volumes and lit; a positive count means it is inside at least one shadow. The crossing sign can be determined from the ray direction’s dot product with the volume face normal. This supports arbitrary receiving geometry, but every caster polygon may create one or more extra faces. Overlapping volumes lead to many crossings, so the stencil/counting method may be manageable while volume construction, storage and fill work become expensive. (P3-18)
+
+An area light has extent. A point in the umbra is blocked from every part of the source; a point in the penumbra sees some of it. A single point-light projection cannot express that gradual transition. Repeated or layered shadow volumes can approximate partial coverage, but at a high geometry cost. This explains why shadows are a balance between accurate visibility and practical sampling or storage. (P3-18)
+
+Shadow mapping stores the closest depth visible from a light in a depth texture. During the eye-view pass, transform each visible point into the light’s clip space, divide by its homogeneous $w$, map x/y into the light’s texture coordinates and compare its light-space depth with the stored depth at that location. If the point is farther than the stored blocker, it is in shadow. If it is nearer or equal (within a bias), the light is visible. For example, if the map stores depth $0.42$ and the receiver’s projected depth is $0.67$, the receiver lies behind the surface seen by the light and is shadowed. With depth increasing away from the light, “farther” is a larger value; exact comparisons depend on the depth convention. A small depth bias avoids self-shadowing caused by quantization and interpolation, but too much bias detaches shadows from casters. (P3-18, P3-19)
+
+The lecture’s 2009 derivation walks between eye and light image spaces with inverse view/projection matrices. It emphasizes retaining homogeneous $w$: once a clip point is divided by $w$, that scale is lost and cannot simply be inverted to recover the same homogeneous point. Reconstruct in homogeneous coordinates, transform back through inverse projection and view, then project into the other camera’s space. This makes the coordinate relationship explicit; a typical modern shadow-map shader instead computes light-space coordinates directly from the world-space position before the eye-space projection. (P3-19)
+
+Shadow maps have two coupled resolution limits. A narrow light frustum clips casters or receivers outside its stored view; a very wide frustum spreads a fixed number of texels across more world area, so a single texel covers a larger region and shadows look blocky. Higher resolution helps but costs memory and rendering work. Several lights generally need several maps. Point lights may need multiple views around the source, while a directional light can use an orthographic view; these choices constrain coverage. A point mapped between texel centers also creates aliasing. Percentage-closer filtering (PCF) compares a neighborhood of depth samples and averages the visibility results. A 4×4 filter averages sixteen binary comparisons; if four samples are lit, the fractional result is 4/16. This softens jagged boundaries and can suggest an area light, but ordinary PCF blurs the visibility edge rather than physically integrating all directions from a source. (P3-19)
+
+**OpenGL era note.** The 2009 lecturer speaks of an OpenGL function for shadow maps and discusses the fixed-function transform pipeline. That is historical context. In modern programmable OpenGL, a common route is to render a depth texture from the light, pass light-space coordinates to a shader, and use a GLSL shadow sampler with depth comparison; the official [OpenGL Shading Language 4.60 specification](https://registry.khronos.org/OpenGL/specs/gl/GLSLangSpec.4.60.pdf) defines these shadow sampler comparisons. Thus the geometric algorithm remains relevant while the API path has changed. (P3-19)
+
+#### Source video index
+
+The transcript references use these playlist positions and exact video URLs.
+
+| Source ID | Video |
+|---|---|
+| P3-01 | [Introduction to Computer Graphics](https://www.youtube.com/watch?v=01YSK5gIEYQ) |
+| P3-02 | [Curves in the Plane](https://www.youtube.com/watch?v=0NbD-c0Ctdk) |
+| P3-03 | [Moving Objects in Space](https://www.youtube.com/watch?v=wArGifkRD2A) |
+| P3-04 | [Rotations About an Arbitrary Axis](https://www.youtube.com/watch?v=gRVxv8kWl0Q) |
+| P3-05 | [The Camera Transform](https://www.youtube.com/watch?v=mpTl003EXCY) |
+| P3-06 | [Clipping](https://www.youtube.com/watch?v=og7hOFypKpQ) |
+| P3-07 | [Depth Buffers and Ray Tracing](https://www.youtube.com/watch?v=Xks1v4GNUiY) |
+| P3-08 | [Color and Shading](https://www.youtube.com/watch?v=TEjDYtkLRdQ) |
+| P3-09 | [Quaternions](https://www.youtube.com/watch?v=mHVwd8gYLnI) |
+| P3-10 | [Shading and Texturing](https://www.youtube.com/watch?v=Is6D5rnWEvs) |
+| P3-11 | [The Hierarchical Modeling System](https://www.youtube.com/watch?v=D8ZYHXom0qk) |
+| P3-12 | [Scan Conversion](https://www.youtube.com/watch?v=23HEwdcphg4) |
+| P3-13 | [Curves and Surfaces](https://www.youtube.com/watch?v=FTg1DUr7bhY) |
+| P3-14 | [Visible Surface Algorithms](https://www.youtube.com/watch?v=hmlWFi1TdbI) |
+| P3-15 | [Ray Tracing](https://www.youtube.com/watch?v=Ahp6LDQnK4Y) |
+| P3-16 | [Subdivision Surfaces Part 1](https://www.youtube.com/watch?v=9uscFr2Hht0) |
+| P3-17 | [Subdivision Surfaces Part 2](https://www.youtube.com/watch?v=THiF7-QxKXk) |
+| P3-18 | [Shadows Part 1](https://www.youtube.com/watch?v=kmdRmXuOjIY) |
+| P3-19 | [Shadows Part 2](https://www.youtube.com/watch?v=qiJhB0fOY6I) |
+| P3-20 | [Camera Motion](https://www.youtube.com/watch?v=HAJv25Afsz8) |
+| P3-21 | [Branches in Computer Graphics](https://www.youtube.com/watch?v=NEIJW3ZJ1GE) |
+
+### A programmable, differentiable rendering system
+
+*Connect to:* Monte Carlo rendering; optimization; inverse rendering; physical light transport; CPU/GPU execution.
+
+Mitsuba 2 is a renderer-system paper, not a new surface representation. Its central design problem is how to add different execution modes—scalar, vectorized, GPU, spectral, polarized, and differentiable—without maintaining separate copies of every sampling and shading algorithm. The authors build generic renderer code on Enoki, a C++ array and program-transformation library. A developer writes operations on array-like values; compile-time types choose how those values are represented and which transformations apply. The same high-level algorithm can then be retargeted to scalar values, CPU packets, or GPU arrays.
+
+On the GPU, ordinary eager execution would launch a kernel for each small arithmetic operation. A path tracer performs many simple operations between irregular scene queries, so launch and memory-transfer overhead can dominate. Enoki instead records operations symbolically in a single-static-assignment graph. Reading or otherwise observing the array triggers just-in-time (JIT) compilation of the accumulated graph into a GPU kernel. The first rendering may pay the compilation cost; identical kernels can be cached for later iterations. The approach fuses small operations while allowing a large renderer to build its graph at runtime, without describing the entire codebase in advance.
+
+A renderer's control flow is irregular. Different rays hit different materials and take different branches. Enoki uses **masks** to mark which lanes of a vector are active. A vectorized branch computes only for lanes that satisfy its condition. To avoid synchronizing the GPU for every step, code should keep many operations vertical (per-lane) and use horizontal reductions such as `all(mask)` sparingly. Dynamic method dispatch is more difficult because a vector of rays may point to many material objects. Enoki groups lanes by unique object pointer, calls that material's method for its active subset, then scatters results back. Gather and scatter also need special derivative rules: in reverse mode, a gather's gradient becomes a scatter-add, while a scatter's gradient becomes a gather.
+
+Differentiable rendering creates a second systems problem: reverse-mode [[Automatic differentiation and backpropagation|automatic differentiation]] (AD) must retain intermediate values until the output loss is known. A wavefront renderer can store large intersection records and sampled values; at image-scale sample counts, the memory cost can reach multiple gigabytes. Enoki simplifies its computation graph at JIT boundaries. It collapses interior nodes by multiplying derivative weights along paths, trading extra arithmetic for fewer stored nodes. A greedy rule collapses low-cost nodes first. This makes the method a hybrid of forward and reverse differentiation rather than a strict traversal of the original graph. The authors' Cornell Box measurement shows JIT alone lowers runtime substantially; graph simplification further reduces memory from 2.43 GiB to 1.36 GiB in the reported setting, with a small timing change. This is a benchmark of their 2019 implementation, not a current performance promise.
+
+The system can also change the *meaning* of its radiance values without duplicating the renderer. For polarization, it represents light with Stokes vectors and material transformations with Mueller matrices. Each Mueller matrix is tied to incident and outgoing reference frames, so those frames must be rotated consistently when light scatters. The renderer uses Mueller-matrix values throughout to keep its interfaces symmetric, even though this performs some unnecessary arithmetic. The paper demonstrates a dielectric between crossed linear polarizers: the glass changes the polarization state so some light passes the second filter. It also enables spectrum-aware transport rather than treating every ray as three fixed RGB numbers; the paper's renderer samples four wavelengths per ray across 360–830 nm by default.
+
+#### Differentiable caustics and media
+
+A differentiable renderer can optimize a scene parameter to make a rendered image match a target. For caustics, one example changes a refractive height field so focused light forms a desired image. Another changes a spatially varying refractive index. In a gradient-index medium, rays curve because the index varies with position. The paper writes the ray equation as
+
+$$\frac{d^2\mathbf{x}}{dt^2}=n(\mathbf{x})\nabla n(\mathbf{x}).$$
+
+The implementation integrates this equation with a Leapfrog step while tracing light. Gradient descent then updates the height field or index grid from the image error. These demonstrations show that a general renderer can support inverse design with a custom differentiable simulation; the authors explicitly say their height-field results do not match purpose-built methods in contrast and precision.
+
+For a scattering medium, the radiative transfer equation (RTE) accounts for light lost to absorption or scattering out of the ray and gained from light scattered into it. In simplified notation,
+
+$$L(\mathbf{x},\omega)=\int_0^\infty T_r(\mathbf{x},\mathbf{x}_t)\int_{S^2}\sigma_s(\mathbf{x}_t)L(\mathbf{x}_t,\omega')f_p(\omega,\omega')\,d\omega'\,dt,$$
+
+where $\sigma_s$ is the scattering coefficient, $f_p$ is the phase function, and $T_r=\exp(-\int_0^t\sigma_t(\mathbf{x}_s)ds)$ is transmittance, with extinction $\sigma_t=\sigma_a+\sigma_s$. Sampling the distance to the next event normally uses a parameter-dependent probability distribution. Directly differentiating through that sampling transform can fail when it becomes discontinuous—for example, when the sampled event leaves the volume bounds. The paper's solution is to differentiate the integral before changing variables into primary-sample space, then detach the sampling transform and its probability from the AD graph. This keeps the derivative on the integrand while avoiding an invalid derivative through a discontinuous sampling map.
+
+The authors initially explored delta tracking, which supports unbiased event sampling but can take a variable number of steps and create incoherent GPU execution. They use regular ray marching instead. This gives more coherent GPU work but introduces a small rendering bias. Their smoke-density experiment is synthetic: one view is ambiguous and creates artifacts; matching nine views constrains the density better. Their translucent-slab experiment is also simplified: extinction is homogeneous and monochromatic, while voxel albedo varies. Differentiable rendering improves on a naive color-to-albedo initialization because multiple scattering couples neighboring voxel values.
+
+#### Coherent bundles for Markov-chain rendering
+
+Mitsuba 2's vectorization also supports a path-sampling method designed for coherence. A conventional packet tracer may launch many rays together, but their paths quickly diverge into different branches and memory locations. Markov-chain Monte Carlo light transport explores nearby points in **primary sample space**, the random numbers that define a path. The paper's coherent pseudo-marginal Metropolis light transport (CPMMLT) smooths the target function by convolving it with a Gaussian in that space:
+
+$$\pi(\mathbf{u})=\int_U G(\boldsymbol\delta)f(\mathbf{u}-\boldsymbol\delta)\,d\boldsymbol\delta.$$
+
+It estimates this smoothed target with a bundle of nearby paths, evaluating them together in vector lanes. The Gaussian width trades exploration against coherence: nearby samples are more likely to take similar path branches, so the CPU's vector units and caches do more useful work. The method uses pseudo-marginal MCMC: an unbiased estimate of the smoothed target can be used while preserving the chain's target distribution. The paper then weights the bundle's contributions to reconstruct an unbiased estimate of the original, unblurred image. In its tests, CPMMLT evaluates about two to six times more rays per second than the PSSMLT baseline, depending on the scene. Those tests ran on 28-core Intel Xeon Gold 6132 machines; the result is specific to that hardware and comparison.
+
+**Practical limits.** Reverse-mode AD stores state and may run out of memory as resolution, samples, and path depth grow. Rendering losses have poor local minima, so parameter initialization matters. Ray marching trades a small bias for GPU coherence. The 2019 paper's software and interfaces are historical: describe the architecture and evidence from the paper, but do not treat its Enoki/Mitsuba 2 API as the current Mitsuba 3 or Dr.Jit API. Its examples demonstrate system flexibility; they do not establish that every inverse-rendering problem is well posed or that one view determines a unique scene.
+
+**Source:** Nimier-David et al., “Mitsuba 2: A Retargetable Forward and Inverse Renderer” (2019), full substantive paper, PDF pp. 1–16. [Primary PDF](https://rgl.s3.eu-central-1.amazonaws.com/media/papers/NimierDavidVicini2019Mitsuba2_7.pdf).
+
 ## Numerical integration and Monte Carlo estimation
 
 Numerical integration approximates transport quantities, and sampling choices determine bias, variance, and convergence.
@@ -1791,6 +2469,96 @@ Point lights and perfect mirrors form a pathological case for some path-sampling
 ### A sample-count budget comparison
 
 Suppose a pixel estimate has standard deviation $\sigma=0.2$ with 100 independent samples. Its expected standard error is $0.2/\sqrt{100}=0.02$. To reach 0.01 with the same estimator, use about 400 samples. If importance sampling reduces per-sample standard deviation from 0.2 to 0.1, 100 samples give standard error 0.01. This comparison shows why algorithmic variance reduction can be more valuable than simply increasing sample count. It also shows the limit: the square-root law is gradual, so halving error by brute force quadruples work. [[#CMU-18 - Monte Carlo Rendering|CMU-18]] · [[#CMU-19 - Variance Reduction|CMU-19]]
+
+### Reservoir resampling for direct-light estimates
+
+*Connect to:* the rendering equation and light transport; Monte Carlo integration; importance sampling; temporal accumulation and visibility.
+
+Direct illumination at a surface point can be written as an integral over the light-emitting surfaces. For a light point $x$ and shading point $y$, the integrand contains the surface response (the BSDF), emitted radiance, a geometry term with distance and cosine factors, and visibility:
+
+$$L(y,\omega)=\int_A \rho(y,\overrightarrow{yx}\leftrightarrow\omega)\,L_e(x\to y)\,G(x\leftrightarrow y)\,V(x\leftrightarrow y)\,dA_x.$$
+
+The hard part is that a sample can be bright before visibility and contribute nothing after a shadow ray finds an occluder. In a scene with thousands of lights, tracing a visibility ray to every source is too expensive. Importance sampling tries to draw more often from parts of the integral that matter. If a proposal density is $p(x)$, a Monte Carlo estimate is
+
+$$\widehat L=\frac{1}{N}\sum_{i=1}^N\frac{f(x_i)}{p(x_i)},\qquad x_i\sim p.$$
+
+The proposal must be nonzero wherever the integrand can be nonzero. A proposal that tracks the integrand well tends to reduce variance, but the ideal proposal includes visibility, which is costly to know before tracing the ray.
+
+**Resampled importance sampling (RIS)** uses an easy proposal $p$ to generate a pool of $M$ candidates. Each candidate receives weight $w_i=\widehat p(x_i)/p(x_i)$, where $\widehat p$ approximates the target distribution. Pick one candidate with probability $w_i/\sum_jw_j$. The estimator is
+
+$$\widehat L_{RIS}=\frac{f(y)}{\widehat p(y)}\left(\frac{1}{M}\sum_{j=1}^M\frac{\widehat p(x_j)}{p(x_j)}\right).$$
+
+The selected sample $y$ is more likely to come from important regions. The average-weight term corrects for the fact that the selected sample only approximates the target distribution. With a valid proposal and target support, this estimator is unbiased: its expected value equals the integral, even though an individual frame may be noisy.
+
+A **weighted reservoir** stores just one selected sample, the running sum of weights, and the number of candidates. For each new candidate, add its weight to the total and replace the stored sample with probability $w_i/w_{sum}$. After processing any prefix of the stream, each candidate has probability proportional to its weight of being the stored sample. This gives a compact implementation: memory does not grow with the candidate count, although generating and weighting candidates still costs work proportional to $M$.
+
+The key reuse trick follows from the reservoir's state. To merge reservoirs, treat each reservoir's selected sample as one new candidate with weight equal to its accumulated weight. The resulting reservoir is equivalent to processing all original candidate streams together, even though those streams were discarded. Thus one pixel can reuse a sample selected for a neighboring pixel using only compact reservoir records. Repeating this across $k$ neighbors and $n$ rounds lets each pixel benefit from roughly $knM$ original proposals while the reuse work scales like $O(nk+M)$ per pixel.
+
+Temporal reuse carries the final reservoir from a previous frame to a reprojected pixel in the current frame. Motion vectors estimate where the same surface point moved. Spatial reuse combines reservoirs from nearby pixels. Visibility reuse tests the chosen sample before sharing it; discarding an occluded sample can prevent its propagation across a local region. These operations exploit correlation between nearby pixels: adjacent points often have similar lighting and material response, so a useful light sample for one may be useful for another.
+
+There is a catch: adjacent pixels do not necessarily have the same sampling distribution or even the same valid sample domain. A sample below one pixel's surface hemisphere can have zero probability there but be valid at its neighbor. An occluded sample may be discarded at one location but visible at another. If the standard RIS correction assumes every proposal distribution covers the whole target support, reusing samples with different support silently drops valid contributions and darkens the result.
+
+The paper derives the problem explicitly. Let $p_i(x)$ be the proposal distribution that produced candidate $i$, and define $Z(y)=\{i:p_i(y)>0\}$. Under the standard mixed-candidate RIS weight, the conditional expected weight for output $y$ is
+
+$$\mathbb{E}[W\mid y]=\frac{1}{p(y)}\frac{|Z(y)|}{M}.$$
+
+If every candidate distribution is positive wherever the target is positive, then $|Z(y)|=M$ and the correction is right. If only some distributions support $y$, the factor is smaller than one, so the estimate is biased dark. A seemingly simple fix is to divide by the count of supporting distributions. That restores the expected value, but can have enormous variance when a proposal is nonzero yet extremely small in part of the domain.
+
+Instead, the authors assign each proposal a mixture weight using the balance heuristic:
+
+$$m_i(y)=\frac{p_i(y)}{\sum_j p_j(y)}.$$
+
+These weights sum to one wherever the mixture has support, and they downweight proposals that are numerically tiny rather than treating every nonzero proposal equally. The unbiased reservoir-combination procedure must evaluate whether a reused sample is supported at each candidate's source pixel. When visibility forms part of that support test, checking it can require extra shadow rays. This is why the method includes both variants: the cheaper **biased** algorithm heuristically rejects neighbors with different depth or normal and accepts some darkening; the **unbiased** algorithm spends more time to evaluate support correctly.
+
+The paper's implementation begins with 32 light candidates per pixel, samples emissive triangles by power and samples any environment map for 25% of candidates. It uses five random spatial neighbors within a 30-pixel radius, two spatial passes, and reprojects the previous frame for temporal reuse. The unbiased variant uses three neighbors and one spatial pass to keep cost comparable. The biased variant stores four reservoirs per pixel; temporal reservoir count is clamped so old history cannot grow without bound. These values describe the tested renderer, not universal defaults.
+
+**Published evidence and limits.** The authors tested in Falcor on an RTX 2080 Ti (Titan RTX for their largest Amusement Park scene), with thousands to millions of emissive triangles. Against their high-sample reference, the paper reports one to two orders of magnitude lower error at comparable rendering budgets. On interactive budgets, the biased version generally has lower variance but visibly loses energy near shadow boundaries, highlights, and complex geometry. At longer render times, bias dominates and the unbiased version can become more accurate. Reuse is weakest at disocclusions, lighting boundaries, rapidly moving lights, and complex geometry. The original method targets direct lighting at the primary camera-hit surface; it does not automatically solve reuse for arbitrary multi-bounce paths. It is an algorithm for sampling contributions inside the renderer, not a post-process that averages final pixel colors.
+
+**Source:** Bitterli et al., “Spatiotemporal [[Reservoir resampling and ReSTIR|Reservoir Resampling]] for Real-Time Ray Tracing with Dynamic Direct Lighting” (2020), full paper and appendices A–B, PDF pp. 1–17. [Primary PDF](https://benedikt-bitterli.me/restir/bitterli20restir.pdf).
+
+### Reuse paths across geometry LoD changes
+
+*Connect to:* multiscale geometry and level of detail; Monte Carlo path tracing; ReSTIR reservoirs; UV parameterization; temporal reprojection.
+
+A distant object often needs a simpler mesh than a nearby one. A **level of detail (LoD)** is one of several representations of the same object, chosen according to viewing scale. LoD reduces geometric cost and can reduce subpixel detail that would otherwise cause aliasing and noisy path-tracing estimates. But changing LoD changes mesh topology. A temporal path-reuse method that identifies a surface point by triangle ID and barycentric coordinates then fails: triangle 240 on one mesh is not necessarily the same surface location as triangle 240 on another.
+
+Real-Time Level-of-Detail Rendering with ReSTIR replaces that assumption with an explicit vertex map $\tau$ between surface points on two LoD meshes. The authors assume the meshes share a consistent UV texture space. With a non-overlapping UV map $\Phi_1$ on the source and $\Phi_2$ on the target, map a surface point by preserving its UV coordinate:
+
+$$\tau(\mathbf{x})=\Phi_2^{-1}(\Phi_1(\mathbf{x})).$$
+
+This uses the UV parameterization as a common address for corresponding locations. It does not require the two meshes to share vertices, triangle counts, or topology.
+
+UV coordinates can overlap, however. A UV value may refer to several world-space points, such as the same texture reused on both sides of a symmetric object. A shift mapping used by ReSTIR needs a one-to-one correspondence over the points it reuses. The paper collects all surface points from each LoD that share a UV coordinate, then forms a partial matching. Its practical algorithm repeatedly pairs the closest unmatched points in world space and removes both from further matching. Unmatched points have no mapping, so reuse can fail for them. This is safer than treating one UV coordinate as a unique world point when it is not.
+
+The mapping changes area and therefore sample density. Let $q=(u,v)$ be a UV coordinate, and let $\Phi_k^{-1}$ map UV coordinates to surface $S_k$, for $k\in\{1,2\}$. Define $\bar{\mathbf{u}}_k=\partial\Phi_k^{-1}/\partial u$ and $\bar{\mathbf{v}}_k=\partial\Phi_k^{-1}/\partial v$; these tangent vectors give world-space displacement per unit change in each UV coordinate. The surface-area Jacobian is
+
+$$\left|\det\frac{\partial\tau}{\partial\mathbf{x}}\right|=\frac{|\bar{\mathbf{u}}_2\times\bar{\mathbf{v}}_2|}{|\bar{\mathbf{u}}_1\times\bar{\mathbf{v}}_1|}.$$
+
+$$\left|\det\frac{\partial\tau}{\partial\mathbf{x}}\right|=\frac{|\bar{\mathbf{u}}_2\times\bar{\mathbf{v}}_2|}{|\bar{\mathbf{u}}_1\times\bar{\mathbf{v}}_1|}.$$
+
+This ratio compares the world-space area represented by the same small UV patch on the two meshes. It multiplies the usual shift-mapping Jacobian for each mapped path vertex. Without this correction, a path could be over- or under-counted simply because one LoD allocates more surface area to that UV region.
+
+In path reuse, a path has several vertices: the first surface hit, later scattering points, and a reconnection vertex where a shifted path rejoins the sampled path. During temporal reuse, 3DGUT-LOD first maps the previous frame's primary hit with $\tau$ and reprojects it into the current image. It then applies the existing hybrid shift to the rest of the path and uses $\tau$ for the reconnection vertex. The mapping data needed by the shift are stored in the path reservoir: object identity and UV coordinates for the primary hit and reconnection vertex. The Jacobian correction includes $|\partial\tau/\partial\mathbf{x}_i|$ for every vertex mapped across LoD. The paper finds that mapping only the primary hit or only the reconnection point increases noise; both roles need the LoD-aware correspondence.
+
+Spatial reuse is simpler in their setup because every ray in one frame sees the same LoD for an object. The challenging transition occurs between frames. The authors implement the method in Falcor, render at 1920×1080 on an RTX 3090 with an AMD Ryzen 9 5900X, and compare against path tracing and reservoir splatting without the new mapping. Their tests include a rock with animated focus and four LoDs, Sponza statues, terrain, chess pieces, and a coastal cliff. At a LoD switch, ordinary reservoir splatting loses temporal history and becomes noisy; the new mapping allows reuse to continue with a smaller, brief quality loss. Path tracing has no reuse and remains noisier at the same time budget. The paper also tests mirrored and overlapping UVs; the one-to-one matching restores reuse where a naive UV inverse would give up.
+
+**Limits.** This method depends on UV parameterizations that correspond across LoDs. Missing, inconsistent, heavily distorted, or degenerate UV maps can break the surface correspondence or lower image quality. The greedy world-space pairing is a practical matching heuristic, not a proof of semantic correspondence for arbitrary remeshes. Their implementation switches one LoD per object per frame; it does not choose a different LoD for every ray within one frame. The source demonstrates image-space sample reuse across mesh-topology changes, not a general guarantee that all coarse meshes preserve the same physical surface or material detail.
+
+**Source:** Wang et al., “Real-Time Level-of-Detail Rendering with ReSTIR” (SIGGRAPH 2026), complete paper, PDF pp. 1–8. [Primary PDF](https://research.nvidia.com/labs/rtr/publication/wang2026levelOfDetail/wang2026levelOfDetail.pdf).
+
+#### What the companion presentations add
+
+The captioned 3D Gaussian Splatting presentation adds an accessible overview of the paper's pipeline: initialize from a structure-from-motion point cloud, optimize anisotropic Gaussians, and render the scene. It highlights that elongated splats can represent thin structures such as bicycle spokes. It also reports more than 100 frames per second in shown scenes, a 7,000-iteration run taking about six minutes, and an ablation using random rather than structure-from-motion initialization. These are claims made in the presentation and depend on its test setup; the paper's experiments remain the detailed evidence. [Presentation](https://www.youtube.com/watch?v=T_kXY43VZnk).
+
+The 2D Gaussian Splatting presentation foregrounds the reason for a planar primitive: its normal is geometrically meaningful. It also walks through perspective-correct ray/disc intersection, a low-pass filter for small or oblique splats, ray-wise depth concentration, normal consistency, and depth-based mesh extraction. The automatic captions are imperfect, so the paper and its supplement carry the formal definitions and equations. [Presentation](https://www.youtube.com/watch?v=oaHCtB6yiKU).
+
+The Instant Field-Aligned Meshes presentation shows the method as two coupled fields: an orientation field guides edge direction and a position field controls vertex placement. It briefly demonstrates feature alignment, point-cloud input, interactive orientation/position brushes, and very large remeshing. Its claim of processing a 372-million-triangle mesh in about nine minutes is a reported demo result, not an independent benchmark. [Presentation](https://www.youtube.com/watch?v=U6wtw6W4x3I).
+
+### Figure U14 - A reservoir selects a candidate by its weight
+
+![[Visual Recall/University Graphics and Vision/reservoir-selection.png]]
+
+*The conditional selection probabilities match the displayed candidate weights. The picture explains reservoir selection only; correct lighting estimates also require the method normalization and support assumptions.*
 
 ## Rasterization, coverage, and depth
 
@@ -1914,6 +2682,196 @@ Mipmapping stores a pyramid of prefiltered textures. Choosing only the nearest l
 
 Transparency complicates a single nearest-depth buffer because multiple layers contribute. A simple approximation draws opaque geometry first, then transparent surfaces with depth testing enabled but depth writes disabled. This lets a transparent window be occluded by a nearer opaque object while allowing multiple transparent layers to blend, though overlapping transparent surfaces still require careful order or more elaborate per-pixel fragment storage. A deferred shading pass stores visible depth and material/BRDF parameters first, then shades only the surface that survived visibility. A pre-Z pass writes depth before expensive shading; tile-based rendering limits active buffers to screen regions, which is especially useful on memory-limited mobile hardware. [[#MITG-18 - Rasterization II|MITG-18]] (01:16:39–01:22:02)
 
+### GPU pipeline, vertex data, and API state
+
+#### Keep the teaching API and modern buffer model distinct
+
+The P1 recordings introduce OpenGL with stateful setup and immediate-mode calls. Their modern-buffer bridge is a different, current vertex-input model. Treat the immediate-mode examples as a teaching step, not as the modern buffer recipe. The separate 2009 API snapshot below is historical context.
+
+#### Map the logical image pipeline onto GPU work
+
+A hardware pipeline makes the story concrete. CPU-side application code supplies vertex data and draw commands. The GPU processes vertices, assembles primitives, clips them against the view volume, maps them to the viewport, rasterizes triangles into fragments, runs fragment shading, applies depth and other per-sample tests, and writes surviving values into a framebuffer. The exact names and boundaries depend on the API and pipeline configuration. Keep the logical pipeline (why an operation is needed) distinct from the hardware/API pipeline (where it is implemented). The lectures use six logical spaces to follow a point: **model space** is local to one object and its pivot; **world space** places independently made objects into one shared scene; **view space** expresses that scene relative to the camera; **clip space** holds projected homogeneous coordinates before clipping/division; **normalized device coordinates (NDC)** are the normalized post-projection coordinates (OpenGL conventionally uses −1 to +1 on each axis); **screen space** maps NDC into a particular pixel viewport. Model, view, and projection matrices perform different jobs. Do not collapse them into one transform: the model transform places the object, the view transform expresses the world from the camera, and projection shapes the visible frustum and depth perspective. (P1-06–07; P1-22–26)
+
+#### How the six-space story maps onto GPU work
+
+The logical stages explain the coordinate journey; the OpenGL pipeline explains which work is programmable and which the GPU normally performs as fixed-function processing. A simplified correspondence is:
+
+| Logical concern | GPU/API work |
+|---|---|
+| Define a model | Vertex attributes and draw/primitive input |
+| Place model in world, then relative to camera | Vertex shader applies model and view transforms |
+| Project and bound the view | Vertex shader produces clip coordinates; clipping tests/intersects primitives against the clip volume |
+| Normalize and address the display | Perspective division produces NDC; viewport mapping converts to screen coordinates |
+| Find covered samples and shade | Primitive setup and rasterization produce fragments; fragment shader computes candidate color |
+| Resolve visibility and framebuffer effects | Per-sample tests such as depth/stencil and blending update the target |
+
+This is a teaching map, not a strict one-to-one mapping: one coordinate space can span more than one GPU operation, and hardware/API stages do not correspond neatly to the six logical names. For example, NDC does not map to the fragment shader; NDC exists after projection and perspective division, before viewport mapping/rasterization. The lecture’s own rough mapping table is misleading on that point, so use the sequence above when reasoning about actual coordinates. (P1-06–08)
+
+At vertex specification, the application provides positions and any attached attributes such as color, normals, and texture coordinates. A vertex shader runs per input vertex and transforms its position through model, view, and projection matrices. Tessellation and geometry shaders are optional programmable stages: tessellation subdivides input patches to add geometry, while a geometry shader can emit, modify, or discard primitives. More triangles can improve detail, but they cost processing; these stages are not automatic performance wins. Primitive assembly groups the resulting vertices into points, lines, or triangles. OpenGL modes include independent lines, line strips/loops, independent triangles, triangle strips that reuse edge vertices, and triangle fans that share a center vertex. (P1-07)
+
+Clipping and face culling solve different problems. Clipping intersects geometry with the view volume; a partly visible triangle can become a polygon with new boundary vertices, while a wholly outside triangle is discarded. Back-face culling rejects triangles based on projected winding when the surface is meant to be one-sided. It can reduce work, but it is not a replacement for depth testing and must respect winding and two-sided surfaces. (P1-07)
+
+#### Clipping, culling, rasterization, and fragments
+
+Clipping intersects primitives with the camera's view volume. A triangle partly outside the volume can become a smaller polygon with new boundary vertices; a wholly outside primitive contributes nothing. Clipping saves later work and prevents invalid projected coordinates from reaching rasterization. The view volume is bounded by near and far depth planes and horizontal and vertical sides.
+
+Back-face culling removes triangles whose winding says they face away from the camera, when the object and rendering setup make that safe. It is a visibility optimization, not a universal substitute for depth testing: thin, open, or two-sided surfaces may need both orientations. Front/back classification depends on vertex winding and the configured convention. (P1-07; P1-11–14)
+
+Rasterization determines which screen samples a projected primitive covers. For a triangle, edge tests identify coverage; interpolated vertex attributes provide values such as color, texture coordinates, and normals across the face. A fragment is a candidate set of per-sample data, including depth and interpolants. It is not automatically a final pixel: depth, stencil, discard, blending, and multisampling can change or reject its contribution. Perspective-correct interpolation matters because ordinary linear interpolation in screen space would distort attributes across a perspective-projected surface. (P1-07; P1-11–14)
+
+#### Vertex attributes and drawing commands
+
+A vertex is a record of values attached to a point in a primitive description. Position is essential, but a vertex can also carry color, normal, texture coordinates, or other shader inputs. A triangle is assembled from three vertex records; neighboring triangles may share positions while needing separate records when their per-vertex attributes differ, as at a sharp normal seam or texture seam. (P1-15–21)
+
+The main attributes answer different questions. **Position** locates the point in the coordinate space expected at that stage; the course begins with three components and later uses homogeneous four-component positions. **Color** gives per-vertex RGB or RGBA values; a triangle with red, green, and blue corners receives interpolated colors across its interior. Alpha participates in transparency/blending when configured. **Normal** is a direction perpendicular to the surface and is used to determine how lighting meets the surface; normalized, interpolated normals help produce smooth shading. **Texture coordinates (UV)** specify where a 2D image is sampled on a surface; interpolation supplies coordinates for fragments, enabling brick, grass, or skin detail without adding more geometry. Position is required to locate geometry; the other attributes depend on the desired appearance. The course examples use normalized color values in [0,1] and mention API-specific texture-origin conventions, which must be matched to the asset and graphics API. (P1-15–16)
+
+OpenGL supports both a legacy immediate-mode interface and programmable vertex/buffer workflows. The early `glBegin`/`glEnd` examples teach primitive assembly and current-state behavior; they are not a modern core-profile recipe. Immediate mode was removed from OpenGL core profiles beginning with OpenGL 3.1 (compatibility profiles may retain it), so use the later VBO/VAO/shader path for modern core OpenGL. Keep those two teaching layers distinct when translating examples or diagnosing why a legacy call is unavailable. (P1-09; P1-15)
+
+Vertex specification is the contract between application memory and the GPU's vertex-processing stage. The application must describe where each attribute begins, how many components it has, the scalar type, stride (distance between successive records), and offset (distance from a record's start). A wrong stride or offset makes the GPU read valid bytes as the wrong values, often producing corrupted geometry rather than a clear error. Interleaved storage places attributes together per vertex; separate arrays keep each attribute in its own stream. The choice affects convenience and data access, not the meaning of a vertex.
+
+A vertex buffer object (VBO) stores the attribute bytes; a vertex array object (VAO) records how those bytes are interpreted (attribute formats, offsets, strides, and associated buffer state); an element/index buffer stores references to reusable vertex records. For a cube, eight corner positions may be shared through indices, but normals or texture coordinates that differ at a seam can require duplicated vertex records. An index buffer lets multiple primitives refer to shared vertex records. For a quad with corners A, B, C, D, two triangles can use indices (A,B,C) and (A,C,D), so the shared diagonal endpoints are stored once. Indexing reduces duplicate data when attributes match; a discontinuity in an attribute may require duplicated vertices even if positions coincide. The draw command also determines primitive type and count, so a correct buffer with an incorrect count or primitive mode still draws the wrong shape. (P1-15–21)
+
+Primitive mode is a connectivity rule over an ordered stream. In the legacy examples, `GL_POINTS` emits one point per vertex; `GL_LINES` groups disjoint pairs (an odd final vertex is unused); `GL_LINE_STRIP` connects each consecutive pair; `GL_LINE_LOOP` adds the closing edge from last back to first. `GL_TRIANGLES` groups independent triples (an incomplete last group contributes no triangle). A triangle fan uses vertex 0 as a shared hub and forms triangles `(0,1,2)`, `(0,2,3)`, …; a triangle strip reuses successive vertices to form `n−2` connected triangles (with alternating winding in standard strip topology). For a strip or fan with 5 vertices, the output has 3 triangles. This reuse helps express a connected surface, but immediate-mode calls still restate vertices; indexed buffers are a separate mechanism for sharing stored vertex records. Choose topology from shape connectivity, not just a desired silhouette: a closed loop outlines a polygon, while a fan is convenient for a disk-like region. (P1-17–19)
+
+A centered cube makes the vertex/primitive distinction concrete. If its edge length is 1, each coordinate is either −0.5 or +0.5, giving 2³ = 8 distinct corners. It has six square faces; splitting each face along a diagonal produces 12 triangles. The course packs each corner as `(x,y,z,r,g,b)` in a NumPy array of shape `(8,6)` and explicitly uses `float32`. Each row has six 4-byte values, so it occupies 24 bytes; all eight rows occupy 192 bytes before any container overhead. This is a compact per-corner record, not yet an indexed buffer draw. The lecture uses different colors on front and back to expose orientation. If two adjacent faces need different colors, normals, or UV coordinates at the same geometric corner, a modern vertex stream may need duplicate records, because a single vertex index refers to one complete attribute tuple. (P1-20)
+
+For example, with corner order `(-.5,-.5,-.5)`, `(+.5,-.5,-.5)`, `(+.5,+.5,-.5)`, `(-.5,+.5,-.5)`, one back face can be submitted as two triples `(0,1,2)` and `(0,2,3)`. The opposite face uses the same X/Y pattern with Z=+.5. Edge faces combine corners from both Z planes. This arithmetic explains why six faces do not imply 24 unique positions: corners are shared geometrically, while triangles repeat the corner references in their own submission order. In immediate mode the coordinates are reissued; in an indexed mesh, the references can be stored as indices, subject to attribute continuity. (P1-20)
+
+The lecture’s cube code makes the indexing step explicit without yet uploading an index buffer. Its vertex array has 8 rows; its index array has 12 rows of 3 integer indices. For one face, `[4,5,6]` and `[4,6,7]` refer to two triangles that share the diagonal corners 4 and 6. The drawing loop selects each face color, visits that face’s two index triples, looks up each index in the vertex array, and emits that record’s XYZ position. That is still legacy immediate mode: it makes 36 `glVertex` calls for 12 triangles. The separate integer indices clarify topology and reveal repeated positions, but the GPU is not reading an element buffer in this sample. The stored per-vertex RGB entries are not what colors the six faces in this loop; a face color is set before its two triangles. (P1-21)
+
+#### Modern-buffer bridge: bytes, stride, offset, and binding
+
+The next trace translates the same `(x,y,z,r,g,b)` float32 row into a modern interleaved vertex buffer. It is an explanatory bridge from the lecture’s data, not a claim that its immediate-mode code performs these API calls. One float32 occupies 4 bytes, so one six-float record occupies `6 × 4 = 24` bytes. The position starts at byte offset 0; RGB starts after the three position floats, at byte offset `3 × 4 = 12`. The stride—the distance in **bytes** from one vertex record to the next—is 24. Component count remains 3; it is not a byte count.
+
+| Vertex record | Byte range in VBO | Position fetch | RGB fetch |
+|---|---:|---|---|
+| 0 | 0–23 | bytes 0, 4, 8 | bytes 12, 16, 20 |
+| 1 | 24–47 | bytes 24, 28, 32 | bytes 36, 40, 44 |
+| 4 | 96–119 | bytes 96, 100, 104 | bytes 108, 112, 116 |
+
+For index 4, the index value means “use vertex record 4,” not “jump to byte 4.” With a buffer base at byte 0, the address is `base + index × stride + attribute_offset`: position begins at `0 + 4×24 + 0 = 96`; RGB begins at `0 + 4×24 + 12 = 108`. Each attribute then reads three 4-byte floats. A first indexed triangle `[4,5,6]` therefore fetches three complete records; `[4,6,7]` can reuse records 4 and 6 by referring to their indices again.
+
+In a traditional OpenGL vertex setup, bind a VAO, bind the VBO to `GL_ARRAY_BUFFER`, upload the 192 bytes, then describe the attributes while that buffer is bound: position uses 3 `GL_FLOAT` components, stride 24, offset 0; color uses 3 `GL_FLOAT` components, stride 24, offset 12. Enable both locations. The `glVertexAttribPointer` call records the currently bound array buffer with that attribute’s format in the VAO. Binding another `GL_ARRAY_BUFFER` later does not rewrite the recorded attribute association. By contrast, the `GL_ELEMENT_ARRAY_BUFFER` binding is VAO state: bind the index buffer while the intended VAO is active. At draw time bind that VAO and call `glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0)` for 36 unsigned indices (12 triangles); the final `0` is a byte offset into the bound element buffer. Use unsigned 32-bit index storage for `GL_UNSIGNED_INT`; the lecture’s signed `int32` NumPy index array is suitable for its Python lookup loop, but convert it for this GPU draw contract. A wrong attribute location, stride, offset, enabled bit, or index type can make the GPU reinterpret valid bytes as incorrect positions or colors. These byte/offset and binding rules follow the [Khronos `glVertexAttribPointer` reference](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glVertexAttribPointer.xhtml), [Khronos `glDrawElements` reference](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDrawElements.xhtml), and [OpenGL core specification](https://registry.khronos.org/OpenGL/specs/gl/glspec43.core.pdf); the course itself defers this buffer-object path. (P1-08; P1-14; P1-21)
+
+In OpenGL-style APIs, buffer objects own bytes, while a vertex-array configuration records how attributes map those bytes to shader inputs and which index buffer is used. Attribute locations, enabled state, integer-versus-floating interpretation, normalization, and shader input types must agree. This separation makes the data contract inspectable: a VBO owns the numbers, the VAO describes their layout for vertex inputs, and an element buffer supplies the order in which indices form primitives. A cube can reuse its eight positions for multiple faces when attached attributes agree; at hard normal or UV seams, the same geometric corner may need more than one vertex record. A systematic debugging order is: verify the CPU data and units; verify buffer upload size; verify attribute location/type/stride/offset; verify index values and draw count; then inspect shader transformations and output. (P1-08–14; P1-15–21)
+
+#### OpenGL commands configure state; they do not define a scene
+
+OpenGL commands configure state and submit work; the API does not itself define a scene. A typical setup creates a window/context, compiles and links shaders, uploads vertex/index data, configures attribute interpretation, and issues draw calls. A shader compilation or program-link failure must be checked through its log; creating an object handle does not prove the object is usable. Binding changes which object subsequent state-setting calls affect, so a binding mistake can silently configure the wrong resource. The vertex shader transforms each incoming vertex and passes values onward; the fragment shader computes candidate fragment outputs. OpenGL is a specification: it defines function behavior and state, while a platform driver supplies an implementation. Its stateful interface lets commands configure buffers, attributes, shaders, and other drawing settings that later draw calls use. PyOpenGL is a Python binding to that interface; shader programs are written in GLSL and compiled/linked by the graphics implementation, not automatically translated from arbitrary Python code. Pygame creates a window/context in the course setup, while NumPy is used for numeric arrays. The course chooses legacy immediate-mode examples for an easier first pass; this is a pedagogical choice, not the modern programmable workflow. (P1-08)
+
+The setup sequence is concrete: initialize Pygame modules; create a display surface with a chosen width and height and request an OpenGL context; create a clock; enter a loop that polls close/key/resize events, updates application state, clears and draws, swaps buffers, and ticks the clock to pace frames. The display size determines the drawable viewport. If a resizable window changes dimensions, update the viewport to the new drawable size; otherwise NDC-to-pixel mapping can stretch or misplace the image. Double buffering draws into a back buffer while the front buffer is displayed, then swaps them to reduce visible partial frames. Pygame handles platform window/input events; OpenGL commands still perform the drawing. (P1-13–14)
+
+A graphics context owns the OpenGL state used by draw calls. Make a suitable context current before querying state or issuing GL functions; separate windows may have separate contexts and do not automatically share all state. In PyOpenGL, `glGetString` results are bytes, so decode them to print readable version/vendor text. Use exact function signatures and matching data formats. The course's `from OpenGL.GL import *` form avoids prefixes in short examples, while qualified imports reduce name collisions in larger code. (P1-14)
+
+A useful minimal triangle trace is: three 2D positions in a vertex buffer → attribute layout maps two floating-point values to the position input → draw command assembles one triangle → vertex shader emits clip-space positions → clipping and viewport mapping locate it on screen → rasterizer generates covered fragments → fragment shader chooses a color → per-fragment tests and framebuffer operations determine visible samples. Each stage has a different failure signature: no program output, malformed triangle, off-screen geometry, missing fragments, or unexpected occlusion. (P1-08–14)
+
+The course implementation stack separates responsibilities. Pygame creates a window and graphics context; PyOpenGL exposes the OpenGL API to Python; NumPy prepares coordinate and attribute arrays; the platform driver implements the API on the available graphics hardware. The lecture uses immediate-mode `glBegin`/`glEnd` calls as an initial teaching path, where vertex and color calls set state for a primitive. Later programmable shaders are GLSL, not Python. Linux `glxinfo` can report implementation/vendor details, while `glxgears` is only a quick visible-draw check and not a benchmark. An isolated Python virtual environment and requirements file help keep package versions for separate projects from colliding; verify imports after installing. These are the course's setup examples, not a current system compatibility guide. (P1-09–10)
+
+#### Numeric arrays and line interpolation
+
+A normal Python list is a general sequence. Multiplying a list by an integer repeats its elements; adding lists concatenates them. Those operations do not perform component-wise vector arithmetic. A NumPy array represents a regular numeric shape and supports elementwise addition, scalar multiplication, and matrix operations. For example, adding `[1, 2, 3]` and `[4, 5, 6]` as NumPy arrays yields `[5, 7, 9]`, while ordinary list addition joins the two lists. Shape matters: an array containing three 3D points has a 3-by-3 structure, with three rows and three coordinates per row. (P1-04)
+
+NumPy makes the intended numeric structure explicit. `np.array` accepts lists and tuples; `.ndim`, `.shape`, `.size`, and `.dtype` answer different questions: number of axes, length of each axis, total element count, and stored numeric type. A list of three 3D points has shape `(3, 3)`. For GPU vertex data, the lecture explicitly casts coordinates to `np.float32`, because its OpenGL vertex attribute example expects 32-bit floats; NumPy otherwise infers a dtype (often 64-bit for ordinary Python floats). Treat this as a boundary contract for that upload path, not a rule that every NumPy calculation must use float32. RGB values add three more per-vertex components; an alpha component can be added when blending is used. (P1-11–12)
+
+NumPy constructors can build common arrays directly: `np.identity(n)` gives an identity matrix, `np.ones(shape)` and `np.zeros(shape)` fill a chosen shape, `np.linspace(start, stop, count)` chooses a specified number of evenly spaced values, and `np.arange(start, stop, step)` advances by a step while excluding the stop. Verify shape and dtype before sending these arrays to rendering code. (P1-11–12)
+
+Indexing and slicing use zero-based positions. In 2D, `A[r, c]` selects the row/column intersection; `A[1:3, 1:3]` selects rows 1 and 2 and columns 1 and 2 because the stop bound is exclusive. `A[:, 2]` takes column 2 from every row. Slices are usually views into the same storage, so editing a slice can change the original; call `.copy()` when independent values are needed. NumPy arrays are mutable, unlike tuples. This is useful for pulling positions or colors out of a combined record, but the indices and shape must match the chosen vertex layout. (P1-12)
+
+Array `+`, `-`, `*`, `/`, powers, and NumPy universal functions such as `np.sqrt` operate element by element when shapes are compatible. Thus `[1,2,3] * 2` becomes `[2,4,6]` in an array, whereas a Python list repeats. Elementwise multiplication is different from matrix multiplication: `A @ B` (or a dot-product operation) combines rows and columns according to linear algebra. For example,
+
+$$
+\begin{bmatrix}1&2\\3&4\end{bmatrix}
+\begin{bmatrix}5&6\\7&8\end{bmatrix}
+=
+\begin{bmatrix}19&22\\43&50\end{bmatrix}.
+$$
+
+For graphics, component-wise scaling of a point and multiplication by a transform matrix are different operations; select the one implied by the transform representation. Mismatched array shapes generally cannot be combined elementwise without an explicit compatible layout. (P1-11–12)
+
+A straight edge between endpoints v0 and v1 can be parameterized as p(t) = (1−t)v0 + tv1, for 0≤t≤1. At t=0 the point is v0; at t=1 it is v1; at t=0.5 it is the midpoint. The same weighted interpolation can blend endpoint attributes. If the endpoints have red and blue colors, intermediate points receive mixtures, producing a gradient. This makes a line more than a pair of locations: it defines all intermediate positions and attribute values needed when the line or triangle is rasterized. (P1-04; P1-07)
+
+#### Applying matrices in the recorded OpenGL examples
+
+P1-24 moves from hand-built NumPy matrices to legacy PyOpenGL helpers. The recording uses fixed-function matrix state, not a modern shader/core-profile pipeline. `glLoadIdentity` resets the current matrix; `glTranslatef(x,y,z)`, `glRotatef(angle,x,y,z)`, and `glScalef(x,y,z)` update it. In this API's fixed-function convention the angle is in degrees, while the earlier NumPy rotation helper converts degrees to radians for trigonometric functions. `glPushMatrix` saves the current matrix on a stack and `glPopMatrix` restores it, which supports drawing a child part with a local transform and then returning to the parent's transform. These calls are state changes: their effect depends on which matrix stack is active and what earlier calls did. (P1-24)
+
+The translation demonstration draws the same triangle twice: first in white at its original coordinates, then in red after resetting the matrix and translating by $(2,1.5,0)$. Resetting matters: without it, a later frame or second object may inherit previous transforms and accumulate unintended movement. The scaling example uses factors $(2,0.5,1)$, doubling x, halving y, and leaving z unchanged. This produces a distorted triangle by design. (P1-24)
+
+To rotate a shape about a pivot $c=(c_x,c_y)$ rather than the origin, the intended point transformation is $T(c)R(\theta)T(-c)p$: first subtract the center, rotate, then add the center back. For the lecture's triangle, $c=(0.5,0.5)$. The transcript describes this geometric construction but its spoken translations/signs are ambiguous against the usual column-vector derivation. The source code was not independently inspected, so treat the mathematical pivot recipe as the correct conceptual target and do not infer the exact working call sequence from captions alone. In fixed-function OpenGL, calls postmultiply the current matrix, so the call sequence needed for this point transformation should be checked against that API convention. (P1-24)
+
+### Additional geometry notes for light transport
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### Barycentric coordinates describe a point in a triangle
+
+Let $P_1,P_2,P_3$ be a triangle's vertices. Any point in the triangle can be represented as
+
+$$
+P=\alpha_1P_1+\alpha_2P_2+\alpha_3P_3,
+\qquad \alpha_1+\alpha_2+\alpha_3=1.
+$$
+
+The coefficients are barycentric coordinates. They describe how the point is positioned relative to the three corners. For a nondegenerate triangle, each point in its plane has a unique triple under this sum constraint. If all coefficients are nonnegative, the point is inside or on the triangle. A zero coefficient places it on the edge opposite that vertex; a coefficient of one and the other two zero selects that vertex.
+
+Example: for triangle $P_1=(0,0)$, $P_2=(2,0)$, and $P_3=(0,2)$, choose weights $(0.25,0.5,0.25)$. They sum to one, and
+
+$$
+P=0.25(0,0)+0.5(2,0)+0.25(0,2)=(1,0.5).
+$$
+
+This coordinate system is useful because the same weights can interpolate attributes attached to the vertices, such as colors, once a triangle's point is known. The lecture spells the spoken name inconsistently in captions; “barycentric coordinates” is the standard term for the construction shown. (P3-01)
+
+#### Organize the graphics program with model, view, and controller roles
+
+The 2009 course uses **model-view-controller (MVC)** to separate responsibilities. The model stores the shape or curve and knows how to draw its geometry. The view is a canvas/window; in the lecture it is based on Qt's `QGLWidget` and owns the camera setup and drawing context. The controller handles user input such as buttons or sliders. If a user presses “draw one more level,” the controller emits a signal; a connected model slot updates the subdivision level; the view is then asked to repaint and calls model draw routines. Separating these roles makes a complex graphics tool easier to change and debug: the model can be drawn in different views, and different controls can update the same model. (P3-04)
+
+Qt's signal/slot mechanism supplies the communication path. The lecture describes a `Q_OBJECT` declaration and Qt's `moc` preprocessing step as needed in that era's C++ build. Those are part of this recording's Qt workflow; the draft does not treat `QGLWidget` or its build details as current Qt/OpenGL setup instructions. (P3-04)
+
+#### Historical snapshot: the 2009 lecture pipeline and API
+
+The P3 recordings describe C++ matrix classes, Qt signals/slots, `QGLWidget`, and an OpenGL-centered course. Their algebra here uses row vectors and matrices multiplied on the right. The P1 draft uses column vectors, and modern shader examples commonly do as well; transpose the matrices and reverse composition order when changing conventions. That algebraic choice is separate from how a matrix's entries are stored in memory. Do not carry a legacy fixed-function call sequence directly into a modern core-profile renderer: the transform mathematics transfers, while the API responsibilities, shaders, and buffer setup differ. These P3-04 captions do not show or test a complete graphics API implementation. (P3-01; P3-03–04)
+
+#### Historical snapshot: the 2009 lecture pipeline and API
+
+These lectures were recorded in 2009 and explicitly use Qt `QGLWidget`, GLU camera helpers, matrix stacks, `glBegin`-era vocabulary, and fixed-function lighting ideas. They are valuable for the mathematics and history. In a current OpenGL core-profile application, immediate mode and the fixed-function matrix/lighting stack are absent; applications provide vertex buffers, shaders, and their own model/view/projection data. The camera/frustum derivations, signed-distance clipping, depth testing, and lighting intuition still transfer, but API calls and some clip-depth conventions do not. No lecture frames or code were independently inspected here, so this section is transcript evidence plus convention-aware explanation, not a claim that a particular code sample was tested. (P3-01, P3-04–08)
+
+#### Rasterization: turn projected polygons into pixel samples
+
+After clipping and perspective division, normalized image coordinates must map to device pixels. For an $N_x$ by $N_y$ viewport, the simple mapping from $[-1,1]^2$ is $x_d=(x_{ndc}+1)N_x/2$ and $y_d=(y_{ndc}+1)N_y/2$, subject to the viewport origin and pixel-center convention. This scaling makes adjacent pixel cells one device unit apart. Rasterization, called scan conversion in the lecture, finds which pixel samples a projected polygon covers and computes attributes such as depth, color, and texture coordinates at those samples. (P3-12)
+
+A scan-line method processes horizontal rows. First split a polygon at its vertex heights so each piece is a trapezoid-like band with two active edges. A triangle is a limiting case where one horizontal end has zero width. For an edge from $(x_1,y_1,z_1)$ to $(x_2,y_2,z_2)$, similar triangles give the change per unit vertical step:
+
+$$
+\Delta x/\Delta y=\frac{x_2-x_1}{y_2-y_1},\qquad
+\Delta z/\Delta y=\frac{z_2-z_1}{y_2-y_1}.
+$$
+
+The edge record stores its current position, its next end row, and these increments. Each scanline advances the current x and z by addition instead of recomputing an intersection from scratch. If the edge begins between scanlines, start at the correct fractional offset. Horizontal edges have $\Delta y=0$ and cannot use these divisions; omit them from the active-edge update or handle them as boundaries under a consistent fill rule. A zero-height polygon contributes no area. (P3-12)
+
+For example, an edge moving from $(2.4,5,0.3)$ to $(5.4,2,0.9)$ changes x by 3 and z by 0.6 while y descends by 3. Each one-row descent therefore advances x by 1 and z by 0.2. Once both intersections of a row are known, fill the span between them. For a planar face with normal $N=(N_x,N_y,N_z)$, one device-pixel step to the right changes the point by $(1,0,\Delta z)$. That displacement lies in the face, so it is perpendicular to the face normal:
+
+$$
+N\cdot(1,0,\Delta z)=0\quad\Rightarrow\quad\Delta z/\Delta x=-N_x/N_z.
+$$
+
+Thus depth can also advance across the row by a constant addition. If $N_z$ is zero, the projected face is edge-on in this setup and the division is invalid; detect degenerate cases explicitly. These increments make a simple raster loop efficient, but an off-by-one, sign error, or inconsistent boundary convention can create cracks or extra pixels. (P3-12)
+
+The lecture chooses the lower-left corner of each pixel as its sample point to simplify the derivation. This is one sampling convention; real rasterizers use a precisely specified edge rule and sample positions so two triangles sharing an edge neither leave a gap nor both claim the same boundary inconsistently. The source describes the danger directly: a one-pixel error can leave cracks, overpaint neighbors, and corrupt later depth comparisons. Use a top-left or equivalent deterministic fill rule in a hand-written implementation rather than assuming every pixel is represented by its lower-left corner. (P3-12)
+
+The edge/span bookkeeping can carry more than $(x,y,z)$. If vertex colors are supplied, increment R, G, and B just like depth; this is Gouraud interpolation. Carry texture coordinates $(u,v)$ to look up a texture at each covered sample. Carry normals for per-pixel Phong shading, then normalize interpolated normals before lighting. This explains how shading, texturing, depth testing, and rasterization meet: rasterization supplies the per-sample position/attributes, the shader or lighting model evaluates color, and the depth buffer decides whether the sample is visible. The original points and normals may also be retained so a renderer can transform a visible sample back into object/world space for lighting calculations. (P3-10, P3-12)
+
+There is one important perspective detail. The lecture informally describes linearly interpolating texture coordinates across projected triangles. Linear interpolation in screen space is correct for affine quantities, but perspective projection changes spacing. For a perspective-correct attribute, interpolate $u/W$, $v/W$, and $1/W$ across the screen, then recover $u=(u/W)/(1/W)$ and similarly for v. Modern GPU rasterization normally performs this correction for default smooth attributes. If a custom scan converter linearly interpolates u and v directly after perspective division, a receding checkerboard will warp incorrectly. (P3-10, P3-12)
+
+With many polygons, an active-edge organization handles all shapes row by row. For each scanline, add edges that begin there, remove edges that end there, sort active intersections by x, and fill the intervals between boundary pairs. Since edge order usually changes only slightly from one row to the next, the list is nearly sorted and can be repaired cheaply. The lecture calls this family the Watkins algorithm and emphasizes the shared structure: maintain endpoint records, advance their attributes by increments, and process the spans. (P3-12)
+
+Pixels are finite areas, not mathematical points. If a polygon edge crosses only part of a pixel but one corner sample misses it, the binary result produces jagged edges. As the object moves, that jagged boundary changes abruptly and appears to crawl or flicker. Anti-aliasing estimates partial coverage or takes multiple samples and averages them. A simple supersampling example renders at four times the width and height, yielding 16 subpixel samples for each output pixel, then averages those samples. Modern multisampling also improves coverage edges but does not necessarily shade every sub-sample independently; the two methods are related, not identical. The same sampling principle applies to ray tracing: trace multiple rays per pixel and average to reduce jagged edges, at extra cost. (P3-12)
+
+### Figure U10 - Vertex fetch uses a stride and byte offset
+
+![[Visual Recall/University Graphics and Vision/vertex-byte-fetch.png]]
+
+*This checked example uses packed float32 positions and colors, a 24-byte vertex stride, and a color offset of 12 bytes. It illustrates one memory layout, not every GPU format or binding model.*
+
 ## Textures and surface detail
 
 Textures attach spatially varying signals to surfaces, so filtering must follow their projected footprint.
@@ -1922,7 +2880,7 @@ Textures attach spatially varying signals to surfaces, so filtering must follow 
 
 A texture map stores a signal in a two-dimensional parameter domain. A surface point is assigned UV coordinates ((u,v)), and the renderer samples the image or function there. Parameterization is the mapping that flattens a surface to a domain; it inevitably introduces distortion, seams, or both. For a mesh triangle with per-vertex coordinates (u_i,v_i), barycentric interpolation transfers a hit point to texture space. If texture coordinates are outside the unit tile, the sampler needs a policy: repeat, clamp, mirror, or border color.
 
-A sampled texture usually needs interpolation. If the query lies between four texel centers with fractional coordinates a,b\in[0,1], bilinear interpolation blends horizontally and then vertically:
+A sampled texture usually needs interpolation. If the query lies between four texel centers with fractional coordinates $a,b\in[0,1]$, bilinear interpolation blends horizontally and then vertically:
 
 $$
 T(u,v)=(1-b)((1-a)T_{00}+aT_{10})+b((1-a)T_{01}+aT_{11}).
@@ -1948,7 +2906,7 @@ UV generation is an optimization problem with both geometric and topological cho
 
 Parameterization methods include artist-chosen seams, closed-form cylinder or sphere projections, and automatic optimization. A photo projected from a virtual camera is useful for image-based rendering, where a simple geometric proxy carries photographs from one or more views. It is less suitable for a freely turning object because a projection designed for one camera may stretch or slide under another. A tiled texture can reuse a small image with wraparound coordinates, while a normal map stores a perturbed normal rather than color. Normal mapping gives a low-polygon mesh fine shading variation, often baked from a high-resolution model, but cannot produce the true silhouette, parallax, or mutual occlusion of displaced geometry. [[#MITG-14 - Texture mapping|MITG-14]] (00:37:49–00:40:20; 00:49:49–00:56:41)
 
-A sampled image is a grid, so a non-integer UV coordinate needs reconstruction. Nearest-neighbor lookup picks one texel and creates visible jumps. Bilinear filtering interpolates between four neighbors: interpolate horizontally in the two rows, then vertically between the results. The order gives the same bilinear polynomial. When the texture becomes small on screen, one output pixel covers many texture texels. Sampling only one can alias the pattern into flicker or moiré. A mip pyramid precomputes successively half-sized averages; selecting the level whose texel footprint roughly matches the screen footprint approximates the needed area average. The extra memory is bounded: for a square texture, the level sizes sum to $N^2(1+1/4+1/16+\cdots)=\frac43N^2$, ignoring tiny rounding effects. A surface tilted away from the camera has an elongated, direction-dependent footprint, so isotropic mip selection can blur too much in one direction; [[Convolution and filter footprints|anisotropic filtering]] samples that footprint more selectively. [[#MITG-14 - Texture mapping|MITG-14]] (00:27:06–00:34:15)
+A sampled image is a grid of texels (texture pixels), so a non-integer UV coordinate needs reconstruction. Nearest-neighbor lookup picks one texel and creates visible jumps. Bilinear filtering interpolates between four neighbors: interpolate horizontally in the two rows, then vertically between the results. The order gives the same bilinear polynomial. When the texture becomes small on screen, one output pixel covers many texture texels. Sampling only one can alias the pattern into flicker or moiré. A mip pyramid precomputes successively half-sized averages; selecting the level whose texel footprint roughly matches the screen footprint approximates the needed area average. The extra memory is bounded: for a square texture, the level sizes sum to $N^2(1+1/4+1/16+\cdots)=\frac43N^2$, ignoring tiny rounding effects. A surface tilted away from the camera has an elongated, direction-dependent footprint, so isotropic mip selection can blur too much in one direction; [[Convolution and filter footprints|anisotropic filtering]] samples that footprint more selectively. [[#MITG-14 - Texture mapping|MITG-14]] (00:27:06–00:34:15)
 
 Texture maps can hold any per-surface signal, not just RGB: diffuse coefficient, specular strength, roughness, or other BRDF parameters. Normal maps encode direction changes that perturb the normal used by lighting. Store directions in a coordinate frame that rotates with the surface (often tangent space), rather than naïvely storing world-space XYZ values that become invalid when the object moves. A coarse mesh with a normal map can reproduce the lighting of fine bumps from a distance, while remaining visibly flat in silhouette or when occlusion matters. [[#MITG-14 - Texture mapping|MITG-14]] (00:49:49–00:56:41)
 
@@ -1977,7 +2935,7 @@ An implicit-surface ray query solves $F(o+td)=0$. If $F$ is a polynomial, this c
 
 ### A ray answers the visibility question
 
-A camera ray is written (r(t)=o+td), with origin (o), direction (d), and t\ge0. Given a camera sample, the ray asks which surface is encountered first. For a sphere with center (c) and radius (R), substituting o+td into (\|r(t)-c\|^2=R^2) gives a quadratic. Let m=o-c. Then
+A camera ray is written $r(t)=o+td$, with origin $o$, direction $d$, and $t\ge0$. Given a camera sample, the ray asks which surface is encountered first. For a sphere with center $c$ and radius $R$, substituting o+td into $\|r(t)-c\|^2=R^2$ gives a quadratic. Let m=o-c. Then
 
 $$
 (d\cdot d)t^2+2(d\cdot m)t+(m\cdot m-R^2)=0.
@@ -1987,11 +2945,11 @@ A negative discriminant means no hit. Two positive roots mean the ray enters and
 
 For a numerical trace, set o=(0,0,0), d=(0,0,1), c=(0,0,5), and R=1. Then m=o-c=(0,0,-5), so the quadratic becomes t²-10t+24=0. Its roots are t=4 and t=6. The first root is the sphere's front surface; the second is its back surface. The hit normal is (r(4)-c)/R=(0,0,-1). This one calculation produces both visibility depth and a geometric normal for later shading.
 
-For a triangle, barycentric coordinates express a point as p=\alpha a+\beta b+\gamma c, with alpha+\beta+\gamma=1. The point lies inside the triangle when all three weights are nonnegative. If a ray hit is expressed in barycentric coordinates, those same weights interpolate per-vertex attributes such as color, normal, or texture coordinates. This is a powerful bridge from geometry to shading: the hit test returns not just a location but a location's coordinates in the primitive. The second casting lecture uses barycentric coordinates and moves among triangle primitives and constructive solid geometry (CSG) [[#MITG-10 - Ray casting II|MITG-10]] (00:15:00–00:45:00).
+For a triangle, barycentric coordinates express a point as $p=\alpha a+\beta b+\gamma c$, with $\alpha+\beta+\gamma=1$. The point lies inside the triangle when all three weights are nonnegative. If a ray hit is expressed in barycentric coordinates, those same weights interpolate per-vertex attributes such as color, normal, or texture coordinates. This is a powerful bridge from geometry to shading: the hit test returns not just a location but a location's coordinates in the primitive. The second casting lecture uses barycentric coordinates and moves among triangle primitives and constructive solid geometry (CSG) [[#MITG-10 - Ray casting II|MITG-10]] (00:15:00–00:45:00).
 
 CSG builds a solid from simpler solids with union, intersection, and difference. For ray rendering, each primitive contributes an ordered set of entry/exit intervals; Boolean operations combine those intervals. For example, a drilled hole can be a solid cylinder subtracted from a box. The resulting boundary can be rendered without first remeshing the Boolean result. CSG is easy to describe compositionally but needs careful treatment of coincident surfaces, inside/outside state, and numerical tolerances. The lecture's ray-casting discussion uses CSG to extend primitive intersection beyond spheres and triangles [[#MITG-10 - Ray casting II|MITG-10]] (00:20:00–00:50:00).
 
-Ray casting gives direct visibility and local shading. Ray tracing extends the question recursively: after the camera ray hits, where does mirror-reflected or transmitted light come from? A reflected direction is (r=d-2d\cdot nn) for normalized incident direction (d) and normal (n). Refraction uses Snell's law. If the refractive indices are n_1,n_2, then n_1\sin\theta_1=n_2\sin\theta_2; some incidence angles cause total internal reflection instead of a transmitted ray. A ray tree branches at reflective and refractive surfaces, and recursion depth or energy thresholds limit work. This captures mirror and glass effects, but does not by itself solve all indirect lighting: a diffuse bounce can send energy toward many directions. The tracing lectures derive secondary rays, reflection/refraction behavior, and recursive ray trees [[#MITG-11 - Ray tracing|MITG-11]] · [[#MITG-12 - Ray tracing II|MITG-12]] (00:05:00–00:20:00; 00:40:00–01:00:00; , 00:25:00–00:45:00).
+Ray casting gives direct visibility and local shading. Ray tracing extends the question recursively: after the camera ray hits, where does mirror-reflected or transmitted light come from? A reflected direction is $r=d-2d\cdot nn$ for normalized incident direction (d) and normal (n). Refraction uses Snell's law. If the refractive indices are n_1,n_2, then $n_1\sin\theta_1=n_2\sin\theta_2$; some incidence angles cause total internal reflection instead of a transmitted ray. A ray tree branches at reflective and refractive surfaces, and recursion depth or energy thresholds limit work. This captures mirror and glass effects, but does not by itself solve all indirect lighting: a diffuse bounce can send energy toward many directions. The tracing lectures derive secondary rays, reflection/refraction behavior, and recursive ray trees [[#MITG-11 - Ray tracing|MITG-11]] · [[#MITG-12 - Ray tracing II|MITG-12]] (00:05:00–00:20:00; 00:40:00–01:00:00; , 00:25:00–00:45:00).
 
 An acceleration structure reduces the number of expensive primitive tests. A bounding volume hierarchy (BVH) encloses groups of objects in boxes; if a ray misses a box, it can skip every primitive below it. A k-d tree recursively partitions space. Both trade construction/storage work for faster repeated queries. For (N) triangles, a brute-force ray tests all (N); an effective hierarchy often visits a much smaller subset, though worst-case behavior can still approach (N). The second ray-tracing lecture discusses axis-aligned bounding boxes and traversal as an algorithmic cost problem [[#MITG-12 - Ray tracing II|MITG-12]] (00:30:00–00:55:00).
 
@@ -2024,7 +2982,7 @@ This calculation exposes brute-force cost. With $P$ pixels and $N$ primitives, o
 A triangle is finite, so intersecting its supporting plane is only half the test. Let its non-collinear vertices be $a,b,c$. Any point $p$ on their plane has affine or barycentric coordinates
 
 $$
-p=\alpha a+\beta b+\gamma c,\qquad \alpha+\beta+\gamma=1.
+$p=\alpha a+\beta b+\gamma c$,\qquad \alpha+\beta+\gamma=1.
 $$
 
 The sum-to-one constraint makes this an affine combination; it leaves two degrees of freedom, exactly the dimension of a plane. If each weight is nonnegative, $p$ is inside the triangle. A negative weight means the point lies across the line opposite that vertex. At the corners the triples are $(1,0,0)$, $(0,1,0)$, and $(0,0,1)$. On the edge from $a$ to $b$, $\gamma=0$. These tests make barycentrics useful beyond ray hits: they are local coordinates for every point of a triangle. [[#MITG-10 - Ray casting II|MITG-10]] (00:07:00–00:18:10)
@@ -2143,6 +3101,62 @@ Traversal correctness comes from parameter intervals. At a node, let the parent 
 
 A regular grid provides another organization. Insert each primitive into every cell its bound or geometry overlaps. Traverse the cells in the order the ray crosses them and test only their contents. The 3D digital differential analyzer (DDA) keeps the next crossing parameter for each axis. From current cell entry $t$, advance to the smallest next boundary time, update the corresponding cell index, and update that axis's next time by a constant increment. For example, if the next x face is at $t_x=2.4$ and the next y face is at $t_y=2.1$, advance y first; then compare the updated times again. Stop once a valid primitive hit lies within the current cell's interval. A primitive spanning several cells can be tested repeatedly unless the implementation marks already-tested primitives. Tiny cells increase walking overhead; large cells put many primitives in each bucket. Uniform grids suit scenes with roughly uniform object scale, and their ordered loops can be simpler to parallelize than recursive trees. [[#MITG-12 - Ray tracing II|MITG-12]] (01:09:20–01:18:50)
 
+### Additional geometry notes for rasterization
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### Visibility: compare depth locally or trace paths
+
+After projection, screen x and y say where a sample lands; depth says which opaque surface is in front. A depth buffer stores one depth per pixel next to the color buffer. When a triangle rasterizes a pixel, interpolate its depth and compare it with the stored value. If the new fragment is nearer, replace both color and stored depth; otherwise leave the current pixel alone. This makes the result independent of the order in which opaque triangles were submitted and reduces to a local comparison that GPUs can perform in parallel. (P3-07)
+
+The comparison direction and clear value are paired with the chosen depth mapping. In this lecture’s image-space convention, near is larger than far, so it initializes to a very negative value and keeps the larger depth. In a common modern window-depth setup, nearer values are smaller, the buffer is cleared to 1, and a `LESS` test keeps the smaller value. Reversing one part without the other makes occlusion wrong. Perspective depth is nonlinear after divide: depth values are crowded toward the far end, so a needlessly tiny near distance relative to the far distance reduces precision. (P3-05–07)
+
+A depth buffer solves visibility for opaque samples, not every light-transport problem. Transparent surfaces need blending and ordering or a different method; a single nearest-surface value cannot represent multiple layers. A shadow asks what is hidden from a light, while the camera depth test asks what is hidden from the eye. These are separate visibility queries. (P3-07)
+
+Ray tracing asks the visibility question differently. For each pixel sample, cast a primary ray from the eye through the image plane, intersect it with scene objects, and keep the nearest hit. A naïve implementation costs about $O(PN)$ for $P$ pixel samples and $N$ objects. As a scale check, one million pixels times one thousand objects is roughly one billion intersection tests. A ray-sphere test can reduce to distance from the ray to the sphere center; triangles need a ray-triangle intersection test. Each pixel ray can be processed independently, but a straightforward implementation may perform much more work than rasterization.
+
+Secondary rays add effects: send a shadow ray from a surface point toward a light and mark it shadowed if another object is encountered first; send a reflected ray in the mirror direction; send a refracted/transmitted ray through transparent material. Recursive effects can branch, so realism brings a potentially large cost. This is the geometric-optics view of light paths traced backward from the eye. The lecture contrasts its cost with the practical depth-buffer solution and previews later ray-tracing work. (P3-07)
+
+Painter’s algorithm sorts surfaces back-to-front and draws them in order, but cyclic overlap can make a global ordering impossible unless geometry is split. A Warnock-style algorithm handles a complex screen region by subdividing it into four smaller regions and repeating until each region is simple enough to resolve. These methods illustrate different ways to turn a global visibility problem into a useful order or smaller local problems. (P3-07)
+
+#### Choose visibility algorithms by their ordering and data needs
+
+The 2009 survey groups five approaches by where they solve visibility:
+
+| Method | Core decision | Main strength | Limitation or use |
+|---|---|---|---|
+| Depth buffer | Per pixel, keep the nearest depth | Submission order can be arbitrary; maps well to parallel hardware | Extra memory; transparent layers need more than one depth |
+| Scanline | Process polygon spans row by row, updating depth/order | Incremental edge/attribute bookkeeping | More complex active-edge state; often combined with depth buffer |
+| Painter / BSP | Sort or partition geometry, then draw back-to-front | Can reuse a spatial ordering for a moving camera; useful in constrained game scenes | Cyclic overlap forces splitting; tree balance and fragments matter |
+| Warnock subdivision | Split the image into smaller windows until each is simple | Window tasks distribute across processors; can oversample edges | Recursive work and repeated polygon/window tests |
+| Ray tracing | Send rays through samples and choose nearest intersections | Natural reflection, shadow and refraction paths | Intersection cost grows; acceleration structures required |
+
+A painter’s algorithm is like painting distant scenery first and nearer objects over it. If every polygon can be placed in one back-to-front list, later drawing hides earlier color. Intersecting polygons can form a cycle—A in front of B in one region, B in front of C elsewhere, C in front of A—so there is no global scalar sort that works. A binary space partition (BSP) tree chooses a polygon plane, classifies other polygons against it, and splits polygons that cross. The tree stores an ordering, and traversal visits the far subtree, the node polygon, and the near subtree; which subtree is “far” depends on the camera’s side of the plane. Bounding volumes can avoid unnecessary split tests. A badly chosen splitter produces a deep, unbalanced tree and many tiny fragments, so random or heuristic plane selection can help. (P3-07, P3-14)
+
+Warnock’s method works in screen space. For a viewport region, collect the polygons that overlap it. If there are none, leave it blank; if one surface alone determines the region, draw it; if a nearer polygon covers the whole region (a surrounder), discard surfaces hidden behind it. Otherwise divide the rectangle into four child windows and repeat with smaller polygon lists. At a one-pixel region, choose the nearest candidate; subdividing below pixel size and averaging samples improves edge coverage. This is a quadtree. Its tasks can be sent to separate processors, which explains why its recursive subdivision remains useful even when the original algorithm is not the main renderer. (P3-14)
+
+The methods are complementary. Rasterization still needs coverage and interpolated attributes; the depth test chooses visible opaque samples. A BSP or painter order can avoid a per-pixel depth store in special geometry, but incurs scene sorting and splitting. Ray tracing resolves nearest intersections per ray and naturally adds secondary visibility queries. The lecture also mentions scanline/depth hybrids. Do not read the historical claim “this algorithm is dead” as a timeless API fact: hardware shifts the balance, and components of older methods reappear inside newer parallel renderers. (P3-14)
+
+#### Ray intersection, recursive paths, and acceleration
+
+A ray is an origin $O$ and direction $D$: $R(t)=O+tD$ for $t\ge0$. Normalize $D$ if you want $t$ to measure distance. For a plane through point $Q$ with normal $N$, an intersection lies on both the ray and plane, so
+
+$$
+N\cdot(O+tD-Q)=0,\qquad t=\frac{N\cdot(Q-O)}{N\cdot D}.
+$$
+
+If $N\cdot D=0$, the ray is parallel; if it also lies in the plane, the intersection is non-unique and must be handled separately. Reject negative t because those hits lie behind the ray origin. This dot-product formula is the same signed-plane test used for clipping, now used to find a location rather than classify a whole endpoint. (P3-15)
+
+For a sphere centered at $C$ with radius $r$, let $V=C-O$ and let $D$ be unit length. Project V onto the ray with $h=V\cdot D$. The squared perpendicular distance is $d_\perp^2=V\cdot V-h^2$. If this exceeds $r^2$, the ray misses. Otherwise its roots are $t_{near}=h-\sqrt{r^2-d_\perp^2}$ and $t_{far}=h+\sqrt{r^2-d_\perp^2}$. Keep the smallest nonnegative root. This geometric derivation shows why spheres are an easy primitive, though a production implementation can solve the quadratic directly and must consider floating-point tolerances. For a triangle, intersect its plane and test the hit’s barycentric coordinates; all three coordinates must be nonnegative and sum to one. (P3-15)
+
+A recursive Whitted-style renderer starts with the camera ray and shades the nearest surface. For each point light, cast a shadow ray toward it; a hit before the light means the direct source is blocked. For a reflective surface, reflect the incoming direction about the normal and trace a new ray; for a dielectric surface, use its refractive index and Snell’s law to trace transmission, with total internal reflection as an edge case. Add each returned radiance scaled by the material’s reflective/transmissive coefficient. Stop at a maximum bounce depth or when contribution becomes negligible, otherwise repeated mirrors can recurse indefinitely. The source transcript says “Turner Whitted”; the correct author is Turner Whitted, whose 1980 paper describes the recursive ray tree ([ACM record](https://doi.org/10.1145/358876.358882), [paper copy](https://my.eng.utah.edu/~cs6958/papers/p343-whitted.pdf)). (P3-07, P3-15)
+
+Backward ray tracing traces from the eye because only paths contributing to visible pixels matter. It efficiently handles direct shadows and ideal mirror/refraction chains. It can miss a narrow light path that does not begin at the camera ray, such as a caustic where a lamp reflects from a mirror onto a diffuse table. Forward light tracing marks where emitted paths land; combining sampling strategies is harder but recovers such paths. Diffuse interreflection requires many scattered directions, so each surface hit can spawn many more rays. More rays improve coverage but increase work. This is the geometric-optics model, not a wave-optics simulation. (P3-15)
+
+The naïve primary-ray cost is roughly $P\times N$ primitive tests for $P$ samples and $N$ objects. Spatial acceleration groups objects. An octree recursively divides 3D space into eight cells; a ray visits only cells it crosses and tests the objects stored there. A kd-tree uses axis-aligned plane splits, often at adaptive positions rather than the exact center. Smaller leaves reduce primitive tests but increase tree traversal and storage. Objects crossing cell boundaries may be referenced in multiple nodes or handled by a spatial split rule. The ray-versus-cell traversal resembles grid line rasterization because both increment through ordered cells. (P3-15)
+
+Implicit surfaces give another difficulty. If a surface is $F(x,y,z)=0$, substitute the ray coordinates to obtain $F(O_x+tD_x,O_y+tD_y,O_z+tD_z)=0$, a one-variable root-finding problem. A quadratic can be solved directly; a generic polynomial of degree five or more has no general formula in radicals. Numerical root-finding is needed for many implicit surfaces. Neighboring pixel rays usually hit nearby points, so the previous ray’s root can seed the next search, but at silhouettes a tiny screen shift may jump to a different branch or miss the surface. This is why ray tracing a sphere or triangle is straightforward while ray tracing a high-order freeform surface is a numerical-analysis problem. (P3-15)
+
 ## Scene graphs and articulated geometry
 
 Hierarchies separate reusable local structure from global pose, allowing articulated surfaces to follow moving skeletons.
@@ -2252,6 +3266,18 @@ The point collapses onto the joint even though neither bone transform collapses 
 
 The 2021 skinning lecture separates the artist-authored character, the skeleton pose, and the deformation caused by changing pose. It discusses how the surface follows a moving joint, and uses interpolated sensor/pose information as an example of estimating motion between samples [[#MITG-06 - Animation:  Skinning/enveloping|MITG-06]] (00:05:00–00:30:00; 00:35:00–00:55:00). The important weakness of ordinary matrix blending is that a weighted sum of rigid rotations is generally not itself a rigid rotation. Near joints, this can shrink or twist volume, producing the “candy-wrapper” or collapsing-joint artifact. Dual-quaternion skinning provides one alternative for blending rigid transforms, while corrective shapes or nonlinear methods handle artist-specific deformations. These later options address the limits of the simple baseline rather than making the baseline useless: linear blend skinning is fast, easy to implement, and often adequate when the rig and weights are designed with its behavior in mind.
 
+### Additional geometry notes for acceleration structures
+
+These lecture examples are integrated by topic. The 2009 interface material below is explicitly historical; it is not a modern OpenGL core recipe.
+
+#### Hierarchical modeling: reuse geometry through transforms
+
+A scene is easier to build from reusable pieces than from one long list of hard-coded world coordinates. The lecture’s 1977-era Midas example treats a text file as a small modeling program. A polygon command defines a unit square. A transform command moves or rotates it; a create command makes a transformed copy while keeping the source; an extrude command sweeps a face into side polygons; an assemble command combines named pieces. Six instances of a square, each with its own transform, make the six faces of a cube. Repeating the cube with translations creates a larger regular arrangement. (P3-11)
+
+This command list naturally forms a directed graph. The leaf stores the original points; each parent stores which children to include and the transform to apply. A table can reuse one cube model for four legs and a top, changing only each instance’s transform. In a row-vector system, define clearly whether a local transform is applied before or after its parent transform; a child’s world transform is the ordered product along the path from leaf to root. In the column-vector convention, that product order reverses. The same parent-child rule makes an articulated character work: rotate the torso and all descendant parts follow; rotate the upper arm and the forearm follows, while the hand remains attached at its own joint. (P3-11)
+
+The source examples reinforce two useful modeling habits. First, identify repeated structure: many chairs, floor tiles, railroad boards, or background houses can be instances of a few models. Second, keep geometry local and move instances with transforms. This lowers authoring effort and makes the model easier to edit. A graph can be a strict tree, or a DAG if geometry resources are shared; distinguish shared immutable shape data from per-instance transform/material state so changing one chair does not accidentally change every chair. The 2009 fixed-function matrix stack offers push/pop for nested transforms. Current renderers usually traverse an explicit scene graph and pass composed matrices to shaders, but the composition idea is the same. (P3-11)
+
 ## Animation curves and motion paths
 
 Motion paths and animation curves describe how poses vary through time and how smoothly cameras or characters move.
@@ -2263,6 +3289,24 @@ A camera path specifies position $x(t)$, viewing direction, and an up vector. In
 ### Camera orientation continuity along a spline path
 
 A camera path must interpolate both position and orientation while maintaining a valid up direction. A curve can be smooth in position yet rotate abruptly if orientation is interpolated inconsistently. The camera therefore combines geometric curve design, a rotation representation, and time parameterization; its valid orientation frame is part of the animation state. [[#CMU-20 - Introduction to Animation|CMU-20]]
+
+### Additional geometry notes for scene graphs
+
+#### Smooth interpolating paths and camera motion
+
+A Bezier control polygon is a handle: its interior controls generally do not lie on the curve. A camera path often needs to pass through chosen waypoints, so Catmull–Rom uses interpolating cubic segments. Between waypoints $P_1$ and $P_2$, a uniform Catmull–Rom segment takes endpoint tangents from neighbors, commonly $m_1=(P_2-P_0)/2$ and $m_2=(P_3-P_1)/2$. With these tangents, adjacent pieces meet at each waypoint and share a tangent direction and scale, giving $C^1$ continuity for uniform parameter spacing. For unevenly spaced waypoints, chord-length or centripetal parameterization is needed to avoid inappropriate speed and loops; the uniform formula assumes equal parameter steps. (P3-20)
+
+The Hermite basis writes this segment directly from endpoints and tangents:
+
+$$
+P(t)=(2t^3-3t^2+1)P_1+(t^3-2t^2+t)m_1+(-2t^3+3t^2)P_2+(t^3-t^2)m_2.
+$$
+
+At $t=0$ the weights select $P_1$ and its derivative is $m_1$; at $t=1$ the curve reaches $P_2$ with derivative $m_2$. These four boundary conditions determine the four coefficients of a cubic polynomial. Bezier, Ferguson/Hermite, and Catmull–Rom are different ways to specify a cubic; converting between their coefficient/control-point forms is a matrix change of basis, not a different geometric degree. (P3-20)
+
+For a numeric intuition, let neighboring one-dimensional waypoints be $P_0=0,P_1=0,P_2=10,P_3=10$. Uniform Catmull–Rom gives both tangents as 5. At $t=1/2$, the Hermite basis has weights $1/2,1/8,1/2,-1/8$, so $P(1/2)=0.5(0)+0.125(5)+0.5(10)-0.125(5)=5$. The path reaches the midpoint smoothly; unlike straight interpolation, its endpoint speeds match the neighboring waypoint context. A small perturbation to a point affects nearby segments rather than making a single global Lagrange polynomial swing wildly across the entire route. (P3-20)
+
+Continuity labels describe different experiences. $C^0$ means neighboring pieces meet in position but may have a corner. $C^1$ also matches first derivatives, removing a velocity jump. $C^2$ matches second derivatives, so curvature changes less abruptly. A camera can still look jerky on a geometrically smooth path if it starts at full speed, stops instantly, or rotates its view direction abruptly. Treat time as a second function: ease speed from zero to cruise and back, and smooth orientation (look direction and up vector) separately from position. A cubic easing curve with a horizontal tangent at its start and end can ramp velocity gently. The path spline determines where the camera goes; timing and orientation determine how the shot feels. (P3-20)
 
 ## Dynamics, forces, and numerical integration
 
@@ -2586,6 +3630,66 @@ $$
 Substitution into the future acceleration equation yields a sparse linear system for the unknown acceleration (or velocity increment), with matrix terms involving $M$, $hD$, and $h^2J_F$. The exact signs depend on whether force Jacobians are defined as derivatives of force or positive stiffness; use one convention consistently. The computational benefit is that a stiff spring's fast mode is treated in the solve instead of being chased by tiny explicit steps. The cost is assembling and solving a coupled system. The lecture motivates backward Euler for stiff cloth and identifies the solve as the price of stability; this linearization spells out that mechanism. [[#MITG-08 - Cloth simulation|MITG-08]] (00:47:00–00:56:00; 01:12:00–01:16:00)
 
 An ordinary spring chain also cannot model every material property. Hair may need curvature and twist states; twisting an elastic rod can cause it to buckle, a behavior a chain of point masses and length springs cannot express. Discrete elastic rods augment centerline positions with material-frame twist. Real fabric likewise has thickness, weave, friction, bending stiffness, and collision behavior. A simple spring mesh is useful because it chooses a manageable subset. [[#MITG-08 - Cloth simulation|MITG-08]] (00:59:00–01:06:40; 01:11:00–01:12:10)
+
+### Contact dynamics with a nonintersection guarantee
+
+*Connect to:* mesh geometry and deformation; numerical optimization; finite-element dynamics; collision detection; friction.
+
+**Incremental Potential Contact (IPC)** addresses a difficult guarantee: an elastic mesh should not pass through itself, an obstacle, or itself invert between time samples. The method solves each implicit time step by minimizing an incremental action that combines inertial, elastic, and external-force terms. It treats admissible motion as a trajectory through configurations that stay intersection-free. This distinction matters: checking only that the two endpoints of a time step do not overlap can miss a collision that happened in between.
+
+The CCD guarantee preserves feasibility from an admissible starting configuration. If the elastic model also forbids inversion, the initial state must satisfy that condition as well. For a set of nonadjacent surface primitive pairs, compute unsigned distances $d_k(\mathbf{x})$. A trajectory is intersection-free when these distances stay positive for every time in the step. The admissible set is defined as the closure of the intersection-free trajectories: a motion that just touches and turns away is a limit of valid motions, but a motion that crosses through a surface is not. This definition handles surface obstacles, curves, and points in one framework. It is stronger than merely demanding a nonnegative unsigned distance at the endpoints.
+
+The method adds a **localized barrier** to the incremental potential. Let $\widehat d$ be the user-set contact-distance accuracy. For $0<d<\widehat d$, the barrier is
+
+$$b(d,\widehat d)=-(d-\widehat d)^2\ln\left(\frac{d}{\widehat d}\right),$$
+
+and it is zero when $d\ge\widehat d$. It rises without bound as $d$ approaches zero, but vanishes for pairs farther apart than the target distance. The barrier-augmented potential is
+
+$$B_t(\mathbf{x})=E_t(\mathbf{x})+\kappa\sum_{k\in C}b(d_k(\mathbf{x}),\widehat d),$$
+
+where $E_t$ is the time-step potential and $\kappa$ adjusts barrier stiffness. The clamping is smooth enough for Newton optimization, and distant pairs need no barrier evaluation. The chosen $\widehat d$ controls geometric accuracy; the solver adapts $\kappa$ to balance force strength against conditioning. Too small a $\kappa$ allows surfaces to get unnecessarily close before the barrier repels; too large a value makes the system stiff.
+
+The barrier by itself does **not** guarantee that a numerical descent step stays valid. A Newton direction can pass through a collision and land in a lower-energy configuration on the other side. IPC uses a collision-aware line search: continuous collision detection (CCD) finds an upper bound on the step before any primitive pair intersects; then backtracking reduces the step until the potential decreases. For noninverting elastic models, an inversion-aware limit is combined with the collision limit. This is the mechanism behind the paper's intersection-free trajectory claim. Floating-point CCD is used in the solver; the authors ran slower exact rational CCD afterward on selected difficult examples as a check, and report that rational CCD was roughly 30 times slower.
+
+The Newton solver projects local elasticity and barrier Hessians to positive semidefinite form before assembly. The assembled system is then positive definite with the inertial mass contribution. Each iteration solves a linear system, takes a CCD-limited descent step, rebuilds the nearby contact set, and repeats until a velocity-scaled step tolerance is met. The paper measures momentum-balance accuracy through the optimization residual. Barrier derivatives yield nonnegative contact-force magnitudes $\lambda_k$; a force is applied only within the selected contact distance. This gives an $\widehat d$-complementarity condition: force-bearing pairs must be within $\widehat d$ of contact.
+
+The barrier needs accurate distance derivatives. A vertex-triangle distance and an edge-edge distance each have several closest-point cases: vertex-to-vertex, point-to-edge, or interior projection. Each active case has a closed-form distance function and analytic derivatives. The method stores the active case with its culled contact set. At parallel edge-edge configurations, the ordinary distance function is not differentiable. IPC multiplies the edge-edge barrier by a smooth **mollifier** that fades it out near parallel degeneracy. Point-triangle pairs remain available to prevent missing collisions. This smoothing protects Newton convergence without claiming that the raw distance formula is smooth at every configuration.
+
+#### Friction inside the same solve
+
+Coulomb friction depends on the normal contact force and opposes tangential sliding. At a contact pair, write the relative tangential displacement as $\mathbf{u}_k=T_k(\mathbf{x})^T(\mathbf{x}-\mathbf{x}_t)$, where $T_k$ gives a two-dimensional tangent basis. The sliding velocity is $\mathbf{u}_k/h$. Under the maximal dissipation principle, friction uses the largest opposing force allowed by $\mu\lambda_k$. This law is difficult for Newton's method because it switches nonsmoothly between sliding and sticking, and the force depends on the yet-unknown contact reaction.
+
+IPC smooths the force near zero sliding speed with a user-controlled velocity tolerance $\epsilon_v$. Then, within a nonlinear solve, it **lags** the tangent basis and normal force at values from the preceding iterate. With those quantities held fixed, the smoothed friction force becomes the gradient of a scalar dissipative potential. The method minimizes the barrier-augmented potential plus this lagged friction potential, then updates the basis and contact force and solves again. This is a practical variational approximation: the geometric contact and the frozen friction potential fit in one Newton framework. The authors do not guarantee convergence of every lagged force/basis update in all settings, so that limitation should be retained.
+
+#### What the paper tests
+
+The paper reports simulations of thin elastic rods and mats, card houses, arches, high-speed ball impact, funnel and point/edge obstacles, large mass and stiffness ratios, and persistent chains of contact. It reports no tunneling at speeds up to 1000 m/s for its ball-and-thin-board example, intersection-free high-speed tests, and stable 100-link chains. Its friction tests recover the expected threshold: a block on a slope stays still when $\mu=0.5$ and slides when $\mu=0.49$ for the chosen slope. It also demonstrates stick-slip oscillation and contact with codimensional obstacles. Most experiments used CPU sparse direct solvers; the largest “squishy ball” example used AMGCL. Runtime and memory therefore depend on the paper's mesh size, time step, solver, hardware, and convergence tolerances.
+
+The paper compares IPC with graphics and engineering codes, then implements several sequential quadratic programming (SQP) contact approaches in a common benchmark. The authors report that the compared methods often need small time steps or large contact offsets to avoid failure, while IPC succeeds on their chosen tests. This is evidence about those methods, settings, and benchmark examples. It is not a proof that every contact solver fails or that IPC is inexpensive at arbitrary mesh scale. Cost still rises with resolution and active contacts; exact rational CCD is expensive; friction updates are lagged; and solving the barrier system may be poorly conditioned under extreme deformation.
+
+**Source:** Li et al., “Incremental Potential Contact: Intersection- and Inversion-free, Large-Deformation Dynamics” (2020), complete paper body and conclusion, PDF pp. 1–20. [Primary PDF](https://ipc-sim.github.io/file/IPC-paper-350ppi.pdf).
+
+### Friction and empirical tests for contact dynamics
+
+#### Friction inside the same solve
+
+Coulomb friction depends on the normal contact force and opposes tangential sliding. At a contact pair, write the relative tangential displacement as $\mathbf{u}_k=T_k(\mathbf{x})^T(\mathbf{x}-\mathbf{x}_t)$, where $T_k$ gives a two-dimensional tangent basis. The sliding velocity is $\mathbf{u}_k/h$. Under the maximal dissipation principle, friction uses the largest opposing force allowed by $\mu\lambda_k$. This law is difficult for Newton's method because it switches nonsmoothly between sliding and sticking, and the force depends on the yet-unknown contact reaction.
+
+IPC smooths the force near zero sliding speed with a user-controlled velocity tolerance $\epsilon_v$. Then, within a nonlinear solve, it **lags** the tangent basis and normal force at values from the preceding iterate. With those quantities held fixed, the smoothed friction force becomes the gradient of a scalar dissipative potential. The method minimizes the barrier-augmented potential plus this lagged friction potential, then updates the basis and contact force and solves again. This is a practical variational approximation: the geometric contact and the frozen friction potential fit in one Newton framework. The authors do not guarantee convergence of every lagged force/basis update in all settings, so that limitation should be retained.
+
+#### What the paper tests
+
+The paper reports simulations of thin elastic rods and mats, card houses, arches, high-speed ball impact, funnel and point/edge obstacles, large mass and stiffness ratios, and persistent chains of contact. It reports no tunneling at speeds up to 1000 m/s for its ball-and-thin-board example, intersection-free high-speed tests, and stable 100-link chains. Its friction tests recover the expected threshold: a block on a slope stays still when $\mu=0.5$ and slides when $\mu=0.49$ for the chosen slope. It also demonstrates stick-slip oscillation and contact with codimensional obstacles. Most experiments used CPU sparse direct solvers; the largest “squishy ball” example used AMGCL. Runtime and memory therefore depend on the paper's mesh size, time step, solver, hardware, and convergence tolerances.
+
+The paper compares IPC with graphics and engineering codes, then implements several sequential quadratic programming (SQP) contact approaches in a common benchmark. The authors report that the compared methods often need small time steps or large contact offsets to avoid failure, while IPC succeeds on their chosen tests. This is evidence about those methods, settings, and benchmark examples. It is not a proof that every contact solver fails or that IPC is inexpensive at arbitrary mesh scale. Cost still rises with resolution and active contacts; exact rational CCD is expensive; friction updates are lagged; and solving the barrier system may be poorly conditioned under extreme deformation.
+
+**Source:** Li et al., “Incremental Potential Contact: Intersection- and Inversion-free, Large-Deformation Dynamics” (2020), complete paper body and conclusion, PDF pp. 1–20. [Primary PDF](https://ipc-sim.github.io/file/IPC-paper-350ppi.pdf).
+
+### Figure U15 - The contact barrier grows near zero separation
+
+![[Visual Recall/University Graphics and Vision/contact-barrier.png]]
+
+*The plot checks the positive barrier shape for the paper distance model. It is not a complete collision solver: continuous collision detection and a feasibility-preserving line search are still required.*
 
 ## Optimization, constraints, and inverse kinematics
 
@@ -3256,6 +4360,942 @@ The dense field and candidate edges support inspection in two directions. **Cove
 
 A raw binary overlap score changes abruptly when a predicted edge moves by one pixel. A distance-field score changes gradually: each transformed template point receives a penalty based on its distance to the nearest observed edge. That smoothness supports optimization and tolerance to quantization. However, overly broad distance penalties can let an incorrect nearby contour score well; the distance scale should reflect the inspection tolerance and expected edge uncertainty. [[#MITV-15 - Alignment, PatMax, Distance Field, Filtering and Sub-Sampling (US 7,065,262)|MITV-15]]
 
+## Learning a visual classifier from examples
+
+### What a computer vision system has to learn
+
+A digital image is an array of numbers. A color image usually stores three values at every pixel: red, green, and blue. A classifier must turn that array into a useful answer, such as “cat.” This is a large jump from numbers to meaning. The lecture calls it the **semantic gap**.
+
+The same object can produce very different arrays. The camera may move. The light may change. An object may be partly hidden, bent into a new pose, small in the image, or surrounded by clutter. Two members of one category can also look unlike each other. A hand-written list of rules would need to cover all these cases, plus cases the rule writer did not imagine.
+
+A data-driven system learns from examples instead. We collect images and labels, fit a model on a training set, choose design settings on a validation set, and measure the final result on a held-out test set. The test set must stay out of model selection. Otherwise, decisions slowly adapt to the test examples, and the final score no longer measures performance on fresh data.
+
+Classification is one task, not the whole field. **Object detection** predicts a box and label for each object. **Semantic segmentation** assigns a category to every pixel. **Instance segmentation** also keeps separate objects apart when they share a category. Video adds time. Vision and language models connect image features with words. These tasks share ideas, but their outputs are different.
+
+The opening lecture places today's learning methods in a longer history: early attempts to describe vision with geometry and hand-built features, growth of image datasets, and the rise of deep learning when data, computation, and useful algorithms came together. The lecture also points to human impact. A model's errors and uses matter because vision systems operate in human settings. The analogy between a neural network and a brain is only a loose teaching aid; the later neural-network lecture warns against treating it as a biological explanation.
+
+**Source:** SC-01, full captions; course schedule and official slides: [CS231n 2025 schedule](https://cs231n.stanford.edu/2025/schedule.html), [Lecture 1, part 1](https://cs231n.stanford.edu/slides/2025/lecture_1_part_1.pdf), [Lecture 1, part 2](https://cs231n.stanford.edu/slides/2025/lecture_1_part_2.pdf).
+
+### Classification begins with a representation
+
+For a fixed-size RGB image of height $H$, width $W$, and three channels, flattening the pixels gives a vector with $D=3HW$ entries. For a CIFAR-sized image, $H=W=32$, so
+
+$$
+
+D=3\cdot32\cdot32=3072.
+
+$$
+
+A classifier takes this vector $x$ and returns one score for each class. A high score means the model favors that class. The score is not yet a probability.
+
+The raw pixel vector is a poor description of object identity. If an image shifts by one pixel, many entries change. A person still sees the same object, but a pixel-by-pixel distance can become large. Conversely, unrelated objects can have similar color patterns. This is why a useful visual representation must tolerate changes that preserve meaning and respond to changes that alter meaning.
+
+The data set is written as pairs $(x_i,y_i)$: image $x_i$ and its correct class $y_i$. A model with parameters $W$ computes scores from each image. A loss function measures how badly those scores fit the correct labels. Training changes the parameters to lower the loss.
+
+### Nearest neighbors: remember first, compare at prediction time
+
+The $k$-nearest-neighbor (k-NN) classifier stores the training images and labels. It does almost no fitting. To classify a new image, it compares the new vector with every stored vector, selects the $k$ closest, and votes among their labels.
+
+For vectors $x,z\in\mathbb{R}^D$, two common distances are
+
+$$
+
+d_1(x,z)=\sum_{j=1}^{D}|x_j-z_j|,
+\qquad
+ d_2(x,z)=\sqrt{\sum_{j=1}^{D}(x_j-z_j)^2}.
+
+$$
+
+For the two-dimensional difference $(0.5,0.5)$, the L1 distance is $0.5+0.5=1$. The L2 distance is $\sqrt{0.5^2+0.5^2}\approx0.707$. L1 measures travel along coordinate directions; L2 measures straight-line distance. Their equal-distance contours have different shapes, so they can rank points differently.
+
+A small $k$ makes the vote sensitive to individual examples. With $k=1$, one mislabeled or unusual point can decide the answer. A larger $k$ smooths the boundary, though it can blur a small class region or create ties. The choice of $k$ and the distance rule are **hyperparameters**: settings chosen outside the fitting process. Choose them on validation data, not on the test set.
+
+For $N$ training images of $D$ values each, a direct prediction compares about $ND$ values. This makes prediction expensive when the data set or images are large. Training is cheap because the method mainly stores the examples. Its deeper weakness is that raw pixel distance does not match human similarity. In the lecture's CIFAR-10 example, the best validation choice reached only about 28–29% accuracy, far above the 10% random baseline but still weak. Treat this as the lecture's reported experiment, not a universal k-NN score.
+
+A simple conceptual implementation is:
+
+```python
+from collections import Counter
+
+def majority_vote(labels):
+    if len(labels) == 0:
+        raise ValueError("At least one neighbor is required")
+    counts = Counter(labels)
+    # Labels are integers; a tied vote chooses the smallest label.
+    return min(counts, key=lambda label: (-counts[label], label))
+
+# Inputs are NumPy arrays: x_train (N, D), y_train (N,), x (D,).
+if not 1 <= k <= len(x_train):
+    raise ValueError("k must be between 1 and the training-set size")
+distances = ((x_train - x) ** 2).sum(axis=1) ** 0.5
+nearest = distances.argsort()[:k]
+prediction = majority_vote(y_train[nearest])
+```
+
+This code exposes the direct computation. It does not solve the representation problem, and a real implementation should also define tie handling and validation splits.
+
+### Linear scores and their geometric limit
+
+A linear classifier computes
+
+$$
+
+s=Wx+b,
+
+$$
+
+where $x\in\mathbb{R}^{D}$, $W\in\mathbb{R}^{C\times D}$, $b\in\mathbb{R}^{C}$, and $s\in\mathbb{R}^{C}$ contains one score for each of $C$ classes. For CIFAR-10, $W$ has shape $10\times3072$ and $b$ has 10 entries.
+
+Each row of $W$ is a class-specific weight vector. Its dot product with the image adds evidence from pixels: positive weights favor that class when the matching pixel values are large; negative weights count against it. A useful picture is a class template, although the learned row need not be a clean image of the object.
+
+In two dimensions, the boundary between two classes is where their scores are equal. A line can separate data only when the classes are linearly separable. XOR is a standard counterexample: opposite corners belong to one class and the other corners to another. No single line can separate them. More weights alone do not change a linear map into a nonlinear one. The model needs a nonlinear transformation of its input.
+
+### Softmax turns scores into probabilities
+
+Given class scores, or **logits**, softmax defines
+
+$$
+
+p_k=\frac{e^{s_k}}{\sum_j e^{s_j}}.
+
+$$
+
+Every probability is nonnegative and all probabilities sum to one. If the correct class is $y$, cross-entropy loss is
+
+$$
+
+L=-\log p_y.
+
+$$
+
+This loss is small when the model assigns high probability to the correct label and grows without bound as that probability approaches zero. For $C$ classes with equal logits, each class gets probability $1/C$, so the loss is $-\log(1/C)=\log C$. With 10 classes, this is about 2.303 using natural logarithms.
+
+The lecture's example logits are $[3.2,5.1,-1.7]$. If the correct class is the first one, then
+
+$$
+
+p_y=\frac{e^{3.2}}{e^{3.2}+e^{5.1}+e^{-1.7}}\approx0.129,
+\qquad L\approx-\log(0.129)\approx2.05.
+
+$$
+
+The largest score belongs to the second class, so the model is confidently leaning the wrong way. For numerical stability, softmax can subtract the largest logit $m$ from every logit: $e^{s_k-m}/\sum_j e^{s_j-m}$. This leaves the probabilities unchanged while keeping exponentials smaller.
+
+Softmax is a useful classification loss, but it is not the only choice. Lecture 4 previews hinge loss: it asks the correct score to exceed each incorrect score by a margin. Unlike softmax, hinge loss does not turn scores into probabilities.
+
+### Generalization is the target of regularization
+
+The **data loss** measures fit to examples. A regularizer adds a preference about the model's parameters:
+
+$$
+
+L_{\text{total}}=L_{\text{data}}+\lambda R(W).
+
+$$
+
+The strength $\lambda$ controls the trade-off. At $\lambda=0$, the penalty has no effect. If $\lambda$ is too large, it can constrain the weights so much that the classifier underfits. The point is not to make training accuracy worse for its own sake. The point is to reduce overfitting so performance improves on unseen data.
+
+For L2 regularization, $R(W)=\sum_j W_j^2$. For L1, $R(W)=\sum_j|W_j|$. Consider two weight vectors with the same score for a particular input: $w_a=(1,0,0,0)$ and $w_b=(0.5,0.5,0.5,0.5)$. Their L1 penalties are both 1. Their squared L2 penalties are 1 and 1/4. L2 therefore prefers the spread-out vector in this example. L1 can favor sparse solutions when removing a coefficient barely changes data loss. These are tendencies, not guarantees for every training problem.
+
+### Optimization follows derivatives through the loss
+
+Imagine a loss landscape whose horizontal axes are model parameters and whose height is loss. A derivative tells how fast loss changes along one direction. For many parameters, the **gradient** collects one derivative per parameter. It points toward steepest local increase; its negative points toward steepest local decrease.
+
+A numerical derivative estimates a slope by changing one parameter by a small $h$ and measuring the change in loss. This is easy to implement, but it is slow and subject to floating-point error. An analytic derivative uses calculus and the chain rule. It is fast and exact when implemented correctly. A numerical gradient check compares both methods on a small problem to catch mistakes.
+
+Gradient descent updates the parameters by
+
+$$
+
+W_{t+1}=W_t-\eta\nabla_W L(W_t),
+
+$$
+
+where $\eta$ is the learning rate. A rate that is too large can jump across a narrow valley or increase loss. A rate that is too small makes progress painfully slow. Stochastic gradient descent estimates the gradient from a mini-batch instead of the entire data set. This lowers the cost of each step but adds noise. One epoch is one pass over all training examples, usually in shuffled order.
+
+Momentum keeps part of the previous update direction. It can reduce zig-zagging in a narrow valley and carry a useful direction through flat regions. RMSProp scales steps using a running average of squared gradients. Adam combines momentum-like averaging with this adaptive scaling. Its bias correction matters early in training because the running averages start at zero. AdamW applies weight decay separately from Adam's moment calculations. These methods have useful intuitions, but the lecture treats optimizer choice and learning-rate schedules as empirical choices to check on validation data.
+
+A schedule changes the learning rate during training. Common examples include a step drop, cosine decay, and linear warm-up before a decay. A high rate may be useful early; a lower rate can help settle near a minimum. The lecture also introduces second-order methods, which use curvature information from the Hessian. They can be useful for smaller problems, but storing and using a Hessian becomes too costly for models with millions or billions of parameters.
+
+### A hidden layer adds nonlinear features
+
+A one-layer linear model cannot make a curved decision boundary. A two-layer network can first transform the input and then classify the transformed values:
+
+$$
+
+h=\phi(W_1x+b_1),\qquad s=W_2h+b_2.
+
+$$
+
+Here, $h$ is the hidden representation, and $\phi$ is a nonlinear activation applied element by element. If $\phi$ were also linear, the two weight matrices could be multiplied into one matrix. The whole network would still be linear. Nonlinearity is what gives depth added expressive power.
+
+ReLU is $\phi(a)=\max(0,a)$. It passes positive inputs through and maps negative inputs to zero. This makes it simple and often effective. A unit that stays on the negative side receives zero gradient through ReLU and may stop learning; this is the “dead ReLU” problem. Leaky ReLU keeps a small negative slope to reduce that risk. Sigmoid and tanh can have vanishing gradients when their outputs saturate. Activation choice depends on the architecture and task; ReLU is a common starting point, not a law.
+
+A hidden layer can learn useful parts or patterns that several classes share. But adding capacity can also let a model memorize the training set. The lecture recommends managing the balance with validation and regularization, rather than assuming that a smaller network is always better.
+
+### Backpropagation: apply the chain rule one operation at a time
+
+A neural network is a composition of simple operations. A **computational graph** records those operations from input to loss. During the forward pass, each node stores the value it computes. During the backward pass, it receives an upstream gradient and sends gradients to its inputs using its local derivative.
+
+For a scalar output $f=(x+y)z$, set $x=-2$, $y=5$, and $z=-4$. The forward pass gives $q=x+y=3$, then $f=qz=-12$. At the multiply node, $\partial f/\partial q=z=-4$ and $\partial f/\partial z=q=3$. At the add node, $\partial q/\partial x=1$ and $\partial q/\partial y=1$. The chain rule gives
+
+$$
+
+\frac{\partial f}{\partial x}=\frac{\partial f}{\partial q}\frac{\partial q}{\partial x}=-4,
+\quad
+\frac{\partial f}{\partial y}=-4,
+\quad
+\frac{\partial f}{\partial z}=3.
+
+$$
+
+The upstream gradient is the derivative arriving from later operations. A local gradient is the derivative of one operation's output with respect to one input. Multiply them to get the downstream gradient. If two branches feed into the same value, add their contributions. This local rule lets a system differentiate a deep network without expanding the whole network into one enormous formula.
+
+Several operation rules are easy to remember:
+
+| Operation | Local backward rule |
+| --- | --- |
+| Addition $q=x+y$ | Send the upstream gradient unchanged to both inputs. |
+| Multiplication $q=xy$ | Send $g y$ to $x$ and $g x$ to $y$, where $g=\partial L/\partial q$. |
+| ReLU $q=\max(0,x)$ | Send $g$ where $x>0$, otherwise send zero (at zero, implementations choose a convention). |
+| Copy/fan-out | Add gradient contributions from all paths that used the copied value. |
+
+For vectors and matrices, derivatives have structure. A scalar loss differentiated with respect to a vector has one gradient entry per input element. A vector output with respect to a vector input can be represented by a Jacobian matrix. In principle, a matrix multiplication could have an enormous Jacobian. In practice, software uses compact matrix rules and the saved forward-pass inputs. It does not build that giant matrix. This is why automatic differentiation can scale to large networks.
+
+**Source:** SC-02–SC-04, full original-English captions. For official primary material and lecture sequence, see [CS231n 2025 schedule](https://cs231n.stanford.edu/2025/schedule.html), [Lecture 2 slides](https://cs231n.stanford.edu/slides/2025/lecture_2.pdf), [Lecture 3 slides](https://cs231n.stanford.edu/slides/2025/lecture_3.pdf), and [Lecture 4 slides](https://cs231n.stanford.edu/slides/2025/lecture_4.pdf).
+
+## Convolutional models preserve image neighborhoods
+
+### Convolutions keep image neighborhoods intact
+
+A fully connected layer flattens an image and compares each learned template with the entire input. That treats distant pixels as if their positions were just entries in one long list. A **convolution layer** uses small learned filters instead. Each filter looks at a local patch, spans all input channels, and slides across the image. At every position, it takes a dot product between the filter and that patch. The resulting number records how strongly the patch matches the filter. One filter makes one 2D activation map; a bank of filters makes a stack of maps, one output channel per filter.
+
+For an input with shape $N\times C_{in}\times H\times W$, a bank of filters has shape $C_{out}\times C_{in}\times K_H\times K_W$. Here, $N$ is batch size, $C_{in}$ is the number of input channels, and $C_{out}$ is the number of filters. The kernel must span all input channels. The output has $C_{out}$ channels. Filter values and biases are learned by backpropagation; filter count and kernel size are architecture choices set before training.
+
+For a single image with 3 channels and spatial size $32\times32$, six filters of size $3\times5\times5$, stride 1, and no padding produce six feature maps of size $28\times28$. With a bias for each filter, the learned parameter count is
+
+$$
+
+6(3\cdot5\cdot5+1)=6(76)=456.
+
+$$
+
+For 10 filters on the same input with a $5\times5$ kernel, stride 1, and padding 2, the parameter count becomes
+
+$$
+
+10(3\cdot5\cdot5+1)=760.
+
+$$
+
+The spatial size stays $32\times32$. Each of the $10\cdot32\cdot32=10{,}240$ output values uses a dot product over 75 values, or roughly $10{,}240\cdot75=768{,}000$ multiply-accumulate operations. The lecture's spoken estimate says about 10,000 outputs and 768,000 operations; exact FLOP conventions can count a multiply and addition separately.
+
+For one spatial dimension, input size $W$, kernel size $K$, padding $P$, and stride $S$ give
+
+$$
+
+W_{out}=\left\lfloor\frac{W+2P-K}{S}\right\rfloor+1.
+
+$$
+
+Without padding, a $7\times7$ input and $3\times3$ kernel at stride 1 produce $5\times5$. Padding adds values around the edge, often zeros. With an odd kernel $K=2q+1$, choosing $P=q$ and stride 1 preserves height and width. Padding makes shape management easier, though border outputs see artificial values.
+
+A **stride** says how far the filter moves each time. Stride 2 skips positions and downsamples the feature map. This can grow the **receptive field** faster: the receptive field of a later activation is the region of the original image that could affect it. Stacking local filters grows this region; downsampling can make it grow more quickly. This helps deeper layers combine local patterns into larger structures.
+
+A stack of only convolutions is still linear if nothing nonlinear sits between them. Two linear maps composed together can be represented as one linear map. Add an activation such as ReLU between the convolution layers to increase what the network can represent.
+
+### Pooling downsamples feature maps
+
+A pooling layer reduces spatial size without learning a new filter bank. It acts on each channel separately. In **max pooling**, split a feature map into windows and keep the largest value in each window. A $2\times2$ window with stride 2 cuts each spatial dimension in half. For example, the windows $[1,6;2,3]$, $[4,7;8,5]$, $[0,2;1,3]$, and $[9,4;6,2]$ become $[6,8;3,9]$.
+
+Max pooling is nonlinear and routes its gradient to the winning entry in each window. Average pooling takes the mean instead; it is linear, so a separate nonlinear activation may still be needed. Pooling is cheap compared with convolution. Strided convolution can also downsample and can learn the operation, while pooling uses a fixed reduction rule. Both choices affect the network's spatial resolution and receptive field.
+
+If training images have different sizes, a batch tensor cannot hold them directly as one rectangular block. Common approaches resize images, pad them to a common shape, process them separately, or group images with similar aspect ratios into buckets. Resizing changes shape and may distort the image; padding adds artificial borders. Each choice has consequences.
+
+### Translation equivariance is a useful design property
+
+If an image shifts, a convolution's feature map shifts in the corresponding way, subject to boundary handling and stride. This is **translation equivariance**. It means the system can detect the same local pattern at different positions. Equivariance is not the same as invariance: an equivariant output moves with the input; an invariant output would stay unchanged. Pooling and other later operations may reduce sensitivity to small shifts, but convolution itself preserves location information in its output map.
+
+This property reflects a useful image prior: a vertical edge is still a vertical edge when it appears on the left or right. A convolution shares the same filter weights across locations, so the network does not need to learn a separate edge detector for every pixel. That weight sharing reduces parameters and builds spatial structure into the model. It does not make every vision problem translation-invariant; object position can matter, and padding or striding can break exact equivariance at borders or for some shifts.
+
+**Source:** SC-05, full original-English captions, including the lecture's stated limits and examples. Official lecture sequence: [CS231n 2025 schedule](https://cs231n.stanford.edu/2025/schedule.html), [Lecture 5 slides](https://cs231n.stanford.edu/slides/2025/lecture_5.pdf).
+
+### CNN layers need stable signals and enough variation
+
+Normalization layers control the scale and center of activations. A common pattern is: first normalize values to mean 0 and standard deviation 1, then apply learned scale and shift parameters. The exact values used to compute the mean and standard deviation depend on the layer:
+
+| Layer | Values used for the statistics |
+| --- | --- |
+| Batch normalization | For each channel, values across the mini-batch and spatial positions during training. |
+| Layer normalization | For each example, values across its feature dimensions; for image tensors, this can cover channels, height, and width. |
+| Instance normalization | For each example and channel, values across spatial positions. |
+| Group normalization | For each example, values across groups of channels and spatial positions. |
+
+The useful question is always: *which values share the same statistics?* Batch normalization depends on batch composition. Layer normalization treats each example independently. Group and instance normalization make different trade-offs. Learned scale and shift let the model choose a useful distribution after the normalization step.
+
+**Dropout** is a training-time regularizer. It randomly sets some activations to zero on each forward pass. This makes it harder for a model to depend on one narrow combination of features. It may learn several cues for “cat,” such as ears, fur, and claws, because any one cue can be missing in a training pass. At test time, dropout is disabled and activation magnitudes must be scaled consistently. Implementations commonly use *inverted dropout*: scale the surviving activations during training so no test-time scale adjustment is needed. The key invariant is that expected activation scale should match between training and testing.
+
+### Activations make the network nonlinear
+
+A sigmoid activation saturates near 0 and 1. In those flat regions, its derivative is near zero. During backpropagation, multiplying many small derivatives can make gradients in early layers almost vanish. ReLU, $\max(0,x)$, has derivative 1 on positive inputs and 0 on negative inputs. This helps positive activations carry gradients, but a unit that stays negative can become inactive. GELU and SiLU/Swish use smooth curves with a nonzero slope around part of the negative region. They are common choices in modern architectures. No activation is best in every setting; architecture conventions and validation guide the choice.
+
+### Architectural patterns: VGG and residual connections
+
+VGG stacks small $3\times3$ convolutions, nonlinearities, and pooling. Three stride-1 $3\times3$ layers see a $7\times7$ region of the original image: the receptive field grows from 3 to 5 to 7. If the channel count stays $C$, the convolution weights for these three layers are about $3\cdot3\cdot3C^2=27C^2$, compared with $7\cdot7C^2=49C^2$ for one $7\times7$ layer. The stacked version also has more activation steps, so it can represent more nonlinear functions.
+
+Plain networks became harder to train as they grew deeper. In the reported experiment, a deeper plain model had worse training error as well as worse test error. That points to an optimization problem, rather than ordinary overfitting. In theory, a deeper model can copy a shallower one by making extra layers act like identity functions. In practice, learning that identity mapping can be difficult.
+
+A **residual block** gives the network a direct route around a group of layers:
+
+$$
+
+y=x+F(x).
+
+$$
+
+The block learns a residual, or change, $F(x)$. If the extra transformation is not useful, it can approach zero and the block can pass $x$ forward. This makes an identity-like solution easier to represent and improves optimization of deep networks. The addition requires the two branches to have compatible shapes; when dimensions change, architectures need a projection or another shape adjustment. ResNets use repeating residual blocks and periodically reduce spatial size while increasing channel count.
+
+### Initialization keeps signals from shrinking or exploding
+
+A neural network starts with random weights. If their scale is too small, activations can shrink toward zero as they pass through many layers. If the scale is too large, activations can grow rapidly. Either case makes learning harder because the signal and gradient scales become poorly behaved.
+
+For ReLU networks, Kaiming (He) initialization draws weights with a scale based on the number of inputs to each unit. In variance form, a common rule is
+
+$$
+
+\operatorname{Var}(W_{ij})=\frac{2}{\text{fan\_in}},
+\quad\text{so standard deviation is }\sqrt{\frac{2}{\text{fan\_in}}}.
+
+$$
+
+For a convolution with six input channels and a $3\times3$ kernel, $\text{fan\_in}=6\cdot3\cdot3=54$. The standard deviation is $\sqrt{2/54}\approx0.192$. This is a starting rule that helps keep activation scales stable. Different activations or layer types may call for different initialization rules.
+
+For image input normalization, compute a mean and standard deviation for each color channel from the training data, then normalize each channel. Pretrained models often expect the statistics used during their own training. Use the matching preprocessing when applying such a model.
+
+### Augmentation and pretrained models expand what small data can do
+
+**Data augmentation** applies label-preserving changes to training examples. Random crops, resize-and-crop, horizontal flips, color changes, and simulated occlusion can make the model less able to memorize the exact training images. An augmentation is useful only when the transformed image should keep the same label. A horizontal flip may help with ordinary objects but hurt a text-reading model. A vertical flip may make sense for overhead imagery and be wrong for everyday scenes.
+
+At test time, **test-time augmentation** can average predictions from several crops or flips of one image. This can improve accuracy, but it costs more inference time and often gives diminishing returns. More data variation is not automatically better: transformations must match the real task.
+
+When a labeled data set is small, a pretrained CNN can serve as a feature extractor. Freeze the earlier layers, replace the final classifier, and train only the new classifier. If there is more data, fine-tune some or all of the pretrained model. Similarity between the pretraining data and the target data matters: a model trained on everyday images may transfer poorly to medical or astronomical images. The lecture presents this as a practical strategy, not a guarantee.
+
+### A practical training and debugging loop
+
+If training fails, first try to overfit one or a few examples. The model should drive training loss very low on a tiny sample. If it cannot, check the data, labels, loss, gradients, and model code before scaling up.
+
+Then test a coarse range of learning rates and inspect both loss and accuracy. Training loss that improves while validation performance worsens suggests overfitting; stronger regularization or more varied data may help. If both training and validation performance still improve, continue training. Random search across sensible hyperparameter ranges often explores important settings more effectively than a rigid grid when some settings matter much more than others.
+
+**Source:** SC-06, full original-English captions. The lecture distinguishes empirical advice from derivations; the notes retain that distinction. Official materials: [CS231n 2025 schedule](https://cs231n.stanford.edu/2025/schedule.html), [Lecture 6 slides](https://cs231n.stanford.edu/slides/2025/lecture_6.pdf).
+
+## Sequence models and attention
+
+### Recurrent networks carry a state through a sequence
+
+A standard feed-forward network maps one fixed-size input to one output. A **recurrent neural network (RNN)** processes inputs one step at a time and carries a hidden state forward. A simple form is
+
+$$
+
+h_t=\phi(W_{xh}x_t+W_{hh}h_{t-1}+b_h),\qquad y_t=W_{hy}h_t+b_y.
+
+$$
+
+The input at time $t$ is $x_t$. The hidden state $h_t$ is a fixed-size summary of what the model has seen so far. The same matrices $W_{xh}$, $W_{hh}$, and $W_{hy}$ are reused at every time step. This lets the model accept sequences of different lengths without needing a separate layer for each position. A vanilla RNN often uses $\tanh$, which keeps activations between $-1$ and $1$, though that can also shrink gradients.
+
+Sequence tasks can have different input and output shapes:
+
+| Pattern | Example |
+| --- | --- |
+| One input to many outputs | Image captioning: one image produces a word sequence. |
+| Many inputs to one output | Video classification: many frames produce one label. |
+| Many inputs to many outputs | Per-frame labeling or sequence-to-sequence mapping. |
+
+For a character-level language model, each input character predicts the next one. A one-hot vector has a single 1 at the character's index and zeros elsewhere. An embedding layer replaces that sparse vector with a learned dense vector. The model applies softmax to score the next character, uses cross-entropy against the actual next character, and feeds a sampled prediction back in during generation. Choosing the highest-probability token every time is greedy decoding. Sampling from the distribution or using beam search can produce different sequences.
+
+A small state can track a simple rule. For the task “output 1 when the current and previous inputs are both 1,” the state only needs enough information to remember the previous input and the current one. A hand-built toy RNN can do this with three state entries, then compute $\max(0,\text{previous}+\text{current}-1)$. For inputs 1, 1, the result is 1; for 1, 0, it is 0. Real models learn the state update and output weights from data.
+
+### Backpropagation through time shares gradients across steps
+
+An unrolled RNN is a computation graph with one copy of the state update at each time step. The copies use the same parameters. If there is a loss at every step, the total loss can be a sum:
+
+$$
+
+L=\sum_{t=1}^{T} L_t.
+
+$$
+
+Each use of a shared weight contributes to its gradient, so the gradient contributions across time are added. This is **backpropagation through time (BPTT)**. If the sequence is long, storing all activations for the entire unrolled graph can use too much memory. **Truncated BPTT** processes a fixed window at a time and carries the hidden state forward between windows while stopping the gradient at the boundary. This saves memory and computation, but it also prevents the current window's loss from sending a full gradient through arbitrarily early steps.
+
+The repeated state update creates another problem. Gradients across many steps multiply Jacobians. If their typical scale is below 1, the product can shrink toward zero; this is the **vanishing-gradient problem**. If the scale is above 1, gradients can grow too large; this is the **exploding-gradient problem**. Gradient clipping can limit large updates. It does not restore information lost to tiny gradients.
+
+An **LSTM** adds gates and a separate cell-state path. The input gate controls what new information to write. The forget gate controls what old information to keep. The output gate controls what to expose as the hidden state. A more direct path through the cell can preserve information across more time steps. This helps, but it does not guarantee that every long dependency will be learned.
+
+RNNs process a sequence in order, so the next step cannot be computed before the previous hidden state exists. This limits parallelism during training. Their fixed-size state can also lose details from very long sequences. Their computation grows roughly linearly with sequence length and the model's parameter count does not grow with sequence length. Transformers instead compare positions through attention, which can capture long-range relations more directly but has higher sequence-length costs in standard forms. The lecture introduces recurrent-style models such as RWKV and Mamba as attempts to combine useful sequence scaling with strong modeling.
+
+### Sequence models inherit the biases in their data
+
+An RNN can combine a visual encoder with text generation. For image captioning, a CNN can encode an image, and an RNN can use that representation plus previous words to predict the next word. The lecture's examples show a failure that remains easy to understand: the model may name an object or action that often co-occurs with a scene in its training data, even when it is absent from this particular image. A captioning loss rewards matching captions; it does not automatically teach the model to distinguish a scene's usual associations from visible evidence.
+
+This is a useful reminder for all learned vision systems. Better sequence modeling does not remove data bias. A model can produce fluent output while making a visual mistake. Evaluation must check the actual task and the evidence in each input.
+
+**Source:** SC-07, full original-English captions. The first minutes also correct the prior dropout explanation: if training drops a fraction $r$, test-time scaling should preserve the expected activation level (or an equivalent inverted-dropout convention can scale during training).
+
+### Attention lets each output retrieve relevant input
+
+An encoder RNN compresses an input sentence into one context vector. That can become a bottleneck: the vector has fixed size even when the input grows to a paragraph or book. Attention removes this single-summary requirement. At every decoder step, the model can look back at all encoder states and build a new context vector for the output it is producing now.
+
+For a query $q$ and input states $h_1,\ldots,h_n$, the model scores each state, applies softmax, and uses the probabilities to combine the states:
+
+$$
+e_i=f(q,h_i),\qquad
+\alpha_i=\frac{\exp(e_i)}{\sum_j\exp(e_j)},\qquad
+c=\sum_i\alpha_i h_i.
+$$
+
+The query represents what the decoder needs at this step. Each $h_i$ is a possible source of information. The weights $\alpha_i$ are nonnegative and sum to 1, so $c$ is a weighted average. A new decoder state creates a new query, so the weights and context can change at every output step.
+
+For example, suppose one output word needs to combine two input states with values $h_1=(2,0)$ and $h_2=(0,4)$. If the attention weights are $(0.75,0.25)$, then the context is
+
+$$
+c=0.75(2,0)+0.25(0,4)=(1.5,1).
+$$
+
+The network learns the scoring rule from the translation objective. It does not need a human to label which input word aligns with each output word. A heat map of attention weights can help inspect a model's behavior, but a high weight is not by itself proof that a human-readable explanation is faithful.
+
+### Scaled dot-product attention and its dimensions
+
+A simple similarity score is a dot product. To keep scores from growing too large as vector width grows, scale the dot product by the square root of the query/key dimension. Let $Q$ contain $n_q$ queries, $K$ contain $n_x$ keys, and $V$ contain $n_x$ values:
+
+$$
+Q\in\mathbb{R}^{n_q\times d_k},\quad
+K\in\mathbb{R}^{n_x\times d_k},\quad
+V\in\mathbb{R}^{n_x\times d_v}.
+$$
+
+Then the score matrix, attention weights, and outputs are
+
+$$
+S=\frac{QK^\top}{\sqrt{d_k}},\qquad
+A=\operatorname{softmax}(S)\text{ row by row},\qquad
+Y=AV.
+$$
+
+The score matrix has shape $n_q\times n_x$: one score for every query/key pair. Each row of $A$ is a probability distribution over the keys. The output has shape $n_q\times d_v$: each query gets one weighted combination of the value vectors.
+
+A small numerical example makes the scaling and weighting concrete. Let one query be $q=(1,0)$, keys be $k_1=(1,0)$, $k_2=(0,1)$, and values be $v_1=(2,0)$, $v_2=(0,4)$. With $d_k=2$, the scaled scores are $(1/\sqrt2,0)\approx(0.707,0)$. Softmax gives about $(0.67,0.33)$. The output is approximately
+
+$$
+0.67(2,0)+0.33(0,4)=(1.34,1.32).
+$$
+
+The dimensions need not match for values and queries: $d_v$ can differ from $d_k$. The query/key dimensions must match for their dot product.
+
+### Queries, keys, values, and two attention patterns
+
+Attention separates three roles. The **query** says what the model is looking for. A **key** says what kind of information an input location offers for matching. A **value** is the information that gets copied into the output when that location receives attention. Learned linear projections produce these vectors, so the model can learn different matching and retrieval spaces.
+
+In **cross-attention**, queries and key/value data come from different sources. A decoder query can retrieve from encoder states, or a text query can retrieve from image features. In **self-attention**, one input set produces its own queries, keys, and values. Each output can then combine information from any allowed input position. The input and output contain the same number of positions, though their vector dimensions may change.
+
+Multi-head attention runs several learned attention projections in parallel. Each head can use a different projection and can learn a different relation. The head outputs are joined and passed through another learned projection. The lecture emphasizes the implementation view: these operations can be batched into matrix multiplications rather than one loop per query or head.
+
+### Position, masking, and attention's limits
+
+Self-attention without position information is **permutation equivariant**: if the input vectors are reordered, the outputs are reordered the same way. The layer can compare content, but it cannot tell which token came first. A positional embedding adds information about each vector's location so the model can learn order-sensitive patterns.
+
+A language model must not use future tokens when predicting the next token. A **causal mask** sets forbidden attention scores to negative infinity before softmax. Since $\exp(-\infty)=0$, the softmax assigns zero probability to those positions. At position $t$, the model can attend only to positions at or before $t$. This prevents the model from seeing the answer during training.
+
+Attention lets all positions interact in one layer, which can help with long-range relationships. Standard full attention compares every query with every key. For sequence length $n$, its score matrix has $n^2$ entries. The work and memory therefore grow quadratically with length, which becomes costly for very long inputs. Efficient hardware and parallel computation help, but they do not remove the quadratic growth of the full score matrix.
+
+### A transformer is attention plus per-position processing
+
+A transformer block combines multi-head self-attention with a small feed-forward network (an MLP) applied independently at each position. The attention layer lets positions exchange information. The MLP transforms each position's vector after that exchange. Residual connections give information a direct route around each sublayer, and layer normalization helps stabilize training. Repeating blocks builds a transformer.
+
+For images, a vision transformer divides the image into patches, projects each patch into a vector, adds position information, and processes the patch vectors with transformer blocks. A classifier can pool the final vectors and map the pooled representation to class scores. The same basic architecture can process language tokens or image patches because both are represented as sets or sequences of vectors.
+
+RNNs, convolutions, and attention encode different assumptions. RNNs process an ordered sequence one step at a time and reuse a state. Convolutions mix local neighborhoods on a grid and share filters across positions. Self-attention lets every position compare with every other position in parallel, but full attention costs $O(n^2)$ in sequence length. The right architecture depends on the data structure, length, compute budget, and task.
+
+**Source:** SC-08, full original-English captions. The lecture's claim that transformers were then the dominant large-scale architecture is time-specific course context; the notes preserve the underlying mechanisms and trade-offs instead of treating that forecast as permanent.
+
+## Predict pixels and localize objects
+
+### Dense prediction: give an answer at every pixel
+
+Image classification returns one label for a whole image. **Semantic segmentation** returns a label for each pixel. It can mark every pixel as road, person, tree, or background, but it does not distinguish two people of the same class. **Instance segmentation** must also say which pixels belong to person 1 and which belong to person 2.
+
+One simple segmentation idea is to classify each pixel from a local patch around it. That supplies context: a pixel alone usually does not reveal whether it belongs to a wheel or a road. But running a full network once per pixel wastes work. Nearby patches overlap heavily. A **fully convolutional network (FCN)** instead processes the image as a grid and predicts a whole label map in one pass. A pixel-wise training objective sums or averages a classification loss over image locations:
+
+$$
+L_{\text{pixel}}=\frac{1}{HW}\sum_{u=1}^{H}\sum_{v=1}^{W}\operatorname{CE}(s_{uv},y_{uv}),
+$$
+
+where $s_{uv}$ is the vector of class scores at pixel $(u,v)$, and $y_{uv}$ is that pixel's ground-truth class. This requires pixel-labeled training examples. The network learns both contextual features and a label for every location.
+
+### Encoder-decoder shape recovery and U-Net skips
+
+A segmentation network needs spatial detail at its output. If it only downsamples, its feature map is too small to label fine boundaries. An encoder-decoder solves this by repeatedly reducing spatial resolution, then increasing it again. Downsampling gives later layers a wider field of view and reduces computation; upsampling restores a map at the original image size.
+
+There are several ways to upsample. Nearest-neighbor upsampling copies a low-resolution value to nearby high-resolution positions. Max-unpooling can place a pooled value back where its maximum came from, if the encoder saved those locations. A learned upsampling layer can spread each input through a learned filter. **Transposed convolution** is a learned operation that expands the spatial grid. It is called “transposed” because its matrix form uses the transpose of the linear map for convolution; it is not a guaranteed inverse of convolution and does not recover information that was discarded.
+
+U-Net adds **skip connections** from encoder feature maps to decoder layers at matching scales. These shortcuts restore spatial cues that downsampling blurred or removed. The decoder then combines fine location information from early layers with broader context from deeper layers. This often produces sharper object boundaries. The lecture notes U-Net's continued value in some medical segmentation settings, especially when a task-specific model is wanted without a larger foundation model.
+
+### Detection: locate each object as well as name it
+
+Object detection must return a class and a box for each object. A box can be represented by its center $(x,y)$, width $w$, and height $h$. For one object, a model can predict class scores and four box values. A training loss can combine class error with a box regression error:
+
+$$
+L=L_{\text{class}}+\lambda L_{\text{box}}.
+$$
+
+Here $\lambda$ balances the two objectives. With many objects, a fixed list of outputs becomes awkward: the model must decide how many objects to output and which output belongs to which target. Exhaustively testing every possible box is also too expensive.
+
+Two-stage detectors address this with **region proposals**. First, a proposal mechanism suggests a manageable set of likely object regions. Then the detector classifies each region and refines its coordinates. Early R-CNN ran a CNN separately on every proposed crop, which was costly. Fast R-CNN computed a feature map for the full image once, then extracted region features from that map. Region Proposal Networks learned to suggest regions using the same image features. This shares computation, but the proposal and recognition stages still add work.
+
+Single-stage detectors such as the YOLO family predict boxes and class scores in one network pass. In the lecture's grid picture, each cell predicts several candidate boxes and scores. Thresholding removes weak candidates; **non-maximum suppression** then keeps a high-scoring box and removes nearby boxes that likely describe the same object. The key design trade-off is speed and simplicity versus the accuracy and computation of more elaborate proposals and refinement stages. Specific systems change over time, so the lecture's description of which detector is “popular” should be read as course context rather than a permanent ranking.
+
+A transformer detector such as DETR replaces hand-built region proposals with learned **object queries**. These queries are trainable vectors, not boxes or image patches. The image is encoded into tokens. A decoder uses each query to retrieve image information through cross-attention and predicts a class plus box coordinates. Some predictions can be “no object.” The lecture emphasizes that the queries are learned parameters and that class and box supervision shapes their outputs. It does not explain the detector's full matching loss in this portion, so this note does not infer those details from the name alone.
+
+### Instance masks extend detection
+
+A detector's box says where an object is, but it includes background pixels around the object. Mask R-CNN adds a mask-prediction branch for each detected region. The network therefore predicts a class, a refined box, and a pixel mask within that box. Repeating this per detected instance preserves the distinction between two objects of the same class. The mask branch makes the output more detailed and the model more computationally involved than box-only detection.
+
+### Visualization can probe a model, but is not a complete explanation
+
+A model's predictions alone do not show which image regions influenced them. The lecture describes several ways to inspect this. Early convolution filters can sometimes be visualized directly as simple edge or color patterns. For deeper feature maps, raw channel values do not map neatly to a human-readable image.
+
+A **saliency map** measures the sensitivity of a class score to each input pixel. If the score for class $c$ is $s_c(x)$, the gradient
+
+$$
+\nabla_x s_c(x)
+$$
+
+shows how a small change in each pixel could change that score near the current image. Large gradient magnitude marks locally sensitive pixels. This is a local sensitivity measurement; it does not, by itself, establish that the model uses a meaningful causal reason or that the map is stable under small changes.
+
+**Class activation mapping (CAM)** uses the final convolutional feature maps and the classifier's class weights to build a coarse spatial map for a class. Because convolutional locations correspond to image regions, the map can be projected back toward the image. The original CAM form requires a particular architecture, with a final convolutional map feeding a pooled linear classifier.
+
+**Grad-CAM** extends the idea to a chosen convolutional layer. It uses gradients of a class score with respect to that layer's activations to weight the channels, combines the weighted maps, and keeps positive evidence with a ReLU. The result is usually a coarse heat map that can be resized over the input. It indicates which regions are associated with the score under this procedure; it is not a pixel-accurate segmentation mask.
+
+For a vision transformer, attention weights already describe interactions among tokens, which can be plotted over image patches. Those maps are convenient to inspect, but attention weights also do not automatically prove a faithful explanation of a prediction. Visualization is useful for debugging, hypothesis generation, and communicating model behavior. It should be checked against the task and other evidence, especially in high-stakes uses such as medical imaging.
+
+**Source:** SC-09, full original-English captions. The lecture covers task definitions, encoder-decoder segmentation, U-Net, families of detectors, object queries at a high level, instance masks, saliency, CAM, and Grad-CAM. It does not supply a complete account of detector matching, IoU/AP evaluation, or the full DETR training objective in the reviewed lecture segment.
+
+## Video adds motion and temporal cost
+
+### Video adds time, cost, and motion
+
+A video is a sequence of frames. If an RGB frame has shape $3\times H\times W$, a clip of $T$ frames has shape $3\times T\times H\times W$. The extra time axis matters because many video tasks ask what action is happening, not only what objects or scene appear. It also makes the input much larger. A long, high-resolution video may not fit into memory as one training example.
+
+A practical first baseline is to sample a few frames, classify each with an image model, and average the frame predictions. This works when each frame already gives strong evidence, such as a person visibly running. It can miss actions whose meaning depends on motion or order. Sampling itself matters: uniformly spaced frames are simple, while learned or content-aware sampling can spend compute on more informative moments.
+
+For a long clip, a model can classify short windows. At test time, run it on several windows and combine their predictions. This reduces input size but creates a design choice: too few windows may miss the action; too many cost more compute. It also raises a distinction between **clip classification** (one label for a short segment), **temporal action localization** (when an action starts and ends), and **spatiotemporal detection** (where an actor or object is, and when the action occurs).
+
+### Three ways to fuse video frames
+
+A framewise image CNN can process each frame independently. **Late fusion** combines the frame features or predictions after those CNN passes. Concatenating all frame features preserves more detail, but its feature vector grows with the number of frames and can require a large classifier. Pooling features over time keeps the representation size fixed, but can discard which event came first or how one event changed into another.
+
+**Early fusion** combines frames at the input. One simple construction treats the time and color channels together, so the first 2D convolution sees information from all selected frames. It can detect temporal differences early, but collapses the entire clip's time axis at once. The model has no local temporal filter that can slide over a motion and recognize it at different times.
+
+**Slow fusion** uses 3D convolutions over time, height, and width. A 3D kernel covers a local space-time neighborhood and slides through the clip. Early layers see short motion patterns; later layers combine them into broader patterns. This shares a filter across time, so a short motion can be recognized whether it occurs near the start or end. The cost is higher than a 2D image CNN because each operation now spans time as well as image space.
+
+These methods make different trade-offs:
+
+| Method | When frames interact | Strength | Main limitation |
+|---|---|---|---|
+| Framewise / late fusion | After each frame has been processed | Reuses image models; strong simple baseline | Motion cues may already be lost |
+| Early fusion | At the first layer | Sees multiple frames immediately | Collapses all time into one operation |
+| 3D convolution / slow fusion | Gradually across layers | Learns local motion patterns shared over time | More compute and memory |
+
+The lecture illustrates the difference with a color transition. A 2D convolution applied to all frames as channels can detect that colors differ, but it treats the temporal positions as fixed channel slots. A 3D filter of short temporal width can slide over the sequence and detect the same transition at different times. That is temporal shift equivariance from weight sharing; it does not mean every video transformation is harmless or that the model understands arbitrary timing.
+
+### Motion streams, recurrent models, and attention
+
+Appearance and motion provide different evidence. **Optical flow** estimates how image points move between adjacent frames. For each pixel $(x,y)$, a flow vector $(u,v)$ estimates its displacement to the next frame. One can visualize horizontal and vertical flow separately. A two-stream network processes RGB appearance in one branch and stacked flow fields in another, then combines their predictions. In the lecture's example, motion features can be more useful than appearance for action categories because the movement itself is the cue. That is a result on a particular benchmark, not a rule that motion always beats appearance.
+
+A recurrent model can process a sequence of frame or clip features and keep a state over time. It can make one prediction for the whole video or one per time step. But recurrence imposes sequential computation: later states depend on earlier states. It can therefore be slow for long clips. A recurrent convolutional network adapts the idea to feature maps: convolutions update the spatial state at each time step, while the recurrent connection carries information forward.
+
+Self-attention offers another way to connect video positions. The model projects space-time features into queries, keys, and values, computes which positions should exchange information, and combines the values. Attention can connect distant frames or image regions directly and can process many positions in parallel. The full attention matrix can be large, so 3D feature grids make efficiency important. The lecture describes non-local blocks as a way to insert such global space-time interactions into a convolutional video network.
+
+A different approach, I3D, inflates a successful 2D image architecture into 3D by adding temporal extent to convolution and pooling kernels. Image-trained weights can initialize the inflated model. Repeating a 2D kernel across $k_t$ time steps and dividing by $k_t$ makes the response match the original kernel when all input frames are identical. Fine-tuning on video can then adapt those weights to motion. This is a useful transfer initialization, not a claim that image weights already encode every temporal pattern.
+
+### Video understanding includes more than action labels
+
+A video can also carry audio. Combining image, motion, and sound supports tasks such as separating the voices of visible speakers, separating instruments, and using audio or vision to select important clips. The lecture also points toward egocentric video, recorded from a person's point of view, where multiple microphones and visual context can help infer who is speaking or listening to whom.
+
+Long videos make efficiency a central constraint. A system may sample only a subset of clips, use a sampler to predict which moments matter, or choose whether a task needs video, audio, or both. Video-language models add another interface: they map video information into a representation that a language model can use to answer questions or describe what is happening. These are active research directions described by the guest lecturer; the lecture does not establish that one particular model or sampling strategy is best for every deployment.
+
+**Source:** SC-10, full original-English captions. The guest lecture covers frame sampling, fusion strategies, 3D convolution, optical flow, recurrent and attention-based models, I3D transfer, temporal localization, audiovisual tasks, and efficient/egocentric video understanding.
+
+## Scaling model training across hardware
+
+### Large-model training is a communication problem too
+
+A modern GPU cluster is a hierarchy. Within one accelerator, arithmetic units share a hierarchy of small, fast caches and larger, slower memory. Across accelerators, data must move over links whose speed depends on whether the devices share a server, rack, or a wider network. A GPU can be fast at matrix multiplication and still sit idle while waiting for data or another device. Distributed training therefore tries to keep computation busy while overlapping communication with useful work.
+
+A single accelerator's compute and memory layout changes over time, so numbers such as memory capacity, bandwidth, or peak operations in this lecture describe the hardware used for its examples, not permanent properties. The durable lesson is that data movement is slower and more constrained as it crosses farther levels of the system. A training setup must account for both arithmetic and communication.
+
+### Data parallelism averages gradients across replicas
+
+In **data parallelism**, every GPU stores a full copy of the model. Each GPU processes a different part of the mini-batch and computes a local gradient. The GPUs then combine those gradients, usually with an all-reduce, so every replica can make the same weight update.
+
+If the global batch contains $m$ shards and each shard has $n$ examples, the average loss is
+
+$$
+L(W)=\frac{1}{mn}\sum_{r=1}^{m}\sum_{i=1}^{n}\ell(x_{ri};W).
+$$
+
+Because differentiation is linear over sums,
+
+$$
+\nabla_W L=\frac{1}{m}\sum_{r=1}^{m}\nabla_W\left(\frac{1}{n}\sum_{i=1}^{n}\ell(x_{ri};W)\right).
+$$
+
+So each GPU can compute its shard gradient independently, then the replicas average them. This is the same gradient as processing the full batch on one device, apart from numerical ordering and implementation details. The update must be synchronized: if every GPU starts with the same weights and receives the same averaged gradient, it stays in sync with the others. The GPUs must read different examples; accidentally repeating the same batch on every replica wastes the parallel work.
+
+The forward and backward passes on each shard need no communication until gradients are combined. An all-reduce can combine partial sums and distribute the result. Training systems can overlap communication for later layers with backward computation for earlier layers. That overlap hides some network delay. It does not eliminate it, and the actual bottleneck depends on model size, batch, interconnect, and the hardware.
+
+### Sharding model state trades memory for communication
+
+Plain data parallelism duplicates model weights, gradients, and optimizer state on every GPU. With an optimizer such as Adam, the state per parameter can include the weight, gradient, and two moving averages. If each is stored in 16-bit form, four values at two bytes each already require eight bytes per parameter; some implementations also retain higher-precision copies. A billion parameters therefore needs several gigabytes per replica before counting activations, temporary buffers, or other state.
+
+**Fully sharded data parallelism (FSDP)** assigns each layer's weights, gradients, and optimizer state to an owner device. Before a layer runs, its owner gathers or broadcasts that layer's weights so every participating device can compute the layer on its local data. Non-owners can discard the temporary weight copy afterward. In the backward pass, the weights are made available again; each device computes its local gradient, and the gradients are sent to the owner to combine and update. The updated weights are shared again when needed in the next forward pass.
+
+Sharding saves persistent memory, but it adds communication. Training can prefetch the next layer's weights while computing the current layer. During backward, it can overlap gradient transfer and optimizer work on one layer with computation on another. Whether this is faster depends on how much communication the cluster can sustain. **Hybrid sharded data parallelism** uses two groups: shard state within a group of closely connected GPUs, then keep a full model replica per group and average group gradients across groups. This can use fast links for frequent sharding communication and slower links for less frequent replica communication.
+
+### Checkpoint activations when memory is the limit
+
+The forward pass stores intermediate **activations** that the backward pass needs. For a deep model, those stored tensors can consume substantial memory. **Activation checkpointing** saves selected activations and recomputes the others during backward. It reduces memory use by spending extra arithmetic.
+
+If a network has $n$ layers, storing every activation uses memory that grows roughly with $n$. If we keep only a checkpoint at intervals of $c$ layers and recompute within each interval, the lecture's simple accounting gives memory proportional to $c$ and extra recomputation on the order of $n^2/c$. Choosing $c\approx\sqrt n$ gives roughly $\sqrt n$ checkpoint memory and $n^{3/2}$ recomputation in that simplified scheme. Practical systems use more careful checkpoint schedules, but the central trade is the same: more recomputation allows fewer stored activations.
+
+### Match parallelism to the tensor axes and hardware
+
+A transformer computes over several axes, and each suggests a different split:
+
+| Parallelism | What is split | Main benefit | Communication challenge |
+|---|---|---|---|
+| Data | Examples in the batch | Independent work per device | Average gradients |
+| Fully sharded data | Weights and optimizer state | Lower persistent memory per device | Gather weights and combine gradients |
+| Context | Positions in a long sequence | Fit long sequences across devices | Attention needs interactions between positions |
+| Pipeline | Consecutive layer groups | Fit deep models across devices | Activations and gradients must cross stages; idle “bubble” time |
+| Tensor | A weight matrix's dimensions | Split large matrix operations | Partial results must be combined |
+
+**Context parallelism** splits a long sequence. Many transformer operations act independently on positions, but attention compares positions with one another. Ring attention arranges blockwise exchanges so devices can build the needed attention interactions; Ulysses-style approaches distribute attention heads and sequence work differently. These methods matter when a sequence is too long for one device.
+
+**Pipeline parallelism** assigns successive layers to different devices. A single mini-batch creates idle time: each stage waits for activations from the previous stage on the forward pass and gradients from the next stage on the backward pass. This idle interval is the pipeline **bubble**. Splitting a batch into multiple micro-batches lets the stages work on different pieces at once and shrinks the bubble. Too many micro-batches, however, mean more activations to manage.
+
+**Tensor parallelism** splits a matrix multiplication across devices. For $Y=XW$, each device can compute a slice of the output from a slice of $W$, then combine partial results. With a pair of adjacent linear layers, choosing complementary row and column splits can avoid communicating between every layer; the devices combine information after the pair. This matches the two linear layers in a transformer's feed-forward block. The method is useful for very wide layers, but it adds communication at the split points.
+
+Large training runs commonly combine these dimensions. The best arrangement depends on memory, sequence length, layer width, batch size, and which devices can communicate quickly. A strategy that works on one cluster may waste time on another because its network topology differs.
+
+### Use model FLOP utilization to diagnose throughput
+
+Peak hardware throughput is a theoretical ceiling. Hardware FLOP utilization (HFU) compares a compute kernel with that ceiling. But training also spends time on data loading, communication, memory movement, optimizer work, and recomputation. **Model FLOP utilization (MFU)** asks how much of the device's theoretical compute rate is realized by the model's forward and backward work in the actual training loop.
+
+A simplified estimate is
+
+$$
+\operatorname{MFU}=\frac{\text{estimated model FLOPs per training step}}
+{\text{peak FLOPs per second}\times\text{measured seconds per step}}.
+$$
+
+For example, suppose a step's model computation is estimated at $2\times10^{15}$ floating-point operations. The device peak is $10^{15}$ operations per second, and the measured step takes 5 seconds. The theoretical time at peak is 2 seconds, so the estimated MFU is $2/5=0.4$, or 40%. This estimate depends on correctly counting model work and the precision-specific peak; it is a tuning signal, not a measure of model quality.
+
+When throughput is low, inspect what keeps the accelerator waiting: communication, small batches, data loading, activation recomputation, or inefficient kernels. The lecture recommends tuning the parallelism and batch/checkpoint choices toward higher MFU. Its numerical guidance reflects the course's training hardware and workload examples; it should not be treated as a universal threshold for every model.
+
+**Source:** SC-11, full original-English captions. The lecture walks from accelerator memory and matrix hardware through data/FSDP/HSDP, checkpointing, context/pipeline/tensor parallelism, and MFU. Hardware figures and scaling thresholds are time- and system-specific; the reusable concepts are the memory/communication hierarchy and each parallelization trade-off.
+
+## Self-supervision and evaluation
+
+### Self-supervision creates training targets from the data
+
+A supervised model learns from human-provided labels. A **self-supervised** model creates a target from the input itself. The task that creates this target is called a **pretext task**. The model learns an encoder representation while solving the pretext task; later, we reuse that encoder for a downstream task, such as classification, with fewer labeled examples.
+
+The hope is that the pretext task forces the encoder to learn useful visual structure. But success on the pretext task does not guarantee useful features for every later task. A model can learn shortcuts that solve the constructed puzzle without learning what matters downstream. Evaluate the representation on the actual target task. A **linear probe** freezes the encoder and learns only a linear classifier, testing whether the information is already easy to read from its features. **Fine-tuning** also updates some or all of the encoder, testing how well it can adapt.
+
+### Transformation and reconstruction pretext tasks
+
+Several early pretext tasks make labels by transforming an image:
+
+- **Rotation prediction:** rotate an image by one of four angles and classify which rotation was used. To solve this, the model may learn object orientation and shape, but it may also exploit dataset-specific cues.
+- **Patch location or jigsaw:** shuffle image patches and predict their relative positions or one of a limited set of allowed permutations. There are $9!$ possible permutations for a 3-by-3 grid, so a practical task chooses a smaller set. The model must use context across patches, though patch borders and texture can become shortcuts.
+- **Inpainting:** hide part of an image and predict the missing pixels. The target is available from the original image, so no human label is required. Pixel reconstruction can average over many plausible answers and produce blurry results; an adversarial objective can encourage realism, but it introduces a different training problem.
+- **Colorization:** convert an image to a color space with a lightness channel and two color channels, then predict color from lightness. The target color is already in the source data. A split-brain version predicts one set of channels from another, such as color from lightness and lightness from color.
+
+These tasks teach the model to make use of image context, but each task has its own bias. Rotation prediction is a classification problem with only four outputs. Colorization can exploit common color-object associations. Reconstructing hidden pixels may reward smooth averages even when the true missing region is ambiguous. Good pretext-task accuracy is therefore only one kind of evidence; downstream performance and robustness also matter.
+
+### Masked autoencoders predict hidden patches
+
+A **masked autoencoder (MAE)** divides an image into patches, hides many patches, and asks a model to reconstruct them. The encoder receives only the visible patches. A separate, smaller decoder receives the encoded visible patches plus learned mask tokens at missing positions and predicts the full image. In the lecture's example, masking about 75% of patches makes each image support many different training views and keeps the expensive encoder focused on visible patches.
+
+Let $x$ be the image represented as patches, $M$ be the set of masked patch indices, and $\hat{x}_i$ be the decoder's reconstruction. A simple objective is mean squared error only over the missing patches:
+
+$$
+L_{\text{MAE}}=\frac{1}{|M|}\sum_{i\in M}\|x_i-\hat{x}_i\|_2^2.
+$$
+
+The mask tells the model which targets it must infer. Visible patches pass through a vision-transformer encoder; a shared learned mask token fills the missing positions for the decoder. The decoder predicts patch content, and the loss compares those predictions with the original hidden patches. The encoder can then be used alone for a downstream task.
+
+Masking a large fraction reduces encoder computation and creates a hard context-prediction problem. But a reconstruction loss may emphasize low-level pixel similarity instead of every semantic property a later task needs. Linear probing and fine-tuning answer different questions, so it is useful to report both. The lecture compares MAE with other representation-learning systems, but its rankings are tied to particular datasets, model sizes, and training budgets.
+
+### Contrastive learning pulls related views together
+
+Instead of reconstructing pixels, **contrastive learning** shapes the representation space. Start with an image $x$ and apply two random augmentations to make two views of the same image. Their embeddings are a **positive pair**. Other images in the batch supply **negative examples**. The encoder should give the positive pair a higher similarity score than the negatives.
+
+For an anchor embedding $z_i$, its positive embedding $z_{i^+}$, and a set of comparison embeddings $z_j$, the InfoNCE loss can be written
+
+$$
+L_i=-\log\frac{\exp(\operatorname{sim}(z_i,z_{i^+})/\tau)}
+{\sum_j\exp(\operatorname{sim}(z_i,z_j)/\tau)},
+$$
+
+where $\operatorname{sim}$ is often cosine similarity and $\tau$ is a temperature that controls how sharply the softmax responds to score differences. The numerator is the positive pair. The denominator includes that positive and the negatives. Lowering the loss raises the positive's share of the softmax probability. In a batch of $N$ images with two views each, each view can serve as an anchor; its paired view is positive and the other views are treated as negatives.
+
+This resembles multiclass cross-entropy: the positive is the correct class among the candidates. More negatives can make the comparison more informative, but large batches use more memory and computation. The lecture mentions a mutual-information interpretation of the objective; that is a theoretical bound under assumptions, not a claim that the loss directly measures every kind of semantic information.
+
+SimCLR uses two augmentations per image, an encoder, and a projection head. It computes contrastive loss on the projection-head outputs. The encoder representation before that head is retained for downstream use. The lecture's intuition is that the projection space can discard details that help the contrastive objective, while the broader encoder representation can retain information useful for other tasks. Augmentation design matters: if an augmentation removes the evidence required by the downstream task, the model is trained to ignore something it may later need.
+
+MoCo addresses the need for many negatives with a queue of previously computed embeddings. Since queued representations are no longer part of the current gradient computation, a second, momentum-updated encoder produces their keys. The query encoder receives gradients; the key encoder slowly tracks it. This gives a larger comparison set without requiring every negative to be in the current batch. MoCo v2 combines design choices from SimCLR and MoCo. The lecture briefly names CPC and DINO but does not derive their objectives here; DINO uses student/teacher learning and is not simply another contrastive loss.
+
+### Choose the evaluation to match the claim
+
+A pretext task measures whether a model can solve the task it was given. A linear probe measures whether a frozen representation separates labels with a simple classifier. Fine-tuning measures how well the representation adapts when its parameters can change. Robustness and generalization tests measure behavior under shifts or perturbations. These results are not interchangeable: a model can excel at reconstruction yet need substantial fine-tuning, or perform well on one benchmark while failing under a different domain.
+
+The practical workflow is therefore: pretrain on unlabeled data, evaluate representations with a clearly stated protocol, then fine-tune or train a downstream head using the labels actually available for the application. Keep the pretraining data, augmentations, and evaluation split separate enough to detect leakage. Most of all, inspect whether the pretext objective preserves the information the downstream task needs.
+
+**Source:** SC-12, full original-English captions. The lecture covers transformation tasks, reconstruction, MAE, and the basics of contrastive learning, SimCLR, and MoCo. It mentions CPC, MoCo v3, and DINO as follow-up directions but does not provide full derivations for them in this session.
+
+## Generative models learn distributions and samplers
+
+### Generative models represent possible outputs
+
+A discriminative classifier models a label distribution given an input, $p(y\mid x)$. For each input image, it assigns probabilities across its fixed set of labels. If the only labels are “cat” and “dog,” it must choose between them even when the image is a horse, unless the system includes a rejection mechanism.
+
+A generative model instead represents data itself, such as $p(x)$, or a distribution over outputs given a condition, $p(x\mid y)$. A conditional model can represent many images that fit one text prompt. That matters when the task has several valid answers: one prompt can describe many possible pictures. Bayes' rule connects discriminative and generative probabilities:
+
+$$
+p(y\mid x)=\frac{p(x\mid y)p(y)}{p(x)}.
+$$
+
+The three views answer different questions. A discriminative model asks which label fits this input? An unconditional generator asks which samples look likely under the data distribution? A conditional generator asks which outputs fit this requested condition? A model that can estimate $p(x)$ may help identify unusual samples, but the lecture notes that unconditional generation gives little control over what is drawn. Conditional generation is useful when the user can supply a prompt or other condition.
+
+A probability density must normalize: its total probability over the space is one. This means possible outcomes compete for a fixed amount of probability mass. Generative modeling therefore asks more than “which label should I predict?” It must describe which data are plausible and how likely different possibilities are. In practice, the term “generative model” is often used loosely; check whether a method models an unconditional distribution, a conditional distribution, or only provides samples.
+
+### Likelihood and autoregressive factorization
+
+**Maximum likelihood estimation (MLE)** chooses model parameters that assign high likelihood to observed training examples. For independent examples $x_1,\ldots,x_N$,
+
+$$
+\theta^*=\arg\max_\theta \prod_{i=1}^{N}p_\theta(x_i)
+=\arg\max_\theta \sum_{i=1}^{N}\log p_\theta(x_i).
+$$
+
+The logarithm turns a product into a sum and is easier to compute stably. We hold the observed samples fixed and change the model distribution; this is why the objective is called likelihood. The data are treated as independent draws from an unknown source distribution, and MLE fits the model to the finite sample we have.
+
+An **autoregressive model** factors a sample into an ordered sequence of pieces and applies the probability chain rule:
+
+$$
+p(x_1,\ldots,x_T)=\prod_{t=1}^{T}p(x_t\mid x_1,\ldots,x_{t-1}).
+$$
+
+This identity is exact. The model predicts the next piece from the prefix. An RNN carries the prefix in its hidden state; a transformer can use a causal mask so position $t$ sees only positions up to $t$. For discrete text tokens, each step predicts a softmax distribution and cross-entropy trains the observed next token. The probability of the whole sequence is the product of the observed-token probabilities at all steps, or the sum of their log probabilities.
+
+Images can be rasterized into sequences too. An 8-bit RGB image has three discrete channel values per pixel, so a $1024\times1024$ image contains more than three million scalar values. Predicting each value in turn is exact in principle, but long sequences are costly. A learned tokenizer can compress image regions into fewer tokens, trading pixel-level detail for a shorter sequence.
+
+### Autoencoders and latent variables
+
+A traditional autoencoder has an encoder $z=f_\phi(x)$ and a decoder $\hat{x}=g_\theta(z)$. It learns to reconstruct the input. A bottleneck makes the task nontrivial: if the latent vector $z$ could simply copy every input value, the system could learn the identity function without useful compression. A compact representation encourages the model to preserve patterns needed to reconstruct the data.
+
+A deterministic autoencoder does not by itself tell us how to sample new latent vectors. Its codes may occupy an irregular region of latent space. Sampling a random point and decoding it can therefore produce an invalid or poor sample. A **variational autoencoder (VAE)** makes the encoder output a distribution over latent codes, $q_\phi(z\mid x)$, and defines a simple prior, usually $p(z)=\mathcal{N}(0,I)$. The decoder defines $p_\theta(x\mid z)$. At generation time, draw $z$ from the prior and decode it.
+
+The exact data likelihood would require marginalizing over all possible latent vectors:
+
+$$
+p_\theta(x)=\int p_\theta(x\mid z)p(z)\,dz.
+$$
+
+For a neural decoder and high-dimensional $z$, this integral is usually intractable. The encoder distribution $q_\phi(z\mid x)$ gives a tractable approximation. The VAE maximizes the evidence lower bound (ELBO):
+
+$$
+\log p_\theta(x)\geq
+\mathbb{E}_{q_\phi(z\mid x)}[\log p_\theta(x\mid z)]
+- D_{\mathrm{KL}}\big(q_\phi(z\mid x)\,\|\,p(z)\big).
+$$
+
+The first term rewards accurate reconstruction: sample a latent code from the encoder and ask the decoder to assign high probability to the original input. The second term, the KL divergence, penalizes an encoder distribution that strays too far from the prior. The KL divergence is nonnegative, which is why dropping an intractable nonnegative term in the derivation gives a lower bound rather than the exact likelihood.
+
+For a diagonal Gaussian encoder, the network predicts a mean vector $\mu(x)$ and standard deviation vector $\sigma(x)$. The reparameterization trick writes a sample as
+
+$$
+z=\mu(x)+\sigma(x)\odot\epsilon,\qquad \epsilon\sim\mathcal{N}(0,I).
+$$
+
+Randomness enters through $\epsilon$, while $\mu$ and $\sigma$ remain differentiable outputs of the encoder. This lets gradients train the encoder through the sampled code. If the decoder uses a Gaussian with fixed variance, maximizing its reconstruction log likelihood is equivalent, up to a scale and additive constant, to minimizing squared error.
+
+The two ELBO terms pull in different directions. Reconstruction favors distinct, precise codes for different inputs. The prior term pushes those codes toward a shared, smooth distribution. A one-dimensional numerical example shows the regularizer's effect: for a Gaussian encoder $q(z\mid x)=\mathcal{N}(\mu,\sigma^2)$ and unit-Gaussian prior, the KL term is
+
+$$
+D_{\mathrm{KL}}=\frac12\big(\mu^2+\sigma^2-1-\log\sigma^2\big).
+$$
+
+If $\mu=0$ and $\sigma=1$, the KL is zero: the encoder matches the prior. If $\mu=2$ and $\sigma=1$, it is 2 nats, so the model pays a penalty for centering this input's code far from the prior. Too much pressure toward the prior can weaken reconstruction; too little can leave latent regions that are difficult to sample. The useful setting balances both.
+
+A VAE makes generation possible because prior samples are likely to lie in latent regions the decoder learned to use. This can also create smooth latent traversals: moving between codes can gradually change a generated image. That does not guarantee that every latent dimension has a clean human meaning or that samples will be sharp. The lecture's taxonomy separates exact explicit densities (such as autoregressive models), approximate explicit densities (VAEs), implicit one-pass samplers (GANs), and implicit iterative samplers (diffusion, discussed in the next lecture).
+
+**Source:** SC-13, full original-English captions. The lecture derives MLE, autoregressive factorization, and the VAE lower bound; the next session is explicitly reserved for GANs and diffusion. Historical statements about which model family is most useful are time-specific context, not universal rankings.
+
+### GANs learn by competing
+
+A **generative adversarial network (GAN)** draws a latent vector $z$ from a simple prior and maps it to a sample $G(z)$. A discriminator $D(x)$ predicts whether an image is real or generated. The discriminator learns a real-versus-fake classification task. The generator learns to make generated samples that the discriminator classifies as real.
+
+The original minimax objective is
+
+$$
+\min_G\max_D\;V(D,G)=
+\mathbb{E}_{x\sim p_{\text{data}}}[\log D(x)]
++\mathbb{E}_{z\sim p(z)}[\log(1-D(G(z)))].
+$$
+
+The discriminator maximizes this expression: it wants $D(x)$ near 1 for real data and $D(G(z))$ near 0 for generated data. The generator minimizes it: it wants generated samples to receive high real scores. Gradients flow from the discriminator through the generated image and into the generator. After training, sampling is fast: draw $z$, run $G$, and discard the discriminator.
+
+The objective describes a two-player game, not a single loss curve that must steadily fall. A strong discriminator can give the generator weak gradients early in training. The common non-saturating generator objective instead maximizes $\log D(G(z))$; it gives stronger gradients when the discriminator confidently rejects early, poor samples. The generator and discriminator also change each other's training data, so the optimization is non-stationary. Training can oscillate, become numerically unstable, or suffer **mode collapse**: many latent vectors map to only a few generated examples. A low discriminator loss or plausible sample grid alone does not prove the generator covers the full data distribution.
+
+GANs can produce crisp samples, and latent interpolation can change an image smoothly. But a standard GAN maps from latent code to image without learning an encoder from image back to code. It has no explicit likelihood value, and it can be difficult to diagnose or tune. The lecture gives an idealized result in which a perfect-capacity discriminator and generator have an optimum when generated and real distributions match; finite neural networks, limited data, and gradient training do not guarantee reaching that optimum.
+
+### Rectified flow turns sampling into an integration problem
+
+Diffusion methods begin with a simple noise distribution and learn to move a noisy sample toward the data distribution through many small steps. The lecture focuses on **rectified flow**, a concrete version that uses a straight interpolation between a real training sample $x$ and a random noise sample $z$. Choose $t$ uniformly from $[0,1]$, with $t=0$ at data and $t=1$ at noise:
+
+$$
+x_t=(1-t)x+t z,\qquad v=z-x.
+$$
+
+The training network sees $(x_t,t)$ and predicts the velocity $v$. It is trained with squared error:
+
+$$
+L(\theta)=\mathbb{E}_{x,z,t}\left[\|f_\theta(x_t,t)-(z-x)\|_2^2\right].
+$$
+
+For a one-dimensional example, let a data value be $x=2$, a noise draw be $z=-1$, and $t=0.25$. Then $x_t=0.75(2)+0.25(-1)=1.25$, and the training target velocity is $v=-1-2=-3$. The model is asked to predict the direction and rate of change as $t$ moves from clean data toward noise.
+
+At generation time, start with noise at $t=1$ and integrate backward toward $t=0$. With a step size $\Delta t>0$, the simple Euler update is
+
+$$
+x_{t-\Delta t}=x_t-\Delta t\,f_\theta(x_t,t).
+$$
+
+The minus sign matters: the training velocity points from data to noise as $t$ increases, while generation moves from noise back to data. With $N$ evenly spaced steps, $\Delta t=1/N$. More steps usually cost more compute but can better approximate the learned path; the lecture gives dozens of steps as a practical starting point, not a universal setting.
+
+Rectified flow is easier to monitor than the adversarial game because it has a direct regression loss. The straight line between a particular data point and a noise draw is a training construction; the model learns a velocity field that combines many such examples. In high dimensions, the geometry is more complex than a two-dimensional diagram suggests. The model is not given the correct pairing between each noise sample and real sample ahead of time; learning a useful transport between the distributions is the central challenge.
+
+### Conditioning and classifier-free guidance
+
+Conditional generation supplies an additional input $y$, such as a text embedding or image. The velocity network becomes $f_\theta(x_t,t,y)$, and it learns to move toward samples that fit that condition. To control how strongly the output follows $y$, **classifier-free guidance** trains the model with the condition removed on some examples. It therefore learns both conditional and unconditional predictions.
+
+At sampling time, combine them:
+
+$$
+v_{\text{guided}}=v_{\text{uncond}}+s\big(v_{\text{cond}}-v_{\text{uncond}}\big).
+$$
+
+At $s=1$, this equals the conditional prediction. When $s>1$, it moves farther in the direction that distinguishes the conditioned prediction from the unconditional one. Stronger guidance can improve prompt adherence, but may reduce variety or produce artifacts. It requires two network evaluations per sampling step unless the implementation combines them efficiently.
+
+### Latent diffusion combines several model families
+
+Operating directly on high-resolution pixels is expensive. **Latent diffusion** first encodes an image into a smaller latent tensor, then runs diffusion on that representation. A decoder converts the final clean latent back to pixels. In common pipelines the encoder and decoder form a VAE-like autoencoder. A discriminator can also be used when training the decoder to improve reconstruction sharpness, because a plain pixel reconstruction objective often produces blurry outputs. The diffusion model learns to generate in the compressed latent space.
+
+A text-to-image pipeline typically has a pretrained text encoder, a diffusion transformer, and an image decoder. The text encoder turns the prompt into embeddings. The diffusion transformer receives noisy image latents, the time step, and the text features. It predicts an update, repeated over multiple steps. The decoder maps the final latent to the image. Each component has a different role; the complete system is not just one generative network.
+
+A video pipeline adds a time axis to the latent. More frames and higher resolution mean more tokens. Since attention can scale quadratically with token count, video generation can be much more expensive than image generation. Distillation aims to reduce the number of sampling steps, usually trading some sample quality for speed. Transformer diffusion models inject time information through scale/shift modulation and text or other conditions through cross-attention or joint attention.
+
+### Diffusion has several mathematical views
+
+The lecture presents diffusion from three related but distinct perspectives. The first is denoising: learn to reverse a process that adds noise. The second is a latent-variable or likelihood view, where the training objective can be related to a lower bound on data likelihood. The third is the **score function**, $\nabla_x\log p(x)$, which points toward regions of higher probability density; models learn this direction for data corrupted at different noise levels. A fourth language describes sampling as solving a stochastic differential equation (SDE), then numerically integrating it from noise toward data.
+
+These views motivate different objectives and sampling algorithms. They are not identical derivations, and the lecture intentionally does not give a full treatment of each. Rectified flow's simple Euler update is one numerical integration approach; more advanced solvers can trade evaluation count against accuracy. Keeping the distinction clear prevents treating one simplified training recipe as the entire theory of diffusion.
+
+**Source:** SC-14, full original-English captions. The lecture develops the GAN game, its practical instability, rectified-flow training and sampling, classifier-free guidance, latent diffusion, and several theoretical views of diffusion. Its model rankings and product examples are tied to the lecture date; the mathematical mechanisms and speed/quality trade-offs are the lasting material.
+
+## Vision-language models and grounded tools
+
+### Foundation models and adaptation
+
+A task-specific model is trained for one job, such as image classification, and then tested on examples reserved for evaluation. A **foundation model** is first trained on broad data and objectives, then adapted to many downstream tasks. Adaptation can mean adding a small trained classifier, supplying a prompt, or connecting the model to another component. “Foundation model” is a broad label, not a guarantee of robustness, safety, or general reasoning. The lecture notes that the definition is contested.
+
+For language models, next-token prediction creates a flexible interface: provide a prefix and ask the model to continue it. Image encoders trained only to match image and text representations do not automatically have this interface. They need a separate way to adapt to a new task. This difference motivates the progression from CLIP-style encoders to vision-language models that generate text, masks, or actions through connected components.
+
+### CLIP: align images with their descriptions
+
+CLIP uses two encoders: an image encoder and a text encoder. Each maps its input to a vector in a shared space. Training data consists of matching image-caption pairs. A correct image and caption should have high similarity; a mismatched pair should have lower similarity. This is **contrastive learning**: pull matching examples together and push other examples apart.
+
+For a mini-batch of $N$ pairs, let normalized image vector $v_i$ and text vector $t_j$ have similarity $s_{ij}=v_i^\top t_j/\tau$, where $\tau$ is a temperature that controls how sharply the scores are separated. The image-to-text loss is
+
+$$
+L_{I\to T}=-\frac{1}{N}\sum_{i=1}^{N}\log\frac{\exp(s_{ii})}{\sum_{j=1}^{N}\exp(s_{ij})}.
+$$
+
+This is cross-entropy over the batch: for each image, the matching caption is the correct class among the $N$ captions. A symmetric text-to-image loss swaps the roles of images and captions:
+
+$$
+L=\frac{1}{2}(L_{I\to T}+L_{T\to I}).
+$$
+
+The symmetry matters. Each image must retrieve its caption, and each caption must retrieve its image. Other batch examples act as negatives. If the batch contains only a dog and a truck, it teaches less about the difference among dog breeds than a batch that also contains several similar dogs. Larger batches increase the chance of including these **hard negatives**, which are plausible but incorrect alternatives. They also demand more memory and compute, and they do not guarantee that training examples cover every important distinction.
+
+After training, image and text vectors can be compared directly. For zero-shot classification, write each class name as a text prompt, encode the prompts, encode a new image, and choose the class with the highest cosine similarity. For example, compare an image vector with text vectors for “a photo of a plane,” “a photo of a dog,” and “a photo of a bird.” This is a nearest-neighbor decision in the shared vector space. A prompt such as “a photo of a dog” can work better than the bare word “dog” because the model was trained on image-caption phrases. One can encode several templates per class and average their vectors to reduce dependence on one wording.
+
+Zero-shot evaluation uses the fixed pretrained model and prompts. A **linear probe** freezes the image encoder and trains a small linear classifier on labeled examples. A linear probe can improve performance, but it requires task-specific labels and training. Zero-shot behavior is useful when a new class set has no labeled training examples.
+
+CLIP's strength comes from broad image-text associations, not only category names. Captions can mention colors, shapes, actions, and context. This can help when test images differ from common benchmark images. The lecture contrasts internet-scale pairs with a much smaller labeled classification dataset; its counts and benchmark results describe the particular 2025 talk and should not be treated as current general rankings.
+
+CLIP has important limits. An image-level caption may say that a person crosses a street without identifying the person's exact location, the car's location, or their relation. The model can recognize “mug” and “grass” but still confuse “a mug in grass” with “grass in a mug.” That is a **compositionality** problem: knowing the parts does not ensure that the model understands how those parts relate. Larger batches and carefully selected hard negatives can improve fine distinctions, but curated hard negatives may also hurt generalization in some settings. The lecture presents that result as an open research issue rather than a settled theory.
+
+Open-vocabulary retrieval is another practical strength. Once a dataset is embedded, a text query can retrieve images without training a new fixed-category classifier. But a text prompt does not add missing evidence. If the training captions omit spatial relations or rare objects, retrieval cannot reliably recover them just because the vocabulary is open.
+
+### Add captioning and spatial features to vision-language models
+
+CoCa combines image-text contrastive training with a captioning objective. The image encoder and text encoder still learn to align paired examples. A decoder also attends to the image features and generates a caption. The two objectives ask for different levels of information: matching a caption can identify the broad topic, while generating the caption requires predicting a sequence of words. The lecture argues that this richer signal can improve the learned image features. The result is still dependent on the training data and evaluation setup.
+
+A vision-language model (VLM) connects visual features to a language model that generates text one token at a time. The image must first be converted into tokens the language model can use. A common design uses a pretrained vision encoder, then a learned **projector**—often a linear layer—to map visual features into the language model's feature space. These projected tokens are placed with the text context. The language model can then answer questions or describe the image.
+
+In a CLIP Vision Transformer, the class token is trained to summarize the image for image-text matching. Other patch tokens may retain spatial detail, but the lecture cautions that their usefulness depends on which layers and supervision are used. It describes using features from just before the final pooled representation because they retain more spatial information. A single global vector is often insufficient when a task asks where an object is.
+
+Flamingo uses a different connection. A Perceiver resampler reduces visual features to a fixed, manageable set of tokens. Cross-attention layers are inserted into the language model so that its text representations can query image features as needed. A **cross-attention** operation uses one sequence as queries and another as keys and values; here, language tokens query the image tokens. Gates and residual connections control how much visual information is added to the language stream. The lecture describes most of the pretrained vision and language weights as frozen in the presented setup, while the resampler and inserted cross-attention components are trained.
+
+This architecture can process interleaved sequences such as image, text, image, text. A mask makes each generated description attend to its corresponding image, while the wider sequence can provide conversational context. This supports multi-image questions and multi-turn dialogue. **In-context learning** means the prompt includes examples of the desired input-output behavior, such as several image-question-answer pairs, and the model attempts a new one without updating its weights. With no examples, the same setup is zero-shot. These are behaviors observed in particular models and prompts; the presence of a fluent answer does not verify that its visual claim is correct.
+
+### Data quality and visual grounding
+
+The lecture's guest presents a VLM example that outputs points as evidence for answers. For a counting question, it points to the items it counted and then gives a number. For OCR, it points to the region containing a bus route number before transcribing it. Coordinates or points provide **grounding**: they connect part of the answer to a location in the image. A point can also be passed to another model, such as a segmentation system, to turn a location into a mask.
+
+The speaker argues that data density and content can matter as much as raw pair count. Internet captions are often incidental: they may express the uploader's reaction or omit obvious spatial facts. Targeted annotation can ask about position, size, shape, material, text, or other details that ordinary captions rarely mention. The lecture describes human elicitation studies and spoken annotation as ways to gather richer descriptions. It reports a particular model and user-study result, but those claims are speaker-reported and time-bound; a preference study or a strong benchmark score is not proof that a model is reliable in every use.
+
+The central lesson is broader than that model: visual tasks need supervision for the information they require. A caption that says “a phone” will not teach the time displayed on the screen or the battery level. A question about relative location needs spatial annotations or another mechanism to inspect pixels. More images alone do not guarantee better coverage if their associated text omits the relevant evidence.
+
+### Prompted segmentation as a foundation task
+
+A segmentation model outputs a mask: a value for each pixel indicating whether it belongs to the target region. The target may be ambiguous. If an image has two cats, “segment the cat” does not say which one. A point, bounding box, or text prompt can specify the user's intent more precisely.
+
+SAM separates this process into three parts: an image encoder computes reusable image features; a prompt encoder converts points, boxes, or other prompts into features; and a lightweight mask decoder combines them to produce one or more candidate masks. A point can still be ambiguous. It might refer to a whole object or to a meaningful part. Instead of forcing the model to guess one interpretation during training, the described system predicts multiple masks at different levels of detail and uses the candidate that best matches the annotated target for the loss. At use time, a person or downstream system can choose the suitable granularity.
+
+The model depends on extensive mask data. The lecture describes an iterative data engine: begin with human annotations, train a model, use it to propose more masks, and have people correct or refine those proposals. This human-in-the-loop process makes a large mask collection possible, but annotation remains costly. The lecture's reported dataset growth is specific to the cited release and should not be generalized to later systems.
+
+### Chaining models into programs
+
+A single model may not reliably solve every subtask. **Chaining** connects models so that one model's output becomes another model's input. For example, a point-grounded VLM can point to a cricket bat; a video segmentation model can use that point to track the bat across frames. A point can also guide a robot's motion planner toward a water bottle. The language model proposes or identifies a goal; a separate system handles localization, segmentation, motion, or control.
+
+A more general form is visual programming. Given a question such as “Are there six people across these two boat images?”, a language model can write a small program that calls an object detector on both images, counts the detections, adds the counts, and compares the result with six. The model does not need to perform every low-level visual computation internally. It selects tools and combines their outputs. The system needs a clear tool interface: what each tool accepts, what it returns, and what the output means.
+
+Programs can be fixed in advance or generated for each question. In-context examples can show the model how to call available functions. Retrieval can select examples that resemble the current question, but this adds another component that can fail. Chaining can expand capability, yet each call adds latency, compute cost, and a new opportunity for error. An incorrect detector output can produce a wrong final count even if the program adds correctly. The final result should therefore preserve intermediate evidence and be checked when the task matters.
+
+Chaining is also useful for image editing. A segmentation model can identify the desert region; an image generator can replace that region with grass; compositing can retain pixels outside the mask. This can be more controllable than asking one generator to redraw the whole image, but segmentation boundaries and generated content still need inspection.
+
+### Grounding reduces, but does not remove, hallucinations
+
+A model that points while answering exposes some evidence that can be checked. It may reduce unsupported answers, but a point can still land on the wrong object, and a correct point does not prove the text conclusion follows. Stronger systems can pass outputs through independent verifiers, check a count against detections, or ask a human to review uncertain cases. Verification is an additional process, not an automatic guarantee.
+
+The lecture also raises the idea of automatically building new tools when a task requires a capability the system does not already have. It describes this as early-stage research. Until a generated tool has been tested, its output should not be treated as reliable just because a model proposed it.
+
+**Source:** SC-16, full original-English captions. The notes follow the lecture's progression from image-text contrastive training, through VLM and segmentation architectures, to data grounding and tool chaining. Historical model names, release dates, benchmark scores, and user-study claims are speaker-reported examples tied to the lecture period; they are not presented as current comparative evaluations.
+
 ## Pose estimation, transforms, and robust fitting
 
 Pose estimation combines geometric constraints with robust fitting to recover transformations despite outliers and ambiguity.
@@ -3778,6 +5818,1253 @@ For a sphere of radius $R$, normals cover the full sphere uniformly in area beca
 
 Regular and semi-regular polyhedra provide partitions of the sphere for directional sampling. The design goal is not simply “many bins”: equal-area coverage, bounded distortion, neighborhood structure, and rotational bias matter. A grid that overrepresents pole directions makes a recognition score depend on how the object is oriented relative to the binning. Refinement should subdivide cells in a controlled way. The rotational tessellation topic and the earlier rotation-space representation meet here: both discretize orientations on curved manifolds, and both need awareness that uniform-looking Euclidean bins are not uniform on the sphere. [[#MITV-20 - Space of Rotations, Regular Tessellations, Critical Surfaces, Binocular Stereo|MITV-20]] · [[#MITV-23 - Gaussian Image, Solids of Revolution, Direction Histograms, Regular Polyhedra|MITV-23]]
 
+## Finite-field projections turn image size into collision counts
+
+Here “projection” means mapping a point set onto a line, such as $\pi_\theta(x,y)=x+\theta y$. This is a different use of the word from camera projection, which maps 3D coordinates to an image plane. The number-theoretic results below do not describe camera matrices.
+
+### Projection as a collision problem
+
+For a finite set $X\subset\mathbb R^2$ and a line $V$ through the origin, orthogonal projection is $\pi_V(x)=x-\langle x,v^\perp\rangle v^\perp$, where $v$ is a unit vector along $V$. A fiber is a set of points with the same projection; its direction is parallel to the kernel $V^\perp$. A small image means many collisions in the fibers. The subject asks how many directions can produce a small image and what structure makes those directions exceptional.
+
+For the slope parameterization, set $\pi_\theta(x,y)=x+\theta y$ and $\pi_\infty(x,y)=y$. In the grid $X=[N]\times[N]\cap\mathbb Z^2$, a rational direction $\theta=a/b$ gives $b\pi_\theta(x,y)=bx+ay$ (up to sign convention for the projected axis), so the image has only $O(N(|a|+|b|))$ possible values rather than $N^2$. The resonance comes from integer arithmetic. This example motivates a structure-versus-rarity principle: a structured set can have small projections, but the same compression cannot generally persist over many sufficiently varied directions.
+
+For a finite map $f:X\to Y$, write $r(y)=|f^{-1}(y)|$. Then $\sum_y r(y)=|X|$ and
+$$\sum_y r(y)^2=\#\{(x,x')\in X^2:f(x)=f(x')\}.$$
+Cauchy–Schwarz gives $|f(X)|\sum_y r(y)^2\ge |X|^2$. Thus a good upper bound for collisions forces a large image. This same move appears later as point–tube incidence counting and [[Additive energy and approximate structure|additive energy]].
+
+For measures, replace cardinality by covering number $|E|_\delta$, the minimum number of radius-$\delta$ balls needed to cover $E$. A scale-$\delta$ set may have $|E|_\delta\approx\delta^{-s}$; local nonconcentration requires $|E\cap B(x,r)|_\delta\le Cr^s|E|_\delta$ at every $\delta\le r\le1$. The energy viewpoint and its projection integral are derived in the proof supplement below.
+
+### Finite fields: exact tests and arithmetic obstruction
+
+Over $\mathbb F_q$, define $\pi_\theta(x,y)=x+\theta y$ for $\theta\in\mathbb F_q$. If $S=\max_{\theta\in D}|\pi_\theta(X)|$ for $X\subset\mathbb F_q^2$, elementary coincidence counting proves $|D|\lesssim S$ when $S\le|X|/2$. The mean-zero line-indicator argument proves the independent estimate $|D|\lesssim Sq/|X|$ when $S\le q/2$. Both count all ordered pairs, with the diagonal separated explicitly; see the complete derivations below.
+
+The prime-field grid example suggests the sharper inequality $|D|\lesssim S^2/|X|$, but it fails over extension fields: if $q=p^2$, $X=\mathbb F_p^2$ and $D=\mathbb F_p$, then $|X|=q$, $|D|=q^{1/2}$ and all projected images lie in $\mathbb F_p$, so $S=q^{1/2}$. The subfield makes many directions preserve a lower-dimensional arithmetic world. Bourgain–Katz–Tao replace a bare size condition with a sum-product expansion argument that excludes approximate subfields in $\mathbb F_p$.
+
+### Exact finite-field collision and orthogonality bounds
+
+For $X\subset\mathbb F_q^2$ and $D\subset\mathbb F_q$, let $\pi_\theta(x,y)=x+\theta y$ and $S=\max_{\theta\in D}|\pi_\theta(X)|$. The collision count for one direction is
+
+$$C_\theta=\#\{(x,x')\in X^2:x\ne x',\ \pi_\theta(x)=\pi_\theta(x')\}.$$
+
+If the fibers contain $n_z$ points, then $\sum_z n_z=|X|$ and $\sum_z n_z^2=C_\theta+|X|$. Cauchy–Schwarz gives $\sum_z n_z^2\ge |X|^2/|\pi_\theta(X)|\ge |X|^2/S$. Thus $C_\theta\ge |X|^2/S-|X|\ge |X|^2/(2S)$ whenever $S\le |X|/2$. Summing over $D$ gives at least $|D||X|^2/(2S)$ triples $(\theta,x,x')$. But for fixed distinct $x-x'=(a,b)$, the equation $a+\theta b=0$ has at most one solution $\theta$ unless $b=0$, in which case it has none because then $a\ne0$. So there are at most $|X|(|X|-1)$ triples. Comparing proves $|D|\le 2S$ (with harmless integer-rounding constants). The hypothesis $S\le |X|/2$ is what lets the diagonal term be absorbed; no prime-field assumption is used.
+
+The second finite-field bound assumes $S\le q/2$. For each direction choose exactly $S$ affine fibers, adding unused lines if necessary, whose union covers $X$. Let $\mathcal L$ be this multiset of lines, so $|\mathcal L|=S|D|$, and let $F=\sum_{L\in\mathcal L}1_L$. On $X$, $F(x)=|D|$. Each line has $q$ points, so the normalized average of $1_L$ on $\mathbb F_q^2$ is $q/q^2=1/q$. Write $1_L=1/q+g_L$, where $g_L$ has mean zero. Then $F=F_0+F_H$ with $F_0=|\mathcal L|/q=S|D|/q$. The condition $S\le q/2$ gives $F_0\le |D|/2$, hence $|F_H(x)|\ge |D|/2$ for every $x\in X$. Using the **unnormalized** squared norm $\|g\|_2^2=\sum_x|g(x)|^2$,
+
+$$|X||D|^2/4\le \|F_H\|_2^2.$$
+
+For distinct lines, direct counting gives $\langle g_{L_1},g_{L_2}\rangle=0$ when they are nonparallel and $-q$ when they are distinct parallel lines. For the latter, they are disjoint and expansion gives $0-q-q+q=-q$. A line’s own mean-zero norm is $q-q^2/q=q(1-1/q)\le q$. Therefore, summing all diagonal and off-diagonal terms,
+
+$$\|F_H\|_2^2=\sum_{L_1,L_2}\langle g_{L_1},g_{L_2}\rangle\le q|\mathcal L|=qS|D|.$$
+
+The two inequalities imply $|D|\le 4Sq/|X|$. Constants are not optimized. If instead the norm is the normalized average $q^{-2}\sum_x|g(x)|^2$, both sides above must be divided by $q^2$; mixing the conventions would lose a factor of $q^2$.
+
+With the unnormalized transform $\widehat f(\xi)=\sum_x f(x)e(-x\cdot\xi)$, the matching Plancherel identity is $\sum_x f(x)\overline{g(x)}=q^{-2}\sum_\xi\widehat f(\xi)\overline{\widehat g(\xi)}$. The factor $q^{-2}$ is the reciprocal size of the ambient group, not an optional convention. For a line $L=\{x:x\cdot v=c\}$, direct character summation gives $\widehat{1_L}(\xi)=q e(-c\lambda)$ when $\xi=\lambda v$, and zero otherwise: parametrize the line by one free coordinate; the resulting nontrivial character sums to zero unless its coefficient vanishes. At $\lambda=0$ this is $q$, the line’s cardinality. Subtracting the mean removes exactly this zero-frequency value. Why does orthogonality appear? If $L$ is the affine line $x\cdot v=c$, its indicator has Fourier support on the one-dimensional normal subspace $\{\lambda v:\lambda\in\mathbb F_q\}$. Subtracting its mean removes the zero frequency. Two nonparallel lines have distinct normal directions, whose frequency supports then meet only at zero; the mean-zero supports are disjoint. Plancherel makes their inner product zero. Parallel disjoint lines have the same nonzero frequency support and a negative correlation, which helps the upper bound. In $\mathbb F_q^3$, a line’s normal frequency support is a plane, and two such planes intersect in a line containing nonzero frequencies. Thus the exact orthogonality argument fails; the lecture’s repair groups lines by direction and bounds the overlap multiplicity rather than pretending the planes are disjoint. This is a useful example of checking the dimension before importing an orthogonality claim.
+
+### Fourier slice identity and the low-frequency local-constancy step
+
+Let $f\in L^1(\mathbb R^2)$ and project onto a unit vector $v$. The projected density along that line is the Radon pushforward
+
+$$R_vf(s)=\int_{\mathbb R}f(sv+tw)\,dt,$$
+
+where $w$ is a perpendicular unit vector. Its one-dimensional Fourier transform at frequency $\sigma$ equals
+
+$$\widehat{R_vf}(\sigma)=\int_{\mathbb R}R_vf(s)e^{-2\pi i s\sigma}\,ds=\int_{\mathbb R^2}f(x)e^{-2\pi i (\sigma v)\cdot x}\,dx=\widehat f(\sigma v).$$
+
+The change of variables $x=sv+tw$ has Jacobian one; Fubini is justified by $f\in L^1$. Thus a projection does not arbitrarily scramble Fourier data: it restricts the two-dimensional transform to the frequency line parallel to the projection direction. This identity is also called the Fourier-slice theorem.
+
+The low-frequency estimate in the real tube method uses local constancy, not a pointwise bandlimited assertion without decay. If $\widehat G$ is supported in the ball $B(0,1/r)$, choose a smooth cutoff $\chi$ that equals one on this ball and is supported in a slightly larger ball. Then $G=G*K_r$, where $K_r=\check\chi_r$ is a rapidly decaying kernel at spatial scale $r$. Integration by parts in the inverse Fourier integral gives $|K_r(x)|\le C_Nr^{-2}(1+|x|/r)^{-N}$ in two dimensions. Majorize $|K_r|$ by a nonnegative integrable rapidly decaying kernel $\Psi_r$ and use weighted Cauchy–Schwarz:
+
+$$|G(x)|^2=\left|\int G(x-y)K_r(y)\,dy\right|^2\le C\int |G(x-y)|^2\Psi_r(y)\,dy=(C|G|^2*\Psi_r)(x).$$
+
+If $G$ is large on a set $X$ of unit balls, integrating this inequality over those balls converts the pointwise lower bound into an average of $|G|^2$ over their radius-$r$ neighborhoods. The maximum occupancy $N_X(r)$ controls how often any location is counted. This is the bridge from frequency support to spatial clustering; it is why the real theorem contains a local-density factor instead of only $|X|$.
+
+For the tube decomposition, smooth each $1\times R$ tube at unit scale so its Fourier transform lies in the dual rectangle, of dimensions about $1$ in the tube-normal frequency and $1/R$ in its long-axis frequency. Split frequency into annuli $|\xi|\sim1/r$, dyadically for $1\le r\le R$, plus the lowest-frequency ball. The $r$-piece is locally constant on radius-$r$ spatial balls. Two such pieces are essentially orthogonal unless their tubes fit in one common $O(r)\times O(R)$ container: otherwise the tube neighborhoods are disjoint or their dual frequency supports are essentially disjoint. Each piece has amplitude about $r^{-1}$ on an area about $rR$, so its squared $L^2$ norm is about $r^{-2}\cdot rR=R/r$. If no container holds more than $N_T(r)$ tubes, summing pairwise inner products yields
+
+$$\|f_r\|_2^2\lesssim N_T(r)|T|R/r.$$
+
+This is a dyadic, scale-localized estimate. The logarithmic number of scales and the near-orthogonality errors are absorbed only after explicitly allowing the small power/log losses stated by the theorem.
+
+### Figure U11 - Finite-grid projections expose collision counts
+
+![[Visual Recall/University Graphics and Vision/finite-grid-projections.png]]
+
+*The checked diagram counts image multiplicities 4, 7, and 16 for the selected finite examples. It illustrates collision counting; it is not a general projection theorem.*
+
+## Real projections add scale, spacing, and incidence geometry
+
+### The real setting adds scales
+
+For unit balls $X$ in a large ball $B_R\subset\mathbb R^2$, take directions $D\subset S^1$ separated at angle $1/R$. Let $S=\max_{\theta\in D}|\pi_\theta(X)|$ denote projected one-dimensional measure. Clustering matters, so define
+$$N_X(r)=\max_c|X\cap B(c,r)|,\qquad
+N_D(\rho)=\max_{|\gamma|=\rho}|D\cap\gamma|.$$
+A pair of balls at distance about $r$ can collide only for directions in an arc of width $O(1/r)$. Summing over dyadic distances gives
+$$\frac{|D|}{|X|}S\lesssim\sum_{1\le r\le R}N_X(r)N_D(1/r).$$
+This is the real double-counting inequality. Hausdorff spacing controls both clustering functions at every scale and collapses the sum to a finite-field-like alternative; without it, a tightly clustered cloud behaves very differently from a spread-out grid.
+
+Fourier analysis supplies a complementary estimate. Smooth a tube indicator, decompose into dyadic frequency annuli, and use that a frequency piece at radius $1/r$ is locally constant on spatial $r$-balls. Distinct tubes have negligible inner product unless they fit in a common $O(r)\times O(R)$ container. The number of tubes in such a container is the scale-dependent tube-clustering factor. The detailed Fourier normalization and weighted local-constancy step appear below.
+
+### Sieve and incidence geometry
+
+The large sieve is a parallel sampling principle. Reducing $f:[N]\to\mathbb C$ modulo many primes samples its Fourier transform at rational frequencies $\alpha/p$. Distinct reduced fractions with $p\sim M$ are separated by $\gtrsim M^{-2}$; when $M^2\le N$, this is at least the local-constancy scale $1/N$. Plancherel then bounds the total mean-zero residue-class energy. Quadratic-residue sparsity gives the model application. It is an arithmetic energy estimate analogous to projection Fourier bounds, not itself a geometric projection theorem.
+
+For $m$ points and $n$ lines in $\mathbb R^2$, Szemerédi–Trotter states
+$$I(P,L)\lesssim m^{2/3}n^{2/3}+m+n.$$
+The crossing proof joins consecutive incident points on each line, applies the graph crossing lemma, and uses that two distinct lines cross at most once. Polynomial partitioning instead distributes points among $O(D^2)$ cells, each with $O(m/D^2)$ points; a line crosses $O(D)$ cells. The cell argument proves the sharp exponent but forgets how one line’s incidence pattern is coordinated across different cells, so it does not classify grid-like near-extremizers.
+
+### The first eight lectures: from exact collisions to geometric scale
+
+Projection theory begins with fibers. For a map $f:X\to Y$, the fiber multiplicities $r_y=|f^{-1}(y)|$ satisfy $\sum_y r_y=|X|$. Cauchy–Schwarz gives $|f(X)|\sum_y r_y^2\ge|X|^2$, so small images mean many equal-image pairs. The continuum counterpart replaces cardinality by covering number or a measure and asks how projection changes dimension. For a Borel set $E\subset\mathbb R^2$, Marstrand’s theorem gives $\dim_H\pi_\theta(E)=\min(\dim_HE,1)$ for almost every direction. Energy makes the mechanism quantitative: finite $t$-energy of a measure implies finite projected $s$-energy on average for $s<\min(t,1)$; the integral and hypotheses are derived in the Frostman section below. [P2-01]
+
+Over $\mathbb F_q$, the lecture uses $\pi_\theta(x,y)=x+\theta y$. If $S=\max_{\theta\in D}|\pi_\theta(X)|$, each direction contributes at least $|X|^2/S-|X|$ ordered unequal collisions. A fixed unequal pair collides in at most one finite slope, giving $|D|\lesssim S$ when $S\le|X|/2$. A second argument covers $X$ by at most $S$ affine fibers per direction, sums their indicators, subtracts the mean $1/q$, and uses orthogonality: nonparallel mean-zero indicators are orthogonal, parallel disjoint ones have negative inner product. With counting measure, $\|F_H\|_2^2\le qS|D|$ while $F_H=|D|-S|D|/q\ge|D|/2$ on $X$ if $S\le q/2$. Hence $|D|\lesssim Sq/|X|$. These estimates are independent of characteristic; the sharper grid conjecture is not, because $\mathbb F_{p^2}$ contains the obstruction $X=\mathbb F_p^2$, $D=\mathbb F_p$, for which $S=|D|=p$ and $|X|=p^2$. Exact normalization and the line Fourier transform appear below. [P2-02]
+
+For separated unit balls in $B_R\subset\mathbb R^2$, the same collision count must remember scale. Define $N_X(r)=\max_c|X\cap B(c,r)|$ and $N_D(\rho)=\max_{|\gamma|=\rho}|D\cap\gamma|$. If two ball centers are $r$ apart, directions causing their projections to overlap lie in an arc of length $O(1/r)$. Dyadically summing pairs yields
+
+$$\frac{|D|S}{|X|}\lesssim\sum_{1\le r\le R,\ r\ dyadic}N_X(r)N_D(1/r).$$
+
+This explains why equal total cardinalities are not equivalent: on a curve-neighborhood $N_X(r)\sim r$; a spread grid changes from one point per ball to about $r^2$ points at larger scales; a tight cluster accumulates quadratically until the whole cloud is captured. Under Hausdorff spacing for both points and directions, the dyadic sum becomes a logarithmic loss times the largest endpoint term. Fourier analysis gives the complementary bound. Smooth $1\times R$ tubes, decompose their sum into dyadic frequency annuli $|\xi|\sim1/r$, and note the piece has support in $B(0,O(1/r))$, so it is nearly constant on spatial $r$-balls. Its amplitude is about $1/r$ over area about $rR$, hence its squared norm is about $R/r$. Pairwise inner products are negligible unless the tubes fit in a common $O(r)\times O(R)$ container; the maximum occupancy of such containers controls the $L^2$ sum. A weighted convolution inequality turns low-frequency support into local averages, rather than assuming literal constancy. [P2-03–04]
+
+The large sieve moves the same idea to arithmetic samples. Write $\mathcal P_M=\{p\text{ prime}:M\le p\le2M\}$. For $f:[N]\to\mathbb C$, let $(\pi_pf)(a)=\sum_{n\equiv a\pmod p}f(n)$ and subtract its residue-class mean. Linnik’s theorem says, for primes $p\in[M,2M]$ and $M\le\sqrt N$,
+
+$$\sum_{p\in\mathcal P_M}\|(\pi_pf)_H\|_2^2\lesssim(N/M)\|f_H\|_2^2.$$
+
+The finite Fourier transform of $\pi_pf$ samples $\widehat f$ at fractions $a/p$. Distinct reduced fractions have separation at least $1/(4M^2)$; the support length $N$ makes the transform locally constant at scale $1/N$, and $M^2\le N$ ensures bounded overlap of sampling neighborhoods. Plancherel gives the energy bound. If a set misses a fixed fraction of residues for every such prime, its mean-zero residue functions retain a fixed fraction of their total $L^2$ mass, forcing $|A|\lesssim\sqrt N$. This is the sparse-residue application, not a prime-specific premise. The lecture then motivates Bombieri–Vinogradov via multiplicative convolution; it is explicitly a route/outline with endpoint and decomposition details omitted. [P2-05]
+
+The 3D finite-field exercise reveals exactly what fails when increasing dimension. In $\mathbb F_q^2$, line indicators have Fourier support on normal lines, so distinct directions meet only at the zero frequency. In $\mathbb F_q^3$, a line’s Fourier support is a plane; two such planes intersect in a nonzero line, so pairwise orthogonality is false. Grouping by direction bounds how many support planes can contain a given frequency, and Cauchy–Schwarz replaces exact orthogonality by a controlled overlap estimate. The lecture’s smoothing companion also separates a density into a low-frequency locally constant part and a high-frequency oscillatory part; low-frequency dominance means the function is almost constant across the relevant balls, while concentration can be tracked with local covering numbers. [P2-06–07]
+
+Finally, the plane supplies topology absent from finite-field pair counting. For $m$ points and $n$ lines, Szemerédi–Trotter gives $I\lesssim m^{2/3}n^{2/3}+m+n$. The crossing proof makes the real-plane input explicit: connect consecutive collinear incidences, apply the crossing lemma, and use that two straight lines meet at most once. Polynomial partitioning instead divides points into $O(D^2)$ cells with at most $O(m/D^2)$ points each; any line crosses at most $D+1$ cells unless it lies on the wall. Summing the elementary cell estimate gives $m\sqrt n/\sqrt D+nD$, balanced at $D\asymp m^{2/3}n^{-1/3}$. Wall incidences and endpoint regimes yield the linear terms. This local proof loses cross-cell relationships, which is why it proves the bound but not a classification of all near-extremal grids. Full cell arithmetic and the cross-cell limitation are expanded below. [P2-08]
+
+
+#### What the Szemerédi–Trotter proof does not reveal (Lecture 9)
+
+The three terms in $I(X,L)\lesssim |X|+|L|+|X|^{2/3}|L|^{2/3}$ have different extremizer behavior. When $|X|$ dominates, it suffices to put each point on a line; points can slide freely, so there is little rigidity. When $|L|$ dominates, stars give the dual flexible example. In the projective plane, a point $[a_0,a_1,a_2]$ lies on the line with coefficients $[b_0,b_1,b_2]$ exactly when $a_0b_0+a_1b_1+a_2b_2=0$; exchanging the two triples preserves incidence and swaps the chain and star constructions. The middle term is the rigid regime: known examples are integer grids and grids over rings of integers of number fields. The cell proof controls each cell separately and only checks that a typical line has few points there. It forgets how the same line threads through many cells, so it loses exactly the cross-cell compatibility one would need for a classification theorem.
+
+There is a distinct question for a prescribed direction set. For $D\subset\mathbb R\cup\{\infty\}$, use $\pi_t(x_1,x_2)=x_1+tx_2$ and $\pi_\infty(x_1,x_2)=x_2$, and define $S_D(N)=\min_{|X|=N}\max_{t\in D}|\pi_t(X)|$. Three directions can be normalized to $\{0,1,\infty\}$ by an invertible linear change. For four directions $\{0,1,\infty,t\}$ with transcendental $t$, take
+$$
+P_{k,s}=\left\{\sum_{j=0}^{k-1}a_jt^j: a_j\in\{0,1,\ldots,s-1\}\right\},\qquad X=P_{k,s}\times P_{k,s}.
+$$
+Transcendence makes the coefficient representation unique, so $|P_{k,s}|=s^k$ and $|X|=s^{2k}$. The projections at $0$ and $\infty$ have $s^k$ values; at $1$, coefficient sums range over $0,\ldots,2s-2$, giving at most $(2s)^k$ values; at $t$, the polynomial degree increases by one, giving at most $(2s)^{k+1}$. Choosing $k$ so that $2^k\asymp |X|^{1/(2k)}$ balances the extra coefficient-range factor against the degree and gives a subpower loss over $|X|^{1/2}$, of the form $\exp(C\sqrt{\log |X|})|X|^{1/2}$ (constants and log base suppressed). This is an example, not a matching lower bound; the lecturer presents sharpness as an open investigation.
+
+For unit balls, let $X$ be a family of radius-one balls in $B_R\subset\mathbb R^2$, and let $D\subset S^1$ be $1/R$-separated. Set $N_X(r)=\max_c|X\cap B(c,r)|$ and $N_D(\rho)=\max_{|\gamma|=\rho}|D\cap\gamma|$. Hausdorff spacing with exponent $\alpha$ means $|X|\asymp R^\alpha$ and $N_X(r)\lesssim r^\alpha$; for directions with exponent $\beta$, $|D|\asymp R^\beta$ and $N_D(r/R)\lesssim r^\beta$. A cell that concentrates in a ball of radius $r$ has roughly $r^\alpha$ balls, but only about $r^\beta$ inequivalent directions: directions less than $1/r$ apart look the same inside that cell. If $\alpha>\beta$, refining the cells preserves “more points than directions,” so the elementary double-counting step never enters its useful direction-dominant regime. This explains the obstruction more precisely than merely saying that unit balls have multiple scales.
+
+The course notes state the OSRW sharp projection estimate under Hausdorff-spacing hypotheses, with a threshold that the direction count be at least $R^{-\varepsilon}\min(R,|X|)$ and an $R^{\varepsilon}$-type loss in the square-root relation $S\gtrsim (|X||D|)^{1/2}$. Equivalently, above that threshold one may write $|D|\lesssim R^{O(\varepsilon)}S^2/|X|$; below it the threshold itself is the relevant alternative. The lecture’s blackboard shorthand “$|D|\le S^2/|X|+1$” suppresses this scale loss, so it must not be quoted as a lossless theorem.
+
+Over $\mathbb C$, the real subfield creates a concrete obstruction. Regard $\mathbb C^2$ as $\mathbb R^4$, take about $R^2$ unit balls centered on a real $R\times R$ grid, and take about $R$ real parameters $t\in B_1\subset\mathbb C$, separated by $1/R$. For $\pi_t(z_1,z_2)=z_1+tz_2$, the centers project to the real axis; the unit-ball thickness contributes only bounded imaginary width. Each projected set therefore occupies length $S\asymp R$, although $|X|^{1/2}|D|^{1/2}\asymp R^{3/2}$. The example shows why the real projection theorem needs arithmetic/subfield sensitivity: a real cell decomposition alone cannot rule out concentration in a proper subfield.
+
+#### Sumsets, energy, and robust structure (Lectures 10–12)
+
+A set can resist additive growth because it sits in a low-dimensional arithmetic pattern. An arithmetic progression $A=a+\{0,\ldots,L-1\}d$ has $|A+A|\le 2|A|$. A rank-$r$ generalized arithmetic progression
+$$
+A=a+\{n_1d_1+\cdots+n_rd_r:0\le n_j<L_j\}
+$$
+has $|A+A|\le 2^r|A|$. Freiman–Ruzsa says conversely that bounded doubling $|A+A|\le K|A|$ forces containment in a generalized progression whose rank and volume factor depend only on $K$. This is a structural classification, but the dependence is enormous; the polynomial Freiman–Ruzsa conjecture asks for meaningful control already when $K$ is a small power of $|A|$.
+
+Two short inequalities let us propagate smallness without invoking that deep classification. For finite subsets of an abelian group,
+$$
+|A|\,|B-C|\le |A-B|\,|A-C|.
+$$
+For each $d\in B-C$, fix $b(d)-c(d)=d$; the map $(a,d)\mapsto(a-b(d),a-c(d))$ is injective, since subtracting its coordinates recovers $d$, and then one coordinate recovers $a$. Substituting $B=C=-A$ gives $|A-A|\le K^2|A|$ whenever $|A+A|\le K|A|$. Plünnecke’s inequality says that if $|A+B|\le K|A|$, then for integers $m,n\ge0$,
+$$
+|B^{\oplus m}-B^{\oplus n}|\le K^{m+n}|A|.
+$$
+Petridis’ proof picks $X\subset A$ minimizing $|X+B|/|X|=\bar K\le K$. Inductively prove $|X+C+B|\le\bar K|X+C|$ for every finite $C$: when a new translate $c$ is added, separate the new sums and use the minimizing property on the subset of $X$ whose $c+B$ translate is already covered. Iterating with $C=B^{\oplus j}$ gives $|X+B^{\oplus m}|\le K^m|X|$; Ruzsa’s inequality then compares $B^{\oplus m}-B^{\oplus n}$ with the two iterated sumsets above. This is why small sumsets yield a whole family of small derived sets.
+
+A prime field has no proper subfield, but a quantitative proof needs to rule out approximate subfields. Define the ratio set $(A-A)/(A-A)$ using nonzero denominators. If $c$ is outside the ratio set, then $a_1+ca_2$ has a unique representation: two representations with unequal second coordinates would solve for $c$ as a difference ratio; equal second coordinates force equal first coordinates. Therefore $|A+cA|=|A|^2$. If the ratio set is proper, the prime-field fact that repeated addition of $1$ visits every element supplies a $b$ in it with $b+1$ outside. Write $b$ as a quotient of differences, insert the representation into $A+(b+1)A$, and clear denominators as a literal set map. The resulting bounded-complexity expression in $A$ must have at least $|A|^2$ values unless the ratio set is already all of $\mathbb F_p$. This denominator-clearing detail matters: multiplying a set by a denominator does not preserve cardinality if the denominator might vanish, so the rational expression is defined only on nonzero denominators and then expanded algebraically.
+
+The course bootstraps this lemma with Plünnecke and Ruzsa to prove the sum-product theorem. If $|A|=p^s$ with $0<s<1$, then for some $\varepsilon(s)>0$,
+$$
+\max(|A+A|,|A\cdot A|)\ge p^{s+\varepsilon(s)}.
+$$
+An arithmetic progression can have small sumset, and a geometric progression can have small product set; the theorem says a proper prime-field subset cannot keep both operations small. The classroom proof first proves a bounded algebraic expression such as $A^{\oplus3}-A^{\oplus3}$ expands by a power. Under the contrary assumption of small growth, Plünnecke bounds iterated additive combinations, and the multiplicative form of Ruzsa’s inequality transfers those bounds to a quotient of the expression from the approximate-subfield lemma, contradicting its lower bound. The gains and losses depend on $s$ and are small; constants and the explicit epsilon formula are suppressed in the lecture. Repeated application shows that for any $s<t<1$, a bounded-complexity expression $\operatorname{Poly}_K(A)$ can be made to have at least $p^t$ elements, where $K=K(s,t)$.
+
+Now let $D\subset\mathbb F_p$ be a set of slopes. If every $A+tA$ ($t\in D$) were small, contagious structure would force smallness for slopes formed by bounded additions, products, and sign changes of elements of $D$. Sum-product expansion makes this generated slope set larger than $A$; finite-field double counting then says one of its projections must be large, a contradiction. Quantitatively, if $|A|=p^{s_A}$ and $|D|=p^{s_D}$ with $0<s_A<1$ and $s_D>0$, there is $\varepsilon(s_A,s_D)>0$ such that
+$$
+\max_{t\in D}|A+tA|\ge p^{s_A+\varepsilon}|A|.
+$$
+The direct double-counting bound already settles $s_D\ge s_A$; the sum-product/contagious-structure argument handles the harder $s_D<s_A$ case. This theorem is exactly the product-set projection case $X=A\times A$.
+
+Why does the product-set case not immediately imply BKT for arbitrary $X\subset\mathbb F_p^2$? After normalizing two directions to horizontal and vertical, let $A=\pi_0(X)\cup\pi_\infty(X)$, so $X\subset A\times A$ and, under a hypothetical near-square-root small-projection bound, $X$ is a large fraction of the product. But a large subset can concentrate on a few unusually heavy fibers while the rest of the product supplies most of its projection values. For example, the diagonal in $A\times A$ has a single value under $\pi_{-1}$; a grid plus a comparably sized random garbage set shows that the whole product can have a large image even when a large structured portion has small image. The BSG theorem removes this garbage.
+
+In restricted-projection form, if $A,B$ have size at most $N$, $X\subset A\times B$, $|X|\ge K^{-1}N^2$, and $|\pi_t(X)|\le KN$, then BSG finds $A'\subset A,B'\subset B$ such that $X'=X\cap(A'\times B')$ still has size at least $K^{-O(1)}N^2$ and $|A'+tB'|\le K^{O(1)}N$. The reason is Cauchy–Schwarz: the many pairs in $X$ landing in few projection values create high additive energy; BSG turns that energy into large subsets with small full sumset. Applying Plünnecke–Ruzsa gives small $A'-A'$ as well.
+
+The remaining symmetry lemma is the bridge from a large subset back to its product. Fix a direction $t_1$ with $A'+t_1B'$ small. For any $t$, fix one pair $(a_1,a_2)\in A'\times A'$ representing each value $c=a_1-(t/t_1)a_2$ in $\pi_{-t/t_1}(A'\times A')$. The map
+$$
+(c,(a,b))\mapsto(a_1-a,\ a_2+t_1b,\ a+tb),\qquad (a,b)\in X',
+$$
+is injective from $\pi_{-t/t_1}(A'\times A')\times X'$ into $(A'-A')\times(A'+t_1B')\times\pi_t(X')$. Indeed, from outputs $(u,v,w)$ recover the chosen projection value $c=u-(t/t_1)v+w$; that fixes $(a_1,a_2)$, then $a=a_1-u$, and $b=(w-a)/t$ (handle $t=0$ separately by the trivial coordinate projection). Thus
+$$
+|\pi_t(X')|\ge \frac{|X'|}{N^2}|\pi_{-t/t_1}(A'\times A')|.
+$$
+Since $|X'|$ is a fixed power fraction of $N^2$ and the transformed slope set still has positive power size, the product-set BKT estimate forces one of these images to grow. Choosing the contradiction epsilon much smaller than the product-case gain absorbs the $K^{O(1)}$ losses from BSG and the small-set inequalities. This proves the full finite-field projection theorem.
+
+Additive energy is a second way to measure structure. Define
+$$
+E(A,B)=\#\{(a_1,a_2,b_1,b_2)\in A^2\times B^2:a_1+b_1=a_2+b_2\}
+=\sum_z r_{A,B}(z)^2,
+$$
+where $r_{A,B}(z)=\#\{(a,b)\in A\times B:a+b=z\}$. Since $\sum_zr_{A,B}(z)=|A||B|$, Cauchy–Schwarz gives
+$$
+|A|^2|B|^2\le |A+B|E(A,B).
+$$
+For a restricted set $Y\subset A\times B$, define $r_Y(z)$ by counting only pairs in $Y$. Then $|Y|=\sum_{z\in\pi_1(Y)}r_Y(z)$ and $r_Y(z)\le r_{A,B}(z)$, hence
+$$
+|Y|^2\le |\pi_1(Y)|E(A,B).
+$$
+So small restricted image forces high energy; conversely, high energy forces some structured large subsets by BSG. Energy handles dense subsets robustly, but lacks the contagious-structure property of small sumsets: the high-energy part of $A$ interacting with $t_1A$ may be different from the part interacting with $t_2A$. Example $A=[N]\cup t_1[N]\cup t_2[N]$ can make both energies large while $t_1+t_2$ has no special relation. The course therefore uses cardinality for algebraic propagation and energy/BSG for robust passage to large subsets.
+
+The robust BKT refinement says there is a direction $t\in D$ such that every substantial $Y\subset X$ (in the notes, $|Y|\ge p^{-\varepsilon}|X|$) satisfies $|\pi_t(Y)|\ge p^{\varepsilon}|X|^{1/2}$. This is stronger than merely finding one large projection of $X$ and is what makes the estimate useful inside later decomposition arguments. Keep the quantifiers visible: the same chosen direction works for all those subsets.
+
+### What the Szemerédi–Trotter proof does not reveal
+
+The three terms in $I(X,L)\lesssim |X|+|L|+|X|^{2/3}|L|^{2/3}$ have different extremizer behavior. When $|X|$ dominates, it suffices to put each point on a line; points can slide freely, so there is little rigidity. When $|L|$ dominates, stars give the dual flexible example. In the projective plane, a point $[a_0,a_1,a_2]$ lies on the line with coefficients $[b_0,b_1,b_2]$ exactly when $a_0b_0+a_1b_1+a_2b_2=0$; exchanging the two triples preserves incidence and swaps the chain and star constructions. The middle term is the rigid regime: known examples are integer grids and grids over rings of integers of number fields. The cell proof controls each cell separately and only checks that a typical line has few points there. It forgets how the same line threads through many cells, so it loses exactly the cross-cell compatibility one would need for a classification theorem.
+
+There is a distinct question for a prescribed direction set. For $D\subset\mathbb R\cup\{\infty\}$, use $\pi_t(x_1,x_2)=x_1+tx_2$ and $\pi_\infty(x_1,x_2)=x_2$, and define $S_D(N)=\min_{|X|=N}\max_{t\in D}|\pi_t(X)|$. Three directions can be normalized to $\{0,1,\infty\}$ by an invertible linear change. For four directions $\{0,1,\infty,t\}$ with transcendental $t$, take
+$$
+P_{k,s}=\left\{\sum_{j=0}^{k-1}a_jt^j: a_j\in\{0,1,\ldots,s-1\}\right\},\qquad X=P_{k,s}\times P_{k,s}.
+$$
+Transcendence makes the coefficient representation unique, so $|P_{k,s}|=s^k$ and $|X|=s^{2k}$. The projections at $0$ and $\infty$ have $s^k$ values; at $1$, coefficient sums range over $0,\ldots,2s-2$, giving at most $(2s)^k$ values; at $t$, the polynomial degree increases by one, giving at most $(2s)^{k+1}$. Choosing $k$ so that $2^k\asymp |X|^{1/(2k)}$ balances the extra coefficient-range factor against the degree and gives a subpower loss over $|X|^{1/2}$, of the form $\exp(C\sqrt{\log |X|})|X|^{1/2}$ (constants and log base suppressed). This is an example, not a matching lower bound; the lecturer presents sharpness as an open investigation.
+
+For unit balls, let $X$ be a family of radius-one balls in $B_R\subset\mathbb R^2$, and let $D\subset S^1$ be $1/R$-separated. Set $N_X(r)=\max_c|X\cap B(c,r)|$ and $N_D(\rho)=\max_{|\gamma|=\rho}|D\cap\gamma|$. Hausdorff spacing with exponent $\alpha$ means $|X|\asymp R^\alpha$ and $N_X(r)\lesssim r^\alpha$; for directions with exponent $\beta$, $|D|\asymp R^\beta$ and $N_D(r/R)\lesssim r^\beta$. A cell that concentrates in a ball of radius $r$ has roughly $r^\alpha$ balls, but only about $r^\beta$ inequivalent directions: directions less than $1/r$ apart look the same inside that cell. If $\alpha>\beta$, refining the cells preserves “more points than directions,” so the elementary double-counting step never enters its useful direction-dominant regime. This explains the obstruction more precisely than merely saying that unit balls have multiple scales.
+
+The course notes state the OSRW sharp projection estimate under Hausdorff-spacing hypotheses, with a threshold that the direction count be at least $R^{-\varepsilon}\min(R,|X|)$ and an $R^{\varepsilon}$-type loss in the square-root relation $S\gtrsim (|X||D|)^{1/2}$. Equivalently, above that threshold one may write $|D|\lesssim R^{O(\varepsilon)}S^2/|X|$; below it the threshold itself is the relevant alternative. The lecture’s blackboard shorthand “$|D|\le S^2/|X|+1$” suppresses this scale loss, so it must not be quoted as a lossless theorem.
+
+Over $\mathbb C$, the real subfield creates a concrete obstruction. Regard $\mathbb C^2$ as $\mathbb R^4$, take about $R^2$ unit balls centered on a real $R\times R$ grid, and take about $R$ real parameters $t\in B_1\subset\mathbb C$, separated by $1/R$. For $\pi_t(z_1,z_2)=z_1+tz_2$, the centers project to the real axis; the unit-ball thickness contributes only bounded imaginary width. Each projected set therefore occupies length $S\asymp R$, although $|X|^{1/2}|D|^{1/2}\asymp R^{3/2}$. The example shows why the real projection theorem needs arithmetic/subfield sensitivity: a real cell decomposition alone cannot rule out concentration in a proper subfield.
+
+### Why the Euclidean projection theorem needs scale regularity
+
+The finite-field Bourgain–Katz–Tao theorem says that if $X\subset\mathbb F_p^2$ has $p^t$ points and the direction set $D\subset\mathbb F_p$ has $p^s$ slopes, then some projection $\pi_\theta(x_1,x_2)=x_1+\theta x_2$ has at least $p^{t/2+\varepsilon}$ values; a robust version says the same direction expands every sufficiently dense subset of $X$. The exponent $t/2$ is the elementary baseline: two distinct slopes determine a point by an invertible $2\times2$ linear system, so the map $x\mapsto(\pi_{\theta_1}x,\pi_{\theta_2}x)$ is injective. Thus $|X|\le |\pi_{\theta_1}X||\pi_{\theta_2}X|$, forcing one image to have size at least $|X|^{1/2}$. [P2-14]
+
+The analogous real theorem cannot hold for arbitrary unions of unit balls inside a large ball. A thin $1\times R$ rectangle projected near its short direction has image length only about $R^s$ if the direction set is concentrated in an interval of width $R^s$; when $s<t/2$, this can be below the square-root scale $R^{t/2}$. Even a well-spread set of directions cannot fix a clustered point set: a ball of radius $R^{1/2}$ has area about $R$ and every projection has length about $R^{1/2}$. These show two distinct failures: the directions can cluster in slope, or the points can cluster spatially. Therefore Bourgain's real result assumes power-law nonconcentration of both.
+
+After rescaling to the unit ball and resolution $\delta=1/R$, measure sets by the $\delta$-covering number $|X|_\delta$, the smallest number of radius-$\delta$ balls that cover $X$. For a $2\delta$-separated finite set this is its cardinality; for a union of bounded-overlap $\delta$-balls in $\mathbb R^d$ it is comparable, with constants depending only on $d$, to $\delta^{-d}$ times Lebesgue measure. It is also comparable to the number of mesh cubes of side $\delta$ that meet the set. Define a $(\delta,s,C)_d$ set by
+
+$$|X\cap B(x,r)|_\delta\le Cr^s|X|_\delta\quad(\delta\le r\le1).$$
+
+This says no ball at an intermediate scale captures too much of the set; $s$ is a dimension-like nonconcentration exponent and $C$ is a tolerance constant. In the projection theorem $C=\delta^{-\eta}$ for a small $\eta>0$. If $X$ has global size $\delta^{-t}$ and $D\subset[0,1]$ has size $\delta^{-s}$, and both obey their corresponding nonconcentration conditions, then some direction projects every subset $Y\subset X$ with $|Y|_\delta\ge\delta^{\eta}|X|_\delta$ to size at least $\delta^{-t/2-\varepsilon}$. The same parameter $\theta$ works for all such $Y$. This robust quantifier matters because later steps repeatedly pass to large subsets.
+
+The cover-number language lets familiar discrete tools survive in Euclidean space. Snap points to a mesh at scale $\delta$; bounded-scale sums and differences can move a snapped point only a bounded number of mesh cells, so Ruzsa triangle, Plünnecke, and BSG inequalities transfer with dimension-dependent multiplicative losses. For example, $|B|_\delta|A-C|_\delta\lesssim_d |A-B|_\delta|B-C|_\delta$. The “almost commutes” qualification is important: snapping a difference is not exactly the difference of snapped representatives, but only a bounded number of neighboring mesh cells are involved.
+
+In the prime-field proof, one studies the ratio set $(A-A)/(A-A)$. If it is proper, the fact that repeated addition of $1$ traverses the whole prime field lets us choose an element $b$ inside it but $b+1$ outside; this forces polynomial growth. Over $\mathbb R$, a direct copy fails: a small interval has little additive or multiplicative growth; ratios may be unbounded from tiny denominators; “add one” can leave the reference interval; and $\mathbb R$ has many additive subgroups. The real proof therefore first cuts off denominators smaller than $\delta^\gamma$ and intersects the resulting ratio-like set with $[0,1]$. It then uses order and gaps rather than field simplicity.
+
+Specifically, for a closed $B\subset[0,1]$ containing $0,1$, let $\rho$ be the supremum length of complementary intervals. Form $B'=B/2\cup(B+1)/2$. Since $1/2\in B'$, a gap in $B'$ cannot cross the midpoint; each half is a scaled copy of $B$, so every gap has length at most $\rho/2$. Choose an almost-largest gap of $B$ with length $\rho-o(\rho)$ and take a centered subinterval of length about $\rho/2$. This subinterval contains a point of $B'$ (otherwise it would create a larger gap in $B'$), and that point is at distance at least a fixed fraction, say $\rho/5$, from $B$. Since the point is either $b/2$ or $(b+1)/2$ for some $b\in B$, one of these affine transforms escapes $B$ by a definite gap. Thus either $B$ is $\rho$-dense or there is a controlled escaping value, playing the role of the finite-field $b+1\notin B$. The precise constants are inessential; the order structure on the real line is essential. This yields a polynomial-expansion lemma under nonconcentration hypotheses, but only at the chosen resolution at first. Iterating it requires a further mechanism to preserve those hypotheses. [P2-14]
+
+### Uniform trees make multiscale size usable
+
+A set can be large at the finest scale and still fail to have enough points at coarser scales. Uniform sets repair this mismatch. Choose a dyadic base $\Delta\in(0,1)$ and a depth $m$, with bottom scale $\delta=\Delta^m$. Tile $[0,1]^d$ by nested half-open cubes of side $\Delta^j$. For each level-$j$ cube $Q$ that meets $X$, count the level-$(j+1)$ children that meet $X$. The set is $(\Delta,m)$-uniform if this number is the same, $R_j$, for every occupied parent at level $j$. The branching factor may vary with level but not from parent to parent. Equivalently, the occupied cubes form a rooted tree with a level-dependent regular branching number. Uniformity makes the number of descendants below any occupied cube a product of the same $R_i$'s, independent of which branch was chosen.
+
+Two consequences explain the value of this bookkeeping. First, for a uniform set, if at every dyadic scale $\rho\in\{1,\Delta,\ldots,\Delta^m\}$ its covering number is at least $C^{-1}\rho^{-s}$, then it is a $(\delta,s,O_\Delta(C))$ set. To see it, take an occupied level-$j$ cube $Q$. It contains one occupied level-$j$ cube, and its number of bottom descendants is $R_j\cdots R_{m-1}$. The whole set has $R_0\cdots R_{m-1}$ bottom descendants and $R_0\cdots R_{j-1}$ level-$j$ cubes. Their ratio gives
+
+$$|X\cap Q|_\delta=\frac{|X|_\delta}{|X|_{\Delta^j}}.$$
+
+The assumed lower bound $|X|_{\Delta^j}\ge C^{-1}(\Delta^j)^{-s}$ rearranges to $|X\cap Q|_\delta\le C(\Delta^j)^s|X|_\delta$. A ball meets only boundedly many cubes of its comparable scale. Between adjacent powers of $\Delta$, sandwich the radius and lose only a constant depending on $\Delta,d$. Thus scale-by-scale lower bounds imply local nonconcentration. Second, if $X$ is already $(\delta,s,C)$ and uniform, the same descendant ratio plus the lower bound $|X|_\rho\ge C^{-1}\rho^{-s}$ shows that the set is $(\rho,s,O_\Delta(C))$ at every coarser resolution $\rho\ge\delta$. This addresses the failure that a fine-scale nonconcentration condition alone says nothing about a much coarser covering scale. [P2-15]
+
+Any set contains a large uniform subset, by a bottom-up pruning argument. Let $\mu$ be any subadditive set function ($\mu(E\cup F)\le\mu(E)+\mu(F)$); the $\delta$-covering number is an important example. Begin at the finest level. For each parent cube, its branching number is between $1$ and at most $\Delta^{-d}$. Group parents by dyadic ranges $[2^\ell,2^{\ell+1})$. There are at most $O(d\log(1/\Delta))$ groups. Subadditivity says the total $\mu$-mass is at most the sum of group masses, so one group retains at least a reciprocal-logarithmic fraction. Within that group, trim every parent down to exactly $2^\ell$ occupied children; because each had fewer than $2^{\ell+1}$, this costs at most another factor of two. Now all surviving parents have the same branching factor. Repeat at the next coarser level. Working from leaves upward preserves uniformity already established at finer levels: removing a parent branch does not alter the descendant count inside branches that remain. After $m$ levels we have a uniform $Y\subset X$ with
+
+$$\mu(Y)\ge [2d\log(1/\Delta)]^{-m}\mu(X)=\delta^{-\sigma}\mu(X),\qquad \sigma=\frac{\log(2d\log(1/\Delta))}{\log(1/\Delta)}.$$
+
+The loss is a small power of $\delta$ when $\Delta$ is chosen sufficiently small, since $\sigma\to0$ as $\Delta\to0$. This pruning is not ordinary measure-theoretic density; only subadditivity is needed, so it works for covering number and for specialized set functions used to measure fibers.
+
+### The large sieve: why rational samples separate
+
+For $f:[N]\to\mathbb C$, define $(\pi_pf)(a)=\sum_{n\equiv a\pmod p}f(n)$ on $\mathbb Z/p\mathbb Z$, and subtract its mean. The Linnik inequality in the course’s counting-measure norm is
+
+$$\sum_{p\in[M,2M]\atop p\text{ prime}}\|(\pi_pf)_H\|_{\ell^2(\mathbb Z/p\mathbb Z)}^2\lesssim \frac{N}{M}\|f_H\|_{\ell^2([N])}^2,\qquad M\le\sqrt N.$$
+
+For each prime $p$, finite Fourier transform on $\mathbb Z/p\mathbb Z$ gives $\widehat{\pi_pf}(\alpha)=\widehat f(\alpha/p)$, up to the chosen sign convention and periodicity. The nonzero frequencies are rational points $\alpha/p\pmod1$. If $p\ne p'$ and both fractions are reduced, their difference has numerator $\alpha p'-\alpha'p$, a nonzero integer, over denominator $pp'\le4M^2$; hence circular separation is at least $1/(4M^2)$. Fractions that reduce to a lower denominator are grouped at that actual reduced denominator; the prime-denominator samples are distinct except for the zero frequency, which has already been removed by taking the high-frequency part.
+
+To see why $M\le\sqrt N$ matters, embed $f$ in a smooth cutoff supported on an interval of length $O(N)$. Its Fourier transform changes only on frequency intervals of width about $1/N$: multiplying by the cutoff makes the transform a convolution with a kernel concentrated at that scale. Because distinct rational sample points are separated by at least $c/M^2\ge c/N$, the associated neighborhoods have bounded overlap. Therefore the sum of sample values squared is bounded by $O(M^2)$ times the integral of $|\widehat f|^2$ over a unit period, with the normalizing factors from the finite transforms. Plancherel converts that integral to $\|f_H\|_2^2$; the number and normalization of prime samples yield the displayed $N/M$ bound. This explanation identifies the actual sampling principle; simply saying “the fractions are separated” is insufficient without the support length/local-constancy scale comparison.
+
+A representative application makes the logic concrete. Let $A\subset[N]$, $f=1_A$, and suppose each reduction modulo each prime in $[\sqrt N,2\sqrt N]$ misses a fixed positive fraction of residues. Then $g=\pi_pf$ has support on at most $(1-c)p$ residues. Its constant part has norm squared $|A|^2/p$. On the omitted $cp$ residues, $g_H=-g_0$; hence $\|g_H\|_2^2\ge c|A|^2/p$. The sieve average gives at most $O(|A|)$ for a prime at this scale, while the support omission gives at least $c|A|^2/\sqrt N$. Comparing forces $|A|\lesssim\sqrt N$. The support-density hypothesis is essential; if nearly every residue is occupied, the high-frequency part need not dominate.
+
+### Szemerédi–Trotter partitioning and the cross-cell limitation
+
+For $m$ points and $n$ lines, first remove incidences from lines with fewer than a fixed number of points; this costs $O(m+n)$. Join consecutive incident points along each remaining line. The resulting graph has $V=m$ vertices and $E\gtrsim I$ edges. In a drawing with $E\ge4V$, the crossing lemma gives at least $cE^3/V^2$ crossings. Two distinct straight lines cross at most once, so the drawing has at most $O(n^2)$ crossings (after a generic perturbation resolves multiple edges at a point without increasing the relevant order). Thus $I^3/m^2\lesssim n^2$, or $I\lesssim m^{2/3}n^{2/3}$; restoring low-degree lines and the cases $E<4V$ yields $I\lesssim m^{2/3}n^{2/3}+m+n$.
+
+The polynomial partition proof has a different local accounting. A degree-$D$ polynomial has $O(D^2)$ coefficients. Polynomial ham-sandwich repeatedly bisects finite point mass into about $D^2$ cells with at most $O(m/D^2)$ points each; the zero set is the wall. Each line not contained in the zero set crosses it at most $D$ times by the one-variable root bound, so it enters at most $D+1$ cells. Summing cell incidences and applying the elementary pair-count bound gives
+
+$$\sum_i I(X_i,L_i)\lesssim \sum_i |X_i||L_i|^{1/2}+\sum_i|L_i|\lesssim m n^{1/2}D^{-1/2}+nD.$$
+
+For the first sum, Cauchy–Schwarz gives $\sum_i|X_i|\sqrt{|L_i|}\le(\sum_i|X_i|^2)^{1/2}(\sum_i|L_i|)^{1/2}\le(m^2/D^2)^{1/2}(nD)^{1/2}$. Wall incidences cost $O(nD)$ plus incidences on line components, which are assigned to the wall and controlled separately. Balance $m n^{1/2}D^{-1/2}=nD$, giving $D\asymp m^{2/3}n^{-1/3}$ and both terms $m^{2/3}n^{2/3}$. At parameter extremes, cap $D$ and the leftover terms yield $m+n$. The cellwise sum is legitimate because each point belongs to one cell and each line is counted once per cell it crosses. What the argument does **not** preserve is a line’s incidence pattern across different cells: it remembers how many cells the line visits, but not whether the local point configurations in those cells align into one global grid or arithmetic structure. Thus the partition proof proves the bound but is not by itself a classification of near-extremizers.
+
+### Bourgain’s real theorem: what uniformization actually preserves
+
+At scale $\delta$, a $(\delta,s,C)$ set $X$ means $|X\cap B(x,r)|_\delta\le Cr^s|X|_\delta$ for all $\delta\le r\le1$. This is an upper bound on local mass. It is not the same as the lower growth condition $|X|_r\gtrsim r^{-s}$ at every scale unless the set is regularized. In a dyadic tree with base $\Delta$ and depth $m$, uniformization selects a subset whose every occupied level-$j$ cube has the same number $R_j$ of occupied children. The mass of a descendant subtree is then the fixed product $R_jR_{j+1}\cdots R_{m-1}$. That identity converts a global scale lower bound into a local upper bound: for an occupied cube $Q$ of side $\rho=\Delta^j$,
+
+$$|X\cap Q|_\delta=|X|_\delta/|X|_\rho\le C\rho^s|X|_\delta.$$
+
+Conversely, the $(\delta,s,C)$ upper bound implies the same condition at coarser scales for a uniform set. This is exactly what allows each magnified piece in the iteration to satisfy the same type of hypothesis.
+
+The first expansion lemma alone is not iterative: it can show that a polynomial image $Q(A)$ is large at the finest scale, but that mass could be concentrated in a few coarse intervals. Robust expansion fixes this by applying to every dense subset $Z\subset A^k$, not only the whole product. To extract a nonconcentrated part of the image, inspect its occupied intervals at scales $\rho_j$ from coarse to fine. If a parent interval contains too many descendants relative to its share of the current image, take the preimage tuples mapping into those descendants. If this preimage has at least the density threshold required by the robust lemma, its image must expand by an extra factor, contradicting the assumed concentration. Therefore the bad parents together carry only a small share; retain the good parents and continue. After finitely many scales, the retained image is both large and nonconcentrated. A subadditive fiber weight can then uniformize this image without losing the fiber cardinality needed in the next projection step. Each assertion has a separate role: robust expansion handles arbitrary dense subsets; good-parent pruning handles scale concentration; the fiber weight preserves multiplicity; uniformity makes the next application legal. The full Bourgain theorem’s repeated BSG/direction reductions have more parameter bookkeeping than this conceptual account, so it remains a proof map rather than a complete parameter-level proof.
+
+### Frostman measures, energy, and the projection integral
+
+Hausdorff dimension is defined by coverings: $\dim_H E=\inf\{s:\mathcal H^s(E)=0\}$, where $\mathcal H^s_\rho(E)$ is the infimum of $\sum_i(\operatorname{diam}U_i)^s$ over covers with diameters at most $\rho$. Frostman’s lemma says that if $t<\dim_H E$ and $E$ is compact, there is a nonzero measure $\mu$ supported on $E$ such that $\mu(B(x,r))\le Cr^t$ for all $x,r$. The converse is immediate from any cover: $1=\mu(E)\le\sum_i\mu(U_i)\lesssim\sum_i(\operatorname{diam}U_i)^t$, so $\mathcal H^t(E)>0$. The forward construction is a nested dyadic-tree argument: retain enough descendants at each scale to carry positive mass, assign mass proportionally down the tree, and take a weak limit; the branching lower bound gives the ball estimate.
+
+The $s$-energy is $I_s(\mu)=\iint|x-y|^{-s}\,d\mu(x)d\mu(y)$. If $\mu(B(x,r))\lesssim r^t$ and $s<t$, decompose a unit ball around $x$ into annuli $2^{-k-1}<|x-y|\le2^{-k}$. The $k$th annulus contributes at most $2^{(k+1)s}\mu(B(x,2^{-k}))\lesssim2^{-k(t-s)}$, and the geometric series converges. Hence $I_s(\mu)<\infty$ for every $s<t$.
+
+For projection onto a line with unit vector $v_\theta=(\cos\theta,\sin\theta)$, let $\nu_\theta=(\pi_\theta)_\#\mu$. Then, by Tonelli for the nonnegative integrand,
+
+$$\int_0^{2\pi}I_s(\nu_\theta)\,d\theta
+=\iint\int_0^{2\pi}|(x-y)\cdot v_\theta|^{-s}\,d\theta\,d\mu(x)d\mu(y).$$
+
+For $z=x-y\ne0$, write $z=|z|(\cos\phi,\sin\phi)$. The angular inner integral is $|z|^{-s}\int_0^{2\pi}|\cos(\theta-\phi)|^{-s}d\theta=C_s|z|^{-s}$; $C_s<\infty$ exactly for $s<1$, since near a zero of cosine the integrand is comparable to $|u|^{-s}$. Thus
+
+$$\int_0^{2\pi}I_s(\nu_\theta)\,d\theta=C_s I_s(\mu),\qquad 0<s<1.$$
+
+A finite $s$-energy forces dimension at least $s$ by a direct potential argument. The potential $U_s(x)=\int|x-y|^{-s}d\mu(y)$ is finite on a positive-mass subset $F$ by Markov’s inequality. For $x\in F$, $U_s(x)\ge r^{-s}\mu(B(x,r))$, so the restricted measure obeys $\mu|_F(B(x,r))\le Cr^s$. The covering argument in the preceding paragraph then gives $\dim_H F\ge s$. Therefore for every $s<\min(t,1)$, almost every projected measure has dimension at least $s$. Markov’s inequality also gives an exceptional-direction estimate: the measure of $\{\theta:I_s(\nu_\theta)>\lambda\}$ is at most $C_s I_s(\mu)/\lambda$. This is the analytic core behind the almost-every-direction projection theorem. Do not infer that every projection has dimension $\min(t,1)$; [[Exceptional projections and dimension|exceptional directions]] are precisely what the integral estimate allows.
+
+## Additive structure explains repeated coincidences
+
+### Additive structure and robust projection growth
+
+Small sumsets indicate additive structure. Ruzsa’s triangle inequality and Plünnecke’s inequality propagate smallness from $A+B$ to iterated sums and differences; Petridis’ minimizing-subset argument provides a short proof. BSG converts many additive relations on a dense subset of $A\times B$ into large subsets with a small sumset by cleaning a bipartite graph until every cross-pair has many length-three paths. The proof and variables are made explicit below.
+
+In $\mathbb F_p$, ratio sets and the lack of proper subfields force sum-product growth. Over $\mathbb R$, there are no finite-field escape steps, denominators can be tiny, and arithmetic subgroups abound. Bourgain’s real projection theorem therefore assumes nonconcentration at all scales, regularizes to uniform dyadic trees, and iterates robust expansion. Uniform branching lets one infer local mass from global scale counts; robust polynomial expansion must work for every dense subset so that pruning does not destroy the next step’s hypotheses. The argument is outlined in the source and not a full parameter-level proof in these notes.
+
+### Sumsets, energy, and robust structure
+
+A set can resist additive growth because it sits in a low-dimensional arithmetic pattern. An arithmetic progression $A=a+\{0,\ldots,L-1\}d$ has $|A+A|\le 2|A|$. A rank-$r$ generalized arithmetic progression
+$$
+A=a+\{n_1d_1+\cdots+n_rd_r:0\le n_j<L_j\}
+$$
+has $|A+A|\le 2^r|A|$. Freiman–Ruzsa says conversely that bounded doubling $|A+A|\le K|A|$ forces containment in a generalized progression whose rank and volume factor depend only on $K$. This is a structural classification, but the dependence is enormous; the polynomial Freiman–Ruzsa conjecture asks for meaningful control already when $K$ is a small power of $|A|$.
+
+Two short inequalities let us propagate smallness without invoking that deep classification. For finite subsets of an abelian group,
+$$
+|A|\,|B-C|\le |A-B|\,|A-C|.
+$$
+For each $d\in B-C$, fix $b(d)-c(d)=d$; the map $(a,d)\mapsto(a-b(d),a-c(d))$ is injective, since subtracting its coordinates recovers $d$, and then one coordinate recovers $a$. Substituting $B=C=-A$ gives $|A-A|\le K^2|A|$ whenever $|A+A|\le K|A|$. Plünnecke’s inequality says that if $|A+B|\le K|A|$, then for integers $m,n\ge0$,
+$$
+|B^{\oplus m}-B^{\oplus n}|\le K^{m+n}|A|.
+$$
+Petridis’ proof picks $X\subset A$ minimizing $|X+B|/|X|=\bar K\le K$. Inductively prove $|X+C+B|\le\bar K|X+C|$ for every finite $C$: when a new translate $c$ is added, separate the new sums and use the minimizing property on the subset of $X$ whose $c+B$ translate is already covered. Iterating with $C=B^{\oplus j}$ gives $|X+B^{\oplus m}|\le K^m|X|$; Ruzsa’s inequality then compares $B^{\oplus m}-B^{\oplus n}$ with the two iterated sumsets above. This is why small sumsets yield a whole family of small derived sets.
+
+A prime field has no proper subfield, but a quantitative proof needs to rule out approximate subfields. Define the ratio set $(A-A)/(A-A)$ using nonzero denominators. If $c$ is outside the ratio set, then $a_1+ca_2$ has a unique representation: two representations with unequal second coordinates would solve for $c$ as a difference ratio; equal second coordinates force equal first coordinates. Therefore $|A+cA|=|A|^2$. If the ratio set is proper, the prime-field fact that repeated addition of $1$ visits every element supplies a $b$ in it with $b+1$ outside. Write $b$ as a quotient of differences, insert the representation into $A+(b+1)A$, and clear denominators as a literal set map. The resulting bounded-complexity expression in $A$ must have at least $|A|^2$ values unless the ratio set is already all of $\mathbb F_p$. This denominator-clearing detail matters: multiplying a set by a denominator does not preserve cardinality if the denominator might vanish, so the rational expression is defined only on nonzero denominators and then expanded algebraically.
+
+The course bootstraps this lemma with Plünnecke and Ruzsa to prove the sum-product theorem. If $|A|=p^s$ with $0<s<1$, then for some $\varepsilon(s)>0$,
+$$
+\max(|A+A|,|A\cdot A|)\ge p^{s+\varepsilon(s)}.
+$$
+An arithmetic progression can have small sumset, and a geometric progression can have small product set; the theorem says a proper prime-field subset cannot keep both operations small. The classroom proof first proves a bounded algebraic expression such as $A^{\oplus3}-A^{\oplus3}$ expands by a power. Under the contrary assumption of small growth, Plünnecke bounds iterated additive combinations, and the multiplicative form of Ruzsa’s inequality transfers those bounds to a quotient of the expression from the approximate-subfield lemma, contradicting its lower bound. The gains and losses depend on $s$ and are small; constants and the explicit epsilon formula are suppressed in the lecture. Repeated application shows that for any $s<t<1$, a bounded-complexity expression $\operatorname{Poly}_K(A)$ can be made to have at least $p^t$ elements, where $K=K(s,t)$.
+
+Now let $D\subset\mathbb F_p$ be a set of slopes. If every $A+tA$ ($t\in D$) were small, contagious structure would force smallness for slopes formed by bounded additions, products, and sign changes of elements of $D$. Sum-product expansion makes this generated slope set larger than $A$; finite-field double counting then says one of its projections must be large, a contradiction. Quantitatively, if $|A|=p^{s_A}$ and $|D|=p^{s_D}$ with $0<s_A<1$ and $s_D>0$, there is $\varepsilon(s_A,s_D)>0$ such that
+$$
+\max_{t\in D}|A+tA|\ge p^{s_A+\varepsilon}|A|.
+$$
+The direct double-counting bound already settles $s_D\ge s_A$; the sum-product/contagious-structure argument handles the harder $s_D<s_A$ case. This theorem is exactly the product-set projection case $X=A\times A$.
+
+Why does the product-set case not immediately imply BKT for arbitrary $X\subset\mathbb F_p^2$? After normalizing two directions to horizontal and vertical, let $A=\pi_0(X)\cup\pi_\infty(X)$, so $X\subset A\times A$ and, under a hypothetical near-square-root small-projection bound, $X$ is a large fraction of the product. But a large subset can concentrate on a few unusually heavy fibers while the rest of the product supplies most of its projection values. For example, the diagonal in $A\times A$ has a single value under $\pi_{-1}$; a grid plus a comparably sized random garbage set shows that the whole product can have a large image even when a large structured portion has small image. The BSG theorem removes this garbage.
+
+In restricted-projection form, if $A,B$ have size at most $N$, $X\subset A\times B$, $|X|\ge K^{-1}N^2$, and $|\pi_t(X)|\le KN$, then BSG finds $A'\subset A,B'\subset B$ such that $X'=X\cap(A'\times B')$ still has size at least $K^{-O(1)}N^2$ and $|A'+tB'|\le K^{O(1)}N$. The reason is Cauchy–Schwarz: the many pairs in $X$ landing in few projection values create high additive energy; BSG turns that energy into large subsets with small full sumset. Applying Plünnecke–Ruzsa gives small $A'-A'$ as well.
+
+The remaining symmetry lemma is the bridge from a large subset back to its product. Fix a direction $t_1$ with $A'+t_1B'$ small. For any $t$, fix one pair $(a_1,a_2)\in A'\times A'$ representing each value $c=a_1-(t/t_1)a_2$ in $\pi_{-t/t_1}(A'\times A')$. The map
+$$
+(c,(a,b))\mapsto(a_1-a,\ a_2+t_1b,\ a+tb),\qquad (a,b)\in X',
+$$
+is injective from $\pi_{-t/t_1}(A'\times A')\times X'$ into $(A'-A')\times(A'+t_1B')\times\pi_t(X')$. Indeed, from outputs $(u,v,w)$ recover the chosen projection value $c=u-(t/t_1)v+w$; that fixes $(a_1,a_2)$, then $a=a_1-u$, and $b=(w-a)/t$ (handle $t=0$ separately by the trivial coordinate projection). Thus
+$$
+|\pi_t(X')|\ge \frac{|X'|}{N^2}|\pi_{-t/t_1}(A'\times A')|.
+$$
+Since $|X'|$ is a fixed power fraction of $N^2$ and the transformed slope set still has positive power size, the product-set BKT estimate forces one of these images to grow. Choosing the contradiction epsilon much smaller than the product-case gain absorbs the $K^{O(1)}$ losses from BSG and the small-set inequalities. This proves the full finite-field projection theorem.
+
+Additive energy is a second way to measure structure. Define
+$$
+E(A,B)=\#\{(a_1,a_2,b_1,b_2)\in A^2\times B^2:a_1+b_1=a_2+b_2\}
+=\sum_z r_{A,B}(z)^2,
+$$
+where $r_{A,B}(z)=\#\{(a,b)\in A\times B:a+b=z\}$. Since $\sum_zr_{A,B}(z)=|A||B|$, Cauchy–Schwarz gives
+$$
+|A|^2|B|^2\le |A+B|E(A,B).
+$$
+For a restricted set $Y\subset A\times B$, define $r_Y(z)$ by counting only pairs in $Y$. Then $|Y|=\sum_{z\in\pi_1(Y)}r_Y(z)$ and $r_Y(z)\le r_{A,B}(z)$, hence
+$$
+|Y|^2\le |\pi_1(Y)|E(A,B).
+$$
+So small restricted image forces high energy; conversely, high energy forces some structured large subsets by BSG. Energy handles dense subsets robustly, but lacks the contagious-structure property of small sumsets: the high-energy part of $A$ interacting with $t_1A$ may be different from the part interacting with $t_2A$. Example $A=[N]\cup t_1[N]\cup t_2[N]$ can make both energies large while $t_1+t_2$ has no special relation. The course therefore uses cardinality for algebraic propagation and energy/BSG for robust passage to large subsets.
+
+The robust BKT refinement says there is a direction $t\in D$ such that every substantial $Y\subset X$ (in the notes, $|Y|\ge p^{-\varepsilon}|X|$) satisfies $|\pi_t(Y)|\ge p^{\varepsilon}|X|^{1/2}$. This is stronger than merely finding one large projection of $X$ and is what makes the estimate useful inside later decomposition arguments. Keep the quantifiers visible: the same chosen direction works for all those subsets.
+
+#### From many additive coincidences to a genuinely structured rectangle
+
+A large set of graph edges with few sums does not itself force the whole ambient sumset to be small: a small “garbage” portion of the ambient sets may contribute many unrelated sums. The Balog–Szemerédi–Gowers theorem (BSG) is a cleaning statement. In its additive form, if $A,B$ lie in an abelian group, $|A|,|B|\le N$, $X\subset A\times B$, $|X|\ge K^{-1}N^2$, and the restricted sum image $\pi_1(X)=\{a+b:(a,b)\in X\}$ has size at most $KN$, then one can find $A'\subset A$, $B'\subset B$ such that $X'=X\cap(A'\times B')$ still has size at least $K^{-O(1)}N^2$ while $|A'+B'|\le K^{O(1)}N$. “Large” and “small” here mean polynomial losses in $K$; the constants hidden in $O(1)$ are absolute but not optimized. The key point is that the new sumset is the full sumset of the selected subsets, not only the restricted sums of the surviving edges. [P2-13]
+
+View $X$ as a bipartite graph, with left vertices $A$, right vertices $B$, and edge $(a,b)$ when the pair belongs to $X$. A path of length three from $a$ to $b$ has form $a-b_1-a_1-b$. The three edge sums $z_1=a+b_1$, $z_2=a_1+b_1$, $z_3=a_1+b$ all belong to $\pi_1(X)$, and $a+b=z_1-z_2+z_3$. Thus each length-three path gives a representation of the endpoint sum using three elements of the restricted sumset. If every pair $(a,b)\in A'\times B'$ has at least $P$ such paths, count pairs consisting of an endpoint sum and one of its representations. There are at least $P|A'+B'|$ representations from paths, while there are at most $|\pi_1(X)|^3$ triples $(z_1,z_2,z_3)$. Therefore
+
+$$|A'+B'|\le \frac{|\pi_1(X)|^3}{P}.$$
+
+This converts a graph-connectivity property into small additive structure. The hard part is to produce large vertex subsets on which every cross-pair has many paths.
+
+For a vertex $b\in B$, write $N(b)=\{a:(a,b)\in X\}$. The number $P_2(a_1,a_2)$ of length-two paths between left vertices is exactly the number of common neighbors of $a_1$ and $a_2$. If the edge density is at least $K^{-1}$, then Cauchy–Schwarz gives
+
+$$\sum_{a_1,a_2\in A}P_2(a_1,a_2)=\sum_{b\in B}|N(b)|^2\ge \frac{|X|^2}{|B|}\ge K^{-2}|A|^2|B|.$$
+
+This is only an average; some vertices could be isolated or some pairs could be bad. Fix a tolerance $\varepsilon>0$, and call $(a_1,a_2)$ bad when $P_2(a_1,a_2)<\varepsilon K^{-2}|B|$. Let $BP_\varepsilon(b)$ count bad ordered pairs in $N(b)^2$. Double-count triples $(a_1,a_2,b)$ with both edges present and bad endpoints. For each bad pair, its common-neighbor count is less than $\varepsilon K^{-2}|B|$, so averaging over $b$ yields $\mathbb E_b BP_\varepsilon(b)\le\varepsilon K^{-2}|A|^2$. Combining this with $\mathbb E_b|N(b)|^2\ge K^{-2}|A|^2$, choose $b$ with a positive objective $|N(b)|^2-(2\varepsilon)^{-1}BP_\varepsilon(b)$. Its neighborhood $A_0=N(b)$ has size at least a constant multiple of $K^{-1}|A|$, and at most a $2\varepsilon$ fraction of ordered pairs in $A_0^2$ are bad. Delete vertices of $A_0$ that have too many bad partners. The survivors $A_2$ remain a constant-power fraction of $A$, and for every $a\in A_2$, all but at most $10\varepsilon|A_2|$ of the $a_2\in A_2$ satisfy $P_2(a,a_2)\ge\varepsilon K^{-2}|B|$.
+
+To obtain length-three paths, first prune $A$ to $A_1=\{a:|N(a)|\ge (10K)^{-1}|B|\}$; this removes only a bounded fraction of the edges, since the total number of edges is at least $K^{-1}|A||B|$. Apply the length-two cleaning lemma to this graph to get $A'=A_2\subset A_1$. For each $a\in A'$, the set $G(a)$ of its good partners in $A'$ misses at most $10\varepsilon|A'|$. Now define $B'$ as vertices with more than $20\varepsilon|A'|$ neighbors in $A'$. For $b\in B'$, at least $10\varepsilon|A'|$ of those neighbors lie in $G(a)$ for each chosen $a\in A'$. Each such intermediate vertex contributes at least $\varepsilon K^{-2}|B|$ length-two paths from $a$; adjoining its final edge to $b$ gives
+
+$$P_3(a,b)\gtrsim \varepsilon^2K^{-3}|A||B|.$$
+
+The pruning retained each $a\in A'$ with degree at least a constant times $K^{-1}|B|$, so $X(A',B)$ has at least a constant times $K^{-2}|A||B|$ edges. Vertices outside $B'$ have at most $20\varepsilon|A'|$ such edges, hence $X(A',B\setminus B')\le20\varepsilon|A'||B|$. Choose $\varepsilon$ as a sufficiently small negative power of $K$; the discarded edges are then a small fraction of $X(A',B)$, leaving $|X'|\ge K^{-O(1)}|A||B|$. Every surviving cross-pair has the stated many-path lower bound, so the path-count inequality proves BSG. The proof is a sequence of explicit repairs to average information: discard low-degree vertices, select a neighborhood where most pairs share many neighbors, remove vertices with too many bad partners, and finally retain right vertices with enough links to the remaining good partners. [P2-13]
+
+#### Why the Euclidean projection theorem needs scale regularity
+
+The finite-field Bourgain–Katz–Tao theorem says that if $X\subset\mathbb F_p^2$ has $p^t$ points and the direction set $D\subset\mathbb F_p$ has $p^s$ slopes, then some projection $\pi_\theta(x_1,x_2)=x_1+\theta x_2$ has at least $p^{t/2+\varepsilon}$ values; a robust version says the same direction expands every sufficiently dense subset of $X$. The exponent $t/2$ is the elementary baseline: two distinct slopes determine a point by an invertible $2\times2$ linear system, so the map $x\mapsto(\pi_{\theta_1}x,\pi_{\theta_2}x)$ is injective. Thus $|X|\le |\pi_{\theta_1}X||\pi_{\theta_2}X|$, forcing one image to have size at least $|X|^{1/2}$. [P2-14]
+
+The analogous real theorem cannot hold for arbitrary unions of unit balls inside a large ball. A thin $1\times R$ rectangle projected near its short direction has image length only about $R^s$ if the direction set is concentrated in an interval of width $R^s$; when $s<t/2$, this can be below the square-root scale $R^{t/2}$. Even a well-spread set of directions cannot fix a clustered point set: a ball of radius $R^{1/2}$ has area about $R$ and every projection has length about $R^{1/2}$. These show two distinct failures: the directions can cluster in slope, or the points can cluster spatially. Therefore Bourgain's real result assumes power-law nonconcentration of both.
+
+After rescaling to the unit ball and resolution $\delta=1/R$, measure sets by the $\delta$-covering number $|X|_\delta$, the smallest number of radius-$\delta$ balls that cover $X$. For a $2\delta$-separated finite set this is its cardinality; for a union of bounded-overlap $\delta$-balls in $\mathbb R^d$ it is comparable, with constants depending only on $d$, to $\delta^{-d}$ times Lebesgue measure. It is also comparable to the number of mesh cubes of side $\delta$ that meet the set. Define a $(\delta,s,C)_d$ set by
+
+$$|X\cap B(x,r)|_\delta\le Cr^s|X|_\delta\quad(\delta\le r\le1).$$
+
+This says no ball at an intermediate scale captures too much of the set; $s$ is a dimension-like nonconcentration exponent and $C$ is a tolerance constant. In the projection theorem $C=\delta^{-\eta}$ for a small $\eta>0$. If $X$ has global size $\delta^{-t}$ and $D\subset[0,1]$ has size $\delta^{-s}$, and both obey their corresponding nonconcentration conditions, then some direction projects every subset $Y\subset X$ with $|Y|_\delta\ge\delta^{\eta}|X|_\delta$ to size at least $\delta^{-t/2-\varepsilon}$. The same parameter $\theta$ works for all such $Y$. This robust quantifier matters because later steps repeatedly pass to large subsets.
+
+The cover-number language lets familiar discrete tools survive in Euclidean space. Snap points to a mesh at scale $\delta$; bounded-scale sums and differences can move a snapped point only a bounded number of mesh cells, so Ruzsa triangle, Plünnecke, and BSG inequalities transfer with dimension-dependent multiplicative losses. For example, $|B|_\delta|A-C|_\delta\lesssim_d |A-B|_\delta|B-C|_\delta$. The “almost commutes” qualification is important: snapping a difference is not exactly the difference of snapped representatives, but only a bounded number of neighboring mesh cells are involved.
+
+In the prime-field proof, one studies the ratio set $(A-A)/(A-A)$. If it is proper, the fact that repeated addition of $1$ traverses the whole prime field lets us choose an element $b$ inside it but $b+1$ outside; this forces polynomial growth. Over $\mathbb R$, a direct copy fails: a small interval has little additive or multiplicative growth; ratios may be unbounded from tiny denominators; “add one” can leave the reference interval; and $\mathbb R$ has many additive subgroups. The real proof therefore first cuts off denominators smaller than $\delta^\gamma$ and intersects the resulting ratio-like set with $[0,1]$. It then uses order and gaps rather than field simplicity.
+
+Specifically, for a closed $B\subset[0,1]$ containing $0,1$, let $\rho$ be the supremum length of complementary intervals. Form $B'=B/2\cup(B+1)/2$. Since $1/2\in B'$, a gap in $B'$ cannot cross the midpoint; each half is a scaled copy of $B$, so every gap has length at most $\rho/2$. Choose an almost-largest gap of $B$ with length $\rho-o(\rho)$ and take a centered subinterval of length about $\rho/2$. This subinterval contains a point of $B'$ (otherwise it would create a larger gap in $B'$), and that point is at distance at least a fixed fraction, say $\rho/5$, from $B$. Since the point is either $b/2$ or $(b+1)/2$ for some $b\in B$, one of these affine transforms escapes $B$ by a definite gap. Thus either $B$ is $\rho$-dense or there is a controlled escaping value, playing the role of the finite-field $b+1\notin B$. The precise constants are inessential; the order structure on the real line is essential. This yields a polynomial-expansion lemma under nonconcentration hypotheses, but only at the chosen resolution at first. Iterating it requires a further mechanism to preserve those hypotheses. [P2-14]
+
+#### Uniform trees make multiscale size usable
+
+A set can be large at the finest scale and still fail to have enough points at coarser scales. Uniform sets repair this mismatch. Choose a dyadic base $\Delta\in(0,1)$ and a depth $m$, with bottom scale $\delta=\Delta^m$. Tile $[0,1]^d$ by nested half-open cubes of side $\Delta^j$. For each level-$j$ cube $Q$ that meets $X$, count the level-$(j+1)$ children that meet $X$. The set is $(\Delta,m)$-uniform if this number is the same, $R_j$, for every occupied parent at level $j$. The branching factor may vary with level but not from parent to parent. Equivalently, the occupied cubes form a rooted tree with a level-dependent regular branching number. Uniformity makes the number of descendants below any occupied cube a product of the same $R_i$'s, independent of which branch was chosen.
+
+Two consequences explain the value of this bookkeeping. First, for a uniform set, if at every dyadic scale $\rho\in\{1,\Delta,\ldots,\Delta^m\}$ its covering number is at least $C^{-1}\rho^{-s}$, then it is a $(\delta,s,O_\Delta(C))$ set. To see it, take an occupied level-$j$ cube $Q$. It contains one occupied level-$j$ cube, and its number of bottom descendants is $R_j\cdots R_{m-1}$. The whole set has $R_0\cdots R_{m-1}$ bottom descendants and $R_0\cdots R_{j-1}$ level-$j$ cubes. Their ratio gives
+
+$$|X\cap Q|_\delta=\frac{|X|_\delta}{|X|_{\Delta^j}}.$$
+
+The assumed lower bound $|X|_{\Delta^j}\ge C^{-1}(\Delta^j)^{-s}$ rearranges to $|X\cap Q|_\delta\le C(\Delta^j)^s|X|_\delta$. A ball meets only boundedly many cubes of its comparable scale. Between adjacent powers of $\Delta$, sandwich the radius and lose only a constant depending on $\Delta,d$. Thus scale-by-scale lower bounds imply local nonconcentration. Second, if $X$ is already $(\delta,s,C)$ and uniform, the same descendant ratio plus the lower bound $|X|_\rho\ge C^{-1}\rho^{-s}$ shows that the set is $(\rho,s,O_\Delta(C))$ at every coarser resolution $\rho\ge\delta$. This addresses the failure that a fine-scale nonconcentration condition alone says nothing about a much coarser covering scale. [P2-15]
+
+Any set contains a large uniform subset, by a bottom-up pruning argument. Let $\mu$ be any subadditive set function ($\mu(E\cup F)\le\mu(E)+\mu(F)$); the $\delta$-covering number is an important example. Begin at the finest level. For each parent cube, its branching number is between $1$ and at most $\Delta^{-d}$. Group parents by dyadic ranges $[2^\ell,2^{\ell+1})$. There are at most $O(d\log(1/\Delta))$ groups. Subadditivity says the total $\mu$-mass is at most the sum of group masses, so one group retains at least a reciprocal-logarithmic fraction. Within that group, trim every parent down to exactly $2^\ell$ occupied children; because each had fewer than $2^{\ell+1}$, this costs at most another factor of two. Now all surviving parents have the same branching factor. Repeat at the next coarser level. Working from leaves upward preserves uniformity already established at finer levels: removing a parent branch does not alter the descendant count inside branches that remain. After $m$ levels we have a uniform $Y\subset X$ with
+
+$$\mu(Y)\ge [2d\log(1/\Delta)]^{-m}\mu(X)=\delta^{-\sigma}\mu(X),\qquad \sigma=\frac{\log(2d\log(1/\Delta))}{\log(1/\Delta)}.$$
+
+The loss is a small power of $\delta$ when $\Delta$ is chosen sufficiently small, since $\sigma\to0$ as $\Delta\to0$. This pruning is not ordinary measure-theoretic density; only subadditivity is needed, so it works for covering number and for specialized set functions used to measure fibers.
+
+#### Robust expansion is what makes the real argument iterate
+
+For a nonconcentrated one-dimensional set $A$, the first real expansion lemma gives a fixed polynomial $Q$ for which $|Q(A)|_\delta\ge\delta^{-s-\varepsilon}$ when $|A|_\delta=\delta^{-s}$. This alone does not permit iteration: $Q(A)$ might be concentrated at intermediate scales. The stronger robust statement says, for some fixed polynomial $Q:\mathbb R^k\to\mathbb R$, if $A$ is a $(\delta,s,C)$ set and $Z\subset A^k$ occupies a fixed power fraction of $A^k$, then $|Q(Z)|_\delta\gtrsim\delta^{-s-\varepsilon}$. The notes use the concrete $k=3$ map $Q(a_1,a_2,a_3)=a_1+a_2a_3$. This handles arbitrary dense subsets of the product, rather than only the entire product, and is the new input needed to recover a well-distributed subset of the expanded image. [P2-16]
+
+Here is how robustness feeds iteration. First uniformize $A$. Uniformity and the scale-wise expansion argument imply $Q(A)$ has large covering number at every coarser scale. But that is not enough: much of the coarse-scale image could come from a tiny part of the domain while the fine-scale covering number is contributed by another part. To prevent this split, examine the image in intervals at a sequence of nearby scales $1\ge\rho_1>\rho_2>\cdots>\rho_N=\delta$. At the first scale retain all image intervals; at each next scale call a parent interval bad if it captures more than $\rho_j^{s+\varepsilon-\eta}|Q(Z)|_{\rho_{j+1}}$ of the next-scale image. Pull the bad intervals back to the parameter tuples in $A^k$. If they occupied a substantial fraction of $A^k$, the robust expansion lemma applied to that bad preimage would force their image to be large, contradicting the bound defining badness. Thus the bad preimage is small and can be removed while leaving enough parameter tuples for the robust estimate to remain applicable. Iterating the removal across the finite scale chain constructs a subset whose image obeys the nonconcentration inequality at each adjacent pair of scales; multiplying adjacent scale ratios gives the bound for separated scales, and choosing a sufficiently fine scale mesh controls intermediate radii. The resulting image contains a $(\delta,s+\varepsilon/2,C')$ set, with tolerances reduced to absorb the accumulated losses. This is the detailed logic behind the official proof sketch; the transcript emphasizes that robustness, rather than a generic appeal to uniformity, is what eliminates the “large coarse part / different large fine part” enemy.
+
+Why is the robust lemma true? Its proof reuses BSG rather than relying on a minor tweak of the earlier expansion argument. The first step gives some $a\in A$ with $|A+aA|_\delta\ge\delta^{-s-\varepsilon}$. A contradiction/exceptional-set argument upgrades this so almost every $a$ has the property that every dense $X\subset A\times A$ still has $|\pi_a(X)|_\delta\gtrsim\delta^{-s-\varepsilon}$. If not, a large set of bad $a$'s would itself be a nonconcentrated subset to which the initial expansion applies. To prove the dense-subset claim, a restricted small projection creates high additive energy; Euclidean BSG at covering scale finds dense subsets with controlled full sumset, and the same symmetry injection used in the finite-field proof transfers expansion back to the chosen projection. Once this holds for most coefficients, apply it to a dense subset of $A^3$: view $Q(a_1,a_2,a_3)=a_1+a_2a_3$ as the projection $(x,y)\mapsto x+ay$ of the product pair $(a_1,a_2a_3)$, use the robust two-coordinate estimate after a product/fiber decomposition, and absorb the constant-power losses in the small exponent $\varepsilon$. The lecture deliberately sketches these steps and says that some pruning and double-counting details are omitted; the supplied notes also label this a sketch. It would be inaccurate to report the complete technical proof as shown in these sources.
+
+Once one expansion step returns a larger nonconcentrated subset inside $Q(A)$, iterate: the exponent $s$ increases by a positive amount depending continuously on $s$, so for any target $1-\tau<1$ only finitely many steps are needed. Plünnecke–Ruzsa then simplifies the bounded-complexity polynomial growth to a one-coefficient expansion $A+aA$; the product-set projection theorem follows by the same contagious-structure and double-counting mechanism as in the finite-field course. To pass from a general planar set, choose three well-separated directions and linearly normalize them to horizontal, vertical, and diagonal. The direction nonconcentration controls the condition number of this change of coordinates. Repeated BSG reductions replace the set by a dense subset of a product of its coordinate projections, and a robust projection estimate is needed at each passage. A final subtlety is that a large projection by itself is not enough: the projected coordinate set must also be nonconcentrated to serve as the next input. This “square-root baseline at every scale” is established by choosing two well-separated projections and using the injectivity of the paired projection map. Uniformization/double counting then upgrades scale-wise baseline size to the needed nonconcentration. The lecture presents the architecture and identifies these careful steps, while explicitly skipping their parameter-heavy details. [P2-16]
+
+#### Finite groups: when a walk is stuck, look for an approximate subgroup
+
+For a finite group $G$, a probability measure $mu$ describes one random step. Its convolution is
+
+$$ (f*g)(x)=\sum_{ab=x}f(a)g(b),\qquad (\mu*\nu)(x)=\sum_{ab=x}\mu(a)\nu(b). $$
+
+If the walk multiplies on the right, its distribution after $k$ independent steps, started at the identity, is $\mu^{*k}$. The operator $T_\mu f=f*\mu$ is a weighted average of right translations. Each translation preserves counting-measure $\ell^2(G)$, so the triangle inequality gives $\|T_\mu f\|_2\leq\|f\|_2$. Constants are fixed and mean-zero functions stay mean-zero. Let $\sigma_1(T_\mu)$ be the largest singular value on that mean-zero subspace. Starting at $g_0$, write $\delta_{g_0}=|G|^{-1}\mathbf 1+f_0$; then $\|f_0\|_2\leq1$, so
+
+$$ \left\|T_\mu^k\delta_{g_0}-\frac{1}{|G|}\mathbf 1\right\|_2\leq \sigma_1(T_\mu)^k. $$
+
+Thus a fixed spectral gap $1-\sigma_1>0$ gives exponential $\ell^2$ mixing, and since counting-measure $\|f\|_\infty\leq\|f\|_2$, also a pointwise error bound. Symmetry $\mu(g)=\mu(g^{-1})$ makes $T_\mu$ self-adjoint, which lets powers of the walk be analyzed through the same singular values.
+
+The first obstacle is algebraic trapping. If a step set is contained in a proper subgroup, the walk never leaves that subgroup; on the full group there is an invariant nonconstant function and $\sigma_1=1$. But failure to mix need not mean literal containment. The Bourgain–Gamburd proof begins with an inverse principle: if a symmetric walk on $\mathrm{SL}_2(\mathbb F_p)$ has no spectral gap, repeated convolution must concentrate substantial mass on a set that behaves approximately like a subgroup. The lecture formulates this with a set $H$ capturing a large portion of some bounded-length walk distribution, whose fixed product $H^5$ is at most $p^{O(\delta)}|H|$ and whose size lies below the scale $p^{2.5}$. This is a schematic lecture statement: the small exponents and mass constants depend on the parameters, and should not be silently replaced by a sharp classification theorem.
+
+Here is why an approximate subgroup emerges from a stalled walk. Begin with uniform measure on a set $A$, so $\|\mu_A\|_2^2=1/|A|$. Square the measure repeatedly, $\mu_{j+1}=\mu_j*\mu_j$. A progress step decreases $\|\mu_j\|_2^2$ by a factor $p^{-\delta}$; after boundedly many such steps the $\ell^2$ norm is small enough to imply a spectral gap. The implication comes from the representation-dimension estimate established in the preceding lecture:
+
+$$ \sigma_1(T_\nu)^2\leq C p^2\|\nu\|_2^2. $$
+
+For symmetric $\mu$, $T_\mu$ is self-adjoint, so applying this to a convolution power gives $\sigma_1(T_\mu)^{2k}\leq C p^2\|\mu^{*k}\|_2^2$. Therefore, unless the walk already mixes, some step must stall: its next squared $\ell^2$ norm remains a large fraction of the previous one. Decompose the group into dyadic level sets of the point masses of $\mu_j$. There are only logarithmically many levels, so one level set $H$ captures a substantial share of the probability and $\mu_j$ is roughly uniform there. The stalled convolution inequality then forces many product collisions in $H$.
+
+For finite subsets $A,B\subset G$, define the representation count $r_{A,B}(g)=\#\{(a,b)\in A\times B:ab=g\}$ and multiplicative energy
+
+$$ E(A,B)=\sum_{g\in G}r_{A,B}(g)^2=\#\{a_1b_1=a_2b_2:a_i\in A,b_i\in B\}. $$
+
+It counts pairs of factorizations of the same group element. For $A=B$, the diagonal choices alone give $|A|^2$ collisions; choosing three factors determines the fourth, so $|A|^2\leq E(A,A)\leq|A|^3$. Energy close to the upper scale means products have many representations, a sign of additive or multiplicative structure. In a noncommutative group the order of the factors matters: $E(A,B)$ does not in general equal $E(B,A)$.
+
+The stalled $\ell^2$ inequality is exactly an energy lower bound after replacing the distribution by its heavy level set. Balog–Szemerédi–Gowers converts this average abundance of collisions into an actual structured subset: if $E(H,H)\geq K^{-1}|H|^3$, then some $H'\subset H$ has $|H'|\geq K^{-O(1)}|H|$ and small difference-like product $|H'H'^{-1}|\leq K^{O(1)}|H'|$. The graph proof is useful to remember. Draw a bipartite graph with left and right copies of $H$, joining $(a,b)$ when $ab$ is a popular product. High energy means many edges. A graph-cleaning lemma finds a large subset in which each pair of left vertices has many common neighbors. A length-four path between two vertices then writes their quotient in many ways as products of popular elements and inverses. Counting all possible popular factors and dividing by the multiplicity of these representations bounds $|H'H'^{-1}|$. The inverse is natural here: unlike in an abelian sumset, a small $H'H$ need not control later products. This is the noncommutative BSG mechanism behind “stuck implies structured.”
+
+The second half identifies which approximate subgroups can occur in $\mathrm{SL}_2(\mathbb F_p)$. Actual proper subgroups are, up to small exceptional groups and conjugacy, largely contained in triangular subgroups. For approximate subgroups, one needs a robust analogue rather than a classification based on exact group order. The lecture’s theorem says, at schematic level, that a moderately large set $H$ with slowly growing bounded products and $|H|\leq p^{2.5}$ must have a positive fraction inside a coset of a Borel subgroup. A Borel here is a conjugate of the upper triangular subgroup. The prime field matters: in $\mathbb F_{p^m}$, a proper subfield can support a large structured subgroup and becomes an additional obstruction.
+
+The proof strategy analyzes how the set intersects simpler algebraic subgroups after moving to the algebraic closure, where matrices can be diagonalized. The diagonal torus and the unipotent subgroup expose scalar and additive coordinates. For example,
+
+$$ u(t)=\begin{pmatrix}1&t\\0&1\end{pmatrix},\quad b(a,t)=\begin{pmatrix}a&t\\0&a^{-1}\end{pmatrix},\quad b(a,t)b(a',t')=b(aa',\,at'+ta'^{-1}). $$
+
+A set of many unipotents whose product set grows little yields a set of parameters with small additive growth. A large diagonal part with small product growth yields parameters with small multiplicative growth. The upper triangular multiplication law couples these two sets. Once the sets are large enough and not nearly all of $\mathbb F_p$, this would create an approximate subfield. But the prime field has no proper subfields, and the sum–product theorem rules out a substantial set that is simultaneously additively and multiplicatively structured. Therefore a non-Borel approximate subgroup cannot persist.
+
+Putting the inverse theorem and classification together gives the mixing criterion. If a symmetric generating set $A$ has size at least $p^\varepsilon$ and avoids concentration in every Borel coset, in the sense that $|A\cap gB|\leq K(\varepsilon)p^{-\varepsilon}|A|$, then the walk has a uniform spectral gap $\sigma_1(T_A)\leq1-c(\varepsilon)$. The logic is a contradiction: a nearly invariant walk produces an approximate subgroup; the classification forces that subgroup to place substantial mass in a Borel coset; the nonconcentration hypothesis forbids this. An arbitrarily small positive sum–product gain is enough because it rules out exact approximate subfields at every iteration. The lecture gives the mechanism and references the deep projection/product results as inputs; it does not provide complete proofs of the noncommutative inverse theorem or the robust Larsen–Pink classification.
+
+#### Homogeneous dynamics: shear, diagonal renormalization, and projection geometry
+
+Let $G$ be a Lie group and $\Gamma$ a discrete subgroup of finite covolume. The quotient $X=G/\Gamma$ is a homogeneous space: $G$ acts transitively, while a subgroup $H$ can have periodic, dense, or more complicated orbits. For $G=\mathrm{SL}_2(\mathbb R)$ and $\Gamma=\mathrm{SL}_2(\mathbb Z)$, the space parametrizes covolume-one lattices: $g\Gamma$ corresponds to $g\mathbb Z^2$, and right multiplication by an integer determinant-one matrix changes the basis without changing the lattice. This quotient is not compact. The family $\langle(\epsilon,0),(0,\epsilon^{-1})\rangle$ keeps area one while its shortest vector tends to zero and its other vector escapes. Mahler’s compactness criterion says precisely that the lattices whose shortest nonzero vector has length at least $\epsilon$ form a compact part of the space; the cusp records increasingly skinny lattices.
+
+Two one-parameter subgroups control the picture:
+
+$$ u_t=\begin{pmatrix}1&t\\0&1\end{pmatrix},\qquad a_r=\begin{pmatrix}e^r&0\\0&e^{-r}\end{pmatrix}. $$
+
+The first shears a lattice horizontally by an amount proportional to height. Hedlund’s theorem says each unipotent orbit $\{u_t x:t\in\mathbb R\}$ in $\mathrm{SL}_2(\mathbb R)/\mathrm{SL}_2(\mathbb Z)$ is either periodic or dense. The geometric periodicity criterion is concrete: for a lattice $\Lambda$, a nonzero $u_T$ fixes it exactly when $\Lambda$ contains a nonzero horizontal vector. Indeed, if $(x,0)\in\Lambda$, take any independent vector $(y,z)\in\Lambda$; choosing $T=x/z$ adds $(x,0)$ to that vector and preserves the lattice. Conversely, if $u_T\Lambda=\Lambda$ for $T\neq0$, then for any $(y,z)\in\Lambda$, the difference $u_T(y,z)-(y,z)=(Tz,0)$ is a horizontal lattice vector (some $z\neq0$). Most lattices have no horizontal vector, so their unipotent orbit is not periodic; Hedlund supplies the nontrivial alternative, density. Diagonal orbits behave differently: they can be neither periodic nor dense, with closures of intermediate dimension.
+
+To see why a projection theorem enters, compare how the two subgroups interact. Direct matrix multiplication gives
+
+$$ a_r u_t a_r^{-1}=u_{e^{2r}t}. $$
+
+Thus a long segment $0\leq t\leq T$ can be represented as a diagonal rescaling of a unit segment, with $e^{2r}=T$. The dynamical question becomes: what does the diagonal action do to a short family of nearby unipotent orbits?
+
+Put a right-invariant Riemannian metric on $G$ by choosing an inner product at the identity and transporting it using right translations. This descends to the quotient because changing a lift of a point means right multiplication by $\Gamma$, an isometry. At the identity the tangent space is $\mathfrak{sl}_2(\mathbb R)$, the trace-zero matrices. An orthonormal basis can be chosen as $U=\begin{pmatrix}0&1\\0&0\end{pmatrix}$, $\widetilde U=\begin{pmatrix}0&0\\1&0\end{pmatrix}$, and $D=\frac1{\sqrt2}\begin{pmatrix}1&0\\0&-1\end{pmatrix}$. The right action is isometric, but the left action is not. To measure its derivative at the identity, follow it by the inverse right translation, which is an isometry; the resulting differential is conjugation, $M\mapsto a_r M a_r^{-1}$. It sends $U$ to $e^{2r}U$, $\widetilde U$ to $e^{-2r}\widetilde U$, and $D$ to $D$. Consequently the singular values of the left action (under the lecture’s inverse action convention, $L_{a_r^{-1}}$) are $e^{2r},1,e^{-2r}$, along expanding, neutral, and compressing directions. Their product is one, so the action distorts lengths but preserves volume. The orbit tangent $U$ is exactly the expanding direction.
+
+The key geometric subtlety is that the compressing direction is not fixed relative to a tube of unipotent orbits. A long stretched orbit is cut into unit-length pieces when it wraps through the quotient’s fundamental domain. Nearby orbit pieces might be packed close together after compression, so length alone does not imply distribution. But the direction of compression twists as one moves along a unit orbit. At any one height, some transverse pairs can collapse; across the full height interval, the collapsing direction sweeps through many slopes. Projection theory says a set of directions that is sufficiently spread out cannot collapse a substantial set of points at every slope: most slices retain large projected covering number. Applying this across the height parameter prevents too many orbit segments from being glued together. The result is a geometric “either spread or exceptional” principle: away from bad concentration directions, the long unipotent segment spreads through the quotient.
+
+The simple picture is closest to a proof when the quotient is compact, where every unit tube has uniformly controlled geometry. For the modular surface the cusp cannot be ignored. A point $a_{-r}x$ may lie very deep in the cusp, corresponding to a lattice with an extremely short vector; then the compact-tube estimates do not apply. The correct conclusion is therefore conditional: either the orbit distributes, or the diagonal renormalization reaches the cusp, which means the original lattice was close to one with a horizontal vector and hence close to a periodic unipotent orbit. This explains why the naive “stretch plus many directions” argument would falsely predict every orbit dense if the cusp were omitted.
+
+There is a useful bridge to number theory. For an indefinite quadratic form $Q$ in at least three variables with coefficients not all proportional to integers, Oppenheim predicts and Margulis proved that $Q(\mathbb Z^n)$ is dense in $\mathbb R$. After a linear change of variables, the form becomes a standard one while the integer lattice becomes another covolume-one lattice $\Lambda$. The symmetry group $\mathrm{SO}(Q)$ preserves the form, so $Q(\Lambda)=Q(g\Lambda)$ along its orbit in the space of lattices. Understanding whether this orbit is dense therefore controls the set of values of $Q$; exceptional nondense orbits correspond to arithmetic structure in the form. The elementary $\mathrm{SL}_2$ shear picture is a visual precursor to the higher-dimensional homogeneous orbit-closure theorems of Dani, Margulis, and Ratner, whose proofs require substantially more machinery.
+
+#### Lattice-orbit spreading: expanding a segment is not enough
+
+The second homogeneous-dynamics lecture asks how a long unipotent segment becomes spread through the lattice space. The identity $a_r u_t a_r^{-1}=u_{e^{2r}t}$ turns a segment of length $T$ into a unit segment seen through a diagonal rescaling, with $e^{2r}=T$. This creates long and thin tubes in local coordinates. Their orbit direction expands, while one transverse direction contracts. Length by itself is inconclusive: many pieces could lie close together after the contraction.
+
+The relevant twist is visible by comparing two nearby initial conditions. Let $g_0$ be a point in the group, and perturb it in a transverse tangent direction $v_0$. The orbit points at time $t$ are $u_tg_0$ and $u_t(g_0+epsilon v_0)$, whose first-order separation is represented by $u_t v_0$. Under diagonal renormalization the compressed transverse direction changes relative to the unipotent orbit direction; the angle at which two orbit tubes can collapse is therefore not a single fixed slope. Measuring this angle requires a metric on the quotient and tangent vectors at the same base point: group-coordinate vectors at distinct points cannot simply be compared as if they were parallel Euclidean arrows. The twisting is the bridge to projection theory: as time runs, the bad projection direction sweeps through a family, and a point set cannot have tiny projections for all sufficiently varied directions unless it has exceptional structure.
+
+A useful quantitative model tracks the cross-section of a tube. Move the starting point away from the cusp by $a_{-R}$, split a long orbit into $J$ pieces of time length $r$, and let $X_j$ denote the cross-section after the $j$th piece. At resolution $delta$, covering the tube is essentially the number of cross-section balls times the $delta^{-1}$ positions along its length: $|U_j|_delta\asymp \delta^{-1}|X_j|_delta$. Choose $e^{2r}=\delta^{-1}$. One step induces a family of almost-projection maps $f_t$ on the cross-section. A planar projection estimate states, for $X\subset B(0,1)$ and directions averaged over the circle,
+
+$$\mathbb E_{\theta\in S^1}|\pi_\theta(X)|_\delta\gtrsim |X|_\delta^{1/2}.$$
+
+The exponent is forced by a disk: if $X$ is a disk of radius $\rho\ge\delta$, then $|X|_\delta\asymp(\rho/\delta)^2$ while a typical projected interval has covering number about $\rho/\delta$. Since the dynamical maps imitate projections, this yields the schematic recurrence $N_{j+1}\gtrsim\delta^{-1}N_j^{1/2}$ for $N_j=|X_j|_\delta$. Starting with $N_0\asymp1$, induction gives $N_j\gtrsim\delta^{-2(1-2^{-j})}$, ignoring controlled losses. Indeed if $N_j\ge\delta^{-2(1-2^{-j})}$, then $N_{j+1}\gtrsim\delta^{-1-(1-2^{-j})}=\delta^{-2(1-2^{-(j+1)})}$. The exponent approaches $2$, the full planar covering exponent. This says the section occupies nearly all available resolution after enough stages; it does not itself establish density of an orbit, because local coordinates, direction-distribution, cusp avoidance, and the exceptional homogeneous-orbit alternatives still need control.
+
+The lecture then tests the geometry in $\mathrm{SL}_3(\mathbb R)$. The group has dimension $8$. For a diagonal element with weights chosen to preserve determinant, conjugation has expanding, neutral, and contracting directions at several rates; the one-dimensional unipotent subgroup is not the only expanding direction. The transverse compression directions form a multiparameter family, but the orbit parameter supplies only one parameter. Thus the needed projection family is a curve in the sphere of directions rather than all directions on a sphere. A curve can fail badly: if its directions lie on the equator of $S^2$, a thin slab with cross-section $1\times1$ and thickness $\delta$ can project to a $\delta\times1$ rectangle, with only about $\delta^{-1}$ cells instead of the $\delta^{-2}$ one hopes for from a two-dimensional set. Curvature/nondegeneracy of the direction curve rules out that flat obstruction and permits a Fourier-decoupling estimate, typically with an arbitrarily small $\delta^\epsilon$ loss. This is a restricted-direction problem, not the ordinary planar projection theorem. The lecture’s final reference to quantitative orbit-density results is a research-level comparison; it is not derived by the recurrence alone. [P2-21]
+
+#### Furstenberg sets: rich tubes, three regimes, and Beck’s theorem
+
+For the sharp projection problem, let $E$ be a set of approximately $\delta^{-t}$ balls of radius $\delta$ in the unit square. At each $x\in E$, choose approximately $\delta^{-s}$ essentially distinct $\delta$-tubes through $x$. After pigeonholing, suppose a typical tube contains $r$ balls of $E$. The incidence count is the number of pairs $(x,T)$ with $x\in T$; it is approximately $|E|_\delta |T_x|$, and also approximately $|T|r$. Therefore
+
+$$|T|\asymp \frac{|E|_\delta |T_x|}{r}.$$
+
+The conjectural sharp bound has three competing constructions. A star gives many tubes through each point with little sharing; an integer-grid arrangement gives the Szemerédi–Trotter scale; random tubes through a large point set realize the third, purely thick-set regime. Precisely, for $E$ a $(\delta,t,C)$ set, with $\delta$-tube direction sets $\operatorname{Dir}T_x$ each a $(\delta,s,C)$ subset of $S^1$, let $T=\bigcup_{x\in E}T_x$ be the essentially distinct union. For every $\epsilon>0$, the course notes state
+
+$$|T|\ge c_\epsilon C^{-O(1)}\delta^\epsilon\min\{\delta^{-t-s},\delta^{-t/2-3s/2},\delta^{-1-s}\}.$$
+
+The first, second, third terms are regimes A, B, C. If a typical tube contains $r$ balls and incidences are uniformized, then $|E|_\delta\asymp\delta^{-t}$, $|T_x|\asymp\delta^{-s}$, and $|T|r\asymp\delta^{-t-s}$; hence
+
+$$r\lesssim_\epsilon C^{O(1)}\delta^{-\epsilon}\max\{1,\delta^{-(t-s)/2},\delta^{-(t-1)}\}.$$
+
+Comparing term exponents shows A is the minimum when $s\ge t$, C when $s+t\ge2$, and B when $s<t<2-s$. This precisely recovers which classical tool applies: double counting in A, Fourier in C, while B is the difficult grid-like interval.
+
+The continuum Beck theorem is a robust way to get out of a one-scale trap. Suppose $E$ has size about $\delta^{-u}$ and satisfies a rectangle nonconcentration condition: for every rectangle of dimensions $\rho\times1$, its intersection with $E$ has at most a $C\rho^\eta$ fraction of the total $\delta$-covering number. Then some point $x\in E$ sees many directions to the rest of $E$:
+
+$$|L_{x,E}|_\delta\gtrsim_{\epsilon,\eta}\min\{\delta^{-u},\delta^{-1}\}.$$
+
+This resembles the finite-point Beck theorem: either there are many distinct joining lines, or a large fraction of points lie on one line. The nonconcentration condition forbids the second alternative. It is important that the statement is real-geometric; the analogous assertion over $\mathbb C$ fails because a complex line has real dimension two, so a planar set can lie in one complex line without being concentrated in a real thin rectangle.
+
+Here is the bootstrap mechanism behind the continuum form. For each point $x$, let $L_{x,E}$ be the direction set to points of $E$ and use pigeonholing to retain a large subset of base points where the direction-set size is nearly uniform. Each $L_{x,E}$ inherits a nonconcentration estimate from the rectangle hypothesis: if many points viewed from $x$ fall into a narrow angular interval, then those points lie in the associated narrow rectangle, contradicting the assumed bound. Counting point–line incidences in two ways makes a typical line rich in points and gives the elementary lower bound on the family of lines. The Orponen–Shmerkin epsilon-improvement theorem then upgrades a direction set of dimension $s$ to size at least $\delta^{-s-\epsilon}$ in the difficult $0<s<\min(u,1)$ range. The same estimate applies after rescaling to subrectangles because the uniform direction sets have nonconcentration at coarser scales. Iterating the improvement increases the exponent by a fixed positive amount each time; after finitely many steps it reaches $\min(u,1)$. This is why uniformization is not cosmetic: a fine-scale count alone would not imply that the rescaled subsets retain the same hypotheses. The lecture presents this as a proof architecture, while the full epsilon-improvement proof lies in the cited research work. [P2-22]
+
+#### AD regularity turns the rich-tube count into a submultiplicative quantity
+
+A set is AD regular at exponent $t$ when every ball of radius $\rho$ centered on the set contains about the fraction $\rho^t$ of the total mass, uniformly at every intermediate scale. In a discrete $\delta$-model, a uniform set with branching factors $B_j$ is AD regular when the product of the first $J$ branchings is comparable to $\delta^{-Jt}$ for every $J$. This is stronger than merely having $|E|_\delta\sim\delta^{-t}$: it says the same dimension is visible inside every occupied ball and at every scale.
+
+Let $R_{AD}(\delta)$ be the largest typical number of $\delta$-balls of an AD-regular set that can lie in one $\delta$-tube, under the direction-set hypotheses of the Furstenberg problem. The crucial submultiplicative estimate is
+
+$$R_{AD}(\delta_1\delta_2)\lesssim R_{AD}(\delta_1)R_{AD}(\delta_2).$$
+
+To see the counting behind it, thicken each fine ball and tube to scale $\delta_1$. A fine tube meets at most $R_{AD}(\delta_1)$ coarse balls. Inside each such ball, rescale by $\delta_1^{-1}$; it becomes a unit ball containing a $\delta_2$-configuration, and a short fine tube segment becomes a $\delta_2$-tube. AD regularity guarantees the rescaled set still has the required mass distribution, regardless of which coarse ball was selected. Thus at most $R_{AD}(\delta_2)$ fine balls occur in each coarse ball along the tube. Multiplying the two counts proves the estimate. For a merely $(\delta,t)$ set, a selected coarse ball may contain an atypically dense portion, so this rescaling step is not valid with uniform constants.
+
+The projective variant assumes every base point uses the same tube directions. In the submultiplicative decomposition at $\delta_1=\delta_2=\sqrt\delta$, directions differing by less than $\sqrt\delta$ cannot be distinguished after thickening, so the local problem inside a coarse ball is projective. Consequently a sharp estimate for projective AD-regular configurations propagates to general AD-regular ones. If the submultiplicative inequality is nearly an equality at every step, then typical coarse balls and typical tubes must also be nearly saturated. In a projective tube, choose coordinates with the coarse tube horizontal. The fine set is contained in a product $A\times B$ of transverse positions and longitudinal positions. Near-saturation means a positive fraction of the product rectangles are occupied at the expected density. Projecting at small slope $c$ sends the product to a discretized sum $A+cB$. If all such projections remain small, an asymmetric Balog–Szemerédi–Gowers reduction extracts a genuine product-like subset; Plünnecke–Ruzsa then propagates small growth to sums with several slopes. The ABC sum-product theorem says that for nonconcentrated real sets of dimensions $a,b,c$, if every $c\in C$ keeps $A+cB$ no larger than $A$, then $a\ge b+c$. The near-saturated geometry would force the opposite dimension inequality in the hard regime, contradiction. This is the source of the epsilon improvement: either the configuration already has more projected points than the extremal estimate permits, or submultiplicativity is strictly improved. The lecture and course notes outline this rigidity argument but explicitly omit the asymmetric BSG and spacing-case details. [P2-23]
+
+#### The last scale-combination argument
+
+The well-spaced theorem is a continuous analogue of Szemerédi–Trotter. Let $E$ be $N$ radius-$\delta$ balls in the unit disk, with at most a bounded number in any ball of radius $N^{-1/2}$. This is the maximally spread regime: a tube can meet at most about $N^{1/2}$ points, which explains why the elementary $N/R$ term in the point-line theorem is unnecessary. A random $\delta$-tube meets about $\delta N$ balls on average, so the richness threshold must exceed this baseline by a small power. For $R>\delta^{-\epsilon}\delta N$, the theorem gives
+
+$$|T_R(E)|\lesssim_\epsilon \delta^{-\epsilon}\frac{N^2}{R^3}.$$
+
+The Fourier method alone proves the desired scale when $R$ is near its minimum allowed value: it gives $|T_R(E)|\lesssim\delta^{-1}NR^{-2}$, and substituting $R\sim\delta N$ makes this $N^2R^{-3}$ up to the small loss. If $R$ is larger, set a thicker scale $\rho$ by $\rho N\sim R$. Well-spacing ensures $|E_\rho|_\rho=N$ (up to constants): thickening each point to radius $\rho$ does not merge distinct points, since the spacing scale $N^{-1/2}$ exceeds $\rho$ when $R\le N^{1/2}$. The Fourier estimate for $\rho$-tubes gives a bound for the number of rich fat tubes. But one fat tube may contain many rich thin tubes.
+
+To count the thin tubes inside one fat tube, first impose a two-ends condition: each rich thin tube has a substantial portion of its incident points near each of its two ends. If the points were all concentrated in a much shorter sub-tube, an induction on scale handles that subproblem; otherwise the two-ends condition holds after decomposition. If a fat tube contains $\widetilde R$ points, count triples $(T,x_1,x_2)$ where $T$ is a rich thin tube inside it and $x_1,x_2$ are incident points near opposite ends. Each thin tube contributes on the order of $R^2$ ordered pairs. Conversely there are at most $\widetilde R^2$ choices of the pair, and two points separated along the tube determine at most one essentially distinct joining tube. Hence there are at most $O(\widetilde R^2/R^2)$ rich thin tubes in that fat tube. The Fourier bound for fat tubes at richness $\widetilde R$ is $O(N^2/(R\widetilde R^2))$ because $\rho^{-1}=N/R$. Multiplication cancels $\widetilde R^2$ and yields $O(N^2/R^3)$; dyadically summing over the logarithmically many values of $\widetilde R$ is absorbed by the $\delta^{-\epsilon}$ loss. The well-spacing condition is used to preserve $N$ after thickening; the lower richness threshold is needed to suppress the low-frequency Fourier contribution.
+
+Finally, define the branching function of a uniform set $E$ by
+
+$$f(x)=\log_{1/\delta}|E_{\delta^x}|_{\delta^x},\qquad 0\le x\le1.$$
+
+Here $x=0$ means unit scale and $x=1$ means finest scale $\delta$; thus $f(0)=0$, $f(1)=t$ when $|E|_\delta=\delta^{-t}$. The $(\delta,t)$ nonconcentration condition gives $f(x)\ge tx$. Since a radius-$\rho$ disk can be covered by $O((\rho/\rho')^2)$ disks of radius $\rho'$, one has $f(x+h)\le f(x)+2h$. The function is increasing and 2-Lipschitz. AD-regularity corresponds to a straight line of slope $t$. Well-spaced geometry has an initial slope close to $2$ followed by a flat part. Ren–Wang’s semi-well-spaced condition relaxes that broken line: for $0<s<1$, the graph lies above the broken profile of slopes $2-s$ and $s$. Fourier analysis controls this whole semi-well-spaced class.
+
+Multiscale decomposition cuts the branching graph at a scale $\rho$. The coarse set $E_\rho$ has the left segment of the graph; inside a typical $\rho$-ball, magnification gives the right segment as the branching function of the local fine set. Richness factors accordingly: number of coarse balls hit by a fat tube times number of fine balls hit in each such ball. If both segments have slopes in the hard interval $s<t_I<2-s$, both subproblems use the grid-regime bound and their product has the correct exponent. A steep first piece and shallow second piece instead require the Fourier and elementary bounds, whose product is too weak; merely splitting arbitrarily is therefore not enough.
+
+The final decomposition theorem arranges the graph, apart from a small leftover set of scales, into intervals where either it is almost linear with slope in $(s,2-s)$, or its restriction lies above the semi-well-spaced broken profile. Lipschitz regularity is central: Rademacher’s theorem makes $f$ differentiable almost everywhere, so sufficiently short intervals around points with derivative in the desired range look nearly linear and correspond to AD-regular pieces. The portions whose slopes fall outside that range are covered by the semi-well-spaced alternative. One then repeatedly applies the coarse/fine factorization, controls each piece with its appropriate theorem, and multiplies the bounds. The transcript and notes state this decomposition and give an illustrative graph but do not include its full combinatorial proof. Together with the AD-regular and well-spaced estimates, this completes the course’s proof outline for the sharp Furstenberg set theorem; it is a proof architecture built on those theorems, not a replacement for their omitted technical arguments. [P2-24]
+
+#### Proof and normalization supplement: finite fields through real discretization
+
+### From many additive coincidences to a genuinely structured rectangle
+
+A large set of graph edges with few sums does not itself force the whole ambient sumset to be small: a small “garbage” portion of the ambient sets may contribute many unrelated sums. The Balog–Szemerédi–Gowers theorem (BSG) is a cleaning statement. In its additive form, if $A,B$ lie in an abelian group, $|A|,|B|\le N$, $X\subset A\times B$, $|X|\ge K^{-1}N^2$, and the restricted sum image $\pi_1(X)=\{a+b:(a,b)\in X\}$ has size at most $KN$, then one can find $A'\subset A$, $B'\subset B$ such that $X'=X\cap(A'\times B')$ still has size at least $K^{-O(1)}N^2$ while $|A'+B'|\le K^{O(1)}N$. “Large” and “small” here mean polynomial losses in $K$; the constants hidden in $O(1)$ are absolute but not optimized. The key point is that the new sumset is the full sumset of the selected subsets, not only the restricted sums of the surviving edges. [P2-13]
+
+View $X$ as a bipartite graph, with left vertices $A$, right vertices $B$, and edge $(a,b)$ when the pair belongs to $X$. A path of length three from $a$ to $b$ has form $a-b_1-a_1-b$. The three edge sums $z_1=a+b_1$, $z_2=a_1+b_1$, $z_3=a_1+b$ all belong to $\pi_1(X)$, and $a+b=z_1-z_2+z_3$. Thus each length-three path gives a representation of the endpoint sum using three elements of the restricted sumset. If every pair $(a,b)\in A'\times B'$ has at least $P$ such paths, count pairs consisting of an endpoint sum and one of its representations. There are at least $P|A'+B'|$ representations from paths, while there are at most $|\pi_1(X)|^3$ triples $(z_1,z_2,z_3)$. Therefore
+
+$$|A'+B'|\le \frac{|\pi_1(X)|^3}{P}.$$
+
+This converts a graph-connectivity property into small additive structure. The hard part is to produce large vertex subsets on which every cross-pair has many paths.
+
+For a vertex $b\in B$, write $N(b)=\{a:(a,b)\in X\}$. The number $P_2(a_1,a_2)$ of length-two paths between left vertices is exactly the number of common neighbors of $a_1$ and $a_2$. If the edge density is at least $K^{-1}$, then Cauchy–Schwarz gives
+
+$$\sum_{a_1,a_2\in A}P_2(a_1,a_2)=\sum_{b\in B}|N(b)|^2\ge \frac{|X|^2}{|B|}\ge K^{-2}|A|^2|B|.$$
+
+This is only an average; some vertices could be isolated or some pairs could be bad. Fix a tolerance $\varepsilon>0$, and call $(a_1,a_2)$ bad when $P_2(a_1,a_2)<\varepsilon K^{-2}|B|$. Let $BP_\varepsilon(b)$ count bad ordered pairs in $N(b)^2$. Double-count triples $(a_1,a_2,b)$ with both edges present and bad endpoints. For each bad pair, its common-neighbor count is less than $\varepsilon K^{-2}|B|$, so averaging over $b$ yields $\mathbb E_b BP_\varepsilon(b)\le\varepsilon K^{-2}|A|^2$. Combining this with $\mathbb E_b|N(b)|^2\ge K^{-2}|A|^2$, choose $b$ with a positive objective $|N(b)|^2-(2\varepsilon)^{-1}BP_\varepsilon(b)$. Its neighborhood $A_0=N(b)$ has size at least a constant multiple of $K^{-1}|A|$, and at most a $2\varepsilon$ fraction of ordered pairs in $A_0^2$ are bad. Delete vertices of $A_0$ that have too many bad partners. The survivors $A_2$ remain a constant-power fraction of $A$, and for every $a\in A_2$, all but at most $10\varepsilon|A_2|$ of the $a_2\in A_2$ satisfy $P_2(a,a_2)\ge\varepsilon K^{-2}|B|$.
+
+To obtain length-three paths, first prune $A$ to $A_1=\{a:|N(a)|\ge (10K)^{-1}|B|\}$; this removes only a bounded fraction of the edges, since the total number of edges is at least $K^{-1}|A||B|$. Apply the length-two cleaning lemma to this graph to get $A'=A_2\subset A_1$. For each $a\in A'$, the set $G(a)$ of its good partners in $A'$ misses at most $10\varepsilon|A'|$. Now define $B'$ as vertices with more than $20\varepsilon|A'|$ neighbors in $A'$. For $b\in B'$, at least $10\varepsilon|A'|$ of those neighbors lie in $G(a)$ for each chosen $a\in A'$. Each such intermediate vertex contributes at least $\varepsilon K^{-2}|B|$ length-two paths from $a$; adjoining its final edge to $b$ gives
+
+$$P_3(a,b)\gtrsim \varepsilon^2K^{-3}|A||B|.$$
+
+The pruning retained each $a\in A'$ with degree at least a constant times $K^{-1}|B|$, so $X(A',B)$ has at least a constant times $K^{-2}|A||B|$ edges. Vertices outside $B'$ have at most $20\varepsilon|A'|$ such edges, hence $X(A',B\setminus B')\le20\varepsilon|A'||B|$. Choose $\varepsilon$ as a sufficiently small negative power of $K$; the discarded edges are then a small fraction of $X(A',B)$, leaving $|X'|\ge K^{-O(1)}|A||B|$. Every surviving cross-pair has the stated many-path lower bound, so the path-count inequality proves BSG. The proof is a sequence of explicit repairs to average information: discard low-degree vertices, select a neighborhood where most pairs share many neighbors, remove vertices with too many bad partners, and finally retain right vertices with enough links to the remaining good partners. [P2-13]
+
+### Robust expansion is what makes the real argument iterate
+
+For a nonconcentrated one-dimensional set $A$, the first real expansion lemma gives a fixed polynomial $Q$ for which $|Q(A)|_\delta\ge\delta^{-s-\varepsilon}$ when $|A|_\delta=\delta^{-s}$. This alone does not permit iteration: $Q(A)$ might be concentrated at intermediate scales. The stronger robust statement says, for some fixed polynomial $Q:\mathbb R^k\to\mathbb R$, if $A$ is a $(\delta,s,C)$ set and $Z\subset A^k$ occupies a fixed power fraction of $A^k$, then $|Q(Z)|_\delta\gtrsim\delta^{-s-\varepsilon}$. The notes use the concrete $k=3$ map $Q(a_1,a_2,a_3)=a_1+a_2a_3$. This handles arbitrary dense subsets of the product, rather than only the entire product, and is the new input needed to recover a well-distributed subset of the expanded image. [P2-16]
+
+Here is how robustness feeds iteration. First uniformize $A$. Uniformity and the scale-wise expansion argument imply $Q(A)$ has large covering number at every coarser scale. But that is not enough: much of the coarse-scale image could come from a tiny part of the domain while the fine-scale covering number is contributed by another part. To prevent this split, examine the image in intervals at a sequence of nearby scales $1\ge\rho_1>\rho_2>\cdots>\rho_N=\delta$. At the first scale retain all image intervals; at each next scale call a parent interval bad if it captures more than $\rho_j^{s+\varepsilon-\eta}|Q(Z)|_{\rho_{j+1}}$ of the next-scale image. Pull the bad intervals back to the parameter tuples in $A^k$. If they occupied a substantial fraction of $A^k$, the robust expansion lemma applied to that bad preimage would force their image to be large, contradicting the bound defining badness. Thus the bad preimage is small and can be removed while leaving enough parameter tuples for the robust estimate to remain applicable. Iterating the removal across the finite scale chain constructs a subset whose image obeys the nonconcentration inequality at each adjacent pair of scales; multiplying adjacent scale ratios gives the bound for separated scales, and choosing a sufficiently fine scale mesh controls intermediate radii. The resulting image contains a $(\delta,s+\varepsilon/2,C')$ set, with tolerances reduced to absorb the accumulated losses. This is the detailed logic behind the official proof sketch; the transcript emphasizes that robustness, rather than a generic appeal to uniformity, is what eliminates the “large coarse part / different large fine part” enemy.
+
+Why is the robust lemma true? Its proof reuses BSG rather than relying on a minor tweak of the earlier expansion argument. The first step gives some $a\in A$ with $|A+aA|_\delta\ge\delta^{-s-\varepsilon}$. A contradiction/exceptional-set argument upgrades this so almost every $a$ has the property that every dense $X\subset A\times A$ still has $|\pi_a(X)|_\delta\gtrsim\delta^{-s-\varepsilon}$. If not, a large set of bad $a$'s would itself be a nonconcentrated subset to which the initial expansion applies. To prove the dense-subset claim, a restricted small projection creates high additive energy; Euclidean BSG at covering scale finds dense subsets with controlled full sumset, and the same symmetry injection used in the finite-field proof transfers expansion back to the chosen projection. Once this holds for most coefficients, apply it to a dense subset of $A^3$: view $Q(a_1,a_2,a_3)=a_1+a_2a_3$ as the projection $(x,y)\mapsto x+ay$ of the product pair $(a_1,a_2a_3)$, use the robust two-coordinate estimate after a product/fiber decomposition, and absorb the constant-power losses in the small exponent $\varepsilon$. The lecture deliberately sketches these steps and says that some pruning and double-counting details are omitted; the supplied notes also label this a sketch. It would be inaccurate to report the complete technical proof as shown in these sources.
+
+Once one expansion step returns a larger nonconcentrated subset inside $Q(A)$, iterate: the exponent $s$ increases by a positive amount depending continuously on $s$, so for any target $1-\tau<1$ only finitely many steps are needed. Plünnecke–Ruzsa then simplifies the bounded-complexity polynomial growth to a one-coefficient expansion $A+aA$; the product-set projection theorem follows by the same contagious-structure and double-counting mechanism as in the finite-field course. To pass from a general planar set, choose three well-separated directions and linearly normalize them to horizontal, vertical, and diagonal. The direction nonconcentration controls the condition number of this change of coordinates. Repeated BSG reductions replace the set by a dense subset of a product of its coordinate projections, and a robust projection estimate is needed at each passage. A final subtlety is that a large projection by itself is not enough: the projected coordinate set must also be nonconcentrated to serve as the next input. This “square-root baseline at every scale” is established by choosing two well-separated projections and using the injectivity of the paired projection map. Uniformization/double counting then upgrades scale-wise baseline size to the needed nonconcentration. The lecture presents the architecture and identifies these careful steps, while explicitly skipping their parameter-heavy details. [P2-16]
+
+### Ruzsa, Plünnecke, Petridis, and BSG: explicit variables and losses
+
+For finite sets in an abelian group, the Ruzsa triangle inequality
+
+$$|A-C|\,|B|\le |A-B|\,|B-C|$$
+
+has a short injection proof. For each $z\in A-C$, fix one representation $z=a_z-c_z$. Send $(z,b)$ to $(a_z-b,b-c_z)$. The sum of the two output coordinates is $a_z-c_z=z$, so it recovers $z$ exactly; the fixed representation then recovers $a_z,c_z$, and the first coordinate gives $b=a_z-(a_z-b)$. The map is injective into $(A-B)\times(B-C)$. This inequality converts a small sumset into small difference sets by choosing the middle set as a reflected copy and checking the signs; no structural classification theorem is needed.
+
+Petridis’ proof of Plünnecke makes clear where the exponent comes from. Given $|A+B|\le K|A|$, choose nonempty $X\subseteq A$ minimizing $|X+B|/|X|=K' \le K$. For every finite $C$, prove $|X+C+B|\le K'|X+C|$ by induction on $|C|$. For the inductive step add one translate $c$: put $Y=\{x\in X:x+c+B\subset X+C+B\}$. The new sums in $X+(C\cup\{c\})+B$ are at most $|X+B|-|Y+B|$, and the new base sums in $X+(C\cup\{c\})$ are at least $|X|-|Y|$. By minimality, $|Y+B|\ge K'|Y|$, while $|X+B|=K'|X|$; combining these with the induction hypothesis gives the desired ratio at most $K'$. Now take $C=kB$ successively to get $|X+kB|\le(K')^k|X|$. Apply Ruzsa’s triangle inequality in the form $|X|\,|mB-nB|\le|X+mB|\,|X+nB|$; this yields $|mB-nB|\le K^{m+n}|X|\le K^{m+n}|A|$. The conclusion is for the derived set $mB-nB$ and is anchored by the minimizing subset $X$, not a claim that every subset of $A$ expands by the same ratio.
+
+For BSG, the quantitative input is a dense bipartite graph $X\subset A\times B$. Suppose $|A|,|B|\le N$, $|X|\ge K^{-1}N^2$, and the restricted sumset $P=\{a+b:(a,b)\in X\}$ has $|P|\le KN$. For a graph path from $a\in A$ to $b\in B$, write $P_3(a,b)$ for the number of length-three paths. Every such path is $a-b_1-a_1-b$ with its three edge labels
+
+$$z_1=a+b_1,\qquad z_2=a_1+b_1,\qquad z_3=a_1+b.$$
+
+They satisfy $a+b=z_1-z_2+z_3$. Thus, if every pair $(a,b)\in A'\times B'$ has at least $P_0$ such paths, then counting representations of each sum gives $|A'+B'|P_0\le |P|^3$.
+
+Why can we find a large rectangle with many paths for every cross-pair? Let $N(b)=\{a:(a,b)\in X\}$. Since $|X|\ge K^{-1}|A||B|$, the average degree is at least $K^{-1}|A|$ on the right. Also
+
+$$\mathbb E_{b\in B}|N(b)|^2\ge |B|^{-1}\left(\sum_b|N(b)|\right)^2\ge K^{-2}|A|^2.$$
+
+For $a_1,a_2\in A$, let $P_2(a_1,a_2)=|N(a_1)\cap N(a_2)|$, and call the pair $\eta$-bad when $P_2(a_1,a_2)<\eta K^{-2}|B|$. The expected number of bad pairs inside $N(b)$ is at most $\eta K^{-2}|A|^2$, because each bad pair contributes for at most $|B|$ choices of its common neighbor. Combining this with the lower bound on $\mathbb E|N(b)|^2$ selects a $b$ for which $A'=N(b)$ has size $\gtrsim K^{-1}|A|$ and at most an $O(\eta)$ fraction of its ordered pairs are bad. A further pruning (the lecture states and sketches this as its length-two lemma) produces $A''\subset A'$ with $|A''|\gtrsim K^{-1}|A|$ such that each $a\in A''$ has at most $10\eta|A''|$ bad partners.
+
+Now retain the right vertices $B''=\{b:|N(b)\cap A''|>20\eta|A''|\}$. For any $a\in A''$ and $b\in B''$, at least $10\eta|A''|$ neighbors $a_1\in N(b)\cap A''$ are good partners of $a$. Each good pair $(a,a_1)$ has at least $\eta K^{-2}|B|$ common neighbors $b_1$, so there are at least $10\eta^2K^{-2}|A''||B|\gtrsim\eta^2K^{-3}|A||B|$ length-three paths from $a$ to $b$. The same degree pruning shows $X\cap(A''\times B'')$ keeps at least a $K^{-O(1)}$ fraction of the original edges when $\eta$ is chosen as a sufficiently small fixed power of $K^{-1}$. The path-count inequality then yields $|A''+B''|\le K^{O(1)}N$. This proof separates two logically different tasks: discard a small fraction of bad pairs to get a uniform path lower bound, then translate paths into additive representations. It does not claim the original $A+B$ is small; the structured conclusion is about large subsets.
+
+## Dynamics connect projection growth to rich tubes
+
+### Dynamics and the sharp rich-tube theorem
+
+For a symmetric probability measure on a finite group, convolution acts on mean-zero functions. A spectral gap contracts this subspace exponentially, giving mixing and a Cayley graph edge-expansion bound. In $\mathrm{SL}_2(\mathbb F_p)$, representation dimensions and flattening/sum-product arguments rule out persistent concentration; the noncommutative inverse theorem and product theorem are deep inputs, not derived in the lecture.
+
+The quotient $\mathrm{SL}_2(\mathbb R)/\mathrm{SL}_2(\mathbb Z)$ parametrizes unimodular lattices. Diagonal conjugation stretches unipotent orbit segments while contracting transverse directions; twisting makes the compressing direction vary, which motivates projection estimates. The noncompact cusp is an essential exceptional case. The detailed lattice, compactness, and recurrence assumptions are stated below.
+
+For the sharp Furstenberg theorem, let $E$ be a $(\delta,t,C)$ set and at each $x\in E$ choose $\delta$-tubes through $x$ whose directions form a $(\delta,s,C)$ subset of $S^1$. If $T$ is their essentially distinct union, the official theorem states
+$$|T|\ge c_\epsilon C^{-O(1)}\delta^\epsilon
+\min\{\delta^{-t-s},\delta^{-t/2-3s/2},\delta^{-1-s}\}.$$
+The three terms correspond to unrelated stars, the arithmetic grid, and random tube incidences. Double counting proves the first regime ($s\ge t$); Fourier proves the third ($s+t\ge2$); the middle regime $s<t<2-s$ is the hard content. AD regularity makes local rescaling legitimate, while a well-spaced Fourier theorem handles the opposite spacing extreme. Ren–Wang’s multiscale decomposition breaks an arbitrary branching profile into pieces covered by those two cases. The research proofs are longer than the course outline; every section below labels those boundaries.
+
+### Finite groups: when a walk is stuck, look for an approximate subgroup
+
+For a finite group $G$, a probability measure $mu$ describes one random step. Its convolution is
+
+$$ (f*g)(x)=\sum_{ab=x}f(a)g(b),\qquad (\mu*\nu)(x)=\sum_{ab=x}\mu(a)\nu(b). $$
+
+If the walk multiplies on the right, its distribution after $k$ independent steps, started at the identity, is $\mu^{*k}$. The operator $T_\mu f=f*\mu$ is a weighted average of right translations. Each translation preserves counting-measure $\ell^2(G)$, so the triangle inequality gives $\|T_\mu f\|_2\leq\|f\|_2$. Constants are fixed and mean-zero functions stay mean-zero. Let $\sigma_1(T_\mu)$ be the largest singular value on that mean-zero subspace. Starting at $g_0$, write $\delta_{g_0}=|G|^{-1}\mathbf 1+f_0$; then $\|f_0\|_2\leq1$, so
+
+$$ \left\|T_\mu^k\delta_{g_0}-\frac{1}{|G|}\mathbf 1\right\|_2\leq \sigma_1(T_\mu)^k. $$
+
+Thus a fixed spectral gap $1-\sigma_1>0$ gives exponential $\ell^2$ mixing, and since counting-measure $\|f\|_\infty\leq\|f\|_2$, also a pointwise error bound. Symmetry $\mu(g)=\mu(g^{-1})$ makes $T_\mu$ self-adjoint, which lets powers of the walk be analyzed through the same singular values.
+
+The first obstacle is algebraic trapping. If a step set is contained in a proper subgroup, the walk never leaves that subgroup; on the full group there is an invariant nonconstant function and $\sigma_1=1$. But failure to mix need not mean literal containment. The Bourgain–Gamburd proof begins with an inverse principle: if a symmetric walk on $\mathrm{SL}_2(\mathbb F_p)$ has no spectral gap, repeated convolution must concentrate substantial mass on a set that behaves approximately like a subgroup. The lecture formulates this with a set $H$ capturing a large portion of some bounded-length walk distribution, whose fixed product $H^5$ is at most $p^{O(\delta)}|H|$ and whose size lies below the scale $p^{2.5}$. This is a schematic lecture statement: the small exponents and mass constants depend on the parameters, and should not be silently replaced by a sharp classification theorem.
+
+Here is why an approximate subgroup emerges from a stalled walk. Begin with uniform measure on a set $A$, so $\|\mu_A\|_2^2=1/|A|$. Square the measure repeatedly, $\mu_{j+1}=\mu_j*\mu_j$. A progress step decreases $\|\mu_j\|_2^2$ by a factor $p^{-\delta}$; after boundedly many such steps the $\ell^2$ norm is small enough to imply a spectral gap. The implication comes from the representation-dimension estimate established in the preceding lecture:
+
+$$ \sigma_1(T_\nu)^2\leq C p^2\|\nu\|_2^2. $$
+
+For symmetric $\mu$, $T_\mu$ is self-adjoint, so applying this to a convolution power gives $\sigma_1(T_\mu)^{2k}\leq C p^2\|\mu^{*k}\|_2^2$. Therefore, unless the walk already mixes, some step must stall: its next squared $\ell^2$ norm remains a large fraction of the previous one. Decompose the group into dyadic level sets of the point masses of $\mu_j$. There are only logarithmically many levels, so one level set $H$ captures a substantial share of the probability and $\mu_j$ is roughly uniform there. The stalled convolution inequality then forces many product collisions in $H$.
+
+For finite subsets $A,B\subset G$, define the representation count $r_{A,B}(g)=\#\{(a,b)\in A\times B:ab=g\}$ and multiplicative energy
+
+$$ E(A,B)=\sum_{g\in G}r_{A,B}(g)^2=\#\{a_1b_1=a_2b_2:a_i\in A,b_i\in B\}. $$
+
+It counts pairs of factorizations of the same group element. For $A=B$, the diagonal choices alone give $|A|^2$ collisions; choosing three factors determines the fourth, so $|A|^2\leq E(A,A)\leq|A|^3$. Energy close to the upper scale means products have many representations, a sign of additive or multiplicative structure. In a noncommutative group the order of the factors matters: $E(A,B)$ does not in general equal $E(B,A)$.
+
+The stalled $\ell^2$ inequality is exactly an energy lower bound after replacing the distribution by its heavy level set. Balog–Szemerédi–Gowers converts this average abundance of collisions into an actual structured subset: if $E(H,H)\geq K^{-1}|H|^3$, then some $H'\subset H$ has $|H'|\geq K^{-O(1)}|H|$ and small difference-like product $|H'H'^{-1}|\leq K^{O(1)}|H'|$. The graph proof is useful to remember. Draw a bipartite graph with left and right copies of $H$, joining $(a,b)$ when $ab$ is a popular product. High energy means many edges. A graph-cleaning lemma finds a large subset in which each pair of left vertices has many common neighbors. A length-four path between two vertices then writes their quotient in many ways as products of popular elements and inverses. Counting all possible popular factors and dividing by the multiplicity of these representations bounds $|H'H'^{-1}|$. The inverse is natural here: unlike in an abelian sumset, a small $H'H$ need not control later products. This is the noncommutative BSG mechanism behind “stuck implies structured.”
+
+The second half identifies which approximate subgroups can occur in $\mathrm{SL}_2(\mathbb F_p)$. Actual proper subgroups are, up to small exceptional groups and conjugacy, largely contained in triangular subgroups. For approximate subgroups, one needs a robust analogue rather than a classification based on exact group order. The lecture’s theorem says, at schematic level, that a moderately large set $H$ with slowly growing bounded products and $|H|\leq p^{2.5}$ must have a positive fraction inside a coset of a Borel subgroup. A Borel here is a conjugate of the upper triangular subgroup. The prime field matters: in $\mathbb F_{p^m}$, a proper subfield can support a large structured subgroup and becomes an additional obstruction.
+
+The proof strategy analyzes how the set intersects simpler algebraic subgroups after moving to the algebraic closure, where matrices can be diagonalized. The diagonal torus and the unipotent subgroup expose scalar and additive coordinates. For example,
+
+$$ u(t)=\begin{pmatrix}1&t\\0&1\end{pmatrix},\quad b(a,t)=\begin{pmatrix}a&t\\0&a^{-1}\end{pmatrix},\quad b(a,t)b(a',t')=b(aa',\,at'+ta'^{-1}). $$
+
+A set of many unipotents whose product set grows little yields a set of parameters with small additive growth. A large diagonal part with small product growth yields parameters with small multiplicative growth. The upper triangular multiplication law couples these two sets. Once the sets are large enough and not nearly all of $\mathbb F_p$, this would create an approximate subfield. But the prime field has no proper subfields, and the sum–product theorem rules out a substantial set that is simultaneously additively and multiplicatively structured. Therefore a non-Borel approximate subgroup cannot persist.
+
+Putting the inverse theorem and classification together gives the mixing criterion. If a symmetric generating set $A$ has size at least $p^\varepsilon$ and avoids concentration in every Borel coset, in the sense that $|A\cap gB|\leq K(\varepsilon)p^{-\varepsilon}|A|$, then the walk has a uniform spectral gap $\sigma_1(T_A)\leq1-c(\varepsilon)$. The logic is a contradiction: a nearly invariant walk produces an approximate subgroup; the classification forces that subgroup to place substantial mass in a Borel coset; the nonconcentration hypothesis forbids this. An arbitrarily small positive sum–product gain is enough because it rules out exact approximate subfields at every iteration. The lecture gives the mechanism and references the deep projection/product results as inputs; it does not provide complete proofs of the noncommutative inverse theorem or the robust Larsen–Pink classification.
+
+### Homogeneous dynamics: shear, diagonal renormalization, and projection geometry
+
+Let $G$ be a Lie group and $\Gamma$ a discrete subgroup of finite covolume. The quotient $X=G/\Gamma$ is a homogeneous space: $G$ acts transitively, while a subgroup $H$ can have periodic, dense, or more complicated orbits. For $G=\mathrm{SL}_2(\mathbb R)$ and $\Gamma=\mathrm{SL}_2(\mathbb Z)$, the space parametrizes covolume-one lattices: $g\Gamma$ corresponds to $g\mathbb Z^2$, and right multiplication by an integer determinant-one matrix changes the basis without changing the lattice. This quotient is not compact. The family $\langle(\epsilon,0),(0,\epsilon^{-1})\rangle$ keeps area one while its shortest vector tends to zero and its other vector escapes. Mahler’s compactness criterion says precisely that the lattices whose shortest nonzero vector has length at least $\epsilon$ form a compact part of the space; the cusp records increasingly skinny lattices.
+
+Two one-parameter subgroups control the picture:
+
+$$ u_t=\begin{pmatrix}1&t\\0&1\end{pmatrix},\qquad a_r=\begin{pmatrix}e^r&0\\0&e^{-r}\end{pmatrix}. $$
+
+The first shears a lattice horizontally by an amount proportional to height. Hedlund’s theorem says each unipotent orbit $\{u_t x:t\in\mathbb R\}$ in $\mathrm{SL}_2(\mathbb R)/\mathrm{SL}_2(\mathbb Z)$ is either periodic or dense. The geometric periodicity criterion is concrete: for a lattice $\Lambda$, a nonzero $u_T$ fixes it exactly when $\Lambda$ contains a nonzero horizontal vector. Indeed, if $(x,0)\in\Lambda$, take any independent vector $(y,z)\in\Lambda$; choosing $T=x/z$ adds $(x,0)$ to that vector and preserves the lattice. Conversely, if $u_T\Lambda=\Lambda$ for $T\neq0$, then for any $(y,z)\in\Lambda$, the difference $u_T(y,z)-(y,z)=(Tz,0)$ is a horizontal lattice vector (some $z\neq0$). Most lattices have no horizontal vector, so their unipotent orbit is not periodic; Hedlund supplies the nontrivial alternative, density. Diagonal orbits behave differently: they can be neither periodic nor dense, with closures of intermediate dimension.
+
+To see why a projection theorem enters, compare how the two subgroups interact. Direct matrix multiplication gives
+
+$$ a_r u_t a_r^{-1}=u_{e^{2r}t}. $$
+
+Thus a long segment $0\leq t\leq T$ can be represented as a diagonal rescaling of a unit segment, with $e^{2r}=T$. The dynamical question becomes: what does the diagonal action do to a short family of nearby unipotent orbits?
+
+Put a right-invariant Riemannian metric on $G$ by choosing an inner product at the identity and transporting it using right translations. This descends to the quotient because changing a lift of a point means right multiplication by $\Gamma$, an isometry. At the identity the tangent space is $\mathfrak{sl}_2(\mathbb R)$, the trace-zero matrices. An orthonormal basis can be chosen as $U=\begin{pmatrix}0&1\\0&0\end{pmatrix}$, $\widetilde U=\begin{pmatrix}0&0\\1&0\end{pmatrix}$, and $D=\frac1{\sqrt2}\begin{pmatrix}1&0\\0&-1\end{pmatrix}$. The right action is isometric, but the left action is not. To measure its derivative at the identity, follow it by the inverse right translation, which is an isometry; the resulting differential is conjugation, $M\mapsto a_r M a_r^{-1}$. It sends $U$ to $e^{2r}U$, $\widetilde U$ to $e^{-2r}\widetilde U$, and $D$ to $D$. Consequently the singular values of the left action (under the lecture’s inverse action convention, $L_{a_r^{-1}}$) are $e^{2r},1,e^{-2r}$, along expanding, neutral, and compressing directions. Their product is one, so the action distorts lengths but preserves volume. The orbit tangent $U$ is exactly the expanding direction.
+
+The key geometric subtlety is that the compressing direction is not fixed relative to a tube of unipotent orbits. A long stretched orbit is cut into unit-length pieces when it wraps through the quotient’s fundamental domain. Nearby orbit pieces might be packed close together after compression, so length alone does not imply distribution. But the direction of compression twists as one moves along a unit orbit. At any one height, some transverse pairs can collapse; across the full height interval, the collapsing direction sweeps through many slopes. Projection theory says a set of directions that is sufficiently spread out cannot collapse a substantial set of points at every slope: most slices retain large projected covering number. Applying this across the height parameter prevents too many orbit segments from being glued together. The result is a geometric “either spread or exceptional” principle: away from bad concentration directions, the long unipotent segment spreads through the quotient.
+
+The simple picture is closest to a proof when the quotient is compact, where every unit tube has uniformly controlled geometry. For the modular surface the cusp cannot be ignored. A point $a_{-r}x$ may lie very deep in the cusp, corresponding to a lattice with an extremely short vector; then the compact-tube estimates do not apply. The correct conclusion is therefore conditional: either the orbit distributes, or the diagonal renormalization reaches the cusp, which means the original lattice was close to one with a horizontal vector and hence close to a periodic unipotent orbit. This explains why the naive “stretch plus many directions” argument would falsely predict every orbit dense if the cusp were omitted.
+
+There is a useful bridge to number theory. For an indefinite quadratic form $Q$ in at least three variables with coefficients not all proportional to integers, Oppenheim predicts and Margulis proved that $Q(\mathbb Z^n)$ is dense in $\mathbb R$. After a linear change of variables, the form becomes a standard one while the integer lattice becomes another covolume-one lattice $\Lambda$. The symmetry group $\mathrm{SO}(Q)$ preserves the form, so $Q(\Lambda)=Q(g\Lambda)$ along its orbit in the space of lattices. Understanding whether this orbit is dense therefore controls the set of values of $Q$; exceptional nondense orbits correspond to arithmetic structure in the form. The elementary $\mathrm{SL}_2$ shear picture is a visual precursor to the higher-dimensional homogeneous orbit-closure theorems of Dani, Margulis, and Ratner, whose proofs require substantially more machinery.
+
+### Lattice-orbit spreading: expanding a segment is not enough
+
+The second homogeneous-dynamics lecture asks how a long unipotent segment becomes spread through the lattice space. The identity $a_r u_t a_r^{-1}=u_{e^{2r}t}$ turns a segment of length $T$ into a unit segment seen through a diagonal rescaling, with $e^{2r}=T$. This creates long and thin tubes in local coordinates. Their orbit direction expands, while one transverse direction contracts. Length by itself is inconclusive: many pieces could lie close together after the contraction.
+
+The relevant twist is visible by comparing two nearby initial conditions. Let $g_0$ be a point in the group, and perturb it in a transverse tangent direction $v_0$. The orbit points at time $t$ are $u_tg_0$ and $u_t(g_0+epsilon v_0)$, whose first-order separation is represented by $u_t v_0$. Under diagonal renormalization the compressed transverse direction changes relative to the unipotent orbit direction; the angle at which two orbit tubes can collapse is therefore not a single fixed slope. Measuring this angle requires a metric on the quotient and tangent vectors at the same base point: group-coordinate vectors at distinct points cannot simply be compared as if they were parallel Euclidean arrows. The twisting is the bridge to projection theory: as time runs, the bad projection direction sweeps through a family, and a point set cannot have tiny projections for all sufficiently varied directions unless it has exceptional structure.
+
+A useful quantitative model tracks the cross-section of a tube. Move the starting point away from the cusp by $a_{-R}$, split a long orbit into $J$ pieces of time length $r$, and let $X_j$ denote the cross-section after the $j$th piece. At resolution $delta$, covering the tube is essentially the number of cross-section balls times the $delta^{-1}$ positions along its length: $|U_j|_delta\asymp \delta^{-1}|X_j|_delta$. Choose $e^{2r}=\delta^{-1}$. One step induces a family of almost-projection maps $f_t$ on the cross-section. A planar projection estimate states, for $X\subset B(0,1)$ and directions averaged over the circle,
+
+$$\mathbb E_{\theta\in S^1}|\pi_\theta(X)|_\delta\gtrsim |X|_\delta^{1/2}.$$
+
+The exponent is forced by a disk: if $X$ is a disk of radius $\rho\ge\delta$, then $|X|_\delta\asymp(\rho/\delta)^2$ while a typical projected interval has covering number about $\rho/\delta$. Since the dynamical maps imitate projections, this yields the schematic recurrence $N_{j+1}\gtrsim\delta^{-1}N_j^{1/2}$ for $N_j=|X_j|_\delta$. Starting with $N_0\asymp1$, induction gives $N_j\gtrsim\delta^{-2(1-2^{-j})}$, ignoring controlled losses. Indeed if $N_j\ge\delta^{-2(1-2^{-j})}$, then $N_{j+1}\gtrsim\delta^{-1-(1-2^{-j})}=\delta^{-2(1-2^{-(j+1)})}$. The exponent approaches $2$, the full planar covering exponent. This says the section occupies nearly all available resolution after enough stages; it does not itself establish density of an orbit, because local coordinates, direction-distribution, cusp avoidance, and the exceptional homogeneous-orbit alternatives still need control.
+
+The lecture then tests the geometry in $\mathrm{SL}_3(\mathbb R)$. The group has dimension $8$. For a diagonal element with weights chosen to preserve determinant, conjugation has expanding, neutral, and contracting directions at several rates; the one-dimensional unipotent subgroup is not the only expanding direction. The transverse compression directions form a multiparameter family, but the orbit parameter supplies only one parameter. Thus the needed projection family is a curve in the sphere of directions rather than all directions on a sphere. A curve can fail badly: if its directions lie on the equator of $S^2$, a thin slab with cross-section $1\times1$ and thickness $\delta$ can project to a $\delta\times1$ rectangle, with only about $\delta^{-1}$ cells instead of the $\delta^{-2}$ one hopes for from a two-dimensional set. Curvature/nondegeneracy of the direction curve rules out that flat obstruction and permits a Fourier-decoupling estimate, typically with an arbitrarily small $\delta^\epsilon$ loss. This is a restricted-direction problem, not the ordinary planar projection theorem. The lecture’s final reference to quantitative orbit-density results is a research-level comparison; it is not derived by the recurrence alone. [P2-21]
+
+### Furstenberg sets: rich tubes, three regimes, and Beck’s theorem
+
+For the sharp projection problem, let $E$ be a set of approximately $\delta^{-t}$ balls of radius $\delta$ in the unit square. At each $x\in E$, choose approximately $\delta^{-s}$ essentially distinct $\delta$-tubes through $x$. After pigeonholing, suppose a typical tube contains $r$ balls of $E$. The incidence count is the number of pairs $(x,T)$ with $x\in T$; it is approximately $|E|_\delta |T_x|$, and also approximately $|T|r$. Therefore
+
+$$|T|\asymp \frac{|E|_\delta |T_x|}{r}.$$
+
+The conjectural sharp bound has three competing constructions. A star gives many tubes through each point with little sharing; an integer-grid arrangement gives the Szemerédi–Trotter scale; random tubes through a large point set realize the third, purely thick-set regime. Precisely, for $E$ a $(\delta,t,C)$ set, with $\delta$-tube direction sets $\operatorname{Dir}T_x$ each a $(\delta,s,C)$ subset of $S^1$, let $T=\bigcup_{x\in E}T_x$ be the essentially distinct union. For every $\epsilon>0$, the course notes state
+
+$$|T|\ge c_\epsilon C^{-O(1)}\delta^\epsilon\min\{\delta^{-t-s},\delta^{-t/2-3s/2},\delta^{-1-s}\}.$$
+
+The first, second, third terms are regimes A, B, C. If a typical tube contains $r$ balls and incidences are uniformized, then $|E|_\delta\asymp\delta^{-t}$, $|T_x|\asymp\delta^{-s}$, and $|T|r\asymp\delta^{-t-s}$; hence
+
+$$r\lesssim_\epsilon C^{O(1)}\delta^{-\epsilon}\max\{1,\delta^{-(t-s)/2},\delta^{-(t-1)}\}.$$
+
+Comparing term exponents shows A is the minimum when $s\ge t$, C when $s+t\ge2$, and B when $s<t<2-s$. This precisely recovers which classical tool applies: double counting in A, Fourier in C, while B is the difficult grid-like interval.
+
+The continuum Beck theorem is a robust way to get out of a one-scale trap. Suppose $E$ has size about $\delta^{-u}$ and satisfies a rectangle nonconcentration condition: for every rectangle of dimensions $\rho\times1$, its intersection with $E$ has at most a $C\rho^\eta$ fraction of the total $\delta$-covering number. Then some point $x\in E$ sees many directions to the rest of $E$:
+
+$$|L_{x,E}|_\delta\gtrsim_{\epsilon,\eta}\min\{\delta^{-u},\delta^{-1}\}.$$
+
+This resembles the finite-point Beck theorem: either there are many distinct joining lines, or a large fraction of points lie on one line. The nonconcentration condition forbids the second alternative. It is important that the statement is real-geometric; the analogous assertion over $\mathbb C$ fails because a complex line has real dimension two, so a planar set can lie in one complex line without being concentrated in a real thin rectangle.
+
+Here is the bootstrap mechanism behind the continuum form. For each point $x$, let $L_{x,E}$ be the direction set to points of $E$ and use pigeonholing to retain a large subset of base points where the direction-set size is nearly uniform. Each $L_{x,E}$ inherits a nonconcentration estimate from the rectangle hypothesis: if many points viewed from $x$ fall into a narrow angular interval, then those points lie in the associated narrow rectangle, contradicting the assumed bound. Counting point–line incidences in two ways makes a typical line rich in points and gives the elementary lower bound on the family of lines. The Orponen–Shmerkin epsilon-improvement theorem then upgrades a direction set of dimension $s$ to size at least $\delta^{-s-\epsilon}$ in the difficult $0<s<\min(u,1)$ range. The same estimate applies after rescaling to subrectangles because the uniform direction sets have nonconcentration at coarser scales. Iterating the improvement increases the exponent by a fixed positive amount each time; after finitely many steps it reaches $\min(u,1)$. This is why uniformization is not cosmetic: a fine-scale count alone would not imply that the rescaled subsets retain the same hypotheses. The lecture presents this as a proof architecture, while the full epsilon-improvement proof lies in the cited research work. [P2-22]
+
+### AD regularity turns the rich-tube count into a submultiplicative quantity
+
+A set is AD regular at exponent $t$ when every ball of radius $\rho$ centered on the set contains about the fraction $\rho^t$ of the total mass, uniformly at every intermediate scale. In a discrete $\delta$-model, a uniform set with branching factors $B_j$ is AD regular when the product of the first $J$ branchings is comparable to $\delta^{-Jt}$ for every $J$. This is stronger than merely having $|E|_\delta\sim\delta^{-t}$: it says the same dimension is visible inside every occupied ball and at every scale.
+
+Let $R_{AD}(\delta)$ be the largest typical number of $\delta$-balls of an AD-regular set that can lie in one $\delta$-tube, under the direction-set hypotheses of the Furstenberg problem. The crucial submultiplicative estimate is
+
+$$R_{AD}(\delta_1\delta_2)\lesssim R_{AD}(\delta_1)R_{AD}(\delta_2).$$
+
+To see the counting behind it, thicken each fine ball and tube to scale $\delta_1$. A fine tube meets at most $R_{AD}(\delta_1)$ coarse balls. Inside each such ball, rescale by $\delta_1^{-1}$; it becomes a unit ball containing a $\delta_2$-configuration, and a short fine tube segment becomes a $\delta_2$-tube. AD regularity guarantees the rescaled set still has the required mass distribution, regardless of which coarse ball was selected. Thus at most $R_{AD}(\delta_2)$ fine balls occur in each coarse ball along the tube. Multiplying the two counts proves the estimate. For a merely $(\delta,t)$ set, a selected coarse ball may contain an atypically dense portion, so this rescaling step is not valid with uniform constants.
+
+The projective variant assumes every base point uses the same tube directions. In the submultiplicative decomposition at $\delta_1=\delta_2=\sqrt\delta$, directions differing by less than $\sqrt\delta$ cannot be distinguished after thickening, so the local problem inside a coarse ball is projective. Consequently a sharp estimate for projective AD-regular configurations propagates to general AD-regular ones. If the submultiplicative inequality is nearly an equality at every step, then typical coarse balls and typical tubes must also be nearly saturated. In a projective tube, choose coordinates with the coarse tube horizontal. The fine set is contained in a product $A\times B$ of transverse positions and longitudinal positions. Near-saturation means a positive fraction of the product rectangles are occupied at the expected density. Projecting at small slope $c$ sends the product to a discretized sum $A+cB$. If all such projections remain small, an asymmetric Balog–Szemerédi–Gowers reduction extracts a genuine product-like subset; Plünnecke–Ruzsa then propagates small growth to sums with several slopes. The ABC sum-product theorem says that for nonconcentrated real sets of dimensions $a,b,c$, if every $c\in C$ keeps $A+cB$ no larger than $A$, then $a\ge b+c$. The near-saturated geometry would force the opposite dimension inequality in the hard regime, contradiction. This is the source of the epsilon improvement: either the configuration already has more projected points than the extremal estimate permits, or submultiplicativity is strictly improved. The lecture and course notes outline this rigidity argument but explicitly omit the asymmetric BSG and spacing-case details. [P2-23]
+
+### The last scale-combination argument
+
+The well-spaced theorem is a continuous analogue of Szemerédi–Trotter. Let $E$ be $N$ radius-$\delta$ balls in the unit disk, with at most a bounded number in any ball of radius $N^{-1/2}$. This is the maximally spread regime: a tube can meet at most about $N^{1/2}$ points, which explains why the elementary $N/R$ term in the point-line theorem is unnecessary. A random $\delta$-tube meets about $\delta N$ balls on average, so the richness threshold must exceed this baseline by a small power. For $R>\delta^{-\epsilon}\delta N$, the theorem gives
+
+$$|T_R(E)|\lesssim_\epsilon \delta^{-\epsilon}\frac{N^2}{R^3}.$$
+
+The Fourier method alone proves the desired scale when $R$ is near its minimum allowed value: it gives $|T_R(E)|\lesssim\delta^{-1}NR^{-2}$, and substituting $R\sim\delta N$ makes this $N^2R^{-3}$ up to the small loss. If $R$ is larger, set a thicker scale $\rho$ by $\rho N\sim R$. Well-spacing ensures $|E_\rho|_\rho=N$ (up to constants): thickening each point to radius $\rho$ does not merge distinct points, since the spacing scale $N^{-1/2}$ exceeds $\rho$ when $R\le N^{1/2}$. The Fourier estimate for $\rho$-tubes gives a bound for the number of rich fat tubes. But one fat tube may contain many rich thin tubes.
+
+To count the thin tubes inside one fat tube, first impose a two-ends condition: each rich thin tube has a substantial portion of its incident points near each of its two ends. If the points were all concentrated in a much shorter sub-tube, an induction on scale handles that subproblem; otherwise the two-ends condition holds after decomposition. If a fat tube contains $\widetilde R$ points, count triples $(T,x_1,x_2)$ where $T$ is a rich thin tube inside it and $x_1,x_2$ are incident points near opposite ends. Each thin tube contributes on the order of $R^2$ ordered pairs. Conversely there are at most $\widetilde R^2$ choices of the pair, and two points separated along the tube determine at most one essentially distinct joining tube. Hence there are at most $O(\widetilde R^2/R^2)$ rich thin tubes in that fat tube. The Fourier bound for fat tubes at richness $\widetilde R$ is $O(N^2/(R\widetilde R^2))$ because $\rho^{-1}=N/R$. Multiplication cancels $\widetilde R^2$ and yields $O(N^2/R^3)$; dyadically summing over the logarithmically many values of $\widetilde R$ is absorbed by the $\delta^{-\epsilon}$ loss. The well-spacing condition is used to preserve $N$ after thickening; the lower richness threshold is needed to suppress the low-frequency Fourier contribution.
+
+Finally, define the branching function of a uniform set $E$ by
+
+$$f(x)=\log_{1/\delta}|E_{\delta^x}|_{\delta^x},\qquad 0\le x\le1.$$
+
+Here $x=0$ means unit scale and $x=1$ means finest scale $\delta$; thus $f(0)=0$, $f(1)=t$ when $|E|_\delta=\delta^{-t}$. The $(\delta,t)$ nonconcentration condition gives $f(x)\ge tx$. Since a radius-$\rho$ disk can be covered by $O((\rho/\rho')^2)$ disks of radius $\rho'$, one has $f(x+h)\le f(x)+2h$. The function is increasing and 2-Lipschitz. AD-regularity corresponds to a straight line of slope $t$. Well-spaced geometry has an initial slope close to $2$ followed by a flat part. Ren–Wang’s semi-well-spaced condition relaxes that broken line: for $0<s<1$, the graph lies above the broken profile of slopes $2-s$ and $s$. Fourier analysis controls this whole semi-well-spaced class.
+
+Multiscale decomposition cuts the branching graph at a scale $\rho$. The coarse set $E_\rho$ has the left segment of the graph; inside a typical $\rho$-ball, magnification gives the right segment as the branching function of the local fine set. Richness factors accordingly: number of coarse balls hit by a fat tube times number of fine balls hit in each such ball. If both segments have slopes in the hard interval $s<t_I<2-s$, both subproblems use the grid-regime bound and their product has the correct exponent. A steep first piece and shallow second piece instead require the Fourier and elementary bounds, whose product is too weak; merely splitting arbitrarily is therefore not enough.
+
+The final decomposition theorem arranges the graph, apart from a small leftover set of scales, into intervals where either it is almost linear with slope in $(s,2-s)$, or its restriction lies above the semi-well-spaced broken profile. Lipschitz regularity is central: Rademacher’s theorem makes $f$ differentiable almost everywhere, so sufficiently short intervals around points with derivative in the desired range look nearly linear and correspond to AD-regular pieces. The portions whose slopes fall outside that range are covered by the semi-well-spaced alternative. One then repeatedly applies the coarse/fine factorization, controls each piece with its appropriate theorem, and multiplies the bounds. The transcript and notes state this decomposition and give an illustrative graph but do not include its full combinatorial proof. Together with the AD-regular and well-spaced estimates, this completes the course’s proof outline for the sharp Furstenberg set theorem; it is a proof architecture built on those theorems, not a replacement for their omitted technical arguments. [P2-24]
+
+### Finite-group mixing: norms, gap, and expansion
+
+Let $G$ be a finite group with uniform probability measure. A probability measure $\mu$ on $G$ defines the right-convolution operator $(T_\mu f)(x)=\sum_g\mu(g)f(xg^{-1})$. If $\mu(g)=\mu(g^{-1})$, the operator is self-adjoint. Constants are fixed, so the interesting invariant subspace is $L^2_0(G)=\{f:\mathbb E_G f=0\}$. A spectral gap is a number $\gamma>0$ such that $\|T_\mu|_{L^2_0}\|_{2\to2}\le1-\gamma$. Iterating gives $\|T_\mu^k f\|_2\le(1-\gamma)^k\|f\|_2$ for every mean-zero $f$. For a walk started at $x$, its density relative to uniform is $|G|1_{\{x\}}$, so its centered initial $L^2$ norm is $\sqrt{|G|-1}$. Cauchy–Schwarz then gives total-variation distance at most $\tfrac12\sqrt{|G|}(1-\gamma)^k$. Thus $k\gtrsim\gamma^{-1}\log(|G|/\varepsilon)$ steps suffice for error $\varepsilon$.
+
+The same gap implies expansion. For $A\subset G$, put $f=1_A-|A|/|G|$. Symmetry and the gap yield
+
+$$\langle1_A,T_\mu1_A\rangle
+=\frac{|A|^2}{|G|}+\langle f,T_\mu f\rangle
+\le\frac{|A|^2}{|G|}+(1-\gamma)\left(|A|-\frac{|A|^2}{|G|}\right).$$
+
+The weighted number of transitions leaving $A$ is $|A|-\langle1_A,T_\mu1_A\rangle$, hence at least $\gamma|A|(1-|A|/|G|)\ge\gamma|A|/2$ when $|A|\le|G|/2$. This is the precise bridge from contraction of fluctuations to combinatorial expansion.
+
+For $G=\mathrm{SL}_2(\mathbb F_p)$, the group has order $p(p^2-1)\asymp p^3$. The nontrivial irreducible representations have dimension at least $(p-1)/2$: restrict a nontrivial representation to the upper-unipotent subgroup $U\cong(\mathbb F_p,+)$. Some nontrivial additive character must occur, since a representation trivial on $U$ and its conjugates is trivial on the group generated by them. The diagonal torus acts on character labels by multiplication by squares; a nonzero label has an orbit of size $(p-1)/2$, so all those distinct characters occur and the representation has at least that dimension. Noncommutative Plancherel then bounds convolution on mean-zero functions by the largest Fourier block: schematically $\|T_\mu\|^2\le |G|d_{\min}^{-1}\|\mu\|_2^2\lesssim p^2\|\mu\|_2^2$. This explains the $p^2$ scale and why a measure with $\|\mu\|_2^2\ll p^{-2}$ gives contraction. The upper-triangular subgroup has size about $p^2$ and can support a walk with no escape from a proper subgroup, showing why that scale cannot simply be removed.
+
+The Bourgain–Gamburd route in Lecture 19 is not a direct proof of a gap from representation dimensions alone. Flattening says that if convolution fails to reduce $\|\mu\|_2$ after a bounded number of steps, then many products coincide; noncommutative Balog–Szemerédi–Gowers converts this high multiplicative energy into an approximate subgroup. A product theorem for $\mathrm{SL}_2(\mathbb F_p)$ says a set of intermediate size either grows under multiplication or is concentrated in a proper algebraic subgroup, principally a Borel subgroup. Prime-field sum-product growth rules out persistent concentration there unless the original walk measure was trapped in an actual obstruction. Once flattening holds at each scale, repeated convolution lowers $L^2$ mass until the representation-theoretic estimate applies. The lecture does not prove the noncommutative BSG or product theorem; these remain named deep inputs.
+
+### Homogeneous dynamics: hypotheses behind the lattice picture
+
+The quotient $\mathrm{SL}_2(\mathbb R)/\mathrm{SL}_2(\mathbb Z)$ is the space of unimodular lattices: $g\mathbb Z^2$ has covolume $|\det g|=1$, and right multiplication by $\gamma\in\mathrm{SL}_2(\mathbb Z)$ changes only the lattice basis. It is noncompact. A sequence leaves every compact set exactly when its shortest nonzero lattice vector tends to zero; this is Mahler’s compactness criterion. The cusp is therefore a geometric failure of uniform injectivity radius, not an incidental picture.
+
+For $u_t=\begin{pmatrix}1&t\\0&1\end{pmatrix}$, $a_r=\operatorname{diag}(e^r,e^{-r})$, the conjugation identity $a_ru_ta_r^{-1}=u_{e^{2r}t}$ follows by multiplying the matrices. A period $T\ne0$ for the unipotent orbit of a lattice $\Lambda$ is equivalent to a nonzero horizontal vector in $\Lambda$. If $(x,0)\in\Lambda$ and $(y,z)$ is independent, then $u_{x/z}(y,z)=(y+x,z)$ differs by a lattice vector, so $u_{x/z}\Lambda=\Lambda$. Conversely, if $u_T\Lambda=\Lambda$, subtracting $(y,z)$ from $u_T(y,z)$ gives $(Tz,0)\in\Lambda$ for any lattice vector with $z\ne0$. Hedlund’s theorem says the unipotent orbit is periodic or dense; hence the absence of a horizontal vector forces density. This dichotomy is special to unipotent flow and should not be transferred to diagonal orbits, which can have intermediate-dimensional closures.
+
+For a longer orbit segment, choose $e^{2r}=T$ and conjugate the unit-time segment. The expanding orbit tangent and contracting transverse tangent create long thin tubes, while twist varies the collapse direction. The projection recurrence from the previous section operates only after orbit pieces remain in controlled local charts. Mahler compactness provides exactly the missing condition: restrict to a compact part by excluding lattices with a too-short vector. In the full quotient, one must separately account for segments entering the cusp; a quantitative density theorem therefore has an “either spread or near a proper periodic/homogeneous obstruction” alternative. The transcript’s recurrence is a model for that mechanism, not a stand-alone proof of orbit density.
+
+## Learned representations of 3D shape and scenes
+
+### 3D vision begins with representation choices
+
+An image is a regular grid of pixels. A 3D object has geometry, and often also texture, material, and appearance. A computer must choose how to store the shape before a network can process it. No single representation is best for every task. Ask what operations the system needs: sampling surface points, checking whether a location is inside the object, rendering an image, editing the shape, or learning from incomplete scans.
+
+A **point cloud** is a set of 3D coordinates, often stored as an $N\times3$ array. It may also include a surface normal at each point. Normals estimate which direction the surface faces and can help with lighting and rendering. Scanners and depth sensors often produce point clouds directly. They can be noisy or unevenly sampled; one region may have many points while a thin tail or hidden surface has few. Points alone do not say which points connect. The same point set can be consistent with different surface topologies, so the representation is incomplete for some geometry queries.
+
+A **polygon mesh** stores vertices plus faces that connect them. Faces give surface connectivity, enabling rendering and many geometry operations. Meshes can be subdivided to add detail, simplified to reduce work, or regularized to make faces more uniform. Their variable connectivity makes them harder to feed to networks built for fixed-size grids. A high-quality mesh can also contain millions of vertices and faces, so simply making it denser is not free.
+
+A **parametric representation** maps a lower-dimensional coordinate into 3D. A circle can be described by $(\cos t,\sin t)$; a surface can be described by a function $F(u,v)$ that maps two parameters to a point in space. Splines and Bézier surfaces use a small set of control points to describe smooth curves and surfaces. They are useful when the shape has structure and needs smooth editing, but one simple patch may not capture an arbitrary object. Several patches may be needed.
+
+An **implicit representation** defines a function over 3D locations. The surface is the set of locations where the function meets a rule, often $f(x,y,z)=0$. For a unit sphere,
+
+$$
+f(x,y,z)=x^2+y^2+z^2-1,
+$$
+
+so a point is on the surface when $f=0$, inside when $f<0$, and outside when $f>0$. This makes point queries easy: evaluate the function. Sampling exact points on a complex surface can be hard because one must solve the equation. An **oriented distance function** adds a useful scale: the magnitude estimates distance to the surface, and the sign indicates inside or outside. Implicit functions can also be combined to form unions, intersections, or smooth blends of shapes.
+
+A **voxel grid** stores values on a regular 3D lattice. It is like a 3D image: each cell records occupancy, density, or another quantity. A grid of $100\times100\times100$ contains one million cells. Doubling each side to $200$ multiplies storage by eight. Many cells may represent empty space, which wastes memory and compute. Voxels are nevertheless convenient for 3D convolutions because the data has a regular grid structure.
+
+These choices expose a recurring trade-off. Explicit surface points are easy to sample, but do not directly answer every inside/outside query. An implicit function makes queries easy but may be costly to sample or evaluate repeatedly. Dense voxels are easy for standard convolutions but use memory on empty space. Meshes capture connectivity but are irregular. Choose a representation based on the operations and resolutions required.
+
+### 3D data and tasks set the learning problem
+
+3D tasks include shape classification, completion of partial scans, shape generation, reconstruction from one or more images, scene understanding, and editing. The output representation must match the task. Classification can use a categorical loss even when the input is a point cloud. Shape generation needs a way to compare the predicted geometry with the target. Reconstruction from images needs a rendering process that connects the 3D output to the observed pixels.
+
+The lecture surveys shape datasets, real scans, object parts, and room scans. It highlights a lasting challenge: real 3D data is harder to collect at internet-image scale. Synthetic assets can provide many labeled objects, but may not match real-world geometry and appearance. Real scans are more realistic but expensive, incomplete, or noisy. Scene scans add more complexity because they include many objects and spatial relationships. Dataset counts and names in the lecture are historical snapshots; the important point is the scale and coverage gap between 2D and 3D data.
+
+### Learning on grids, sets, and surfaces
+
+One early approach renders a 3D model from several camera views and applies a 2D image network to each view. Pooling the view features gives a shape descriptor. This reuses strong image models and large image datasets. It can miss geometry hidden from the chosen cameras and depends on view selection and rendering quality.
+
+Another early approach voxelizes the shape and applies 3D convolutions. This mirrors image CNNs, but the cubic memory cost makes high resolution expensive. An **octree** reduces that waste by recursively subdividing only regions that need more detail. Empty or uniform regions stay large; surface regions receive smaller cells. This adaptive grid can represent finer details under a similar memory budget, but the structure is more complex than a dense tensor.
+
+Point-cloud networks must respect that points have no meaningful input order. If a permutation $\pi$ reorders the points, a shape classifier should return the same class. PointNet applies a shared pointwise feature map $h$, then uses a symmetric pooling function such as max or sum:
+
+$$
+g(\{x_i\}_{i=1}^{N})=\operatorname{MAX}_{i=1}^{N}h(x_i).
+$$
+
+A symmetric operation gives the same aggregate regardless of point order. A final classifier maps this global feature to class scores. This is simple and effective, but pooling can discard fine local relations; later methods use neighborhoods and graph-like message passing to capture how nearby points interact.
+
+For point-cloud generation, compare sets without assuming a fixed point-to-point ordering. The **Chamfer distance** finds each point's nearest neighbor in the other set and sums or averages those distances in both directions. For sets $A$ and $B$, one common squared form is
+
+$$
+D_{\text{Chamfer}}(A,B)=\sum_{a\in A}\min_{b\in B}\|a-b\|_2^2+
+\sum_{b\in B}\min_{a\in A}\|b-a\|_2^2.
+$$
+
+The **Earth Mover's Distance (EMD)** instead finds a low-cost one-to-one matching between points. For $A=\{0,2\}$ and $B=\{1,4\}$ on a line, nearest-neighbor matches cost $1+1$ from A to B and $1+2$ from B to A, totaling 5 in the unsquared bidirectional Chamfer form. The one-to-one EMD assignment costs $|0-1|+|2-4|=3$. Chamfer is cheaper but can let many points match the same neighbor; EMD enforces a balanced assignment but costs more. Both provide geometric objectives that can be differentiated or approximated for training.
+
+A learned **surface patch** maps a small 2D parameter region into 3D. An MLP can learn the map $F_\theta(u,v)$, producing an ordered surface patch rather than an unordered set of points. Several patches can be combined to cover an object. This gives smoother surfaces than a raw point set, but requires choosing how patches are arranged and how their boundaries fit together.
+
+### Neural implicit functions and NeRF
+
+A neural implicit model uses a network as the function itself. Query a coordinate $\mathbf{x}=(x,y,z)$; the network may return occupancy, signed distance, density, or another geometric value. A signed distance function (SDF) returns an approximate distance to the nearest surface, with negative values inside and positive values outside. Instead of storing every grid cell, the model can answer queries at chosen locations. This is compact and resolution-flexible, but every query costs network evaluation, and extracting a mesh or uniformly sampling the surface requires additional work.
+
+NeRF extends coordinate queries from geometry to appearance. Given a 3D location $\mathbf{x}$ and viewing direction $\mathbf{d}$, its network predicts color $\mathbf{c}$ and volume density $\sigma$. The viewing direction lets the model represent view-dependent effects such as highlights. A camera ray samples locations through the scene. For sample $i$, let $\Delta_i$ be the distance to the next sample. The opacity contribution and transmittance are commonly written
+
+$$
+\alpha_i=1-\exp(-\sigma_i\Delta_i),\qquad
+T_i=\exp\left(-\sum_{j<i}\sigma_j\Delta_j\right),\qquad
+w_i=T_i\alpha_i.
+$$
+
+Then the pixel color is approximately
+
+$$
+\hat{C}=\sum_i w_i\mathbf{c}_i+T_{\text{end}}\mathbf{c}_{\text{background}}.
+$$
+
+Early samples can absorb light and reduce the contribution of later samples. The rendering computation is differentiable, so rendered pixels can be compared with training photographs and gradients can update the scene representation. This enables reconstruction from images without a known 3D target mesh. It also requires many spatial samples along many camera rays, including points in empty space, which makes classic NeRF rendering slow.
+
+### Gaussian splatting trades dense queries for explicit scene elements
+
+**3D Gaussian Splatting** represents a scene with many spatial Gaussian blobs. Each blob has a location, shape, opacity, and color or appearance parameters. The renderer projects relevant blobs into the camera and blends them to form pixels. Because the scene elements are explicit and spatially localized, the system can skip large empty regions instead of querying a network uniformly along every ray. This can render much faster while producing comparable view-synthesis quality on the lecture's examples.
+
+The trade-off is different from NeRF. NeRF stores a continuous neural field and evaluates it at sampled points. Gaussian splatting stores a large collection of explicit primitives and renders the visible ones. Splatting can be very fast, but depends on many learned primitives and their optimization; it is not the same compact continuous function as a neural field. The lecture's speed and quality figures are benchmark- and implementation-specific, not universal guarantees.
+
+### Objects also have parts and relationships
+
+A geometric representation can capture surface detail while missing structure. Chairs have seats, backs, bases, and legs. Some parts repeat or form symmetric pairs. A room also has relationships: a bed may be next to a wall, and a chair may sit by a table. Part hierarchies represent which pieces belong to which larger pieces; relational graphs can express alignment, symmetry, adjacency, and other constraints.
+
+These structures help with generation and editing. A system can generate a chair while preserving the relation between its legs and seat, or change one part while keeping the rest coherent. The lecture points to program-like representations, where repeated components can be described with loops, and to language models that may generate semantic programs while a geometric representation supplies detailed shape. These are emerging approaches, not solved capabilities.
+
+**Source:** SC-15, full original-English captions. The guest lecture moves from shape representations and data limits through voxel, point, surface, and implicit neural methods to NeRF, Gaussian splatting, and structured object parts. Benchmark sizes, project names, and speed comparisons are preserved only as lecture examples and should not be read as current rankings.
+
+### From scene representations to research methods
+
+#### A radiance field turns views into a continuous scene query
+
+*Connect to:* cameras and calibration; volumetric image formation; numerical integration and Monte Carlo estimation; optimization.
+
+A [[Radiance fields and Gaussian splatting|neural radiance field]] (NeRF) represents a scene by a function queried at a location and viewing direction. The original NeRF model maps a 3D point $\mathbf{x}$ and unit direction $\mathbf{d}$ to emitted color $\mathbf{c}$ and volume density $\sigma$:
+
+$$F_\Theta(\mathbf{x},\mathbf{d})=(\mathbf{c},\sigma).$$
+
+Density depends on position alone; color can depend on both position and direction. That split lets the field represent view-dependent appearance, such as a specular highlight that moves when the camera moves, while keeping the scene's estimated occupancy tied to 3D position. It does not make the representation a surface mesh: a ray can accumulate color through a continuous volume.
+
+For a camera ray $\mathbf{r}(t)=\mathbf{o}+t\mathbf{d}$, the contribution at depth $t$ is attenuated by everything encountered earlier on the ray. Define transmittance
+
+$$T(t)=\exp\left(-\int_{t_n}^{t}\sigma(\mathbf{r}(s))\,ds\right).$$
+
+For a black background beyond the far bound, the rendered pixel is
+
+$$C(\mathbf{r})=\int_{t_n}^{t_f}T(t)\,\sigma(\mathbf{r}(t))\,\mathbf{c}(\mathbf{r}(t),\mathbf{d})\,dt.$$
+
+For a nonblack background with color $C_{bg}$, add the residual term $T(t_f)C_{bg}$; the remaining transmittance is the probability that the ray reaches that background without an earlier volume event.
+
+The product $T(t)\sigma(t)$ is the probability density, in the volume-rendering model, that the ray's visible event occurs near $t$. A dense region has larger $\sigma$ and is more likely to contribute. But transmittance falls as the ray crosses density, so later regions receive less weight. This is the same visibility-and-contribution logic as front-to-back compositing, written continuously.
+
+A computer evaluates the integral with samples. For sample interval length $\delta_i$ and density $\sigma_i$, define opacity
+
+$$\alpha_i=1-\exp(-\sigma_i\delta_i),\qquad T_i=\exp\left(-\sum_{j<i}\sigma_j\delta_j\right),\qquad w_i=T_i\alpha_i.$$
+
+For a black background, approximate the ray color by
+
+$$\widehat C(\mathbf{r})=\sum_i w_i\mathbf{c}_i.$$
+
+For a nonblack background $C_{bg}$, add $T_{n+1}C_{bg}$, where $T_{n+1}=\exp(-\sum_i\sigma_i\delta_i)$ is the transmittance left after the final interval.
+
+For example, take three equal intervals with $\sigma_i=1$ and $\delta_i=0.5$. Each sample has opacity $1-e^{-0.5}\approx0.393$. The weights are about $0.393$, $e^{-0.5}(0.393)\approx0.239$, and $e^{-1}(0.393)\approx0.145$. The first sample matters most because it blocks part of the later ray. The remaining transmittance after all three is $e^{-1.5}\approx0.223$. The weights plus remaining transmittance sum to one, up to rounding. This gives a useful conservation check for an implementation.
+
+Training uses calibrated images. A camera pose maps each observed pixel into a ray. The field is queried along that ray; the predicted color is compared with the measured pixel, and the error is differentiated back through the samples into the network. The network therefore learns by explaining many rays from known camera positions. A pose error can be mistaken for shape or appearance error, so camera calibration is part of the model's evidence, not a detail that can be ignored.
+
+The original paper's **positional encoding** maps coordinates to sine and cosine features at multiple frequencies. Its purpose is to make a standard multilayer perceptron (MLP) respond to high spatial frequencies more readily. The field is trained with stratified samples: one sample is drawn from each subinterval along a ray. A coarse field first proposes where useful contributions are likely. The algorithm normalizes its ray weights into a piecewise probability distribution and draws additional fine samples from it. The fine network evaluates the union of coarse and fine samples. This concentrates work around visible contributions while retaining broad coverage.
+
+The paper also derives a normalized device coordinate (NDC) parameterization for forward-facing captures. It shifts the ray origin to a near plane and reparameterizes distance so samples can be placed linearly in inverse depth. This concentrates samples closer to the camera, where nearby geometry changes more rapidly in image space. NDC is a capture-specific coordinate choice; it is not a general fix for arbitrary camera paths.
+
+**Limits and interpretation.** NeRF's contribution is a learned, differentiable representation and renderer, but the original per-scene MLP requires many network evaluations along each ray. Training depends on many posed images and can take hours in the paper's setup. View-dependent color helps explain reflections but can also hide errors in geometry. The results are reported for the paper's scenes, camera calibration, architecture, and compute; they should not be read as a guarantee of the same quality for sparse views, moving scenes, or different cameras.
+
+**Source:** Mildenhall et al., “NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis” (2020), full paper and appendices A–D, PDF pp. 1–25. [Primary PDF](https://arxiv.org/pdf/2003.08934).
+
+#### A multiresolution hash grid gives a small network local detail
+
+*Connect to:* neural fields; spatial sampling; acceleration structures; numerical optimization; the NeRF volume renderer above.
+
+Instant Neural Graphics Primitives (Instant-NGP) changes the input representation before changing the renderer. Instead of asking a large MLP to build every spatial frequency from raw coordinates, it looks up trainable feature vectors at several grid resolutions. A small MLP then combines those features into the task's output. The same input encoding can support image fitting, signed distance functions (SDFs), radiance caching, and NeRF.
+
+An SDF gives each point a signed distance to a surface; its zero level set is the surface. For a 3D input, each grid level stores features at lattice corners. A point inside a cell obtains a feature by trilinearly interpolating its eight corner values. At coarse levels, lattice vertices map directly to stored entries. Fine levels can have more vertices than memory allows, so their integer coordinates are mapped through a spatial hash into a fixed table. A collision happens when two different grid vertices map to the same table slot. The method does not resolve every collision explicitly. Instead, all levels and their features are concatenated and passed to a learned MLP, which can often infer a useful representation from the combined context.
+
+Let level $\ell$ have resolution $N_\ell$. The paper spaces resolutions geometrically:
+
+$$N_\ell=\left\lfloor N_{min}b^\ell\right\rfloor,\qquad b=\exp\left(\frac{\ln N_{max}-\ln N_{min}}{L-1}\right),$$
+
+where $L$ is the number of levels. This makes adjacent levels differ by a nearly constant scale factor. If the fine grid's vertices are hashed into a table of size $T$, a simple hash is
+
+$$h(\mathbf{i})=\left(\bigoplus_{k=1}^{d}i_k\pi_k\right)\bmod T,$$
+
+where $\mathbf{i}$ is an integer grid coordinate, $\pi_k$ are fixed integer multipliers, and $\oplus$ denotes bitwise XOR. Hashing reduces storage, but it introduces collisions. Coarse levels retain stable broad structure; finer levels encode smaller detail but have more collisions. The MLP receives the concatenation of the feature vectors from every level, not their sum, so it can use scale-specific clues separately.
+
+A practical picture: imagine a coarse grid that stores broad color regions and a fine grid that stores edges and texture. If two fine vertices collide, their table slot must serve both positions. Other levels still tell the MLP where each point lies at coarser scales, so the resulting predictions may remain useful. But if fine-scale geometry is critical, the collision can create small artifacts. A hash table is a memory shortcut, not a guarantee that spatial detail is preserved perfectly.
+
+The paper's default encoding uses 16 levels and two features per lookup. Its resolutions run from 16 to a task-dependent maximum; the hash table size balances memory, cache use, and quality. The authors report that tables above $2^{19}$ entries began to slow on their RTX 3090 because one level no longer fit in the GPU's 6 MB L2 cache. That threshold belongs to the reported hardware, not a universal rule. They also store table entries in half precision for speed and keep a full-precision master copy for stable updates.
+
+For NeRF, the hash encoding feeds a density network and then a color network. The density network predicts density plus latent features from position; the color network combines those features with a spherical-harmonic encoding of view direction. The renderer still uses volume integration: the new encoding accelerates field queries, but does not replace visibility, transmittance, or ray compositing. A separate occupancy grid marks likely-empty cells. Ray marching skips cells marked empty, increases step length with distance in larger scenes, and stops once transmittance falls below $10^{-4}$. The occupancy grid is periodically refreshed from predicted density, so early estimates must be treated cautiously. The authors sample the whole scene more broadly during early training, then use a mixture of uniform and currently occupied cells to avoid a stale grid hiding new density.
+
+The same encoding supports different output tasks. For a single SDF, training positions are a mix: one eighth uniform in the bounding cube, one half uniform over the mesh surface, and three eighths perturbed around the surface. This mixture teaches the network both the zero crossing and values away from it. Their SDF comparison exposes an important failure: random hash collisions leave fine-scale surface roughness. The intersection-over-union metric can still look strong because it checks inside/outside classification over many points, while shading magnifies small normal errors. A shape metric and a normal-sensitive image reveal different kinds of failure.
+
+The authors report that hash-encoded NeRFs became competitive with the paper's selected NeRF baselines after seconds to minutes rather than hours. On some scenes with strong view-dependent reflections, mip-NeRF and NSVF scored better. The paper's ablation attributes speed and quality gains to the encoding and smaller MLP, but explicitly says more work is needed to isolate ray-marching contributions across implementations. The results are therefore evidence for that combined system and benchmark set, not a universal wall-clock ratio.
+
+**Tradeoffs.** The hash representation is attractive when a task has low-dimensional spatial inputs and needs local, high-frequency detail. It is less attractive when one needs a smooth derivative everywhere, collision-free spatial values, or a generative model whose parameters should align with a regular grid. The paper suggests filtered lookup or smoothness losses as future directions for SDF microstructure. Its optional smoothstep interpolation makes first derivatives continuous, but the authors found that stronger smoothing could reduce reconstruction quality and did not use it by default.
+
+**Source:** Müller et al., “Instant Neural Graphics Primitives with a Multiresolution Hash Encoding” (2022), full body and appendices A–E, PDF pp. 1–15. [Primary PDF](https://nvlabs.github.io/instant-ngp/assets/mueller2022instant.pdf).
+
+#### Explicit Gaussian splats trade continuous querying for fast rasterization
+
+*Connect to:* radiance fields and view synthesis; projected geometry; rasterization, coverage, depth, and alpha compositing; optimization.
+
+3D Gaussian Splatting (3DGS) begins from sparse points reconstructed by structure from motion. Each point becomes an anisotropic Gaussian with a position, shape, opacity, and view-dependent color coefficients. “Anisotropic” means its spread can differ by direction. A Gaussian therefore models a small oriented volume rather than a round point. The scene is represented explicitly by many such elements; a renderer projects each element to the image and blends its contribution.
+
+For position $\mathbf{x}$, mean $\boldsymbol\mu$, and covariance $\Sigma$, a Gaussian weight is
+
+$$G(\mathbf{x})=\exp\left(-\frac{1}{2}(\mathbf{x}-\boldsymbol\mu)^T\Sigma^{-1}(\mathbf{x}-\boldsymbol\mu)\right).$$
+
+The covariance controls orientation and scale. The paper factors it as
+
+$$\Sigma=R S S^T R^T,$$
+
+where $R$ is a rotation from a normalized quaternion and $S$ contains the learned axis scales. This factorization makes $\Sigma$ positive semidefinite; because the Gaussian response uses $\Sigma^{-1}$, its scales must be nonzero so that $\Sigma$ is positive definite. Camera projection maps a 3D Gaussian to an approximate 2D Gaussian. Let $W$ be the $3\times3$ linear part of the world-to-camera transform and let $J\in\mathbb{R}^{2\times3}$ be the local Jacobian from camera-space position to the two image coordinates. The projected covariance is
+
+$$\Sigma'=J W\Sigma W^TJ^T,$$
+
+where $W$ transforms from world to camera coordinates. The Jacobian is a local linear approximation. It is accurate when the splat is small enough that projection does not curve substantially across its support; large or extreme-perspective splats make that approximation weaker.
+
+The renderer bins projected splats into image tiles, sorts them by depth within a tile, and composites front to back. For sorted splat $i$, let $\alpha_i$ include learned opacity and the Gaussian's weight at the pixel. Let $T_i$ be the transmittance left after earlier splats. Then
+
+$$C=\sum_i T_i\alpha_i c_i,\qquad T_i=\prod_{j<i}(1-\alpha_j).$$
+
+Example: two splats have colors $c_1=(1,0,0)$ and $c_2=(0,0,1)$ with opacities $0.4$ and $0.5$. The first contributes $0.4c_1$. It leaves transmittance $0.6$, so the second contributes $0.6(0.5)c_2=0.3c_2$. The remaining background weight is $0.3$. This order matters: the renderer is approximating visibility, not averaging colors symmetrically.
+
+Optimization adjusts centers, scales, rotations, opacity, and spherical-harmonic (SH) color coefficients to match training images. The loss combines an $L_1$ color term with a structural similarity term. Adaptive density control responds to image-space position gradients. The method clones small splats in areas needing more representation and splits large splats into smaller ones; it prunes transparent or oversized splats and periodically resets opacity. This is a representation-growth strategy: allocate more elements where image error says the current set cannot explain detail well.
+
+The tile renderer is central to speed. Each projected splat is duplicated into every overlapped tile, with its depth and tile identifier sorted together. The authors use 16 by 16 pixel tiles and cull outside a confidence ellipse. They process front to back and stop a pixel when accumulated opacity is effectively saturated. During the backward pass, they re-traverse the ordered list and reconstruct the necessary transmittance. This avoids repeatedly evaluating a full neural network at every ray sample, but memory grows with the number and size of splats and their tile overlaps.
+
+**Failure modes and evidence.** Sparse or biased training views leave unseen regions unconstrained. The learned elements can become floaters, elongated blotches, or splotchy geometry. Culling and approximate ordering can cause popping. SH color can fit observed directions but cannot guarantee correct appearance from unseen directions. The paper reports strong speed and quality on its 13 scenes, with an A6000 GPU; those benchmark numbers are specific to its setup. The authors note substantial memory use and that the representation does not automatically become a clean mesh. A fast view synthesizer is not, by itself, a reliable surface reconstruction.
+
+**Source:** Kerbl et al., “3D Gaussian Splatting for Real-Time Radiance Field Rendering” (2023), full paper and appendices A–D, PDF pp. 1–14. [Primary PDF](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_low.pdf).
+
+#### Flatten each Gaussian into a surface element and regularize its depth
+
+*Connect to:* Gaussian splatting; perspective projection and camera rays; differential rendering; depth maps and surface normals; mesh extraction.
+
+A 3D Gaussian is useful for view synthesis, but its volume can spread through space instead of following a thin surface. 2D Gaussian Splatting (2DGS) replaces each 3D blob with a flat elliptical disk in 3D. A disk has a center $\mathbf{p}$, tangent directions $\mathbf{t}_u,\mathbf{t}_v$, two scales $s_u,s_v$, opacity, and view-dependent color. Its normal is $\mathbf{t}_w=\mathbf{t}_u\times\mathbf{t}_v$. In local tangent coordinates $(u,v)$, the surface point and Gaussian weight are
+
+$$\mathbf{P}(u,v)=\mathbf{p}+s_u\mathbf{t}_u u+s_v\mathbf{t}_v v,\qquad G(u,v)=\exp\left(-\frac{u^2+v^2}{2}\right).$$
+
+The normal is available directly from the representation. The model can start with a sparse camera-calibrated point cloud, then optimize centers, tangent frames, scales, opacity, and appearance from posed images. The starting cloud does not need to provide dense ground-truth points or normals.
+
+The renderer must find where a pixel ray hits the disk. A common shortcut projects the disk with a local affine approximation. It is fast near the center, but perspective makes the approximation less accurate farther away. 2DGS instead writes the pixel ray and the disk in homogeneous coordinates and intersects them explicitly. The method represents the ray as the intersection of two planes in screen space. It transforms those planes into the disk's local coordinates, solves two linear equations for $(u,v)$, and maps that point back to camera space to recover depth. This gives a perspective-correct ray-disk intersection while avoiding the direct inverse matrix that can become ill-conditioned when the disk is nearly edge-on.
+
+A nearly edge-on disk projects to a thin line and could disappear from rasterization. 2DGS uses a low-pass floor: it takes the maximum of the true disk Gaussian value and a small screen-space Gaussian centered at the projected disk center. This keeps at least some pixel support and stabilizes optimization. It also means the rasterized footprint is not a perfect projection of the geometric disk in degenerate views; the filter is a practical regularizer for visibility and gradients.
+
+The color renderer still uses front-to-back alpha compositing. For disk $i$, its weight on a pixel is $\omega_i=T_i\alpha_i\widehat G_i$, where $T_i$ is transmittance from earlier disks. Photometric loss alone can explain a pixel with several different depth arrangements. For example, two semitransparent disks at depths 2 and 4 may produce nearly the same color as a different pair at depths 2.5 and 3.5. The image loss alone does not tell the renderer which arrangement is the real surface.
+
+The **depth-distortion loss** penalizes spread in the weighted depths along each ray:
+
+$$L_d=\sum_{i,j}\omega_i\omega_j|z_i-z_j|.$$
+
+If two equally weighted intersections lie at depths 2 and 4, their pairwise separation contributes in proportion to $|4-2|=2$. If optimization moves them closer, their colors can remain similar while the penalty falls. The regularizer therefore encourages the visible weight to concentrate into a thinner surface. It does not directly supply a ground-truth depth; it encodes the assumption that a surface should be locally concentrated along a ray.
+
+The appendix maps depth to normalized device coordinates and gives an efficient one-pass form of a squared-distance variant. For transformed depths $m_i$, maintain prefix sums $A_i=\sum_{j\le i}\omega_j$, $D_i=\sum_{j\le i}\omega_jm_j$, and $D_i^{(2)}=\sum_{j\le i}\omega_jm_j^2$. Each new sample's pairwise contribution can then be computed from those accumulated sums instead of looping over every earlier pair. This reduces the cost of the nested sum while preserving the dependence of the intersection depths on the learnable disks. The published main text uses the absolute-separation form; the appendix's implementation details should not be silently substituted for that main-text equation.
+
+**Normal consistency** joins two independent estimates of the surface orientation. The splats have normals $\mathbf{n}_i$ by construction. The rendered depth map gives a second normal: choose a representative surface point $\mathbf{p}_s$ at median accumulated opacity, estimate its image-space derivatives with finite differences, then compute
+
+$$\mathbf{N}=\frac{\nabla_x\mathbf{p}_s\times\nabla_y\mathbf{p}_s}{\|\nabla_x\mathbf{p}_s\times\nabla_y\mathbf{p}_s\|}.$$
+
+The loss is
+
+$$L_n=\sum_i\omega_i(1-\mathbf{n}_i^T\mathbf{N}).$$
+
+If the normals agree, their dot product is near 1 and the penalty is near zero. If they point in different directions, the penalty rises. The splat normal is oriented toward the camera for this comparison. This connects local surface orientation to the way neighboring depths change across the image; noisy depth or inconsistent splat normals makes the two descriptions disagree.
+
+The combined training objective is
+
+$$L=L_c+\alpha L_d+\beta L_n,$$
+
+where $L_c$ combines an $L_1$ image loss and a structural-similarity loss. The paper sets $\beta=0.05$ and uses different depth-loss weights for bounded and unbounded scenes ($\alpha=1000$ and $100$, respectively). Those values depend on its loss scaling and implementation. The ablations support the role of both terms: removing normal consistency hurts orientation, while removing depth distortion blurs the estimated surface normals. The final model extracts a mesh by rendering training-view depth maps and fusing them with truncated signed-distance fusion (TSDF). The paper found median depth more robust than expected depth because expected depth is more affected by outliers.
+
+**What the experiments do and do not establish.** On the paper's DTU benchmark, 2DGS reports lower mean Chamfer distance than its compared 3DGS and SuGaR runs, with about 5.5 minutes of training for its 15,000-iteration setting on an RTX 3090. Its Tanks and Temples mean score is below the listed Neuralangelo result but above its listed SuGaR and 3DGS results; therefore the result is not “best on every benchmark.” On Mip-NeRF360, it reports novel-view quality close to 3DGS, while the dataset lacks ground-truth geometry. The paper's own limitations are substantial: it assumes opaque surfaces, depth-fusion meshing struggles with glass, texture-driven densification can miss geometric detail, and regularization trades image fidelity against smooth geometry. These limits matter when using 2DGS as a reconstruction method rather than only as a view synthesizer.
+
+**Source:** Huang et al., “2D Gaussian Splatting for Geometrically Accurate Radiance Fields” (2024; arXiv v3, 2025), complete paper and supplemental appendices A–D, PDF pp. 1–13. [Primary PDF](https://arxiv.org/pdf/2403.17888).
+
+#### Project Gaussian splats through distorted cameras and trace secondary rays
+
+*Connect to:* camera calibration and lens distortion; Gaussian splatting; sampling and projection; rasterization and ray tracing; reflections and refractions.
+
+Standard 3D Gaussian Splatting projects a 3D Gaussian to the image with a first-order approximation to the camera projection. That approximation uses a Jacobian. It is efficient for a pinhole camera near the Gaussian's center, but it becomes less accurate as the projection becomes more nonlinear. Supporting each new lens model also means deriving its Jacobian. A rolling-shutter camera adds a harder complication: different rows are captured at different times, so each row can have a different camera pose.
+
+3DGUT replaces that linearized projection with the **Unscented Transform** (UT). In three dimensions, select seven sigma points: the Gaussian mean and six points placed in opposite directions along the three covariance axes. In the paper's notation, with covariance factor $\Sigma=RSS^TR^T$,
+
+$$\mathbf{x}_0=\boldsymbol\mu,\qquad \mathbf{x}_{i}=\boldsymbol\mu+\sqrt{3+\lambda}\,(RS)_{:,i},\qquad \mathbf{x}_{i+3}=\boldsymbol\mu-\sqrt{3+\lambda}\,(RS)_{:,i},$$
+
+for $i=1,2,3$. Each point is passed through the camera's actual projection function, including distortion or its own row-dependent pose. The projected mean and covariance are then estimated by weighted sums:
+
+$$\mathbf{v}_\mu=\sum_i w_i^\mu g(\mathbf{x}_i),\qquad \Sigma'=\sum_i w_i^\Sigma(g(\mathbf{x}_i)-\mathbf{v}_\mu)(g(\mathbf{x}_i)-\mathbf{v}_\mu)^T.$$
+
+The central and off-center weights depend on $\lambda=\alpha^2(3+\kappa)-3$, with $\alpha$ setting the spread, $\kappa$ a scale parameter, and $\beta$ a prior-distribution parameter. The paper uses $\alpha=1$, $\beta=2$, and $\kappa=0$. UT is **derivative-free** with respect to the projection model: it samples the nonlinear mapping at carefully selected points instead of differentiating that mapping to obtain a Jacobian. This projected 2D Gaussian is used to estimate which image tiles a particle may affect. UT does not make the projected shape exactly Gaussian; it approximates it from a small set of samples.
+
+The method also changes how a candidate Gaussian responds to a pixel ray. 3DGS evaluates a 2D projected conic. 3DGUT evaluates the 3D Gaussian at the point where its response is largest along the parameterized line $\mathbf{r}(\tau)=\mathbf{o}+\tau\mathbf{d}$. Differentiating the Gaussian exponent with respect to $\tau$ gives
+
+$$\tau_{max}=\frac{(\boldsymbol\mu-\mathbf{o})^T\Sigma^{-1}\mathbf{d}}{\mathbf{d}^T\Sigma^{-1}\mathbf{d}}.$$
+
+This is the covariance-weighted closest point on the line. The paper's closed form maximizes over unrestricted $\tau$; if a renderer restricts the ray to a finite interval, it must also enforce that interval. Evaluating in 3D avoids backpropagating through the camera projection approximation for the color/opacity response. The supplement derives a stable backward pass for the particle mean, scale, and rotation. The main text distinguishes **projected support** from **particle response**: UT estimates the screen-space footprint for culling and tiling; it does not replace the 3D response calculation.
+
+$$\tau_{max}=\frac{(\boldsymbol\mu-\mathbf{o})^T\Sigma^{-1}\mathbf{d}}{\mathbf{d}^T\Sigma^{-1}\mathbf{d}}.$$
+
+This point is the closest point on the ray to the Gaussian center in the covariance-weighted metric. Evaluating in 3D avoids backpropagating through the camera projection approximation for the color/opacity response. The supplement derives a stable backward pass for the particle mean, scale, and rotation. The main text distinguishes **projected support** from **particle response**: UT estimates the screen-space footprint for culling and tiling; it does not replace the 3D response calculation.
+
+The response model can be composited front-to-back, but the sort order matters. 3DGS sorts particles by center depth for a whole tile; the true maximum-response depth may differ per ray. 3DGUT adds a per-ray multilayer alpha-blending (MLAB) strategy: it retains a bounded number of far hits (the paper usually uses $k=16$) and progressively blends the nearer ones. This improves the approximation to the ray's depth order. It is still a bounded approximation. The authors also discuss hybrid transparency, which keeps the nearest hits and blends the far ones, but its cost can be high without additional optimization.
+
+Because the 3D particle evaluation is aligned with the tracing formulation in 3DGRT, one representation can support hybrid rendering. Rasterize primary camera rays, discard particles behind the first surface hit, then trace reflected or refracted secondary rays. The paper demonstrates reflections and refractions using a combination of primary-ray splatting and secondary-ray tracing. This capability comes from aligning the representation and response model; the paper does not claim the splatting pass alone can compute secondary light transport.
+
+**Published results.** On the paper's Mip-NeRF360 pinhole benchmark, unsorted 3DGUT reports similar image quality to 3DGS at 265 versus 347 frames per second, while its sorted variant reports 200 FPS and supports the stronger rendering-order alignment. On the fisheye ScanNet++ scenes, sorted 3DGUT reports PSNR 29.11, SSIM 0.910, and LPIPS 0.252 versus the paper's FisheyeGS run at 28.15, 0.901, and 0.261, using 0.38 million rather than 1.07 million Gaussians. The comparison includes the paper's specified preprocessing and trained scenes. On Waymo's selected static scenes, 3DGUT with rolling-shutter and distortion-aware training reports PSNR 30.16 and SSIM 0.900; 3DGRT reports 29.99 and 0.897. The 3DGS comparison uses rectified images without rolling shutter and is not directly comparable. For UT quality, the supplement compares projected distributions with a 500-sample Monte Carlo reference using Kullback–Leibler (KL) divergence. It reports better projections than EWA under fisheye distortion and stable median KL as radial distortion or rolling-shutter motion increases.
+
+**Limits.** UT is more expensive than the original 3DGS projection, so 3DGUT is somewhat slower in its own pinhole benchmark. Under strong distortion, the true projected particle may no longer resemble a 2D Gaussian, weakening tile culling and support estimates. The one-point maximum-response evaluation cannot accurately handle overlapping Gaussians in all cases. Per-ray sorting improves consistency but costs additional time. These are limits of the reported formulation, not solved problems.
+
+**Source:** Wu et al., “3DGUT: Enabling Distorted Cameras and Secondary Rays in Gaussian Splatting” (CVPR 2025), complete main paper plus supplemental appendices A–F, PDF pp. 1–13; references pp. 14–15 excluded. [Primary paper and supplement](https://research.nvidia.com/labs/toronto-ai/3DGUT/res/3DGUT_full_resolution.pdf).
+
+#### What the short presentations add
+
+The captioned 3D Gaussian Splatting presentation adds an accessible overview of the paper's pipeline: initialize from a structure-from-motion point cloud, optimize anisotropic Gaussians, and render the scene. It highlights that elongated splats can represent thin structures such as bicycle spokes. It also reports more than 100 frames per second in shown scenes, a 7,000-iteration run taking about six minutes, and an ablation using random rather than structure-from-motion initialization. These are claims made in the presentation and depend on its test setup; the paper's experiments remain the detailed evidence. [Presentation](https://www.youtube.com/watch?v=T_kXY43VZnk).
+
+The 2D Gaussian Splatting presentation foregrounds the reason for a planar primitive: its normal is geometrically meaningful. It also walks through perspective-correct ray/disc intersection, a low-pass filter for small or oblique splats, ray-wise depth concentration, normal consistency, and depth-based mesh extraction. The automatic captions are imperfect, so the paper and its supplement carry the formal definitions and equations. [Presentation](https://www.youtube.com/watch?v=oaHCtB6yiKU).
+
+The Instant Field-Aligned Meshes presentation shows the method as two coupled fields: an orientation field guides edge direction and a position field controls vertex placement. It briefly demonstrates feature alignment, point-cloud input, interactive orientation/position brushes, and very large remeshing. Its claim of processing a 372-million-triangle mesh in about nine minutes is a reported demo result, not an independent benchmark. [Presentation](https://www.youtube.com/watch?v=U6wtw6W4x3I).
+
+### Figure U12 - Volume compositing accumulates visible contributions
+
+![[Visual Recall/University Graphics and Vision/volume-compositing.png]]
+
+*The checked weights sum to the visible contribution plus residual background transmittance for the illustrated ray. The diagram is a one-ray compositing example, not a full trained NeRF or a density-estimation guarantee.*
+
+### Figure U13 - A local Gaussian covariance projects to an ellipse
+
+![[Visual Recall/University Graphics and Vision/gaussian-screen-covariance.png]]
+
+*The checked diagonal case maps the stated local covariance to screen covariance $\operatorname{diag}(1600,400)$. It illustrates first-order covariance propagation for that camera setup; it is not a general nonlinear-camera result.*
+
+## Robot learning closes the perception-action loop
+
+### Robot learning is a feedback problem
+
+In supervised learning, a model maps an input $x$ to a target $y$. For example, an image classifier maps pixels to a category. In robot learning, an agent observes a state, chooses an action, and changes the world. The world then returns a new observation and possibly a reward. The next decision depends on what happened after the previous action. This makes robot learning a **sequential decision problem** rather than a single prediction problem.
+
+A compact formulation is a state $s_t$, action $a_t$, transition $s_{t+1}$, and reward $r_t$. A policy $\pi(a\mid s)$ chooses actions from the current state. A goal or instruction helps define which outcomes are wanted. The objective is to choose a sequence of actions that gets a high total reward or low total cost. A familiar formal version is
+
+$$
+G_t=\sum_{k=0}^{H-1}\gamma^k r_{t+k},
+$$
+
+where $H$ is the planning horizon and $\gamma\in[0,1]$ discounts rewards that arrive later. This notation makes a delayed effect explicit: an early action can matter because it changes which future states are reachable. In a clothes-folding task, the state may include camera or depth observations, the action may move a gripper or open it, and reward may measure whether the final fold meets a chosen standard.
+
+Reward design is part of the task definition. A fast drive might be rewarded for speed, but a safe and comfortable drive needs additional terms. A folded shirt can be scored by compact area, smoothness, or a human's preference. Different reward choices can favor different behaviors. A robot trained to optimize a poorly chosen proxy may succeed at the score while missing the intended goal.
+
+The lecture contrasts this loop with static image prediction. The physical world is uncertain: the same push can rotate a box by different amounts because contact forces differ. Rewards may arrive only at the end of a long sequence, which makes it hard to assign credit to the action that helped or hurt. The environment often cannot be differentiated through, so a gradient cannot simply flow from a final reward through every physical interaction. Finally, actions change later observations. A small early error can move the robot into a state unlike the training data, where its next action may be worse.
+
+### Perception must support action
+
+Robot perception is not only a description of a scene. It should extract information that helps the next decision. A camera gives color and spatial layout. A depth sensor gives distance. Tactile sensors can help detect stable contact; sound can reveal contact or motion. Combining sensors can fill gaps, since no one sensor captures everything.
+
+The physical scene can be incomplete or changing. Objects occlude one another; sensors are noisy; a grasp can fail and drop an object; clothes and other deformable materials change shape; people, pets, and other agents move through the scene. A robot therefore needs to cope with unexpected changes rather than assume one fixed image per task.
+
+The robot can also act to improve what it knows. If an object may be one piece or several nested pieces, a gentle perturbation can reveal whether parts move independently. Moving a camera or head can reveal what was behind an obstacle. This is **active perception**: the system selects actions partly to obtain useful information. It is embodied because the robot has a physical body and sensors; active because it chooses what to sense; and situated because it must respond to the actual world at a particular time. For a local task such as fastening a button, the system may only need detailed perception around the button, not a perfect model of the entire room.
+
+A useful design question is therefore: which facts about the world does the next action require? A full scene reconstruction can be wasteful if a local view suffices. On the other hand, using a single image-level label can be too coarse if the action needs an exact point, surface, or contact state.
+
+### Reinforcement learning: learn from outcomes
+
+**[[Perception feedback and robot learning|Reinforcement learning]] (RL)** trains an agent through interaction. It tries actions, observes the resulting states and rewards, and changes its policy toward actions that yield better future outcomes. In a game, the state may be screen pixels, the actions may be button presses, and reward may be score. For a robot arm, the state may include joint positions and camera observations, the actions may be motor torques, and reward may reflect task progress.
+
+A value function estimates future reward. The action-value function is often written
+
+$$
+Q^\pi(s,a)=\mathbb{E}_{\pi}\left[\sum_{k=0}^{H-1}\gamma^k r_{t+k}\mid s_t=s,a_t=a\right].
+$$
+
+It asks: if the agent is in state $s$, takes action $a$, then follows policy $\pi$, how much reward should it expect? A greedy decision chooses the action with the largest estimated value, $a^*=\arg\max_a Q(s,a)$. In practice, an agent must also explore actions whose value is uncertain; repeatedly choosing only the current apparent best can miss better strategies.
+
+The lecture uses Atari Breakout as an example of learning behavior through repeated play. Early play may miss the ball. Later the policy catches it more often; eventually it can discover a strategy such as opening a tunnel through one side of the bricks. That example illustrates why trial and error can discover a strategy that was not hand-coded. It also illustrates the resource requirement: extensive interaction can be expensive.
+
+In simulation, RL can learn impressive locomotion. **Sim-to-real transfer** means using a policy trained in simulation on a physical robot. Randomizing friction, geometry, and other simulated parameters can help the policy handle a range of conditions, so the real world may fall within the simulated distribution even if every detail was not modeled. The lecture reports strong empirical success for locomotion, but warns that manipulation has harder cases. A box rotating by a few extra degrees may be tolerable; a grasp that slips or fails entirely may change the task qualitatively. Some mistakes in real-world exploration are unsafe or damaging.
+
+The limits of model-free RL are substantial. It often needs many trials, can learn strange behavior during training, and may be difficult to interpret or correct. Game simulations can be reset cheaply. A physical robot cannot always repeat a dangerous or destructive action. A successful video also does not show how many trials failed or how much human intervention was required.
+
+### Learn a world model, then plan with it
+
+A **world model** predicts how the environment changes after an action. Given the current state and an action, a forward model predicts the next state:
+
+$$
+\hat{s}_{t+1}=f_\theta(s_t,a_t).
+$$
+
+Planning uses this model in the opposite direction. Given a current state and a target, choose actions whose predicted trajectory approaches the target. For an action sequence $a_{0:H-1}$, repeatedly apply the model to predict states, then minimize a cost such as
+
+$$
+J(a_{0:H-1})=\sum_{t=1}^{H} d(\hat{s}_t,s^*_t)+\lambda\sum_{t=0}^{H-1}\|a_t\|^2,
+$$
+
+where $s^*_t$ is the desired state and the action penalty discourages extreme commands. If the model is differentiable, gradients of this cost can help adjust the action sequence. If not, the planner can sample many possible sequences and compare their predicted outcomes.
+
+A learned model will be imperfect. A common response is receding-horizon planning: execute only the first planned action, observe the real next state, then plan again. This feedback corrects some prediction error before it accumulates. GPUs make it possible to evaluate many candidate action sequences in parallel, but the quality still depends on the model and objective.
+
+The representation of state matters. Pixel dynamics predict how an image changes. Keypoint dynamics track a small set of landmarks. Particle dynamics represent many local points, which can capture deformable objects such as dough or granular material. Coarser representations are easier to predict, but may miss details needed for contact or fine manipulation. Finer representations retain detail but increase the burden on learning and planning.
+
+The lecture illustrates particle-based models with granular rearrangement and dumpling making. A robot can compare predicted dough shapes after using different tools with a target shape, then choose a tool and motion. High-level planning chooses the tool or task stage; low-level planning chooses the movement. Human disturbances can change the dough, so the robot observes the new shape and replans, sometimes returning to an earlier stage. The lecture says the learned real-interaction model predicted these deformations better than the compared physics simulator, even after parameter tuning. This is evidence for that task and comparison, not a claim that learned models always beat physics simulation.
+
+### Imitation learning and cascading errors
+
+**Imitation learning** learns actions from demonstrations. In behavior cloning, a policy maps observation to action and is trained on expert examples:
+
+$$
+\theta^*=\arg\min_\theta\mathbb{E}_{(o,a)\sim D}\left[\ell(\pi_\theta(o),a)\right].
+$$
+
+This can be much more sample-efficient than discovering every action through trial and error. A person can demonstrate how to fold, grasp, or place an object, and the model learns to reproduce those decisions.
+
+But behavior cloning has a distribution shift problem. During training, the policy sees expert states. At deployment, one small mistake may take it to a state the expert demonstrations rarely contain. The policy then makes another mistake, moving farther from the demonstrated path. This **cascading error** can turn a small offset into a failed sequence.
+
+A practical loop is: collect demonstrations, train a policy, run it, inspect failures, then collect corrective demonstrations in the states the policy actually reaches. Add those examples to the dataset and retrain. The expanded dataset covers more of the policy's own state distribution. This is why iterative data collection is often necessary for robust physical behavior.
+
+Inverse reinforcement learning takes another route. Instead of directly copying actions, infer a reward function that could explain the demonstrations, then use RL to find a policy that optimizes that reward. This can capture the goal behind an action sequence, but inferring the intended reward is itself ambiguous: many reward functions can explain the same demonstrations.
+
+Policies can also represent multiple plausible actions. A single regression output may average two valid strategies into one invalid action. Energy-based policies score candidate actions and search for a good one. Diffusion policies use a generative process to sample action sequences, which can represent several modes of behavior. The lecture presents these as active approaches; their reliability still depends on demonstration diversity, task coverage, and evaluation in the intended environment.
+
+### Robotic foundation policies and their evidence limits
+
+A robotic foundation policy maps an observation and a goal—often a language instruction—to an action or action sequence. Related labels include vision-language-action model and large behavior model. Unlike an explicit world model, a direct policy need not predict the environment before acting. Its promise is broad transfer across objects, tasks, and embodiments, but the word “foundation” alone does not prove such breadth.
+
+A typical recipe begins with pretrained vision-language features, then trains on robot demonstrations and interaction data. Joint or co-finetuning can preserve semantic knowledge while adding action prediction. Post-training uses task-specific data to improve a base model for a particular setting. This leads to a useful evaluation split: test the base model on familiar tasks; test post-training on more difficult familiar tasks; and test separate tasks that were not part of pretraining. If performance improves only after task-specific examples, that is different evidence from zero-shot generalization.
+
+The lecture notes that robot demonstrations are often collected by teleoperation: a person remotely controls the robot. This can be slower than using one's hands because the robot has a different body, the operator has a camera-mediated viewpoint, and occlusion makes precise timing difficult. Policies trained on slow demonstrations may also act slowly. A single policy may handle a long folding task but may not be sufficient to manage every household task. Higher-level planning or symbolic structure may still be needed to choose which task to do and in what order.
+
+Evaluation is especially difficult. Real-world trials are expensive and noisy. Initial object positions, lighting, friction, and small setup differences can change the outcome. Training loss measures prediction on training examples, often one step at a time; it may not predict success over a long sequence of actions. A policy with a lower training loss can still fail more often over a full task. Simulated benchmarks can make testing cheaper, but their value depends on how well simulated contacts, deformable objects, assets, and disturbances match the physical world. A useful benchmark should correlate with real-world behavior, not merely be easy to score.
+
+The lecture closes with **foundation world models** as a complementary direction. Large action-conditioned datasets contain information about how actions change the environment. Using them only to train a policy may discard useful dynamics knowledge. A learned world model could predict those changes, while a policy proposes actions; combining the two may improve planning. The lecture frames this as a research direction and lists open choices such as whether the model should be 3D, which structural priors to use, and how to relate learned predictions to physics and real measurements.
+
+**Source:** SC-17, full original-English captions. The lecture is an overview with selected examples, not a full derivation of SAC, PPO, behavior cloning, or diffusion policies. The notes define the basic concepts and preserve the speaker's distinctions between demonstrated locomotion, harder manipulation, simulation-based transfer, learned dynamics, demonstrations, and broad robotic policies. Claims about particular demonstrations and systems remain lecture-period examples rather than universal performance guarantees.
+
+## Human vision, accessibility, and augmentation
+
+### Human vision shaped computer vision's early goals
+
+This closing lecture shifts from algorithms to the human context of AI. Its first lens is **AI that sees what people see**: recognizing objects, understanding scenes, and describing images. The lecturer reviews a familiar historical arc. Early computer vision tried to build object recognition from hand-designed parts. Statistical machine learning then treated model parameters as things to learn from data. Benchmarks gave researchers shared ways to compare systems. Large labeled image collections, more computing power, and neural networks—especially convolutional networks—later combined to make large gains in object classification.
+
+The lecture connects this history to psychology and neuroscience. People can recognize objects quickly, and human vision is sensitive to objects such as faces and places. These observations inspired computer vision, but copying human perception directly is not the same as building a useful machine system. A category label also does not explain a scene. “Person” and “horse” say what is present; they do not say who is riding whom.
+
+A **scene graph** represents a scene as nodes and relations. Nodes can describe entities such as a person, horse, or cake; edges can describe relations such as riding, feeding, or wearing. Attributes can add details about an entity. The same object categories can form different scenes when the relations change. Once objects and relations are represented separately, a system can combine common pieces to describe a less common combination—such as a horse wearing a hat—even if that exact pairing is rare in the training data. This is a form of compositional generalization, though it depends on whether the model learned useful object and relation components.
+
+Image captioning extends recognition to language. A vision encoder can extract image features and a language model can generate a sentence from them. Dense captioning tries to describe regions, not only the image as a whole. Video is harder because multiple actors move, interact, and may be seen by a moving camera. The lecture treats understanding who is doing what, where, and what may happen next as an open challenge, with consequences for robots that share spaces with people.
+
+The field's progress came from the combination of data, compute, and learnable models. Psychology and neuroscience helped frame the questions, and AI can in turn provide tools for studying perception. This is a productive connection, but biological inspiration is not proof that a machine has humanlike understanding.
+
+### AI can see more detail—and humans have limits
+
+The second lens is **AI that sees what people may miss**. Humans are good at recognizing everyday objects, but are not equally good at thousands of fine categories. A fine-grained classifier may distinguish bird species or a car's make, model, and year. The lecture describes using vehicle categories in street images to study patterns across cities. Such measurements can reveal correlations with social variables, but correlation alone does not show that car choice causes education, income, or voting patterns. Data coverage, region, time, and classification errors all affect those conclusions.
+
+Human attention is selective. The **Stroop effect** occurs when a word's meaning interferes with naming its ink color—for example, reading the word “blue” printed in red ink. **Change blindness** occurs when a visible change between two scenes goes unnoticed, especially when attention is drawn elsewhere. These effects show that people do not process every visual detail with equal care. In high-stakes settings, a missed item can matter. The lecturer shows a research demonstration for counting objects in a surgical scene, but explicitly distinguishes it from a deployed clinical system.
+
+This suggests a helpful role for AI as a second observer: track objects, count items, or flag a possible mismatch. It does not mean that AI should replace the people responsible for a clinical decision. A demo is not deployment evidence. Real use would require validation in the intended environment, clear escalation when the system is uncertain, and a way for clinicians to check the evidence.
+
+Human perception also carries assumptions. A checkerboard shadow illusion makes two equal-gray squares look different because the visual system interprets lighting and shadow. Learned systems can also inherit biases from their data and training process. If facial recognition works better for some skin tones or genders than for others, the error distribution can create unequal consequences in security, transport, or health settings. Measuring only one average score can hide those differences. The lecture emphasizes continuing to test for such harms; attention to bias is not the same as solving it.
+
+Sometimes the desired system should deliberately see less. Privacy-preserving sensing may blur or mask faces, reduce detail, keep data local, or use encryption. These choices can also remove useful information. The lecture describes a hardware-and-software approach that designs a lens to retain motion cues while making faces and bodies harder to reconstruct. The goal is to recognize an activity without collecting a conventional identifiable video. This is a design trade-off that needs testing: a privacy filter should be checked both for what it protects and for whether its retained signal still supports the task.
+
+### AI that helps people see and act
+
+The third lens is **AI that helps people achieve what they value**. The lecture places this discussion in the context of work and labor. Technology can change jobs, sometimes painfully, while AI may also help where care systems lack enough staff. The speaker argues for augmentation: use sensing to help people notice important events and respond sooner. That framing is a goal, not a guaranteed social outcome; systems can also shift burdens or replace tasks, so their effects should be measured with affected workers and communities.
+
+In healthcare, ambient sensors can monitor activity without requiring a person to watch every room continuously. One project uses depth information to detect hand hygiene near a sink. A proximity badge alone cannot tell whether someone actually washed their hands; depth-based activity recognition attempts to observe the action more directly. Another project monitors movements such as getting into or out of bed or a chair in an intensive care unit. A further use case is aging in place: detecting changes in mobility, sleep, diet, or possible infection can help a person remain at home safely.
+
+These examples illustrate sensing as support for clinical attention, not autonomous diagnosis. A depth camera may reduce exposure of visual details, but it still collects information about movement in a private space. Patients and staff need meaningful notice and control, secure data handling, and clear rules about who receives alerts. The system also needs to be evaluated for missed events and false alarms. If the detection is wrong, the human workflow must make it possible to correct it.
+
+Sensing alone cannot carry water or help a patient move. **Embodied AI** connects perception to physical action through a robot. Robots still struggle with speed, dexterity, and generalization. Many successful demonstrations use short tasks and carefully selected conditions. A video of a robot opening a drawer does not show whether it can handle other handles, avoid nearby objects, recover from a failed grasp, or work without a human choosing the route.
+
+One approach combines language models, vision-language models, and motion planning. A language model can turn “open the top drawer” into a sequence of named goals. A visual model can locate the drawer and handle. A planner can use positive and negative spatial maps to approach the handle while avoiding a vase. New instructions can update the map, and the robot can replan. The system's parts have distinct jobs, which makes the chain easier to inspect than a single opaque action. But each model can still mislabel an object or produce a poor plan; physical execution needs checks and recovery behavior.
+
+### Ask people what tasks robots should do
+
+A benchmark should reflect tasks people actually want help with, not only tasks researchers find convenient. The lecture reports a survey in which people rated everyday activities. Respondents often welcomed help with cleaning, but were less interested in delegating emotionally or socially meaningful activities such as choosing a wedding ring or opening a holiday gift. Preferences differ; a task is not “useful” just because it can be automated.
+
+The lecture describes a household benchmark project that combined a large task list, human preference survey, scans of real environments, and many object assets in a simulated setting. The aim was to create diverse, interactive tasks and a shared way to measure progress. It also reports that current systems struggled on the benchmark's challenging tasks unless given privileged information or simplifying assumptions. This is valuable evidence about the tested setup, but benchmark scores still depend on task selection, simulator quality, and what information the robot is allowed to use.
+
+Simulation can make repeated testing cheaper and safer, but it must capture the properties that matter: object articulation, deformation, contact, visibility, and disturbances. Sim-to-real transfer remains an open question. The lecture's example of a robot making mistakes while cleaning a room underscores why a polished short demo cannot establish reliable household autonomy.
+
+Human-centered evaluation asks at least three questions: Does the system work? Does it work across the people and conditions that matter? And is this a task people actually want the system to perform? In healthcare and home settings, users should also have a say in privacy, consent, oversight, and what happens when the system fails.
+
+### Human augmentation includes accessibility
+
+The closing demonstration uses non-invasive EEG signals to select pre-trained robot actions such as lift, place, or drop. The robot is not reading arbitrary thoughts; the control is based on signals mapped to a limited set of trained commands. The lecturer presents this as a research direction that may support people with severe paralysis. That potential calls for careful evaluation with the intended users, including comfort, reliability, fatigue, and the user's control over each action.
+
+The lecture's final message is that AI should be developed with both technical and human questions in view. A system may extend human perception, miss what matters, amplify a bias, expose private information, or help someone act. Whether it is beneficial depends on the task, evidence, people affected, and safeguards. “Can the model do it?” is only one part of the design question; “Who wants it, who benefits, and who carries the risk?” also matter.
+
+**Source:** SC-18, full original-English captions. This talk offers historical perspective, research examples, and the speaker's values; it is not an algorithm lecture or a clinical deployment report. Medical, labor, demographic, and benchmark claims are bounded to the examples described and require independent evaluation before use as current population-wide facts.
+
 ## Photographic composition, history, and communication
 
 A photograph carries information through deliberate choices of viewpoint, framing, sequence, and context; those choices affect how viewers interpret its evidence.
@@ -4128,6 +7415,108 @@ print('PASS: stereo, lighting rank, optical flow rank, interpolation, color, edg
 print(f'left={left}, right={right}, depth=4 m, albedo={albedo:.8f}, normal={normal}')
 ```
 
+### Runnable standard-library checks
+
+This standard-library Python lab checks small numerical witnesses for array addressing, projection multiplicities, volume compositing, projected covariance, reservoir selection, contact-barrier shape, and derivative calculations. The checked run reported 8 passing checks. These checks validate only the stated examples and formulas; they do not train a vision model, compile a GPU renderer, or prove performance on a graphics device.
+
+```python
+"""Small numerical experiments, not a GPU renderer or trained vision system."""
+import math, random, struct, json
+
+def sigmoid(z):
+    return 1/(1+math.exp(-z)) if z >= 0 else math.exp(z)/(1+math.exp(z))
+
+def loss_and_gradient(p, data, hidden=4):
+    loss, grad = 0., [0.]*len(p)
+    for x,y in data:
+        h=[math.tanh(p[3*j]*x[0]+p[3*j+1]*x[1]+p[3*j+2]) for j in range(hidden)]
+        z=p[-1]+sum(p[3*hidden+j]*h[j] for j in range(hidden))
+        loss += max(z,0)-z*y+math.log1p(math.exp(-abs(z)))
+        dz=sigmoid(z)-y
+        grad[-1]+=dz
+        for j in range(hidden):
+            grad[3*hidden+j]+=dz*h[j]
+            da=dz*p[3*hidden+j]*(1-h[j]*h[j])
+            grad[3*j]+=da*x[0]
+            grad[3*j+1]+=da*x[1]
+            grad[3*j+2]+=da
+    n=len(data)
+    return loss/n, [g/n for g in grad]
+
+def predict(p,x,hidden=4):
+    h=[math.tanh(p[3*j]*x[0]+p[3*j+1]*x[1]+p[3*j+2]) for j in range(hidden)]
+    return sigmoid(p[-1]+sum(p[3*hidden+j]*h[j] for j in range(hidden)))
+
+def weighted_reservoir(items,rng):
+    chosen,total=None,0.
+    for item,weight in items:
+        if weight<0:raise ValueError('Weights must be nonnegative')
+        total+=weight
+        if weight>0 and rng.random()*total<weight:chosen=item
+    if total==0:raise ValueError('At least one positive weight is required')
+    return chosen,total
+
+def barrier(d,threshold=1.):
+    if threshold<=0 or d<=0:raise ValueError('Positive distance and threshold required')
+    return -(d-threshold)**2*math.log(d/threshold) if d<threshold else 0.
+
+def main():
+    checks=[]
+    vertices=[(0,0,0,1,0,0),(1,0,0,0,1,0),(0,1,0,0,0,1)]
+    buffer=b''.join(struct.pack('=6f',*v) for v in vertices)
+    assert len(buffer)==72
+    assert struct.unpack_from('=3f',buffer,2*24+12)==(0.,0.,1.)
+    checks.append('packed float32 vertex fetch')
+    grid=[(i,j) for i in range(4) for j in range(4)]
+    assert [len({round(a*x+b*y,10) for x,y in grid}) for a,b in [(1,0),(1,1),(1,math.sqrt(2))]]==[4,7,16]
+    checks.append('exact finite-grid projections')
+    image=[[1,2,3],[4,5,6],[7,8,9]];kernel=[[1,0,-1],[2,0,-2],[1,0,-1]]
+    correlation=sum(image[i][j]*kernel[i][j] for i in range(3) for j in range(3))
+    convolution=sum(image[i][j]*kernel[2-i][2-j] for i in range(3) for j in range(3))
+    assert (correlation,convolution)==(-8,8)
+    checks.append('correlation versus flipped mathematical convolution')
+    data=[((0.,0.),0.),((0.,1.),1.),((1.,0.),1.),((1.,1.),0.)]
+    rng=random.Random(7);p=[rng.uniform(-1,1) for _ in range(17)];base,gradient=loss_and_gradient(p,data)
+    errors=[];epsilon=1e-6
+    for i in range(len(p)):
+        plus=p[:];minus=p[:];plus[i]+=epsilon;minus[i]-=epsilon
+        numeric=(loss_and_gradient(plus,data)[0]-loss_and_gradient(minus,data)[0])/(2*epsilon)
+        errors.append(abs(numeric-gradient[i]))
+    assert max(errors)<1e-7
+    for _ in range(3000):
+        _,g=loss_and_gradient(p,data);p=[v-.7*dv for v,dv in zip(p,g)]
+    probabilities=[predict(p,x) for x,_ in data]
+    assert probabilities[0]<.05 and probabilities[3]<.05 and probabilities[1]>.95 and probabilities[2]>.95
+    checks.append('all 17 MLP derivatives checked; XOR learned')
+    scores=[1/math.sqrt(2),0.];exps=[math.exp(s-max(scores)) for s in scores];attention=[e/sum(exps) for e in exps]
+    result=[2*attention[0],3*attention[1]]
+    assert math.isclose(sum(attention),1) and 1.33<result[0]<1.35 and .98<result[1]<1.
+    checks.append('scaled attention with two keys')
+    alpha=[.2,.5,.4];transmittance=1.;weights=[]
+    for a in alpha:weights.append(transmittance*a);transmittance*=1-a
+    assert all(math.isclose(a,b) for a,b in zip(weights,[.2,.4,.16]))
+    assert math.isclose(sum(weights)+transmittance,1)
+    assert all(math.isclose(a+transmittance,b) for a,b in zip(weights,[.44,.64,.4]))
+    checks.append('front-to-back compositing and remaining background')
+    items=[('A',2.),('B',1.),('C',3.)];counts=dict.fromkeys('ABC',0);rng=random.Random(19);n=100000
+    for _ in range(n):
+        kept,total=weighted_reservoir(items,rng);counts[kept]+=1
+    assert total==6
+    assert all(abs(counts[k]/n-w/6)<.004 for k,w in items)
+    checks.append('streaming reservoir empirical weighted selection')
+    d=.3;numeric=(barrier(d+epsilon)-barrier(d-epsilon))/(2*epsilon)
+    analytic=-2*(d-1)*math.log(d)-(d-1)**2/d
+    assert math.isclose(numeric,analytic,rel_tol=1e-7)
+    assert barrier(1)==0 and barrier(2)==0 and barrier(1e-9)>barrier(.001)>barrier(.1)>0
+    try:barrier(0)
+    except ValueError:pass
+    else:raise AssertionError('Invalid distance accepted')
+    checks.append('barrier derivative and positive-distance domain')
+    return {'checks':checks,'gradient_max_error':max(errors),'xor_probabilities':probabilities,'attention':result,'reservoir_counts':counts,'errors':[]}
+
+if __name__=='__main__':print(json.dumps(main(),indent=2))
+```
+
 ## A complete renderer makes the forward model executable
 
 This lab is a small, original teaching implementation that joins camera geometry, ray intersections, visibility, Monte Carlo integration, and color output in one runnable Python script. It is an independent example; it is not course project code, a reconstruction of a student project, or a production renderer.
@@ -4428,6 +7817,20 @@ Use this map to find the developed explanation, then test it with the chapter ex
 | [[Surface orientation from image brightness]] | Shape-from-illumination methods infer surface orientation or depth from how light changes across an image. | [[#Surface orientation from illumination\|Full explanation]] |
 | [[Light spectra and radiometry]] | Radiometry distinguishes total radiant flux $\Phi$ in watts, irradiance $E$ in watts per square metre, radiant intensity $I$ in watts per steradian, and radiance $L$ in watts per square metre per steradian measured with projected source area. | [[#Light measurement and radiometry\|Full explanation]] |
 | [[Sampling aliasing and reconstruction]] | Sampling records measurements of a continuous signal on a discrete grid. | [[#Sampling continuous signals and image formation\|Full explanation]] |
+| [[GPU vertex specification]] | Vertex input turns buffer bytes into shader attributes through component format, byte offset, byte stride, and captured buffer binding. | [[#Rasterization, coverage, and depth|Full explanation]] |
+| [[Homogeneous clipping and perspective interpolation]] | Clip primitives in homogeneous coordinates before divide, then interpolate perspective attributes using reciprocal-w weights. | [[#Rasterization, coverage, and depth|Full explanation]] |
+| [[Automatic differentiation and backpropagation]] | Automatic differentiation composes local chain-rule rules; reverse-mode VJPs compute scalar-loss gradients efficiently. | [[#Learning a visual classifier from examples|Full explanation]] |
+| [[Learned image features and CNNs]] | CNNs learn shared local filters whose feature maps combine into task-specific image representations. | [[#Convolutional models preserve image neighborhoods|Full explanation]] |
+| [[Attention and visual transformers]] | Scaled query-key scores weight value vectors so each image token can mix context from other tokens. | [[#Sequence models and attention|Full explanation]] |
+| [[Contrastive vision and image-language alignment]] | Contrastive training pulls paired image and text embeddings together while separating mismatched batch pairs. | [[#Self-supervision and evaluation|Full explanation]] |
+| [[Latent-variable models and generative flows]] | VAEs, GANs, and flows learn data generators using distinct likelihood, adversarial, and invertible-density objectives. | [[#Generative models learn distributions and samplers|Full explanation]] |
+| [[Radiance fields and Gaussian splatting]] | NeRFs integrate learned density and color along rays; Gaussian splatting blends projected anisotropic primitives. | [[#Learned representations of 3D shape and scenes|Full explanation]] |
+| [[Reservoir resampling and ReSTIR]] | Reservoirs retain one weighted sample and normalization data so candidates can be reused for rendering estimates. | [[#Numerical integration and Monte Carlo estimation|Full explanation]] |
+| [[Collision barriers and continuous detection]] | Barrier energies repel near-contact geometry while continuous tests detect contact anywhere during a time step. | [[#Dynamics, forces, and numerical integration|Full explanation]] |
+| [[Exceptional projections and dimension]] | Exceptional directions create unusually large projection fibers, revealing geometric structure under stated dimension and spacing assumptions. | [[#Finite-field projections turn image size into collision counts|Full explanation]] |
+| [[Additive energy and approximate structure]] | Additive energy counts repeated pair sums; high counts can force a structured large subset under quantitative hypotheses. | [[#Additive structure explains repeated coincidences|Full explanation]] |
+| [[Local rigidity and mesh orientation fields]] | ARAP preserves local edge shapes approximately, while orientation fields guide consistent surface remeshing. | [[#Meshes, connectivity, and geometry processing|Full explanation]] |
+| [[Perception feedback and robot learning]] | Robot learning closes a loop from sensed observations through action to new states and future observations. | [[#Robot learning closes the perception-action loop|Full explanation]] |
 
 ## Source legend - actual playlist coverage
 
@@ -5411,3 +8814,666 @@ The durable local source cache contains inventories, original caption files, com
 | **Total** | **88 / 88** | **86** | **1** | **1** |
 
 The first three playlists contribute all 70 requested entries. The added playlist contributes 18 entries. Counts represent source use and review status; they do not claim that every frame was watched or that course projects and research systems were fully reimplemented.
+
+### Expanded coverage across eight course playlists
+
+| Playlist | Entries |
+|---|---:|
+| CMU 15-462/662, Fall 2020 | 25 |
+| MIT 6.837, Fall 2021 | 22 |
+| MIT 6.801, Fall 2020 | 23 |
+| Levoy digital photography (Stanford CS178 based), added | 18 |
+| Computer Graphics and Visual Computing (2025/26 CSC 4505) | 26 |
+| MIT 18.156 Projection Theory, Spring 2025 | 24 |
+| Computer Graphics, Fall 2009 | 21 |
+| Stanford CS231N Deep Learning for Computer Vision I 2025 | 18 |
+| **Total** | **177 / 177** |
+
+The original four course groups contribute 88 entries; P1, P2, P3 and Stanford CS231n add 89. The expanded total counts playlist entries once. The source notes below distinguish caption review from visual inspection and from mathematical-paper evidence.
+
+### Computer Graphics and Visual Computing (2025/26 CSC 4505)
+
+[Playlist](https://www.youtube.com/playlist?list=PLubb3AIPdPhYu-auUzK10YzvERCshyQ9M)
+
+#### P1-01 - Module 1.1: Course Intro & Administrivia Part 1 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=dA0O3xbMhZw) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Course scope and learning expectations; Capstone problem selection and literature search; Instructor research context and applied examples.
+
+#### P1-02 - Module 1.2: Course Intro & Administrivia Part 2 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=SAqv-gqy0tA) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Computer graphics as visual communication; Research and capstone topic discovery; Applications: games, medicine, CAD, visualization, GIS, VR/AR, simulation.
+
+#### P1-03 - Module 2.1: Fundamentals of Visual Computing Part 1 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=hoZcPvCIFyk) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Graphics/vision/image-processing input-output distinction; Video frames and frame/key-frame selection; Raster versus vector representation and scaling.
+
+#### P1-04 - Module 2.2: Fundamentals of Visual Computing Part 2 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=KyFhkeTwnDE) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Texture mapping and lighting motivation; Polygon mesh and triangle geometry; Vertex/edge/face and vertex attributes.
+
+#### P1-05 - Module 2.3: Fundamentals of Visual Computing Part 3 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=VPxqKOYjpG0) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Triangle primitive motivation and GPU processing; NumPy array and legacy OpenGL setup recap; Coordinate normalization.
+
+#### P1-06 - Module 3.1: The Graphics Pipeline Part 1 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=QEiWsz7cmnw) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Logical versus API/hardware pipeline; 3D-to-2D rendering challenge; Six coordinate spaces.
+
+#### P1-07 - Module 3.2: The Graphics Pipeline Part 2 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=rRQiFwFzFJM) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Programmable versus fixed stages; Vertex specification and buffer objects; Model/view/projection transforms in vertex shader.
+
+#### P1-08 - Module 4.1: Introduction to OpenGL Part 1 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=I1VFptM0obM) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Fragment shader inputs and color outputs; Depth, stencil and blending; API contract and abstraction.
+
+#### P1-09 - Module 4.2: Introduction to OpenGL Part 2 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=CpN9JORFZ7s) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** OpenGL implementation and version checks; Linux mesa-utils, glxinfo and glxgears; Android Termux/VNC demonstration setup.
+
+#### P1-10 - Module 4.3: Tutorial — OpenGL Implementation Q&A Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=Mt8QU6JWY20) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** PyOpenGL binding versus OpenGL implementation version; Backward-compatible use of legacy examples; Course setup checklist.
+
+#### P1-11 - Module 4.4: Introduction to OpenGL Part 3 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=sr-4ZAnBXIM) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Why NumPy for contiguous vertex attributes; Import alias and array constructors; Array dtype, dimension, shape and size.
+
+#### P1-12 - Module 4.5: Introduction to OpenGL Part 4 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=Eu4pGvCAOhI) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Tuple/list-to-array conversion and explicit dtypes; One- and multi-dimensional array shape; Indexing and half-open slicing.
+
+#### P1-13 - Module 4.6: Introduction to OpenGL Part 5 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=e2GQBMBWyh0) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Dot product and matrix multiplication; reshape, transpose and flatten; NumPy 4x4 transform data.
+
+#### P1-14 - Module 4.7: Introduction to OpenGL Part 6 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=EtgZoNuFZiw) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Pygame initialization and display/context flags; Event loop, keyboard exit, resize and viewport; Clock, frame pacing and double buffering.
+
+#### P1-15 - Module 5.1: Vertex Specification Part 01 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=llQ74GoG1po) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Vertex as structured attribute record; Position XYZ/XYZW and homogeneous W; RGB/RGBA interpolation and alpha.
+
+#### P1-16 - Module 5.2: Vertex Specification Part 02 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=wl-w5PZfmII) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Course-level pipeline framing; Model and world space illustrated by game objects; Transformations and camera view recap.
+
+#### P1-17 - Module 5.3: Vertex Specification Part 03 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=QGwjwKvDF0I) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Legacy/core scope; Immediate-mode begin/end; Vertex-call dimensions/types/vector variants.
+
+#### P1-18 - Module 5.4: Vertex Specification Part 04 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=yNa86goEb64) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** NDC mapping and viewport; Legacy point/line/triangle modes; Line and triangle grouping rules.
+
+#### P1-19 - Module 5.5: Vertex Specification Part 05 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=IaV0iweZLxY) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Triangles as surface mesh primitives; Triangle fan and hub connectivity; Triangle strip vertex reuse.
+
+#### P1-20 - Module 5.6: Vertex Specification Part 06 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=S8gMtV0Zsa4) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Triangle geometry and shared corners; Per-vertex XYZ/RGB array; float32 shape and indexing.
+
+#### P1-21 - Module 5.7: Vertex Specification Part 07 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=ztaaLo_SVjQ) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Indexed drawing versus positions; Cube corners and 12 triangle triples; Integer index data and array shape.
+
+#### P1-22 - Module 6.1: Geometric Transformations Part 01 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=ynFh7s0SBpg) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Transformation purpose: model space to world space; 2D translation and homogeneous coordinates; Uniform and nonuniform scale.
+
+#### P1-23 - Module 6.2: Geometric Transformations Part 02 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=Utop5s8YRM4) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Transformation purpose: model space to world space; 2D translation and homogeneous coordinates; Uniform and nonuniform scale.
+
+#### P1-24 - Module 6.3: Geometric Transformations Part 03 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=CeHVh4oSX6g) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Legacy versus core OpenGL context; Identity matrix reset and accumulation; GL_TRANSLATE_F, GL_ROTATE_F, GL_SCALE_F arguments.
+
+#### P1-25 - Module 7.1: Geometric Transformations Part 01 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=oeEe2WiSku8) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** Viewing problem and virtual camera motivation; 2D world window versus screen viewport; Viewport-coordinate convention distinction.
+
+#### P1-26 - Module 7.2: Geometric Transformations Part 02 Graphics & Visual Computing 2026
+
+[Source video](https://www.youtube.com/watch?v=GnIE0V5dS1w) · Full transcript reviewed; YouTube English original automatic captions (en-orig); 30-second normalized transcript; exact cue-word deduplication.
+
+**Topics used:** World versus view coordinates; Camera fixed at origin looking −Z; Inverse camera motion / translate world by −eye.
+
+### MIT 18.156 Projection Theory, Spring 2025
+
+[Playlist](https://www.youtube.com/playlist?list=PLUl4u3cNGP62K9_7Pg26ytrAOXwXFpN43)
+
+#### P2-01 - Lecture 01: Introduction to Projection Theory
+
+[Source video](https://www.youtube.com/watch?v=1A1kWkxK3QY) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Introduces orthogonal projections and the exceptional-direction question for finite X; the grid predicts |E_S(X)| on the order of S²/|X| over a useful range, with Szemerédi–Trotter proving the sharp upper bound and topology entering its proof. Extends the question to line-fiber integrals of a density (CAT scan); the Fourier slice identity says the Fourier transform of a projected density is the restriction of the original transform to the corresponding subspace. Explains why point projections and projections of thick balls differ: clustering changes the behavior. Introduces finite-field linear maps, the F_p² subfield obstruction inside F_{p²}², and the sum-product connection.
+
+#### P2-02 - Lecture 02: Fundamental Methods of Projection Theory
+
+[Source video](https://www.youtube.com/watch?v=sEZHGMV2LiI) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Defines π_θ(x₁,x₂)=x₁+θx₂ over F_q and S=max_θ∈D|π_θ(X)|. Contrasts an integer grid with a subfield example; the latter shows why a prime-field hypothesis is essential for the grid conjecture. Proves two estimates. Coincidences: each small image forces ≳|X|²/S colliding ordered distinct pairs; each pair determines at most one direction, hence |D|≲S when S<|X|/2. Orthogonality: choose at most S covering lines per direction, sum their indicators F, split each line indicator into mean 1/q and mean-zero part. The mean-zero parts of nonparallel lines are exactly orthogonal.
+
+#### P2-03 - Lecture 03: Projection Theory in Euclidean Space
+
+[Source video](https://www.youtube.com/watch?v=OAI8C20E7R4) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Transfers collision counting to disjoint unit balls X in B(0,R) and 1/R-separated directions D. Defines N_X(r) as maximum local ball occupancy and N_D(ρ) as maximum directions in an arc of length ρ. For a colliding pair of projected balls separated by distance ≈r, the direction lies in an arc of width ≈1/r; there are at most N_D(1/r) such directions, while the number of nearby second balls is ≤N_X(r). Summing dyadic r gives |D|≲(S/|X|)Σ_r N_X(r)N_D(1/r). Compares curve-neighborhood, well-spaced grid, and clumped-ball examples; spacing affects the bound. Hausdorff spacing N_X(R^β)≲|X|^β (and similarly for D) reduces the scale sum to endpoint behavior and yields the finite-field-style alternative (up to logarithmic/power losses). Then develops a real Fourier lemma: smooth 1×R tubes.
+
+#### P2-04 - Lecture 04: The Fourier Method in Euclidean Space
+
+[Source video](https://www.youtube.com/watch?v=X-4how4KkPQ) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Digests the Euclidean Fourier estimate and distinguishes its added information from the elementary total L² bound. Low-frequency support in B(0,1/r) makes a piece locally constant on radius-r balls: choose a smooth Fourier cutoff η=1 on that ball, write G=G*η̌, use rapid decay by integration by parts and a positive majorant ψ_r; Cauchy–Schwarz gives |G|²≲|G|²*ψ_r. Applying this on X and using N_X(r)/r² as local density, plus a tube-count bound of ≲rN_D(r/R) inside an r×R container, gives the clustered-direction estimate |D|≲(SR/|X|) max_r N_X(r)N_D(r/R)/r² up to logarithms. Under Hausdorff spacing it collapses to the finite-field-style alternative. Reviews independent historical rediscoveries of the Fourier/double-counting methods. Introduces sieve as reduction maps Z→Z/pZ; squares occupy ≈p/2 quadratic residues, and Linnik’s bound |X|≲√N follows by counting (x₁,x₂,p) with x₁≡x₂ mod p: each unequal pair has at most log N prime divisors, while diagonal pairs contribute |X||D|..
+
+#### P2-05 - Lecture 05: The Large Sieve
+
+[Source video](https://www.youtube.com/watch?v=i5lpHaGpeaI) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** States Linnik large-sieve theorem: for f:[N]→C, M≤√N, Σ_{p∼M}||(π_p f)_H||²₂ ≲ (N/M)||f_H||²₂. Mod-p reduction samples f̂ at α/p; distinct reduced fractions α/p from primes p∼M are separated by ≳M⁻². Since f is supported on [N], a smooth cutoff gives f̂ local constancy at scale 1/N; M²≤N ensures the sampling peaks have bounded overlap, converting the sum to an integral by Plancherel. Uses this for sparse residue supports (quadratic residues imply |A|≲√N) and average residue-class discrepancy ≲N^{1/4}. Explains Bombieri–Vinogradov motivation but does not yet prove it..
+
+#### P2-06 - Lecture 06: Projections and Smoothing
+
+[Source video](https://www.youtube.com/watch?v=iUB_y1OXBo4) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Explains a 3D finite-field line estimate as the PSet 1 repair: in F_q² the mean-zero line indicators of distinct nonparallel lines are orthogonal, but in F_q³ their Fourier supports are planes whose pairwise intersections are lines, so orthogonality fails. Group lines by direction W; a fixed nonzero frequency lies in W⊥ for at most q+1 directions. Cauchy–Schwarz yields ||F_H||²₂≤(q+1)Σ_W||F_{W,H}||²₂≤(q+1)q²|L|. Then studies Euclidean fiber-integral projections: Fourier-slice identity, polar Plancherel, and Sobolev embedding. Exact theorem: if f∈L²(R^d), supp f⊂B₁, and (d−1)/2>k+1/2, then ∫_{S^{d−1}}||π_θf||²_{C^k}dθ≲||f||²₂. The unit-ball support controls the low-frequency term via ||f||₁≲||f||₂; prove for Schwartz functions then extend by density. Cube projection along the diagonal connects with the central limit theorem and Gaussian smoothing..
+
+#### P2-07 - Lecture 07: Applications of the Large Sieve to Number Theory
+
+[Source video](https://www.youtube.com/watch?v=-UJgxLaFzfM) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Defines Δ_q(N)=max_{a∈(Z/qZ)*}|π(N; q,a)−π(N)/φ(q)|. Contrasts Dirichlet, Siegel–Walfisz, GRH and Montgomery bounds; states Rényi–Bombieri–Vinogradov average over q≤N^{1/2−ε}. Explains the sieve identity RPS=1*D_{p₁}*…*D_{p_r}, where RPS detects integers with no prime factor in S.
+
+#### P2-08 - Lecture 08: The Szemeredi-Trotter Theorem
+
+[Source video](https://www.youtube.com/watch?v=3h0jvsOnTIc) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Presents the full Szemerédi–Trotter theorem I(X,L)≲|X|+|L|+|X|^{2/3}|L|^{2/3}, and derives the projection corollary |D|≤S²/|X|+1. The N×N grid with rational slopes of height ≤M has |X|≈N², |D|≈M², projection size ≲MN, |L|≈M³N, and I≈N²M², saturating the middle term. Other known sharp families include rectangular grids, some number-field grids, and projective images; an inverse classification is open. Double counting gives only I≲|X||L|^{1/2}+|L| and fails over finite fields (all points/all lines in F_q² give q³ incidences), proving that topology is essential. The proof's cell-decomposition lemma partitions R² into open cells plus a wall, with each line meeting O(s) cells/wall pieces and each cell containing ≤|X|/s² points. Polynomial ham-sandwich (from Borsuk–Ulam) repeatedly bisects point sets; degrees grow geometrically and sum to O(s). Cellwise double counting yields I≲s^{-1/2}|X||L|^{1/2}+s|L|.
+
+#### P2-09 - Lecture 09: Reflections on the Szemeredi-Trotter Theorem
+
+[Source video](https://www.youtube.com/watch?v=lvdIUKULiak) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Analyzes what the ST cell proof does not capture: local per-cell incidence bounds discard cross-cell line relationships, the very structure needed to classify extremizers. Separates flexible linear-term examples from rigid grid-type middle-term examples; projective point-line duality swaps chains and stars but takes a grid to a different sharp configuration. For prescribed projection directions, normalizes three slopes to {0,1,∞}; with a fourth transcendental t, constructs P_{k,s}={Σ_{j<k}a_jt^j:0≤a_j<s}, X=P×P, |X|=s^{2k}, and max projection ≲(2s)^{k+1}.
+
+#### P2-10 - Lecture 10: Sum-Product Theory
+
+[Source video](https://www.youtube.com/watch?v=VCOrx2jEKXk) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Builds additive-combinatorics tools for BKT. Corrects the approximate-subfield lemma: for A⊂F_p, either (A−A)/(A−A)=F_p or a bounded-complexity rational expression built from A (including (A·A)^{⊕3}−(A·A)^{⊕3}, divided by A−A) has size at least |A|². If c is outside the ratio set, representations a₁+ca₂ are unique, so |A+cA|=|A|². If the ratio set is proper, repeated addition of 1 in the prime field provides b in it with b+1 outside; clear denominators and expand to force growth. Reviews Freiman–Ruzsa: bounded doubling implies containment in a bounded-dimensional generalized arithmetic progression, but available quantitative bounds are huge; polynomial Freiman–Ruzsa remains open. Proves Ruzsa triangle inequality by injection A×(B−C)→(A−B)×(A−C), yielding |A||B−C|≤|A−B||A−C| and |A+A|≤K|A| ⇒ |A−A|≤K²|A|. States Plünnecke: if |A+B|≤K|A|, then |B^{⊕m}−B^{⊕n}|≤K^{m+n}|A|.
+
+#### P2-11 - Lecture 11: Contagious Structure in Projection Theory
+
+[Source video](https://www.youtube.com/watch?v=Uz7aJtbfqkU) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Corrects the previous approximate-subfield expression: denominators cannot simply be multiplied through a cardinality estimate; take a literal bounded-complexity rational expression and clear denominators. Develops contagious structure for small projections/sumsets. Ruzsa transfers smallness through dilations (A−t₁A and A−t₂A small imply A−t₁t₂A small); Plünnecke transfers sums to differences.
+
+#### P2-12 - Lecture 12: The Bourgain-Katz-Tao Projection Theorem
+
+[Source video](https://www.youtube.com/watch?v=aHQxdnufLbg) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Completes arbitrary-set BKT with Balog–Szemerédi–Gowers (BSG). Projection form: if |A|,|B|≤N, X⊂A×B has |X|≥K⁻¹N² and |π_t(X)|≤KN, then find substantial A′⊂A,B′⊂B with X′=X∩(A′×B′) of size ≥K⁻O(1)N² and |A′+tB′|≤K^O(1)N. The restricted small image creates high additive energy by Cauchy–Schwarz; BSG removes unstructured garbage and keeps a large structured rectangle. P-R gives small A′−A′ too. Fix t₁ with A′+t₁B′ small. For any t, choose one pair (a₁,a₂) for each value of a₁−(t/t₁)a₂ in π_{−t/t₁}(A′×A′); map (c,(a,b)) to (a₁−a,a₂+t₁b,a+tb). It is injective into (A′−A′)×(A′+t₁B′)×π_t(X′): from output (u,v,w), recover c=u−(t/t₁)v+w, then the fixed pair (a₁,a₂), then a=a₁−u and b=(w−a)/t (handle t=0 by the trivial coordinate projection). Hence |π_t(X′)|≥(|X′|/N²)|π_{−t/t₁}(A′×A′)|. The transformed direction set retains positive power size, so product-set BKT forces growth.
+
+#### P2-13 - Lecture 13: The Balog-Szemeredi-Gowers Theorem
+
+[Source video](https://www.youtube.com/watch?v=DGBuM5pEdoo) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Develops BSG by representing X as a bipartite graph, counting length-two paths via Cauchy–Schwarz, selecting a neighborhood with few bad pairs, pruning vertices with too many bad partners, then choosing right vertices with enough neighbors among the good pairs. This yields large A′, B′ with many length-three paths between every cross-pair; each path gives a representation a+b=z1−z2+z3 from restricted sums, so |A′+B′|≤|π1(X)|³/P. OCW notes verify BSG theorem hypotheses and constants; captions only, no video-board inspection..
+
+#### P2-14 - Lecture 14: The Bourgain Projection Theorem Part 1 over the Real Numbers
+
+[Source video](https://www.youtube.com/watch?v=0UYCJ0cjG9k) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Recalls finite-field BKT and square-root injectivity baseline; real counterexamples are clustered directions and clustered point sets. States real Bourgain projection theorem under power-law nonconcentration of point set and direction set, in robust form for every sufficiently dense subset. Defines δ-covering numbers, mesh-box counting, and transfer of Ruzsa/Plünnecke/BSG with dimension constants. Explains why finite-field ratio-set growth fails over R (intervals, small denominators, lack of canonical +1 escape, additive subgroups), then introduces clipped ratio set with denominator cutoff and the real order/gap lemma using B/2∪(B+1)/2. Proof of the polynomial expansion is sketched, details omitted; OCW notes checked..
+
+#### P2-15 - Lecture 15: The Bourgain Projection Theorem, Part 2
+
+[Source video](https://www.youtube.com/watch?v=1lql9PGvLG4) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Defines (Δ,m)-uniform sets through level-dependent branching factors constant across all occupied parent cubes. Proves the useful implications: uniform plus lower covering bounds at each dyadic scale implies a δ-scale nonconcentration set; uniform plus δ-nonconcentration propagates the bound to all coarser scales. Proves uniformization for any subadditive set function by bottom-up dyadic pigeonholing branching counts and trimming each parent to a common number of children, losing at most [2d log(1/Δ)]^m. Shows how uniformity repairs the scale mismatch in iteration, but notes that Q(A) need not itself be uniform; source presents a sketch of the bridge. OCW notes checked..
+
+#### P2-16 - Lecture 16: The Bourgain Projection Theorem, Part 3
+
+[Source video](https://www.youtube.com/watch?v=85YISwhp7MQ) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** States robust polynomial expansion: for dense Z⊂A^k, a fixed polynomial image Q(Z) expands, not just Q(A^k). Explains how a dense image subset and BSG/energy extract a structured rectangle; symmetry transfers expansion to dense subsets, then a fiber-weighted subadditive function plus uniformization selects a uniform portion that remains large at each scale. This yields a higher-dimensional nonconcentration subset inside the expanded image and permits finite iteration. Finishes the real BPT proof architecture: normalize three well-separated directions, use repeated BSG reductions, ensure projected coordinate sets themselves are nonconcentrated, and apply robust product-set growth. Lectures/notes explicitly give proof sketches and omit parameter-heavy details; these limitations are recorded, not presented as fully proved in source. OCW notes checked..
+
+#### P2-17 - Lecture 17: Random Walks on Finite Groups, Part 1
+
+[Source video](https://www.youtube.com/watch?v=QVDLMx0Guiw) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Defines convolution random walks on finite groups, shows the singular-value mixing estimate and Cayley expansion inequality, then proves an order-p lower bound on dimensions of nontrivial representations of SL2(Fp). Uses this to bound the nontrivial singular value by Cp²‖μ‖₂² and explains why upper-triangular subgroups are the sharp obstruction scale..
+
+#### P2-18 - Lecture 18: Random Walks on Finite Groups, Part 2
+
+[Source video](https://www.youtube.com/watch?v=_jSFwF8rMdY) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Develops the Sarnak–Xue route to Selberg expansion: lift the walk to SL2(Z), estimate mass in the principal congruence subgroup by counting determinant-one matrices, then convert an L2 bound into a spectral gap. The matrix count uses p² divisibility and gives a p⁻³ density up to divisor losses; the hyperbolic heat-kernel viewpoint makes the random-walk counting step precise. Ends with the Borel-subgroup obstruction and its approximate-subgroup interpretation. The lecture marks the random-walk distribution claim as vague/proof-sketch..
+
+#### P2-19 - Lecture 19: Random Walks on Finite Groups, Part 3
+
+[Source video](https://www.youtube.com/watch?v=bBzcaYNAfcI) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Unpacks Bourgain–Gamburd as two inputs: failure of mixing produces an approximate subgroup by convolution flattening, dyadic level sets, multiplicative energy, and noncommutative Balog–Szemerédi–Gowers; then a Helfgott/Larsen–Pink style classification forces moderately large approximate subgroups in SL2(Fp) to concentrate in a Borel coset. Prime-field sum–product excludes an approximate subfield, yielding spectral gap when the step set avoids Borel-coset concentration. The lecture provides a proof sketch, not complete proofs of the deep inverse/classification inputs..
+
+#### P2-20 - Lecture 20: Homogeneous Dynamics, Part 1
+
+[Source video](https://www.youtube.com/watch?v=rChKr66KG-c) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Introduces homogeneous spaces G/Γ and identifies SL2(R)/SL2(Z) with covolume-one lattices. Contrasts periodic-or-dense unipotent orbits (Hedlund) with more complicated diagonal orbits; computes how diagonal conjugation expands, contracts, and preserves the neutral tangent direction under a right-invariant metric. A long shear is renormalized to a unit shear, and twisting of the compressing direction connects orbit spreading to projection theorems. The cusp invalidates a naive compact-tube proof and corresponds to lattices near periodicity; notes also connect this orbit picture to Oppenheim..
+
+#### P2-21 - Lecture 21: Homogeneous Dynamics, Part 2
+
+[Source video](https://www.youtube.com/watch?v=5QV8Gr1z16E) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Studies twisting of the contracting direction in homogeneous dynamics. A cross-section recurrence models each renormalized orbit segment by near-projections and yields N_{j+1} ≳ δ^{-1}N_j^{1/2}; iterating approaches planar δ^{-2} covering. Sharpness is witnessed by disks. Extends the idea to SL3, where a one-parameter curve of directions can fail if flat (equatorial slab example); curvature and Fourier decoupling address the restricted-direction obstruction. Quantitative orbit-density statements are cited as context, not proved..
+
+#### P2-22 - Lecture 22: Sharp Projection Theorems, Part 1: Introduction and Beck's Theorem.
+
+[Source video](https://www.youtube.com/watch?v=hBG7nMXTOcw) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Sets up the Furstenberg rich-tube problem with E of size δ^{-t}, about δ^{-s} directions through each point, and typical richness r. Incidence counting relates |T| to |E||T_x|/r. The competing star, grid, and random constructions divide parameters into A (s≥t, double counting), C (s+t≥2, Fourier), and B (s<t<2−s, hard). Develops continuum Beck: rectangle nonconcentration forces some x to see at least min(δ^{-u},δ^{-1}) directions. Pigeonholing, direction-set nonconcentration, double counting, an Orponen–Shmerkin epsilon improvement, and scale iteration form the proof architecture; transcript/notes do not supply every technical lemma..
+
+#### P2-23 - Lecture 23: Sharp Projection Theorems, Part 2: AD Regular Case
+
+[Source video](https://www.youtube.com/watch?v=I6ZSrgxiofs) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Defines AD regularity through uniform branching at every scale and proves the key submultiplicative principle conceptually: thicken to a coarse scale, rescale each occupied coarse ball, and multiply coarse and fine richness. AD regularity is what makes every selected local pattern admissible. A projective reduction makes directions common across base points. Near equality forces product-like structure inside a tube; asymmetric BSG and Plünnecke–Ruzsa lead to the real ABC sum-product theorem and an epsilon improvement. The lecture explicitly leaves the full structured-set and spacing-case derivation to research papers..
+
+#### P2-24 - Lecture 24: Sharp Projection Theorems, Part 3: Combining Different Scales
+
+[Source video](https://www.youtube.com/watch?v=h0Ln82BR4R0) · Full transcript reviewed; YouTube original English captions (en-orig); timestamped transcript.
+
+**Topics used:** Completes the course proof outline. For well-spaced E of N δ-balls, the GSW rich-tube bound is |T_R(E)| ≲_ε δ^{-ε}N²/R³ once R exceeds the random-tube baseline δN by a power; Fourier analysis handles the baseline, thickening to ρN≈R handles larger R, and a two-ends double count removes fat-tube multiplicity. Then defines the branching function f(x)=log_{1/δ}|E_{δ^x}|_{δ^x}, increasing, t-Lipschitz-below and 2-Lipschitz-above. AD regularity is linear slope; semi-well-spaced graphs are above a broken profile of slopes 2−s and s. Scale cutting concatenates coarse and fine problems. Rademacher differentiation plus the semi-well-spaced alternative partitions the hard range into controllable pieces. The final decomposition and some deep theorem proofs remain outlined, not derived in full..
+
+### Computer Graphics, Fall 2009
+
+[Playlist](https://www.youtube.com/playlist?list=PL_w_qWAQZtAZhtzPI5pkAtcUVgmzdAP8g)
+
+#### P3-01 - Introduction to Computer Graphics
+
+[Source video](https://www.youtube.com/watch?v=01YSK5gIEYQ) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** UC Davis ECS 175 / instructor Ken Joy; Course purpose: 3D graphics, math, optics, programming; API-level development and visual iteration.
+
+#### P3-02 - Curves in the Plane
+
+[Source video](https://www.youtube.com/watch?v=0NbD-c0Ctdk) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Why interpolation can oscillate; Control polygons and design curves; Chaikin quarter/three-quarter corner cutting.
+
+#### P3-03 - Moving Objects in Space
+
+[Source video](https://www.youtube.com/watch?v=wArGifkRD2A) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** 2D/3D local frames and basis vectors; Coordinates relative to origin and basis; Homogeneous row-vector convention.
+
+#### P3-04 - Rotations About an Arbitrary Axis
+
+[Source video](https://www.youtube.com/watch?v=gRVxv8kWl0Q) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** MVC and software design patterns; Qt signals/slots and generated moc code; Model owns curve data/draw routines.
+
+#### P3-05 - The Camera Transform
+
+[Source video](https://www.youtube.com/watch?v=mpTl003EXCY) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Separates camera pose/orientation from frustum-to-canonical-cube projection. Pinhole model; perspective comes from homogeneous W proportional to camera depth and divide by W.; Camera inputs: eye, viewing direction/center of attention, advisory up vector, field angle, near and far. Move eye to origin and orient axes so camera looks down negative Z; then map the truncated viewing pyramid to image-space cube.; Derives row-vector projection with W=-Z; uses near/far boundary constraints to map near to +1 and far to -1 in the course convention. Includes vertical top edge n tan(alpha/2), field angle, projection, depth clipping, screen mapping..
+
+#### P3-06 - Clipping
+
+[Source video](https://www.youtube.com/watch?v=og7hOFypKpQ) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Reviews camera pose and center-of-attention versus direction vector, then motivates camera basis from viewing direction and up; up is advisory and the computed basis must be orthogonal.; Explains transform order, camera matrix C followed by viewing/projection matrix V under row vectors, divide by W, image space and negative-W points behind camera. Matrix order mismatch can produce blank output.; Defines plane by point P and normal n; signed test d=n·(Q−P) classifies inside/outside/on-plane once normal orientation is chosen. Derives plane equation form ax+by+cz−d=0..
+
+#### P3-07 - Depth Buffers and Ray Tracing
+
+[Source video](https://www.youtube.com/watch?v=Xks1v4GNUiY) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Revisits signed-distance clipping and why canonical/image-space plane normals allow cheap component/sign tests; clipping may be delayed in homogeneous coordinates, with caveat that behind-camera points must be rejected.; Depth-buffer mechanics: one depth value per pixel alongside color; rasterize each polygon, compare its interpolated depth to stored depth, write color and depth only when it wins. Source uses larger image-space z as nearer and initializes to a very negative value; mapping and comparison must be changed consistently in other conventions.; Shows why depth buffering handles interpenetrating surfaces more robustly than a global sort; highly parallel per-pixel test. Transparency requires additional ordering/blending treatment; shadows are a second visibility question relative to lights..
+
+#### P3-08 - Color and Shading
+
+[Source video](https://www.youtube.com/watch?v=TEjDYtkLRdQ) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Uses object-oriented scene construction as a model: objects/classes have draw and transform behavior; classes compose into rooms/scenes. Reiterates the course assignment distinction between a manually constructed camera/view transform and GLU viewing calls in image space.; Motivates shading as light transport; physical light bounces recursively. RGB samples continuous spectra into three channels; 8-bit RGB gives 24 bits/channel combination space. RGB is additive, CMY is subtractive; HLS/HSV-like models aid human color selection. The speaker conflates HLS value and saturation; draft corrects that.; Point-light simplification; constant ambient term approximates indirect room illumination. Diffuse/Lambert term scales by max(0,N·L), with unit normal and light direction; grazing light approaches zero and aligned light is maximal. Material base/diffuse color controls channel response..
+
+#### P3-09 - Quaternions
+
+[Source video](https://www.youtube.com/watch?v=mHVwd8gYLnI) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Motivates noncommuting rotations with an order-sensitive 90° x/y example and connection to Euler-angle gimbal lock.; Builds quaternion algebra as scalar a plus vector v. Addition is componentwise; product scalar is a1a2−v1·v2 and vector is a1v2+a2v1+v1×v2. Conjugate (a,−v), norm sqrt(a²+|v|²), inverse conjugate divided by norm squared; noncommutativity comes from cross product.; Unit quaternion axis/angle rotation, closure under product, composition into one orientation, conversion to 4×4 matrix for rendering. Transcript uses ambiguous/full-angle language; mathematically correct rotation encoding uses half-angle q=(cos(theta/2),u sin(theta/2)) and q p q* for pure-vector p..
+
+#### P3-10 - Shading and Texturing
+
+[Source video](https://www.youtube.com/watch?v=Is6D5rnWEvs) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Recasts the ambient/diffuse/specular shading equation and connects each coefficient to a material/light response.; Explains flat shading (one face normal/result), Gouraud shading (compute colors at vertices, interpolate colors), and Phong shading (interpolate normals, evaluate lighting per fragment). Small specular peaks can be missed by Gouraud; Phong captures them more reliably at greater cost.; Introduces micropolygons about half a pixel as a strategy for detailed shading/textures and surface variation..
+
+#### P3-11 - The Hierarchical Modeling System
+
+[Source video](https://www.youtube.com/watch?v=D8ZYHXom0qk) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Course assignment discussion emphasizes repeated furniture and components, camera controls, near clipping, and reuse of one model with transforms. These are supporting context, not required tasks.; Demonstrates an editable command-file modeling system (called Midas by the speaker): define polygons, transform in place, create transformed copies, extrude a polygon into side faces, assemble components. Shows unit square faces translated/rotated into a cube, then repeated/assembled into a 3×3×3 arrangement.; Explains the component structure as a directed graph/tree: leaf nodes hold low-level polygons, higher nodes apply transforms and assemble children. Shared repeated geometry is instanced by transform rather than duplicated by hand..
+
+#### P3-12 - Scan Conversion
+
+[Source video](https://www.youtube.com/watch?v=23HEwdcphg4) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Defines scan conversion/rasterization as identifying pixel samples covered by a polygon in device space after image-space mapping. Historic scan-line/CRT explanation motivates processing horizontal rows.; Maps NDC square to an Nx×Ny device grid while depth and attributes accompany geometry. Uses a chosen pixel corner as sample location in the lecture; real raster fill rules need consistent shared-edge handling.; Splits polygons at vertex y-levels into trapezoid-like bands so each band can be scanned with two active edge trackers; triangles are a special case. Horizontal/degenerate edges require careful handling..
+
+#### P3-13 - Curves and Surfaces
+
+[Source video](https://www.youtube.com/watch?v=FTg1DUr7bhY) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Contrasts corner-cutting/subdivision curves with endpoint-interpolating cubic Bezier curves; de Casteljau subdivision gives a stable split and points converge to curve.; Bezier convex-hull and variation-diminishing properties; tangent endpoint formulas and smooth joins: G1 collinearity, C1 equal tangent vectors; higher derivative continuity imposes more constraints.; Introduces B-spline/NURBS curve construction: local degree/order, knot sequence, uniform vs nonuniform, endpoint multiplicity/clamping. NURBS are piecewise polynomial/rational curves; transcript calls them “Beast blind” via ASR..
+
+#### P3-14 - Visible Surface Algorithms
+
+[Source video](https://www.youtube.com/watch?v=hmlWFi1TdbI) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Surveys five visible-surface algorithm families: depth buffer, scanline, ray tracing, painter/BSP ordering, and Warnock recursive image subdivision. Lecture says depth buffer/ray tracing are dominant general methods; painter returned in games; Warnock’s spatial subdivision is useful in parallel systems; scanline has niche/hybrid use.; Develops painter’s algorithm: sort and draw back-to-front so later polygons overwrite earlier pixels. Cyclic/intersecting geometry prevents a global order; split/clip polygons to resolve. BSP stores splitting polygon planes, splits crossing polygons, and traverses near/far subtrees in camera-dependent order.; BSP drawbacks: skewed trees can degrade toward quadratic construction/search; grouped/ordered scene geometry yields imbalance; splitting creates many tiny fragments. Bounding boxes and randomized splitters are discussed as practical help. Stored partition can support changing viewpoints through reversed traversal order..
+
+#### P3-15 - Ray Tracing
+
+[Source video](https://www.youtube.com/watch?v=Ahp6LDQnK4Y) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Ray model: one primary ray per pixel through a camera plane, intersect scene primitives, retain nearest positive hit and shade it. Naive cost O(pixels×objects); numeric 1M×1K ≈ 1B tests. Ray tracing avoids view/image-space projection pipeline for primary visibility.; Sphere intersection by projecting center-to-ray-origin vector along unit ray and checking perpendicular distance against radius; two roots on hit, tangent special case. Plane intersection derives t from dot products; denominator N·D=0 is parallel/coplanar edge case. Polygon membership via barycentric coordinates, half-space clipping, or odd/even crossing.; Explains Turner Whitted’s recursive illumination idea: shadow rays toward lights, reflection rays, and refracted rays; closest hit decides visibility. Suppress direct diffuse/specular when shadowed while retaining the course ambient approximation; add weighted reflected/refracted radiance recursively..
+
+#### P3-16 - Subdivision Surfaces Part 1
+
+[Source video](https://www.youtube.com/watch?v=9uscFr2Hht0) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Explains why corner-cutting curves have limits (parabolic pieces, no exact circle) and extends them to regular grids by applying 1/4–3/4 along u then v, creating nested quad meshes and biquadratic-by-biquadratic limit patches.; Derives bilinear interpolation over a four-corner cell: P(u,v)=(1−u)(1−v)P00+u(1−v)P10+(1−u)vP01+uvP11. Values at quarter parameters recover child points; coefficients sum to one, preserving affine combinations.; Generalizes the intuitive construction to irregular polygon meshes with face averages/radial edge points, producing smaller face polygons, edge quads, and vertex polygons. Extraordinary vertices retain original valence; ordinary regions become quads and locally look like regular subdivision patches. Identifies Doo–Sabin; exact canonical masks are more specific than this transcript’s sketch..
+
+#### P3-17 - Subdivision Surfaces Part 2
+
+[Source video](https://www.youtube.com/watch?v=THiF7-QxKXk) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Finishes Catmull–Clark subdivision on arbitrary polygon meshes. Computes face points as face-vertex averages, interior edge points as averages of the two endpoint vertices and the adjacent face points, and updated vertex points from local face/edge neighborhoods plus a valence-dependent original-vertex weight. Each pass can be scheduled in three passes (faces, edges, vertices).; Clarifies why extraordinary vertex valence changes local limit behavior; changing the weight can create spikes or alter smoothness, so the mask is mathematical, not an arbitrary artistic constant. Transcript gestures at C=3/n, but does not fully state standard generalized mask.; Builds a sphere mesh by subdividing icosahedron triangles four ways and projecting new midpoints radially onto a sphere. Triangle count quadruples exactly per refinement (20→80→320→1280); transcript’s “1,200” is approximate/ASR or arithmetic error..
+
+#### P3-18 - Shadows Part 1
+
+[Source video](https://www.youtube.com/watch?v=kmdRmXuOjIY) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Contrasts ground-plane projected shadows, shadow volumes and depth-buffer shadows; lecture covers the first two and previews depth-map comparison. Ground-plane projection is a simple game-friendly trick but only projects onto a planar receiver.; Derives line-light-to-surface projection onto a plane using a plane point/normal and a ray from light through each object point. Solve a ratio of dot products; parallel ray/plane denominator zero means no unique hit. Offset projected polygon slightly to avoid depth-buffer z-fighting.; Shadow becomes a separately rendered dark, ambient-only polygon. Complexity can approach one extra projected polygon per source polygon; texture/fuzzy edge or projected ellipse can cheaply suggest a soft contact shadow but loses actual shape detail..
+
+#### P3-19 - Shadows Part 2
+
+[Source video](https://www.youtube.com/watch?v=qiJhB0fOY6I) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Develops depth-buffer shadow mapping as visibility from the light: render a depth map per light, then render from the eye and determine whether each visible point is in front of or behind the closest depth stored from the light. Multiple lights generally require separate maps.; The 2009 lecture derives reprojection between eye and light image spaces with camera/view 4x4 transforms, inverse transforms and homogeneous coordinates. Retaining clip-space W matters: divide by W and it is lost, so a point must be reconstructed/transformed before perspective division. This is the lecture’s matrix-heavy route to the same light-space depth comparison used by practical shadow maps.; At a mapped sample, compare current light-space depth with stored light depth. If sample depth is farther, another surface blocks the light. A projected point rarely hits a texel center; treating one sample as decisive makes jagged/aliased shadow boundaries..
+
+#### P3-20 - Camera Motion
+
+[Source video](https://www.youtube.com/watch?v=HAJv25Afsz8) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Introduces Catmull–Rom interpolating splines for camera paths: specified waypoints lie on the path, unlike a Bezier control polygon. Continuity levels C0 (positions), C1 (first derivative/tangent), C2 (second derivative/curvature behavior) matter perceptually for camera motion.; Rejects global Lagrange interpolation for local path editing: a small waypoint perturbation can cause large oscillation elsewhere. A cubic Hermite/Ferguson segment is determined by endpoints and endpoint tangents; its four constraints solve four cubic coefficients or a 4×4 matrix. Hermite and Bezier are convertible cubic bases.; Catmull–Rom sets each interior waypoint tangent from neighboring points, typically half the difference between previous and next waypoint (uniform parameterization). That makes adjacent segment tangents agree, giving C1 continuity. Endpoints need phantom points/one-sided tangents or an assumed second derivative; different endpoint choices change path behavior..
+
+#### P3-21 - Branches in Computer Graphics
+
+[Source video](https://www.youtube.com/watch?v=NEIJW3ZJ1GE) · Full transcript reviewed; YouTube original English captions (en-orig.vtt); normalized 30-second transcript.
+
+**Topics used:** Ends with a course-level map of the larger graphics field, separating interactive/pipeline graphics from scientific visualization, VR, graphics hardware, animation, geometric design, and image-based reconstruction.; Describes SIGGRAPH’s role as a large professional conference and a source of specialist communities/conferences; listed branches include interactive 3D/games (I3D), scientific visualization, VR, animation, CAD/CAGD/curves and surfaces, solid modeling, digital photography, parallel visualization, and graphics hardware. Attendance, paper acceptance and conference history numbers are lecture recollections, not independently verified/current statistics.; Connects mobile devices’ integrated GPUs to interactive rendering and augmented reality: camera/image input can be linked with contextual data or virtual content. Notes device memory constraints. Examples and timelines are 2009 forecasts, not current product claims..
+
+### Stanford CS231N Deep Learning for Computer Vision I 2025
+
+[Playlist](https://www.youtube.com/playlist?list=PLoROMvodv4rOmsNzYBMe0gJY2XS8AQg16)
+
+#### SC-01 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 1: Introduction
+
+[Source video](https://www.youtube.com/watch?v=2fq9wYslV0A) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** Learning to see: from pixels to trainable vision models; 1. What a computer vision system has to learn.
+
+#### SC-02 - Stanford CS231N Spring 2025 Lecture 2: Image Classification with Linear Classifiers
+
+[Source video](https://www.youtube.com/watch?v=pdqofxJeBN8) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 2. Classification begins with a representation; 3. Nearest neighbors: remember first, compare at prediction time; x_train: (N, D); y_train: (N,); x: (D,).
+
+#### SC-03 - Stanford CS231N Spring 2025 Lecture 3: Regularization and Optimization
+
+[Source video](https://www.youtube.com/watch?v=dyNGd06MWn4) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** Stanford CS231N | Spring 2025 | Lecture 3: Regularization and Optimization.
+
+#### SC-04 - Stanford CS231N Spring 2025 Lecture 4: Neural Networks and Backpropagation
+
+[Source video](https://www.youtube.com/watch?v=25zD5qJHYsk) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 2. Classification begins with a representation; 3. Nearest neighbors: remember first, compare at prediction time; x_train: (N, D); y_train: (N,); x: (D,).
+
+#### SC-05 - Stanford CS231N Spring 2025 Lecture 5: Image Classification with CNNs
+
+[Source video](https://www.youtube.com/watch?v=f3g1zGdxptI) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 10. Convolutions keep image neighborhoods intact; 11. Pooling downsamples feature maps; 12. Translation equivariance is a useful design property.
+
+#### SC-06 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 6: CNN Architectures
+
+[Source video](https://www.youtube.com/watch?v=aVJy4O5TOk8) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 13. CNN layers need stable signals and enough variation; 14. Activations make the network nonlinear; 15. Architectural patterns: VGG and residual connections.
+
+#### SC-07 - Stanford CS231N Spring 2025 Lecture 7: Recurrent Neural Networks
+
+[Source video](https://www.youtube.com/watch?v=kG2lAPBF7zA) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 19. Recurrent networks carry a state through a sequence; 20. Backpropagation through time shares gradients across steps; 21. Sequence models inherit the biases in their data.
+
+#### SC-08 - Stanford CS231N Spring 2025 Lecture 8: Attention and Transformers
+
+[Source video](https://www.youtube.com/watch?v=RQowiOF_FvQ) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 22. Attention lets each output retrieve relevant input; 23. Scaled dot-product attention and its dimensions; 24. Queries, keys, values, and two attention patterns.
+
+#### SC-09 - Stanford CS231N Spring 2025 Lecture 9: Object Detection, Image Segmentation, Visualizing
+
+[Source video](https://www.youtube.com/watch?v=PTypu6GqEd4) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 27. Dense prediction: give an answer at every pixel; 28. Encoder-decoder shape recovery and U-Net skips; 29. Detection: locate each object as well as name it.
+
+#### SC-10 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 10: Video Understanding
+
+[Source video](https://www.youtube.com/watch?v=wElqklprhPE) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 32. Video adds time, cost, and motion; 33. Three ways to fuse video frames; 34. Motion streams, recurrent models, and attention.
+
+#### SC-11 - Stanford CS231N Spring 2025 Lecture 11: Large Scale Distributed Training
+
+[Source video](https://www.youtube.com/watch?v=9MvD-XsowsE) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 36. Large-model training is a communication problem too; 37. Data parallelism averages gradients across replicas; 38. Sharding model state trades memory for communication.
+
+#### SC-12 - Stanford CS231N Spring 2025 Lecture 12: Self-Supervised Learning
+
+[Source video](https://www.youtube.com/watch?v=4howBU7THbM) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 42. Self-supervision creates training targets from the data; 43. Transformation and reconstruction pretext tasks; 44. Masked autoencoders predict hidden patches.
+
+#### SC-13 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 13: Generative Models 1
+
+[Source video](https://www.youtube.com/watch?v=zbHXQRUNlH0) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 47. Generative models represent possible outputs; 48. Likelihood and autoregressive factorization; 49. Autoencoders and latent variables.
+
+#### SC-14 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 14: Generative Models 2
+
+[Source video](https://www.youtube.com/watch?v=Edr4uZFh4EE) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 50. GANs learn by competing; 51. Rectified flow turns sampling into an integration problem; 52. Conditioning and classifier-free guidance.
+
+#### SC-15 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 15: 3D Vision
+
+[Source video](https://www.youtube.com/watch?v=7lxrKDKtykM) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 55. 3D vision begins with representation choices; 56. 3D data and tasks set the learning problem; 57. Learning on grids, sets, and surfaces.
+
+#### SC-16 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 16: Vision and Language
+
+[Source video](https://www.youtube.com/watch?v=mQOK0Mfyrkk) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 61. Foundation models and adaptation; 62. CLIP: align images with their descriptions; 63. Add captioning and spatial features to vision-language models.
+
+#### SC-17 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 17: Robot Learning
+
+[Source video](https://www.youtube.com/watch?v=XSfmOH_xVSU) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 68. Robot learning is a feedback problem; 69. Perception must support action; 70. Reinforcement learning: learn from outcomes.
+
+#### SC-18 - Stanford CS231N Deep Learning for Computer Vision Spring 2025 Lecture 18: Human-Centered AI
+
+[Source video](https://www.youtube.com/watch?v=g8UaBfj6Sh8) · Full transcript reviewed; YouTube original English captions (en-orig); normalized 30-second buckets.
+
+**Topics used:** 74. Human vision shaped computer vision's early goals; 75. AI can see more detail—and humans have limits; 76. AI that helps people see and act.
+
+### Research papers and current-topic orientation
+
+#### R-02 - NeRF: Representing Scenes as Neural Radiance Fields for View Synthesis
+
+[Primary paper PDF](https://arxiv.org/pdf/2003.08934)
+
+PDF pp. 1–25 (complete paper and appendices A–D; references excluded) fully reviewed: complete substantive body and technical appendices where present Equation review: Volume-rendering integral, discrete alpha/transmittance weights, positional encoding, coarse/fine sampling, and NDC derivation checked in extracted primary PDF text; no raster page check. Related video boundary: Promotional demonstration of later Instant NeRF, not original NeRF experiments or their technical derivation. Caption status: Full en-orig automatic transcript read; it contains only brief nontechnical speech (“so,” “you”) plus music/applause. This is a 43-second promotional demo, not a technical lecture.
+
+#### R-03 - Instant Neural Graphics Primitives with a Multiresolution Hash Encoding
+
+[Primary paper PDF](https://nvlabs.github.io/instant-ngp/assets/mueller2022instant.pdf)
+
+PDF pp. 1–15 (complete paper and appendices A–E; references excluded) fully reviewed: complete substantive body and technical appendices where present Equation review: Multiresolution schedule, hash lookup, interpolation, smoothstep, SDF/ray-marching formulas checked in extracted primary PDF text; no raster page check. Caption status: Full en-orig automatic transcript read; it contains only brief nontechnical speech (“so,” “you”) plus music/applause. This is a 43-second promotional demo, not a technical lecture.
+
+#### R-04 - 3D Gaussian Splatting for Real-Time Radiance Field Rendering
+
+[Primary paper PDF](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/3d_gaussian_splatting_low.pdf)
+
+PDF pp. 1–14 (complete paper and appendices A–D; references excluded) fully reviewed: complete substantive body and technical appendices where present Equation review: Gaussian density/covariance, projected covariance, alpha compositing and optimization loss checked in extracted primary PDF text; no raster page check. Caption status: Full en-orig automatic transcript read; sparse overview of initialization, anisotropic splats, optimization, test claims, and ablation. Detailed method and results are taken from the paper, not inferred from this brief presentation.
+
+#### R-05 - 2D Gaussian Splatting for Geometrically Accurate Radiance Fields
+
+[Primary paper PDF](https://arxiv.org/pdf/2403.17888)
+
+PDF pp. 1–13 (complete body and supplemental appendices A–D; references excluded) fully reviewed: complete substantive body and supplemental appendices A–D Equation review: 2D Gaussian plane parameterization, projective ray-splat intersection, depth-distortion and normal-consistency losses, median/expected depth, and single-pass distortion recurrence checked in extracted primary PDF text; no raster page check. Caption status: Full en-orig automatic transcript read; presentation covers planar splats, ray intersections, filtering, geometry regularizers, and mesh extraction. Captions are imperfect; formal details are sourced to the paper.
+
+#### R-06 - Spatiotemporal Reservoir Resampling for Real-Time Ray Tracing with Dynamic Direct Lighting
+
+[Primary paper PDF](https://benedikt-bitterli.me/restir/bitterli20restir.pdf)
+
+PDF pp. 1–17 (complete paper and appendices A–B; references excluded) fully reviewed: complete substantive body, limitations, and appendices A–B Equation review: Direct-light integral, MIS/RIS estimators, weighted reservoir update, reservoir reuse weights, mixed-PDF expected-weight derivation, unbiased balance-heuristic correction, and WIS/RIS appendix relation checked in extracted primary PDF text; no raster page check. Caption status: no directly related source video identified in the supplied inventory
+
+#### R-08 - Incremental Potential Contact: Intersection- and Inversion-free, Large-Deformation Dynamics
+
+[Primary paper PDF](https://ipc-sim.github.io/file/IPC-paper-350ppi.pdf)
+
+PDF pp. 1–20 (complete paper body and conclusion; references excluded) fully reviewed: complete substantive body, contact/friction/distance methods, evaluations, comparisons and conclusion Equation review: Admissible trajectory and epsilon-complementarity definitions, clamped log barrier, Newton barrier Hessian, implicit momentum balance/contact force, smoothed lagged friction potential, point-triangle/edge-edge distances and parallel-edge mollifier checked in extracted primary PDF text; no raster page check. Caption status: no caption track; 160-second supplemental video awaiting parent frame inspection
+
+#### R-09 - As-Rigid-As-Possible Surface Modeling
+
+[Primary paper PDF](https://igl.ethz.ch/projects/ARAP/arap_web.pdf)
+
+PDF pp. 1–8 (complete paper body and conclusion; references excluded) fully reviewed: complete paper body and conclusion; references excluded Equation review: Per-cell weighted rigidity energy, covariance/SVD optimal rotation, cotangent weights, and alternating sparse Laplacian position solve checked in extracted primary PDF text; no raster page check. Caption status: no caption track; 210-second ARAP demo awaiting parent frame inspection
+
+#### R-10 - Instant Field-Aligned Meshes
+
+[Primary paper PDF](https://igl.ethz.ch/projects/instant-meshes/instant-meshes-SA-2015-jakob-et-al-compressed.pdf)
+
+PDF pp. 1–15 (complete body and conclusion; references excluded) fully reviewed: complete substantive paper and conclusion; references excluded Equation review: Local Gauss–Seidel smoothing, symmetry-aware N-RoSy orientation, integer translation position field, local symmetry search, and weighted extraction equations checked in extracted primary PDF text; no raster page check. Caption status: Full en-orig automatic transcript read; overview of orientation/position fields, feature alignment, interactive tools, point clouds, and a large remeshing demo claim. Detailed evidence is sourced to the paper.
+
+#### R-01 - Rendering Synthetic Objects into Real Scenes: Bridging Traditional and Image-based Graphics with Global Illumination and High Dynamic Range Photography
+
+[Primary paper PDF](https://www.pauldebevec.com/Research/IBL/debevec-siggraph98.pdf)
+
+PDF pp. 1–10 (complete paper; no technical appendix) fully reviewed: complete substantive body and technical appendices where present Equation review: Differential compositing and Lambertian reflectance-update equations in the extracted primary PDF text; glyphs readable; no raster page check. Caption status: no related caption track
+
+#### R-07 - Mitsuba 2: A Retargetable Forward and Inverse Renderer
+
+[Primary paper PDF](https://rgl.s3.eu-central-1.amazonaws.com/media/papers/NimierDavidVicini2019Mitsuba2_7.pdf)
+
+PDF pp. 1–16 (complete body, system design, applications and limitations; references excluded) fully reviewed: complete substantive body and conclusion; references excluded Equation review: Differentiable change-of-variables equations, gradient-index Eikonal ODE, radiative transfer equation and its transmittance definition checked in extracted primary PDF text; no raster page check. Caption status: no directly related source video identified in the supplied inventory
+
+#### R-11 - 3DGUT: Enabling Distorted Cameras and Secondary Rays in Gaussian Splatting
+
+[Primary paper PDF](https://research.nvidia.com/labs/toronto-ai/3DGUT/res/3DGUT_full_resolution.pdf)
+
+PDF pp. 1–13 (main paper and supplemental appendices A–F; references pp. 14–15 excluded) fully reviewed: complete paper body and supplemental appendices A–F; references excluded Equation review: 3D Gaussian/EWA projection, unscented sigma-point and moment weights, maximum-response ray parameter, generalized Gaussian kernel, projection KL tests and Waymo objective checked in extracted primary PDF text; no raster page check. Caption status: no directly related source video identified in the supplied inventory; unavailable NeRF talk is not counted
+
+#### R-12 - ReSTIR-LOD: Level-of-Detail Reservoir Resampling for Efficient Global Illumination
+
+[Primary paper PDF](https://research.nvidia.com/labs/rtr/publication/wang2026levelOfDetail/wang2026levelOfDetail.pdf)
+
+PDF pp. 1–8 (complete paper body and discussion/conclusion; references excluded) fully reviewed: complete substantive paper and discussion/conclusion; references excluded Equation review: RIS/GRIS resampling weights and unbiased contribution weights, partial-bijection UV vertex map, world-space greedy matching, and surface-area Jacobian ratio checked in extracted primary PDF text; no raster page check. Caption status: no directly related source video identified in the supplied inventory
+
+#### R-13 - What is next in computer graphics - SIGGRAPH 2026 research orientation
+
+[Orientation video](https://www.youtube.com/watch?v=sIcGH3M5yPc)
+
+This SIGGRAPH 2026 trailer is orientation only; its brief mentions are not technical evidence for the papers.
+
+### Auxiliary video evidence: eight unique available videos
+
+There are 12 technical paper studies and eight unique available auxiliary videos. Five available clips have full automatic-caption tracks reviewed; three captionless demos were visually sampled at 16 distributed frames each. R-13 is the SIGGRAPH orientation trailer and is listed once in the source catalog and once here only for status accounting. The 43-second Instant NeRF promotional clip is linked to the NeRF paper as a boundary note but is counted once as one video. The attempted NeRF technical talk `LRAqeM8EjOo` was unavailable and is not included in the eight. Caption review does not mean soundtrack or every visual frame was inspected.
+
+| Video ID | Title | Evidence reviewed | Boundary |
+|---|---|---|---|
+| [R4a7ZCF6_t4](https://www.youtube.com/watch?v=R4a7ZCF6_t4) | 1998 Rendering With Natural Light by Paul Debevec | No captions; 16 distributed visual samples reviewed over 95 s. | Images show environment-lighting examples; visual samples do not prove quantitative agreement. Title and credits confirmed; sampled frames show reflective and translucent colored spheres on sculptural supports in a sunlit courtyard. Reflections and shadows motivate measured illumination; no quantitative physical agreement is inferred from images. |
+| [DJ2hcC1orc4](https://www.youtube.com/watch?v=DJ2hcC1orc4) | NVIDIA Instant NeRF: NVIDIA Research Turns 2D Photos Into 3D Scenes in the Blink of an AI | Full en-orig automatic-caption track reviewed; 43 s. | Promotional Instant NeRF clip; transcript contains only brief nontechnical speech, music and applause; not a NeRF lecture. |
+| [T_kXY43VZnk](https://www.youtube.com/watch?v=T_kXY43VZnk) | 3D Gaussian Splatting for Real-Time Radiance Field Rendering | Full en-orig automatic-caption track reviewed; ~5 min. | Short 3DGS overview; performance claims belong to the presentation setup, not an independent test. |
+| [oaHCtB6yiKU](https://www.youtube.com/watch?v=oaHCtB6yiKU) | 2D Gaussian Splatting for Geometrically Accurate Radiance Fields | Full en-orig automatic-caption track reviewed; ~6:40. | 2DGS overview; imperfect captions; paper supplies formal definitions. |
+| [sX5qQEDvHVU](https://www.youtube.com/watch?v=sX5qQEDvHVU) | [SIGGRAPH 2020] Incremental Potential Contact (IPC) - Supplemental | No captions; 16 distributed visual samples reviewed over 160 s. | Supplemental IPC examples; sampled images do not prove absence of every collision. Title confirmed IPC intersection/inversion-free large-deformation dynamics. Samples show deforming shapes and thin structures, slow-motion and zoom views, falling objects and a contact scene. Tiny timing labels are not used as measurements. Samples do not independently establish absence of every collision. |
+| [ltX-qUjbkdc](https://www.youtube.com/watch?v=ltX-qUjbkdc) | As-Rigid-As-Possible Surface Modeling | No captions; 16 distributed visual samples reviewed over 210 s. | ARAP deformation examples; samples do not establish global rigidity or convergence. Title and Sorkine/Alexa authors confirmed. Samples show a bent triangulated strip, handle-driven creature/limb deformation, cactus examples, stretched surfaces and relief detail. Samples support the demonstration description, not a global rigidity or convergence guarantee. |
+| [U6wtw6W4x3I](https://www.youtube.com/watch?v=U6wtw6W4x3I) | Instant Field Aligned Meshes (SIGGRAPH ASIA 2015) | Full en-orig automatic-caption track reviewed; ~3:30. | InstantMeshes overview; large-model runtime is a reported demo claim. |
+| [sIcGH3M5yPc](https://www.youtube.com/watch?v=sIcGH3M5yPc) | What’s Next in Computer Graphics? \| SIGGRAPH 2026 Technical Papers | Full en-orig automatic-caption track reviewed; ~4:36. | SIGGRAPH 2026 orientation trailer; not technical evidence for a specific paper. |
+
+

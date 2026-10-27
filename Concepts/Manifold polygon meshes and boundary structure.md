@@ -24,6 +24,8 @@ A polygon mesh is a combinatorial surface made of vertices, edges, and faces plu
 - [[Quadric error mesh simplification]]
 - [[Bounding volume hierarchies]]
 
+- [[Collision barriers and continuous detection]]
+- [[Local rigidity and mesh orientation fields]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Surfaces, patches, topology, and parameterization|Surfaces, patches, topology, and parameterization]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Meshes, connectivity, and geometry processing|Meshes, connectivity, and geometry processing]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Surface descriptions and Gaussian images|Surface descriptions and Gaussian images]]

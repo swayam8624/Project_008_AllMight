@@ -24,6 +24,7 @@ Fourier coordinates encode frequency magnitude and phase; phase places structure
 - [[PSF OTF and MTF]]
 - [[Perceptual metrics and display calibration]]
 
+- [[Exceptional projections and dimension]]
 ## Recall and next depth
 
 Recover the two tested sinusoid amplitudes and explain leakage. Pending: FFT implementations, windows and finite-boundary estimates. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

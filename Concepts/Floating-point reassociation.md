@@ -22,6 +22,7 @@ Changing grouping moves rounding points. With binary32 1e20,−1e20,3.14, groupi
 
 - [[Compensated and pairwise summation]] — uses this mechanism to establish its numerical contract.
 
+- [[Automatic differentiation and backpropagation]]
 ## Recall and next depth
 
 Reconstruct the definition's example and name the assumptions that make it valid.

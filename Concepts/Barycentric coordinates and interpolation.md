@@ -26,6 +26,7 @@ The panel sensor $(1,1,0)$ has weights $(5/12,1/4,1/3)$ and corner temperatures 
 - [[Ray-triangle intersection]]
 - [[Stereo correspondence and epipolar geometry]]
 
+- [[Homogeneous clipping and perspective interpolation]]
 ## Recall and next depth
 
 Derive signed-area ratios; distinguish affine attribute interpolation from perspective-correct screen interpolation. Full production proofs, target-specific integration and learner mastery require further evidence.

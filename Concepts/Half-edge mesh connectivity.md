@@ -23,6 +23,7 @@ A half-edge data structure stores each undirected edge as two opposite directed 
 - [[Subdivision surface masks]]
 - [[Quadric error mesh simplification]]
 
+- [[Local rigidity and mesh orientation fields]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Meshes, connectivity, and geometry processing|Meshes, connectivity, and geometry processing]]

@@ -23,6 +23,7 @@ MSE/PSNR describe numerical differences under a declared domain; SSIM adds struc
 
 - [[Research validity and ablation]]
 
+- [[Contrastive vision and image-language alignment]]
 ## Recall and next depth
 
 Create equal-MSE errors with different structure and explain a ranking change. Pending: metric implementation and targeted validation datasets. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

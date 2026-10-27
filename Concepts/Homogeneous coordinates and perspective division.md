@@ -27,6 +27,7 @@ Later curriculum sources can deepen this same node; no future coverage is marked
 - [[Ray-triangle intersection]]
 - [[Camera calibration and bundle adjustment]]
 
+- [[Homogeneous clipping and perspective interpolation]]
 ## Recall and next depth
 
 Explain why perspective division is nonlinear and why clipping must precede casual division. Full production proofs, target-specific integration and learner mastery require further evidence.

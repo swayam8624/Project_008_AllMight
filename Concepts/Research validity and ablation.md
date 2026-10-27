@@ -22,6 +22,11 @@ Ablation isolates a method component; reference choice, confounds and uncertaint
 
 Later independent XR sources will extend this same node.
 
+- [[Attention and visual transformers]]
+- [[Contrastive vision and image-language alignment]]
+- [[Latent-variable models and generative flows]]
+- [[Learned image features and CNNs]]
+- [[Perception feedback and robot learning]]
 ## Recall and next depth
 
 Change a metric without changing output and explain the apparent winner reversal. Pending: replication protocols, workloads and the remaining series. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.

@@ -28,6 +28,7 @@ A pointer is a typed access path constrained by array bounds, alignment, and obj
 - [[Null pointers and optional access]]
 - [[Borrow invalidation and logical identity]]
 
+- [[GPU vertex specification]]
 ## Recall and next depth
 
 Explain p+1 for int versus byte and why a numeric address is insufficient.

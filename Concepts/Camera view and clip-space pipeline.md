@@ -22,6 +22,8 @@ A camera pose maps camera coordinates to world coordinates; its inverse is the v
 - [[Depth buffering and visibility order]]
 - [[Lens optics and depth of field]]
 
+- [[GPU vertex specification]]
+- [[Homogeneous clipping and perspective interpolation]]
 ## Recall and next depth
 
 Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
