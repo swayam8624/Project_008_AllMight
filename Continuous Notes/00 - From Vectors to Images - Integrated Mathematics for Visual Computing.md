@@ -546,10 +546,6 @@ A mathematically nonzero displacement may be too small for a noisy sensor to def
 
 Under flush-to-zero modes, very small components may already be erased or treated as zero by hardware. The scaled method cannot recover those inputs. Tests and documented assumptions must cover [[Flush-to-zero and denormals-are-zero]].
 
-
-<!-- end V06.07 -->
-
-<!-- begin V06.08 -->
 ## The dot product turns two movements into a measurement
 
 The robot needs to know how much a movement follows its guide rail. A [[#The dot product turns two movements into a measurement|dot product]] measures alignment, weighted by the magnitudes.
@@ -625,17 +621,12 @@ $$
 
 Handle zero and non-finite inputs separately; scale or safely normalize before evaluating the ratio when ranges are large. An absolute threshold on the raw dot changes its meaning when vector lengths change.
 
-
-<!-- end V06.08 -->
-
-
 ### Immediate footing — least squares
 
 Least squares chooses parameters that minimize the sum of squared residuals, where a residual is predicted minus measured value. For a matrix model it minimizes $\lVert Ax-b\rVert_2^2$. Fitting one constant $x$ to measurements $1$ and $3$ minimizes $(x-1)^2+(x-3)^2$, so the answer is $x=2$. A zero residual is possible only if the model can match every measurement. Rank deficiency can give multiple minimizing parameter vectors. Weights, measurement units, outliers and noise assumptions affect which squared-error problem is appropriate.
 
 [[#QR turns least squares into a triangular solve plus an irreducible residual|Full explanation and worked examples in this book]]
 
-<!-- begin V06.09 -->
 ## Projection separates useful movement from sideways movement
 
 The rail follows a nonzero vector $\mathbf b$. The robot's requested movement is $\mathbf a$. We want the part along the rail and the part left over.
@@ -730,17 +721,12 @@ If the requested movement is almost entirely normal, the small tangential remain
 
 In camera-local coordinates with forward along $+z$, a point in front of the camera at $(x,y,z)$ has vertical angle $\theta=\operatorname{atan2}(y,z)$. Points $(0,3,4)$ and $(0,-1,5)$ have angles about $36.87^\circ$ and $-11.31^\circ$. A fixed axis needs a full vertical field of view of about $73.74^\circ$ to include both. A sphere of radius $r$ at center distance $d>r$ adds angular radius $\arcsin(r/d)$. Freya Holmér's trigonometry lesson develops the right-triangle camera-FOV relation; the selected interpolation lesson covers multiple-target camera fitting and the sphere angular radius. Behind-camera points and horizontal aspect constraints still need explicit treatment. [Freya Holmér, Trigonometry](https://www.youtube.com/watch?v=1NLekEd770w), [Freya Holmér, Interpolation & Velocity](https://www.youtube.com/watch?v=-Ii3MrJFBkQ)
 
-
-<!-- end V06.09 -->
-
-
 ### Immediate footing — radians
 
 A radian measures angle as arc length divided by radius. One full circle is $2\pi$ radians, so a quarter-turn is $\pi/2$. The unit-circle point at angle $\theta$ is $(\cos\theta,\sin\theta)$; at $\theta=\pi/2$ it is $(0,1)$. Rotation formulas and calculus conventionally use radians. Convert degrees using $\theta_{\mathrm{rad}}=\theta_{\mathrm{deg}}\pi/180$. For a signed planar angle, $\operatorname{atan2}(y,x)$ retains quadrant information, while $\operatorname{atan}(y/x)$ does not and is undefined at $x=0$.
 
 [[#Rotation first becomes understandable in a plane|Full explanation and worked examples in this book]]
 
-<!-- begin V06.11 -->
 ## Rotation first becomes understandable in a plane
 
 Before constructing the panel's three-dimensional frame, rotate its sensor sweep within a plane. [[#Rotation first becomes understandable in a plane|Complex numbers]] provide a compact explanation.
@@ -752,6 +738,7 @@ $$
 $$
 
 Multiplication by $i$ sends $(x,y)$ to $(-y,x)$. Applying it twice sends the vector to $(-x,-y)$, because $i^2=-1$. In conventional upward-positive Cartesian coordinates, one application is a counterclockwise quarter-turn.
+
 
 For an arbitrary angle, use the unit complex number
 
@@ -792,10 +779,6 @@ constexpr Complex2 multiply(Complex2 a, Complex2 b) noexcept {
 
 This excerpt implements multiplication, not a validated rotation type. The later laboratory uses a separate unit-vector wrapper for the same reason: a representation and a validated promise are different things.
 
-
-<!-- end V06.11 -->
-
-<!-- begin V06.12 -->
 ## Oriented area tells us which side of the panel is front
 
 The panel needs a facing direction. Its edge vectors lie in its plane, so their dot product alone cannot provide an out-of-plane direction. We need [[#Oriented area tells us which side of the panel is front|oriented area]].
@@ -897,10 +880,6 @@ In $n$ dimensions, oriented two-dimensional areas have $n(n-1)/2$ independent co
 
 There is an exceptional seven-dimensional binary cross product with additional structure. Do not turn the introductory three-dimensional explanation into the false claim that no such operation exists anywhere else. The ordinary graphics cross product remains the three-dimensional one described here.
 
-
-<!-- end V06.12 -->
-
-<!-- begin V06.13 -->
 ## Signed volume extends the same idea into space
 
 Move a test point above the panel to $D=(0,0,2)$. The [[#Signed volume extends the same idea into space|scalar triple product]] is
@@ -951,17 +930,11 @@ $$
 
 is precisely tangent-plane rejection. A nested cross has now become a previously understood projection operation.
 
-
-<!-- end V06.13 -->
-
-
 ### Immediate footing — derivative
 
 A derivative is the best linear prediction of how a function changes near an input. For $f(x)=x^2$, $f(x+h)-f(x)=2xh+h^2$, so near $x=3$ the leading change is $6h$ and $f'(3)=6$. The derivative is local: the omitted $h^2$ term matters for larger steps. Derivative units are output units divided by input units. At corners or discontinuities an ordinary derivative may not exist, so algorithms that rely on smoothness must state that assumption.
-
 [[#Functions, limits, continuity, and scalar change|Full explanation and worked examples in this book]]
 
-<!-- begin V06.14 -->
 ## An angle is a question with a domain
 
 The [[#An angle is a question with a domain|unsigned angle]] between nonzero vectors lies in $[0,\pi]$. The familiar expression is
