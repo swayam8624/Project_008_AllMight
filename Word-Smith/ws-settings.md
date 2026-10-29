@@ -6,7 +6,7 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-27 18:51:50
+- written: 2026-10-29 11:31:57
 
 ```json
 {
@@ -221,7 +221,7 @@ not the plugin folder — can get everything back.
   "hemFlashTarget": "both",
   "syntaxSkipCode": true,
   "syntaxStyle": "text",
-  "checksEnabled": true,
+  "checksEnabled": false,
   "checkStyle": "line",
   "checkFiller": false,
   "checkFillerSoft": false,
@@ -236,7 +236,7 @@ not the plugin folder — can get everything back.
   "checkPronounColor": "#4f9dde",
   "checkDialogue": false,
   "checkDialogueColor": "#4f9dd9",
-  "checkRhythm": true,
+  "checkRhythm": false,
   "checkRhythmHardColor": "#d4a017",
   "checkRhythmVeryHardColor": "#c2544d",
   "checkRhythmShortColor": "#5aa469",

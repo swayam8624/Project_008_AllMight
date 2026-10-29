@@ -24,33 +24,11 @@ New worked bridges and first-use explanations give the meaning of a term before 
 
 Start with what a number measures, how a displacement differs from a point, and how dot products, projections and orientation answer geometric questions. The initial Euclidean projection formulas assume an orthonormal coordinate basis; the later Gram-matrix section makes the metric explicit for a slanted basis.
 
-<!-- begin V06.00 -->
-<details>
-<summary>Original source metadata</summary>
-
-```yaml
----
-tags:
-  - continuous-notes
-  - phase-6
-  - geometry
-coverage: Parts 501–600
-source_group: M031–M036
----
-```
-
-</details>
-
-
 ## From Movement to Meaning: Vectors, Geometry, and Reliable Code
 
 Phase 6 asks one large question: **how do we turn a physical relationship into a calculation whose meaning survives a change of coordinates, a floating-point computation, and an engine API?**
 
 We will answer it by building a small robot workcell. A robot must inspect a triangular metal panel, move a sensor over it, illuminate it, and avoid nearby obstacles. The same panel gives us a reason to learn numbers, vectors, lengths, projections, orientations, surface frames, interpolation, collision geometry, and reliable C++.
-
-
-<!-- end V06.00 -->
-
 
 ### Immediate footing — field
 
@@ -100,7 +78,6 @@ The transpose $A^T$ swaps matrix rows and columns and obeys $(AB)^T=B^TA^T$. For
 
 [[#Transpose lets us compare measurements and structure|Full explanation and worked examples in this book]]
 
-<!-- begin V06.01 -->
 ## The panel gives us a reason to learn
 
 ### Figure G0 - The robot and its inspection panel
@@ -134,10 +111,6 @@ Our central habit is to ask four questions before using a formula:
 
 You do not need a matrix course before reading this chapter. When matrices appear, read a matrix as a compact arrangement of coefficients that reconstructs or measures vectors. We explain the necessary rows, columns, transpose, determinant, and inverse at their first use.
 
-
-<!-- end V06.01 -->
-
-<!-- begin V06.02 -->
 ## Numbers become a system of permitted operations
 
 The robot moves a distance, waits a time, and adjusts a speed. Each quantity has a numeric amount. In vector algebra, a number used to scale a vector is called a [[#Numbers become a system of permitted operations|scalar]]. Scalar describes a role. It does not mean “a `float`,” “dimensionless,” or “exactly one machine word.” A complex number can be a scalar in a complex vector space.
@@ -213,10 +186,6 @@ $$
 
 Type, units, finite-state policy, and mathematical role are four different pieces of information. A `double` alone tells us only one of them.
 
-
-<!-- end V06.02 -->
-
-<!-- begin V06.03 -->
 ## An arrow is not the address written beside it
 
 The robot moves from $A$ to $B$. The location $A$ is a **point**. The movement is a [[#An arrow is not the address written beside it|displacement vector]]:
@@ -272,10 +241,6 @@ This is the first safety lesson for C++: `Point3` and `Vec3` may both contain th
 
 A **direction** answers “which way?” A nonzero displacement also contains “how far?” A zero displacement is valid; a zero direction cannot specify a way to travel. A **unit vector** has length one, so it keeps direction while removing the original length. We will earn normalization rather than assume it is always possible.
 
-
-<!-- end V06.03 -->
-
-<!-- begin V06.04 -->
 ## A basis is a measuring arrangement, not the vector itself
 
 The panel has its own coordinate frame. The workcell has another. A vector does not change merely because we describe it in a different frame.
@@ -362,9 +327,6 @@ This is [[#An inverse can exist and still amplify uncertainty|conditioning]]: se
 A small determinant alone is not a scale-independent conditioning test. Uniformly shrinking a perfectly perpendicular basis shrinks its determinant but does not make its directions nearly parallel. Inspect relative geometry, residuals, and appropriate condition estimates.
 
 
-<!-- end V06.04 -->
-
-<!-- begin V06.05 -->
 ## The reachable movements form a vector space
 
 Why does the previous reasoning work? Because movements form a [[#The reachable movements form a vector space|vector space]] over a field. Such a space has vector addition and scalar multiplication. The rules make combined movement consistent:
@@ -449,16 +411,12 @@ A basis must both span and be independent. Independence alone may leave unreacha
 Before continuing, ask a learner to distinguish three things: a set of generators, the span they produce, and a basis extracted by removing redundancy. Confusing them makes later matrices look much more mysterious than they are.
 
 
-<!-- end V06.05 -->
-
-
 ### Immediate footing — norm
 
 A norm measures vector size and obeys nonnegativity, vanishing only at zero, scaling, and the triangle inequality. The Euclidean norm is $\|x\|_2=\sqrt{\sum_i x_i^2}$; therefore $\|(3,4)\|_2=5$. Length depends on the coordinate metric, and normalization $x/\|x\|$ is undefined when $x=0$. A stable implementation scales components before squaring to reduce overflow or underflow risk. A residual norm measures equation error, whose meaning also depends on units and problem scale.
 
 [[#A ruler needs more than coordinate components|Full explanation and worked examples in this book]]
 
-<!-- begin V06.06 -->
 ## A ruler needs more than coordinate components
 
 The robot must measure how far the sensor travels. In perpendicular unit axes, the [[#A ruler needs more than coordinate components|Euclidean length]] of $\mathbf v=(x,y,z)$ is
@@ -525,10 +483,6 @@ $$
 
 avoids a square root. It remains necessary to consider overflow and underflow in the squared quantities. Never compare a squared distance in square metres with an ordinary radius in metres.
 
-
-<!-- end V06.06 -->
-
-
 ## Reading the C++ laboratories
 
 A `double` stores an approximation to a real number. An `int` stores an integer in a finite range. `std::array` has a fixed element count; `std::vector` owns a resizable sequence. A reference such as `T&` refers to an existing object, while a value normally represents an independent object. `const` restricts modification through that access path. A pointer or `std::span` can borrow storage without owning it; the owner must outlive every use of the borrowed view.
@@ -537,15 +491,13 @@ A `template` describes a family of types or functions. An overload lets the same
 
 Each complete program in this book is a separate laboratory with its own `main`. Compile it independently. Smaller snippets illustrate a particular operation and may depend on nearby declarations. Distinguish a mathematical assumption, a checked precondition, an asserted invariant, and a source-reported claim that has not been independently tested.
 
-
+-----
 
 ### Immediate footing — unit roundoff
 
 Unit roundoff describes the scale of relative rounding error in a floating-point operation. Under the usual model, $\operatorname{fl}(a\circ b)=(a\circ b)(1+\delta)$ with $|\delta|\le u$ for round-to-nearest when the exact result is finite and normal and no exceptional case occurs. Unit roundoff is not the smallest positive number and does not bound accumulated error by itself. Repeated operations, cancellation, overflow, underflow, and ill-conditioning matter. Use scale-aware tolerances and state assumptions rather than treating a tiny residual as exact zero.
 
 [[#Floating-point answers: error, conditioning, stability, and stable arithmetic|Full explanation and worked examples in this book]]
-
-<!-- begin V06.07 -->
 ## A direction can exist even when the naive length overflows
 
 [[#A direction can exist even when the naive length overflows|Normalization]] asks for a unit vector pointing the same way as a nonzero vector:
