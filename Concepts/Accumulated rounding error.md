@@ -6,7 +6,7 @@ tags:
 
 # Accumulated rounding error
 
-**Curriculum depth:** Introduced · **First seen:** C005 · **Latest development:** C005
+**Curriculum depth:** Introduced · **First seen:** C005 · **Latest development:** Phase 10
 
 ## Definition and mechanism
 
@@ -20,7 +20,9 @@ Under suitable nearest normal-range assumptions, products of rounding factors ar
 ## Used by
 
 - [[Compensated and pairwise summation]] — uses this mechanism to establish its numerical contract.
+- [[Online moments and Welford accumulation]]
 
+- [[Discretization, truncation, and roundoff]]
 ## Recall and next depth
 
 Reconstruct the definition's example and name the assumptions that make it valid.
@@ -30,3 +32,8 @@ Reconstruct the definition's example and name the assumptions that make it valid
 ## Source and navigation
 
 [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|M005 teaching chapter]] · [[Supplementary/Foundations#M005 - Parts 77-88|Part definitions]] · [[Dependency Map]]
+
+## Full teaching explanation
+
+- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#9. Finite samples need stable descriptive statistics|Phase 10 teaching section]]
+- [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

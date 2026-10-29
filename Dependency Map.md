@@ -177,6 +177,91 @@ The C++ volume accepts Parts 101–160. Construction/value transfer and M010 res
 
 An edge from prerequisite to dependent means the dependent explanation uses the prerequisite's definition or mechanism. Obsidian's graph shows actual note links; the labeled prerequisite lists in concept notes give those edges their meaning.
 
+## Phase 6-10 mathematical learning route
+
+Phase 6 establishes vectors, coordinates, and geometry; Phase 7 treats matrices as maps and changes of basis; Phase 8 develops solves, decompositions, and matrix functions; Phase 9 models change with derivatives, integrals, ODEs, and optimization; Phase 10 uses probability and statistics to reason about uncertain samples.
+
+| Phase | Teaching volume |
+|---|---|
+| 6 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn\|06 - From Movement to Meaning - Vectors, Geometry and Reliable Code]] |
+| 7 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations\|07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions]] |
+| 8 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation\|08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions]] |
+| 9 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|09 - From Local Change to Reliable Motion - Calculus and Optimization]] |
+| 10 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Learning route\|10 - From Uncertainty to Trustworthy Samples - Probability and Monte Carlo]] |
+
+## Phase 9-10 prerequisite edges
+
+Every prerequisite below is also a prerequisite link on the dependent note and a reciprocal Used by link on its prerequisite note.
+
+| Prerequisite | Dependent | Why the dependency exists |
+|---|---|---|
+| [[Function contracts: domains, codomains, and images]] | [[Differentiation rules and chain rule]] | The Differentiation rules and chain rule explanation builds on the definition or mechanism in Function contracts: domains, codomains, and images. |
+| [[Limits and continuity]] | [[Differentiation rules and chain rule]] | The Differentiation rules and chain rule explanation builds on the definition or mechanism in Limits and continuity. |
+| [[Function contracts: domains, codomains, and images]] | [[Partial derivatives and gradients]] | The Partial derivatives and gradients explanation builds on the definition or mechanism in Function contracts: domains, codomains, and images. |
+| [[Derivative as a local linear map]] | [[Partial derivatives and gradients]] | The Partial derivatives and gradients explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Partial derivatives and gradients]] | [[Directional and total derivatives]] | The Directional and total derivatives explanation builds on the definition or mechanism in Partial derivatives and gradients. |
+| [[Derivative as a local linear map]] | [[Directional and total derivatives]] | The Directional and total derivatives explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Derivative as a local linear map]] | [[Jacobians, pushforwards, and pullbacks]] | The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Matrix multiplication and composition order]] | [[Jacobians, pushforwards, and pullbacks]] | The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Matrix multiplication and composition order. |
+| [[Probability density and change of measure]] | [[Jacobians, pushforwards, and pullbacks]] | The Jacobians, pushforwards, and pullbacks explanation builds on the definition or mechanism in Probability density and change of measure. |
+| [[Jacobians, pushforwards, and pullbacks]] | [[Hessians and local curvature]] | The Hessians and local curvature explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. |
+| [[Symmetric positive-definite matrices and Cholesky]] | [[Hessians and local curvature]] | The Hessians and local curvature explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. |
+| [[Derivative as a local linear map]] | [[Taylor models and approximation error]] | The Taylor models and approximation error explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Hessians and local curvature]] | [[Taylor models and approximation error]] | The Taylor models and approximation error explanation builds on the definition or mechanism in Hessians and local curvature. |
+| [[Derivative as a local linear map]] | [[Finite differences and step-size balance]] | The Finite differences and step-size balance explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Absolute and relative error]] | [[Finite differences and step-size balance]] | The Finite differences and step-size balance explanation builds on the definition or mechanism in Absolute and relative error. |
+| [[Derivative as a local linear map]] | [[Definite integrals and the fundamental theorem]] | The Definite integrals and the fundamental theorem explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Definite integrals and the fundamental theorem]] | [[Numerical quadrature and error]] | The Numerical quadrature and error explanation builds on the definition or mechanism in Definite integrals and the fundamental theorem. |
+| [[Absolute and relative error]] | [[Numerical quadrature and error]] | The Numerical quadrature and error explanation builds on the definition or mechanism in Absolute and relative error. |
+| [[Definite integrals and the fundamental theorem]] | [[ODE initial-value problems and stiffness]] | The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Definite integrals and the fundamental theorem. |
+| [[Eigenvalues and eigenspaces]] | [[ODE initial-value problems and stiffness]] | The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Eigenvalues and eigenspaces. |
+| [[Absolute and relative error]] | [[ODE initial-value problems and stiffness]] | The ODE initial-value problems and stiffness explanation builds on the definition or mechanism in Absolute and relative error. |
+| [[ODE initial-value problems and stiffness]] | [[Time integrators and symplectic updates]] | The Time integrators and symplectic updates explanation builds on the definition or mechanism in ODE initial-value problems and stiffness. |
+| [[Hessians and local curvature]] | [[Newton and quasi-Newton optimization]] | The Newton and quasi-Newton optimization explanation builds on the definition or mechanism in Hessians and local curvature. |
+| [[Constrained optimization and inverse kinematics]] | [[Newton and quasi-Newton optimization]] | The Newton and quasi-Newton optimization explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. |
+| [[Jacobians, pushforwards, and pullbacks]] | [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. |
+| [[Hessians and local curvature]] | [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Hessians and local curvature. |
+| [[Symmetric positive-definite matrices and Cholesky]] | [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. |
+| [[Constrained optimization and inverse kinematics]] | [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | The Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. |
+| [[Automatic differentiation and backpropagation]] | [[Implicit differentiation and parameter sensitivities]] | The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in Automatic differentiation and backpropagation. |
+| [[Constrained optimization and inverse kinematics]] | [[Implicit differentiation and parameter sensitivities]] | The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in Constrained optimization and inverse kinematics. |
+| [[ODE integration and stability]] | [[Implicit differentiation and parameter sensitivities]] | The Implicit differentiation and parameter sensitivities explanation builds on the definition or mechanism in ODE integration and stability. |
+| [[Probability spaces, events, and conditioning]] | [[Random variables and probability laws]] | The Random variables and probability laws explanation builds on the definition or mechanism in Probability spaces, events, and conditioning. |
+| [[Random variables and probability laws]] | [[Common probability distributions and their assumptions]] | The Common probability distributions and their assumptions explanation builds on the definition or mechanism in Random variables and probability laws. |
+| [[Expectation, covariance, and dependence]] | [[Common probability distributions and their assumptions]] | The Common probability distributions and their assumptions explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Probability spaces, events, and conditioning]] | [[Expectation, covariance, and dependence]] | The Expectation, covariance, and dependence explanation builds on the definition or mechanism in Probability spaces, events, and conditioning. |
+| [[Random variables and probability laws]] | [[Expectation, covariance, and dependence]] | The Expectation, covariance, and dependence explanation builds on the definition or mechanism in Random variables and probability laws. |
+| [[Expectation, covariance, and dependence]] | [[Multivariate Gaussian distributions and whitening]] | The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Symmetric positive-definite matrices and Cholesky]] | [[Multivariate Gaussian distributions and whitening]] | The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Symmetric positive-definite matrices and Cholesky. |
+| [[Probability density and change of measure]] | [[Multivariate Gaussian distributions and whitening]] | The Multivariate Gaussian distributions and whitening explanation builds on the definition or mechanism in Probability density and change of measure. |
+| [[Multivariate Gaussian distributions and whitening]] | [[Conditional Gaussians and Schur complements]] | The Conditional Gaussians and Schur complements explanation builds on the definition or mechanism in Multivariate Gaussian distributions and whitening. |
+| [[Gaussian elimination and pivoting]] | [[Conditional Gaussians and Schur complements]] | The Conditional Gaussians and Schur complements explanation builds on the definition or mechanism in Gaussian elimination and pivoting. |
+| [[Common probability distributions and their assumptions]] | [[Stateful pseudorandom generators and stream state]] | The Stateful pseudorandom generators and stream state explanation builds on the definition or mechanism in Common probability distributions and their assumptions. |
+| [[Stateful pseudorandom generators and stream state]] | [[Stateless keyed sampling and reproducibility]] | The Stateless keyed sampling and reproducibility explanation builds on the definition or mechanism in Stateful pseudorandom generators and stream state. |
+| [[Stateless keyed sampling and reproducibility]] | [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | The Sampling quality: stratification, quasi-Monte Carlo, and blue noise explanation builds on the definition or mechanism in Stateless keyed sampling and reproducibility. |
+| [[Sampling aliasing and reconstruction]] | [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | The Sampling quality: stratification, quasi-Monte Carlo, and blue noise explanation builds on the definition or mechanism in Sampling aliasing and reconstruction. |
+| [[Random variables and probability laws]] | [[Inverse, rejection, and importance sampling]] | The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Random variables and probability laws. |
+| [[Probability density and change of measure]] | [[Inverse, rejection, and importance sampling]] | The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Probability density and change of measure. |
+| [[Stateful pseudorandom generators and stream state]] | [[Inverse, rejection, and importance sampling]] | The Inverse, rejection, and importance sampling explanation builds on the definition or mechanism in Stateful pseudorandom generators and stream state. |
+| [[Expectation, covariance, and dependence]] | [[Online moments and Welford accumulation]] | The Online moments and Welford accumulation explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Accumulated rounding error]] | [[Online moments and Welford accumulation]] | The Online moments and Welford accumulation explanation builds on the definition or mechanism in Accumulated rounding error. |
+| [[Common probability distributions and their assumptions]] | [[Confidence intervals and sequential evidence]] | The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Common probability distributions and their assumptions. |
+| [[Expectation, covariance, and dependence]] | [[Confidence intervals and sequential evidence]] | The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Monte Carlo rendering estimators and variance]] | [[Confidence intervals and sequential evidence]] | The Confidence intervals and sequential evidence explanation builds on the definition or mechanism in Monte Carlo rendering estimators and variance. |
+| [[Expectation, covariance, and dependence]] | [[Robust summaries and error metrics]] | The Robust summaries and error metrics explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Absolute and relative error]] | [[Robust summaries and error metrics]] | The Robust summaries and error metrics explanation builds on the definition or mechanism in Absolute and relative error. |
+| [[Random variables and probability laws]] | [[Probability density and change of measure]] | The Probability density and change of measure explanation builds on the definition or mechanism in Random variables and probability laws. |
+| [[Inverse, rejection, and importance sampling]] | [[Monte Carlo rendering estimators and variance]] | The Monte Carlo rendering estimators and variance explanation builds on the definition or mechanism in Inverse, rejection, and importance sampling. |
+| [[Expectation, covariance, and dependence]] | [[Monte Carlo rendering estimators and variance]] | The Monte Carlo rendering estimators and variance explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Derivative as a local linear map]] | [[Automatic differentiation and backpropagation]] | The Automatic differentiation and backpropagation explanation builds on the definition or mechanism in Derivative as a local linear map. |
+| [[Jacobians, pushforwards, and pullbacks]] | [[Automatic differentiation and backpropagation]] | The Automatic differentiation and backpropagation explanation builds on the definition or mechanism in Jacobians, pushforwards, and pullbacks. |
+| [[ODE initial-value problems and stiffness]] | [[ODE integration and stability]] | The ODE integration and stability explanation builds on the definition or mechanism in ODE initial-value problems and stiffness. |
+| [[Time integrators and symplectic updates]] | [[ODE integration and stability]] | The ODE integration and stability explanation builds on the definition or mechanism in Time integrators and symplectic updates. |
+| [[Expectation, covariance, and dependence]] | [[PCA and covariance eigensystems]] | The PCA and covariance eigensystems explanation builds on the definition or mechanism in Expectation, covariance, and dependence. |
+| [[Multivariate Gaussian distributions and whitening]] | [[PCA and covariance eigensystems]] | The PCA and covariance eigensystems explanation builds on the definition or mechanism in Multivariate Gaussian distributions and whitening. |
+| [[Monte Carlo rendering estimators and variance]] | [[Antialiasing and sample allocation]] | The Antialiasing and sample allocation explanation builds on the definition or mechanism in Monte Carlo rendering estimators and variance. |
+| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | [[Antialiasing and sample allocation]] | The Antialiasing and sample allocation explanation builds on the definition or mechanism in Sampling quality: stratification, quasi-Monte Carlo, and blue noise. |
+
 ## Learning spines
 
 | Prerequisite | Dependent | Why the dependency exists |
@@ -326,3 +411,87 @@ The first volume covers all Parts 1–100. Prerequisites explain the story's dep
 | [[Bitwise XOR]], [[Serialization]] | [[Checksums CRCs and hashes]] | Checksums/digests summarize specified bytes. Additive checksums miss reorderings; CRCs use GF(2) polynomial remainders and declared parameters. Cryptographic hashes need a trusted reference to support integrity claims against substitution. |
 | [[Checksums CRCs and hashes]], [[Interpretation contract]] | [[Integrity and authenticity]] | Integrity compares content with a declared reference; authenticity requires a trust mechanism such as a MAC or signature. Replacing both file and untrusted digest defeats a simple hash comparison. |
 | [[Endianness]], [[Bit casting and representation]], [[Binary format contracts]] | [[Memory dump interpretation]] | Raw octets gain meaning from offsets, width, encoding and byte order. Bytes00 00 80 3F mean integer1065353216 or binary32 one under different little-endian contracts. A dump does not prove a typed object is live. |
+
+## Phase 10–11 — Parts 966–1100 prerequisite edges
+
+| Prerequisites | Dependent | Why these steps are needed |
+|---|---|---|
+| [[A posteriori error bounds for contractive iteration]] | [[Bracketed and open root solvers]] | Bracketed and open root solvers uses the definitions or assumptions established by A posteriori error bounds for contractive iteration. |
+| [[A posteriori error bounds for contractive iteration]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by A posteriori error bounds for contractive iteration. |
+| [[Accumulated rounding error]] | [[Discretization, truncation, and roundoff]] | Discretization, truncation, and roundoff uses the definitions or assumptions established by Accumulated rounding error. |
+| [[Algorithmic stability]] | [[Bracketed and open root solvers]] | Bracketed and open root solvers uses the definitions or assumptions established by Algorithmic stability. |
+| [[Algorithmic stability]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Algorithmic stability. |
+| [[Algorithmic stability]] | [[Stable quadratic root evaluation]] | Stable quadratic root evaluation uses the definitions or assumptions established by Algorithmic stability. |
+| [[Axial depth and Euclidean range]] | [[Hardware depth-buffer linearization]] | Hardware depth-buffer linearization uses the definitions or assumptions established by Axial depth and Euclidean range. |
+| [[Axial depth and Euclidean range]] | [[Off-axis stereo projection and disparity]] | Off-axis stereo projection and disparity uses the definitions or assumptions established by Axial depth and Euclidean range. |
+| [[Axial depth and Euclidean range]] | [[Position reconstruction from depth]] | Position reconstruction from depth uses the definitions or assumptions established by Axial depth and Euclidean range. |
+| [[Barycentric coordinates and interpolation]] | [[Interpolation versus approximation]] | Interpolation versus approximation uses the definitions or assumptions established by Barycentric coordinates and interpolation. |
+| [[Bracketed and open root solvers]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Bracketed and open root solvers. |
+| [[Camera calibration and bundle adjustment]] | [[Off-axis stereo projection and disparity]] | Off-axis stereo projection and disparity uses the definitions or assumptions established by Camera calibration and bundle adjustment. |
+| [[Camera calibration and bundle adjustment]] | [[Omnidirectional camera projections]] | Omnidirectional camera projections uses the definitions or assumptions established by Camera calibration and bundle adjustment. |
+| [[Camera calibration and bundle adjustment]] | [[Position reconstruction from depth]] | Position reconstruction from depth uses the definitions or assumptions established by Camera calibration and bundle adjustment. |
+| [[Camera view and clip-space pipeline]] | [[Axial depth and Euclidean range]] | Axial depth and Euclidean range uses the definitions or assumptions established by Camera view and clip-space pipeline. |
+| [[Camera view and clip-space pipeline]] | [[Hardware depth-buffer linearization]] | Hardware depth-buffer linearization uses the definitions or assumptions established by Camera view and clip-space pipeline. |
+| [[Camera view and clip-space pipeline]] | [[Screen-space ray generation and mouse picking]] | Screen-space ray generation and mouse picking uses the definitions or assumptions established by Camera view and clip-space pipeline. |
+| [[Conditioning and singularity]] | [[A posteriori error bounds for contractive iteration]] | A posteriori error bounds for contractive iteration uses the definitions or assumptions established by Conditioning and singularity. |
+| [[Conditioning and singularity]] | [[Algorithmic stability]] | Algorithmic stability uses the definitions or assumptions established by Conditioning and singularity. |
+| [[Conditioning and singularity]] | [[Bracketed and open root solvers]] | Bracketed and open root solvers uses the definitions or assumptions established by Conditioning and singularity. |
+| [[Conditioning and singularity]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Conditioning and singularity. |
+| [[Conditioning and singularity]] | [[Stable quadratic root evaluation]] | Stable quadratic root evaluation uses the definitions or assumptions established by Conditioning and singularity. |
+| [[Confidence intervals and sequential evidence]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Confidence intervals and sequential evidence. |
+| [[Convergence order and Richardson extrapolation]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Convergence order and Richardson extrapolation. |
+| [[Convergence order and Richardson extrapolation]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Convergence order and Richardson extrapolation. |
+| [[Depth buffering and visibility order]] | [[Hardware depth-buffer linearization]] | Hardware depth-buffer linearization uses the definitions or assumptions established by Depth buffering and visibility order. |
+| [[Discretization, truncation, and roundoff]] | [[Convergence order and Richardson extrapolation]] | Convergence order and Richardson extrapolation uses the definitions or assumptions established by Discretization, truncation, and roundoff. |
+| [[Discretization, truncation, and roundoff]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Discretization, truncation, and roundoff. |
+| [[Finite differences and step-size balance]] | [[Convergence order and Richardson extrapolation]] | Convergence order and Richardson extrapolation uses the definitions or assumptions established by Finite differences and step-size balance. |
+| [[Forward and backward error]] | [[A posteriori error bounds for contractive iteration]] | A posteriori error bounds for contractive iteration uses the definitions or assumptions established by Forward and backward error. |
+| [[Forward and backward error]] | [[Algorithmic stability]] | Algorithmic stability uses the definitions or assumptions established by Forward and backward error. |
+| [[Forward and backward error]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Forward and backward error. |
+| [[Hardware depth-buffer linearization]] | [[Position reconstruction from depth]] | Position reconstruction from depth uses the definitions or assumptions established by Hardware depth-buffer linearization. |
+| [[Homogeneous coordinates and perspective division]] | [[Position reconstruction from depth]] | Position reconstruction from depth uses the definitions or assumptions established by Homogeneous coordinates and perspective division. |
+| [[Interpolation versus approximation]] | [[Bézier curves and De Casteljau evaluation]] | Bézier curves and De Casteljau evaluation uses the definitions or assumptions established by Interpolation versus approximation. |
+| [[Interpolation versus approximation]] | [[Cubic Hermite interpolation]] | Cubic Hermite interpolation uses the definitions or assumptions established by Interpolation versus approximation. |
+| [[Interpolation versus approximation]] | [[Tensor-product interpolation]] | Tensor-product interpolation uses the definitions or assumptions established by Interpolation versus approximation. |
+| [[Latin-hypercube sampling]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Latin-hypercube sampling. |
+| [[Numerical error budgets]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Numerical error budgets. |
+| [[Numerical quadrature and error]] | [[Convergence order and Richardson extrapolation]] | Convergence order and Richardson extrapolation uses the definitions or assumptions established by Numerical quadrature and error. |
+| [[Numerical quadrature and error]] | [[Discretization, truncation, and roundoff]] | Discretization, truncation, and roundoff uses the definitions or assumptions established by Numerical quadrature and error. |
+| [[Numerical reproducibility]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Numerical reproducibility. |
+| [[Position reconstruction from depth]] | [[Numerical error budgets]] | Numerical error budgets uses the definitions or assumptions established by Position reconstruction from depth. |
+| [[Probability density and change of measure]] | [[Latin-hypercube sampling]] | Latin-hypercube sampling uses the definitions or assumptions established by Probability density and change of measure. |
+| [[Probability density and change of measure]] | [[Stable probability normalization and log-sum-exp]] | Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Probability density and change of measure. |
+| [[Probability spaces, events, and conditioning]] | [[Uniform shuffling without replacement]] | Uniform shuffling without replacement uses the definitions or assumptions established by Probability spaces, events, and conditioning. |
+| [[Reproducible numerical benchmarking]] | [[Research validity and ablation]] | Prerequisite provides concepts used by the dependent. |
+| [[Robust summaries and error metrics]] | [[Reproducible numerical benchmarking]] | Reproducible numerical benchmarking uses the definitions or assumptions established by Robust summaries and error metrics. |
+| [[Sampling aliasing and reconstruction]] | [[Tensor-product interpolation]] | Tensor-product interpolation uses the definitions or assumptions established by Sampling aliasing and reconstruction. |
+| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | [[Latin-hypercube sampling]] | Latin-hypercube sampling uses the definitions or assumptions established by Sampling quality: stratification, quasi-Monte Carlo, and blue noise. |
+| [[Spline bases and curve evaluation]] | [[Bézier curves and De Casteljau evaluation]] | Bézier curves and De Casteljau evaluation uses the definitions or assumptions established by Spline bases and curve evaluation. |
+| [[Spline bases and curve evaluation]] | [[Cubic Hermite interpolation]] | Cubic Hermite interpolation uses the definitions or assumptions established by Spline bases and curve evaluation. |
+| [[Stable probability normalization and log-sum-exp]] | [[Monte Carlo rendering estimators and variance]] | Prerequisite provides concepts used by the dependent. |
+| [[Stable quadratic root evaluation]] | [[Bracketed and open root solvers]] | Bracketed and open root solvers uses the definitions or assumptions established by Stable quadratic root evaluation. |
+| [[Stable reformulation]] | [[Stable probability normalization and log-sum-exp]] | Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Stable reformulation. |
+| [[Stable reformulation]] | [[Stable quadratic root evaluation]] | Stable quadratic root evaluation uses the definitions or assumptions established by Stable reformulation. |
+| [[Stateful pseudorandom generators and stream state]] | [[Uniform shuffling without replacement]] | Uniform shuffling without replacement uses the definitions or assumptions established by Stateful pseudorandom generators and stream state. |
+| [[Stateless keyed sampling and reproducibility]] | [[Uniform shuffling without replacement]] | Uniform shuffling without replacement uses the definitions or assumptions established by Stateless keyed sampling and reproducibility. |
+| [[Stereo correspondence and epipolar geometry]] | [[Off-axis stereo projection and disparity]] | Off-axis stereo projection and disparity uses the definitions or assumptions established by Stereo correspondence and epipolar geometry. |
+| [[Taylor models and approximation error]] | [[Discretization, truncation, and roundoff]] | Discretization, truncation, and roundoff uses the definitions or assumptions established by Taylor models and approximation error. |
+| [[Taylor models and approximation error]] | [[Interpolation versus approximation]] | Interpolation versus approximation uses the definitions or assumptions established by Taylor models and approximation error. |
+| [[Uniform shuffling without replacement]] | [[Latin-hypercube sampling]] | Latin-hypercube sampling uses the definitions or assumptions established by Uniform shuffling without replacement. |
+| [[Uniform shuffling without replacement]] | [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | Prerequisite provides concepts used by the dependent. |
+| [[Unit directions and safe normalization]] | [[Axial depth and Euclidean range]] | Axial depth and Euclidean range uses the definitions or assumptions established by Unit directions and safe normalization. |
+| [[Unit directions and safe normalization]] | [[Omnidirectional camera projections]] | Omnidirectional camera projections uses the definitions or assumptions established by Unit directions and safe normalization. |
+| [[Unit directions and safe normalization]] | [[Screen-space ray generation and mouse picking]] | Screen-space ray generation and mouse picking uses the definitions or assumptions established by Unit directions and safe normalization. |
+| [[Unit roundoff]] | [[Stable probability normalization and log-sum-exp]] | Stable probability normalization and log-sum-exp uses the definitions or assumptions established by Unit roundoff. |
+| [[Unit roundoff]] | [[Stable quadratic root evaluation]] | Stable quadratic root evaluation uses the definitions or assumptions established by Unit roundoff. |
+| [[Visual angle and calibrated rays]] | [[Omnidirectional camera projections]] | Omnidirectional camera projections uses the definitions or assumptions established by Visual angle and calibrated rays. |
+| [[Visual angle and calibrated rays]] | [[Screen-space ray generation and mouse picking]] | Screen-space ray generation and mouse picking uses the definitions or assumptions established by Visual angle and calibrated rays. |
+
+## Phase 11 - Camera observability and differential sampling
+
+- [[Camera calibration and bundle adjustment]] → [[Camera gauge freedoms and observability]] — prerequisite definitions and assumptions.
+- [[Coordinate frames and change of basis]] → [[Camera gauge freedoms and observability]] — prerequisite definitions and assumptions.
+- [[Homogeneous coordinates and perspective division]] → [[Camera gauge freedoms and observability]] — prerequisite definitions and assumptions.
+- [[Camera view and clip-space pipeline]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.
+- [[Visual angle and calibrated rays]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.
+- [[Lens optics and depth of field]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.

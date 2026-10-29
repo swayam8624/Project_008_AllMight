@@ -3482,6 +3482,83 @@ Passing an integer by const reference is not automatically faster than passing i
 
 At the board, connect the story: declarations identify entities; storage hosts live objects; expression categories describe uses; binding chooses a referent; lifetime limits the path; mutation may invalidate its physical or logical target; const restricts access; ownership and synchronization remain separate obligations. That is the foundation for reliable interfaces.
 
+### Worked API choice: borrow, consume, retain, or copy a value
+
+A function signature should say whether it borrows access, consumes one owner, or retains shared lifetime. Copying a value is a separate decision from extending an object's lifetime. This self-contained C++20 example demonstrates those choices and a matching deleter for a C file handle.
+
+```cpp
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+
+struct FileCloser {
+    void operator()(std::FILE* file) const noexcept {
+        if (file) std::fclose(file);
+    }
+};
+using TempFile = std::unique_ptr<std::FILE, FileCloser>;
+
+void inspect_file(std::FILE& file) {
+    (void)file; // Borrowed access; this function does not close it.
+    std::cout << "inspect: caller still owns file\n";
+}
+
+void consume_file(TempFile file) {
+    (void)file; // Sink: ownership arrived by value and ends at function exit.
+    std::cout << "consume: callee owns file until return\n";
+}
+
+void inspect_shared(const std::shared_ptr<const std::string>& text) {
+    std::cout << "observe: " << *text << '\n';
+    // Borrow the existing handle for this call; do not store a copy.
+}
+
+struct Cache {
+    std::shared_ptr<const std::string> retained;
+
+    void retain_shared(std::shared_ptr<const std::string> text) {
+        retained = std::move(text); // Sink: keep a shared owner after return.
+    }
+};
+
+int main() {
+    // Same value at the start, independent owned strings after copying.
+    std::string title = "North";
+    std::string copy = title;
+    copy[0] = 'M';
+    std::cout << "values: " << title << " / " << copy << '\n';
+
+    auto file = TempFile{std::tmpfile()}; // Custom deleter calls fclose.
+    if (!file) return 1;
+    inspect_file(*file);                   // Borrow FILE&, no ownership transfer.
+    consume_file(std::move(file));          // Transfer unique ownership by value.
+    std::cout << "caller handle after sink: " << (file ? "full" : "empty") << '\n';
+
+    Cache cache;
+    auto shared = std::make_shared<const std::string>("shared lifetime");
+    inspect_shared(shared);                 // Borrow the shared_ptr handle by const ref.
+    cache.retain_shared(shared);             // Copy into sink, then retain in Cache.
+    shared.reset();                          // Cache keeps the object alive.
+    std::cout << "cache after caller reset: " << *cache.retained << '\n';
+}
+```
+
+## The call-site decision
+
+| Need at the boundary | Parameter shape | What the signature communicates |
+|---|---|---|
+| Read or mutate a live object only during this call | `T&` / `const T&` | Borrow. The caller maintains lifetime and obeys invalidation rules. |
+| Consume one exclusive owner | `std::unique_ptr<T>` by value | Sink. The caller passes `std::move(owner)`; the callee owns the cleanup duty. |
+| Keep shared lifetime | `std::shared_ptr<T>` by value | Join/retain the ownership group. A copy extends lifetime beyond the call if stored. |
+| Temporarily inspect an already shared handle | `const std::shared_ptr<T>&` | Borrow the handle without incrementing the owner count just for parameter passing. Do not store the reference. |
+| Release a non-memory resource | Owner plus matching deleter/RAII wrapper | Cleanup follows that resource's protocol; `std::FILE` uses `fclose`, not `delete`. |
+
+An API that only observes data generally should take `T&` or `const T&`, even if some caller happens to own it through a `shared_ptr`. Use a shared-pointer parameter when the function's contract actually depends on shared ownership or transfers/retains that handle. By-value strings illustrate value semantics: the copy owns a separate string value. Two shared pointers, by contrast, can refer into one shared object; copying the handle is not a deep copy of the pointee.
+
+Standard wording matters for edge cases. Standard-library objects are generally valid but unspecified after a move unless the type specification guarantees more; use only operations whose preconditions hold. A user-defined type must preserve its own documented invariant. [C++ draft: moved-from library types](https://eel.is/c++draft/lib.types.movedfrom). Operations on distinct shared-pointer objects may share a control block under specified library guarantees, but this does not synchronize the pointed-to object; mutable access still needs synchronization or immutability. [C++ draft: shared_ptr general requirements](https://eel.is/c++draft/util.smartptr.shared). These corrections address overbroad statements in selected CppCon talks and Q&A; the example is original. The selected full-caption sources were Inbal Levi on smart pointers and RAII, Dave Abrahams on value semantics, Ben Saks on move semantics, and Phil Nash on lifetime management: [Levi](https://www.youtube.com/watch?v=07rJOzFRs6M), [Abrahams](https://www.youtube.com/watch?v=QthAU-t3PQ4), [Saks](https://www.youtube.com/watch?v=szU5b972F7E), and [Nash](https://www.youtube.com/watch?v=aMvIv6blzBs).
+
 ## A value crosses the function boundary
 
 Borrowing solves access without duplication. It does not solve ownership of a result that must survive the caller, or independence when one function transforms data. [[Parameter passing and sink contracts|By-value parameters]] supply a separate object initialized from the argument expression. The **argument** is what the caller supplies; the **parameter** is the callee's declared input. Do not replace that distinction with “all calls mechanically copy bytes.” The source's category and the destination type choose how initialization works.

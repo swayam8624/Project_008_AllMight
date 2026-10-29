@@ -1,8 +1,15 @@
 # Derivations
 
+## Phase 9-10 derivation navigation
+
+The complete proofs and derivations remain inline in the continuous volumes:
+
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change|Phase 9 functions and derivatives]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation|Jacobians and local approximation]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature|Integration and quadrature]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation|ODE stability]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation|Automatic differentiation]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems|Optimization and least squares]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#1. A probability model begins with possible outcomes|Probability axioms and conditioning]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#5. Waiting times, event counts, and covariance geometry|Covariance and Gaussian geometry]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#7. Transformations turn simple inputs into useful samples|Density changes and sampling]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#8. Monte Carlo estimates trade computation for uncertainty|Monte Carlo uncertainty]]
+
+
 ## Phase 8 - Linear systems and decompositions
 
-These compact reconstructions support [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|the full Phase 8 narrative]].
+These compact reconstructions support [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation|the full Phase 8 narrative]].
 
 ### The solution set is one solution plus the null space
 
@@ -74,7 +81,7 @@ The method chooses $s$ so a rational or polynomial approximation is accurate for
 
 ## Phase 7 - Transform reconstruction proofs
 
-Essential proofs are in [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
+Essential proofs are in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
 
 ### A change of basis changes a map on both sides
 
@@ -114,7 +121,7 @@ The recovered $2d'r'^*$ has zero scalar part, as a translation pure quaternion r
 
 ## Phase 6 - Geometry reconstruction proofs
 
-These extensions belong to [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
+These extensions belong to [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
 
 ### Why projection is an orthogonal decomposition
 
@@ -941,3 +948,7 @@ An h-bit digest has2^h outputs. Choose2^h+1 distinct messages. At least two must
 A changed file and a recomputed untrusted digest can agree. Authentication needs a trusted reference or keyed/signature mechanism; a polynomial remainder alone provides neither identity nor authorization.
 
 [[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Executable bounded codecs]] · [[Supplementary/Sources and Code Anchors|Verification scope]]
+
+## Received completion through Part 1100
+
+Numerical reliability derivations live in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Floating-point answers: error, conditioning, stability, and stable arithmetic|the stability chapter]] and its interpolation/root/convergence chapters. Camera projection, depth inversion, stereo, optical and research derivations remain self-contained in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A coordinate is a claim about a frame|the camera volume]].

@@ -61,7 +61,7 @@ Three habits make the mathematics easier to teach:
 - **Name the measure.** A density per unit area differs from a density per unit solid angle. An average over pixel area differs from a point sample.
 - **Name the ambiguity.** A single brightness value cannot generally determine both material and shape. A single image displacement cannot generally determine full three-dimensional motion.
 
-The vault develops related math in [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|vectors and geometry]], [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions|transforms and quaternions]], and [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|linear systems and decompositions]]. Follow those links for more practice. This volume still includes the definitions and reasoning needed for its subject.
+The vault develops related math in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|vectors and geometry]], [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|transforms and quaternions]], and [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation|linear systems and decompositions]]. Follow those links for more practice. This volume still includes the definitions and reasoning needed for its subject.
 
 A **derivation** shows why a formula follows from its assumptions. A **trace** follows the values as an algorithm runs. A **laboratory check** tests a prediction in code or a controlled example. Each catches a different problem: a sound derivation can still be coded with the wrong coordinate convention, while one passing example can hide an unstated restriction.
 
@@ -148,7 +148,11 @@ The truck-approach demonstrations make the time-to-contact idea concrete. As the
 
 A camera obscura in Santa Monica serves as an intuitive pinhole-camera model: light passes through a small opening into a dark room and projects an inverted scene on the opposite wall. The brightness discussion warns against treating pixel values as direct reflectance. The Moon looks bright without a nearby white reference even though the lecture says it reflects about 11 percent of incoming sunlight; apparent brightness depends on context. Similarly, inverse-square falloff for a point source does not mean that a uniformly lit extended wall looks one-quarter as bright from twice the distance: each pixel then represents a larger wall area, offsetting the per-source falloff. Foreshortening changes illumination per unit surface area by the cosine of the incident angle, but reflectance can be more complex.
 
- For an ideal thin lens with focal length $f$, pupil diameter $D$, and scene radiance $L$ at field angle $\alpha$, sensor-plane irradiance is $E_{\mathrm{img}}=(\pi/4)L(D/f)^2\cos^4\alpha$ under fixed-pupil geometric-optics assumptions. The fourth power combines projection and distance factors; this is image-plane irradiance, not the irradiance on the surface. The normal’s two degrees of freedom versus one brightness measurement motivates photometric stereo and the course’s recurring constraint-counting argument. [[#MITV-01 - Introduction to Machine Vision|MITV-01]] (video 00:51:15–00:52:27, 01:05:34–01:13:48)
+ For an ideal thin lens with focal length $f$, pupil diameter $D$, and scene radiance $L$ at field angle $\alpha$, sensor-plane irradiance is:
+ 
+  > $E_{\mathrm{img}}=(\pi/4)L(D/f)^2\cos^4\alpha$ 
+  
+  under fixed-pupil geometric-optics assumptions. The fourth power combines projection and distance factors; this is image-plane irradiance, not the irradiance on the surface. The normal’s two degrees of freedom versus one brightness measurement motivates photometric stereo and the course’s recurring constraint-counting argument. [[#MITV-01 - Introduction to Machine Vision|MITV-01]] (video 00:51:15–00:52:27, 01:05:34–01:13:48)
 
 ### A photograph is a model of a view
 
@@ -184,6 +188,10 @@ $$
 
 The orthogonal matrix $V^T$ rotates or reflects inputs into principal directions. The diagonal matrix $\Sigma$ scales those directions, and orthogonal $U$ maps them into output coordinates. The diagonal values are the **singular values**. This factorization describes stretching and rank loss, and supports least-squares solutions and data transformations. [[#CMU-02 - Linear Algebra (P)Review|CMU-02]] · [[#CMU-05 - Spatial Transformations|CMU-05]]
 
+Principal directions are two perpendicular directions of maximum and minimum bending.
+
+Normal matrix is : $AA^T = A^T A$
+Thus, Orthogonal, Symmetric, Skew-Symmetric are children of it.
 ### Inner products and vector calculus
 
 The Euclidean norm gives vector length: $\|v\|=\sqrt{v\cdot v}$. The dot product $u\cdot v=\sum_i u_iv_i$ measures alignment. For unit vectors it equals the cosine of their angle. In 3D, the cross product $u\times v$ is perpendicular to both inputs. Its length equals the area of their parallelogram, and its direction follows the right-hand rule. These operations support angle tests, projections, surface normals, and lighting. [[#CMU-03 - Vector Calculus (P)Review|CMU-03]]

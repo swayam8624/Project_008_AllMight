@@ -12,7 +12,7 @@ tags:
 
 Conditioning measures sensitivity to input perturbation. $A=10^{-4}I_2$ has determinant $10^{-8}$ but condition number one in the 2-norm. Uniform scaling changes determinant magnitude without changing this conditioning measure.
 
-Phase 7 develops $\kappa(A)=\|A\|\|A^{-1}\|$, near-parallel-column sensitivity, pivoted elimination and inverse residuals. Equal determinants can conceal very different stretch ratios: $\operatorname{diag}(10^{-10},10^{-10})$ and $\operatorname{diag}(1,10^{-20})$ both have determinant $10^{-20}$ but conditions one and $10^{20}$. [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions#An inverse can exist and still amplify uncertainty|Full worked sensitivity example]].
+Phase 7 develops $\kappa(A)=\|A\|\|A^{-1}\|$, near-parallel-column sensitivity, pivoted elimination and inverse residuals. Equal determinants can conceal very different stretch ratios: $\operatorname{diag}(10^{-10},10^{-10})$ and $\operatorname{diag}(1,10^{-20})$ both have determinant $10^{-20}$ but conditions one and $10^{20}$. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#An inverse can exist and still amplify uncertainty|Full worked sensitivity example]].
 
 Subtraction of nearby inputs exposes input uncertainty relative to a small difference. Sensitivity belongs to the problem; exact subtraction of stored operands cannot recover information lost when those inputs were rounded.
 
@@ -31,6 +31,11 @@ Connect later dependent concepts here as their lessons arrive.
 - [[QR factorization and least squares]] — Extends this foundation into linear-systems and decomposition analysis.
 - [[ODE integration and stability]]
 
+- [[A posteriori error bounds for contractive iteration]]
+- [[Algorithmic stability]]
+- [[Bracketed and open root solvers]]
+- [[Numerical error budgets]]
+- [[Stable quadratic root evaluation]]
 ## Recall and next depth
 
 Reconstruct the concrete example in the definition and identify its validity assumptions.

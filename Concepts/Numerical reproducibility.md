@@ -22,6 +22,7 @@ Repeatability in a defined environment, bitwise identity across a stated environ
 
 Connect later dependent concepts here when their lessons arrive.
 
+- [[Reproducible numerical benchmarking]]
 ## Recall and next depth
 
 Reconstruct the definition's example and name the assumptions that make it valid.

@@ -6,7 +6,7 @@ tags:
 
 # Absolute and relative error
 
-**Curriculum depth:** Introduced · **First seen:** C005 · **Latest development:** C005
+**Curriculum depth:** Introduced · **First seen:** C005 · **Latest development:** Phase 10
 
 ## Definition and mechanism
 
@@ -26,6 +26,10 @@ Absolute error |computed−reference| has the reference's units. Relative error 
 - [[Cancellation and loss of significance]] — uses this mechanism to establish its numerical contract.
 - [[Numerical decision boundaries]] — uses this mechanism to establish its numerical contract.
 - [[ODE integration and stability]]
+- [[Finite differences and step-size balance]]
+- [[Numerical quadrature and error]]
+- [[ODE initial-value problems and stiffness]]
+- [[Robust summaries and error metrics]]
 
 ## Recall and next depth
 
@@ -36,3 +40,10 @@ Reconstruct the definition's example and name the assumptions that make it valid
 ## Source and navigation
 
 [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|M005 teaching chapter]] · [[Supplementary/Foundations#M005 - Parts 77-88|Part definitions]] · [[Dependency Map]]
+
+## Full teaching explanation
+
+- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation|Phase 9 teaching section]]
+- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10. Inference and error metrics need explicit assumptions|Phase 10 teaching section]]
+- [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · Phase 9 visual recall
+- [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

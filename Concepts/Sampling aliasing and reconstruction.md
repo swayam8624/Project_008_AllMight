@@ -3,15 +3,21 @@ tags:
   - concept
   - xr
   - independent-series
+aliases:
+  - "sample placement and reconstruction"
 ---
 
 # Sampling aliasing and reconstruction
 
-**Curriculum depth:** Developed · **First seen:** XR01 · **Latest development:** University courses
+**Curriculum depth:** Developed · **First seen:** XR01 · **Latest development:** Phase 10
 
 ## Definition and mechanism
 
 Uniform samples identify frequencies only modulo sample rate and corresponding real-signal equivalences. Strictly band-limited ideal reconstruction needs non-overlapping spectral replicas; exact-Nyquist phase is a boundary hazard. Prefilter before decimation.
+
+### Phase 9–10 development
+
+Signal aliasing occurs when distinct signal frequencies produce the same sampled values; reconstruction then cannot recover which signal generated the samples without additional assumptions. Stratification, low-discrepancy sequences, and blue-noise point sets describe where samples are placed, not a guarantee that the signal is band-limited or that an estimator is unbiased. Each strategy still needs a valid support, probability weight, and reconstruction filter.
 
 ## Prerequisites
 
@@ -29,6 +35,9 @@ Uniform samples identify frequencies only modulo sample rate and corresponding r
 - [[Learned image features and CNNs]]
 - [[Radiance fields and Gaussian splatting]]
 - [[Reservoir resampling and ReSTIR]]
+- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+
+- [[Tensor-product interpolation]]
 ## Recall and next depth
 
 Prove 13Hz and 3Hz sample identity at 10Hz. Pending: anisotropic/nonuniform sampling and actual reconstruction errors. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
@@ -42,3 +51,9 @@ Prove 13Hz and 3Hz sample identity at 10Hz. Pending: anisotropic/nonuniform samp
 Sampling records measurements of a continuous signal on a discrete grid. Frequencies that differ by integer multiples of the sampling rate can produce the same samples, so the sampled values alone cannot identify which original signal was present. For ideal band-limited reconstruction, the signal must be restricted below half the sampling rate; equality at the limiting frequency needs additional phase and endpoint conditions. A real pixel also integrates light over area and exposure time, making its measurement a filtered sample. Prefiltering attenuates frequencies that would alias, while reconstruction estimates a continuous signal from the stored samples. Ideal sinc reconstruction has infinite support; practical filters trade computation, sharpness, ringing and residual aliasing. More samples reduce integration error only when their placement and weights match the intended pixel or path-space measure.
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Sampling continuous signals and image formation|Sampling continuous signals and image formation]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Image sampling, filtering, and efficient reconstruction|Image sampling, filtering, and efficient reconstruction]]
+
+## Full teaching explanation
+
+- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences|Phase 10 teaching section]]
+- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#8. Monte Carlo estimates trade computation for uncertainty|Phase 10 teaching section]]
+- [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

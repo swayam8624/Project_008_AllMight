@@ -30,4 +30,8 @@ Distinguish tolerance-based geometry, measurements and certified predicates; the
 
 ## Source and navigation
 
-[[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#The sensor needs coordinates inside the triangle|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The sensor needs coordinates inside the triangle|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+
+## Phase 11 camera development
+
+Adaptive orientation and incircle predicates protect discrete sign decisions from floating-point error by refining arithmetic when an error bound cannot certify the result. Camera estimation has a different uncertainty: noisy pixels and weak observability can leave pose uncertain even when every sign is exact. Predicate robustness does not improve measurement accuracy, and a low reprojection residual does not guarantee every combinatorial decision was reliable. Keep layers distinct: use robust predicates for topology, uncertainty weights for image residuals, and Jacobian spectra for weak directions. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].

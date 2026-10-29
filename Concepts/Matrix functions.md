@@ -4,7 +4,7 @@ For diagonalizable matrices, a scalar function can be applied to eigenvalues in 
 
 **Use it when:** integrating linear dynamics or interpolating structured transforms.
 
-**Developed in Phase 8:** A matrix function applies scalar behavior to invariant directions when the decomposition permits it, but its definition and its stable algorithm are separate. The exponential solves a linear differential equation; logarithms and square roots require domain and branch choices, and powers range from repeated multiplication to fractional transforms. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Matrix functions turn repeated linear actions into one operator|matrix functions]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Logarithms and square roots need domains and branches|domains and branches]]
+**Developed in Phase 8:** A matrix function applies scalar behavior to invariant directions when the decomposition permits it, but its definition and its stable algorithm are separate. The exponential solves a linear differential equation; logarithms and square roots require domain and branch choices, and powers range from repeated multiplication to fractional transforms. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Matrix functions turn repeated linear actions into one operator|matrix functions]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Logarithms and square roots need domains and branches|domains and branches]]
 
 ## Prerequisites
 
@@ -14,4 +14,4 @@ For diagonalizable matrices, a scalar function can be applied to eigenvalues in 
 
 [[Polar decomposition]], [[Matrix factorization choices]].
 
-**Teaching path:** [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Matrix functions turn repeated linear actions into one operator|matrix functions]].
+**Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Matrix functions turn repeated linear actions into one operator|matrix functions]].

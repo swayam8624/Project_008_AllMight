@@ -20,6 +20,8 @@ A mathematically equivalent expression can avoid unnecessary numerical loss. sqr
 
 Connect later dependent concepts here when their lessons arrive.
 
+- [[Stable probability normalization and log-sum-exp]]
+- [[Stable quadratic root evaluation]]
 ## Recall and next depth
 
 Reconstruct the definition's example and name the assumptions that make it valid.

@@ -18,6 +18,7 @@ Ablation isolates a method component; reference choice, confounds and uncertaint
 - [[Psychophysics and threshold inference]] — A perceptual conclusion requires a defined task and inference procedure.
 - [[Perceptual metrics and display calibration]] — Ablation conclusions depend on a declared, justified outcome measure.
 
+- [[Reproducible numerical benchmarking]]
 ## Used by
 
 Later independent XR sources will extend this same node.

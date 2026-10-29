@@ -4,7 +4,7 @@ For any real rectangular matrix, $A=U\Sigma V^\mathsf T$. Right singular vectors
 
 **Use it when:** revealing rank and conditioning, solving rank-uncertain least squares, compressing a matrix, or understanding PCA.
 
-**Developed in Phase 8:** The SVD expresses a rectangular map using orthonormal input and output directions joined by nonnegative stretches. Full, thin, and compact shapes have different dimensions; bidiagonal reduction and Jacobi methods compute the factors, and reconstruction, orthogonality, and triplet residuals check them independently. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Full, thin, and compact shapes for tall and wide matrices|factor shapes]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#How numerical software computes and checks an SVD|SVD algorithms and validation]]
+**Developed in Phase 8:** The SVD expresses a rectangular map using orthonormal input and output directions joined by nonnegative stretches. Full, thin, and compact shapes have different dimensions; bidiagonal reduction and Jacobi methods compute the factors, and reconstruction, orthogonality, and triplet residuals check them independently. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Full, thin, and compact shapes for tall and wide matrices|factor shapes]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#How numerical software computes and checks an SVD|SVD algorithms and validation]]
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ For any real rectangular matrix, $A=U\Sigma V^\mathsf T$. Right singular vectors
 
 [[Moore-Penrose pseudoinverse]], [[PCA and covariance eigensystems]], [[Polar decomposition]], [[Matrix factorization choices]].
 
-**Teaching path:** [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Singular value decomposition covers every rectangular map|SVD geometry]].
+**Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Singular value decomposition covers every rectangular map|SVD geometry]].
 - [[Matrix norms and numerical error]] — Extends this foundation into the Phase 8 dependency spine.
 - [[Camera calibration and bundle adjustment]]
 - [[Constrained optimization and inverse kinematics]]

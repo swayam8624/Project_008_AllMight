@@ -26,6 +26,8 @@ Repeated-rounding bounds use $\gamma_n=nu/(1-nu)$ when $nu<1$, under the stated 
 
 Connect later dependent concepts here as their lessons arrive.
 
+- [[Stable probability normalization and log-sum-exp]]
+- [[Stable quadratic root evaluation]]
 ## Recall and next depth
 
 Reconstruct the concrete example in the definition and identify its validity assumptions.

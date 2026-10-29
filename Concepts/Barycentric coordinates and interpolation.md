@@ -27,13 +27,14 @@ The panel sensor $(1,1,0)$ has weights $(5/12,1/4,1/3)$ and corner temperatures 
 - [[Stereo correspondence and epipolar geometry]]
 
 - [[Homogeneous clipping and perspective interpolation]]
+- [[Interpolation versus approximation]]
 ## Recall and next depth
 
 Derive signed-area ratios; distinguish affine attribute interpolation from perspective-correct screen interpolation. Full production proofs, target-specific integration and learner mastery require further evidence.
 
 ## Source and navigation
 
-[[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#The sensor needs coordinates inside the triangle|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The sensor needs coordinates inside the triangle|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
 
 ## University course development
 

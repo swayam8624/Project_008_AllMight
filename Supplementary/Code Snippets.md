@@ -1,5 +1,12 @@
 # Code Snippets
 
+## Phase 9-10 inline code and lab navigation
+
+The complete implementations remain beside their explanations; this page adds navigation only:
+
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation|Phase 9 quadrature and ODE code]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation|Phase 9 dual-number and reverse-mode code]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Reliable optimization in practice|Phase 9 optimization workbench]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#11. Implement probability without losing its numerical contracts|Phase 10 probability implementation]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#12. Use probability to evaluate graphics and research claims|Phase 10 graphics validation lab]]
+
+
 ## Source-reported C++ project excerpts
 
 ### Value-transfer anchors added by M009
@@ -1330,3 +1337,7 @@ void run_m006_lab() {
 
 
 Limits: tests assume the M004 host format/strict environment; non-finite summation is outside these sum contracts. The weighted example is for small safe finite fixtures, not an overflow-proof general production update. No parallel atomic test, real depth-frame corpus, mesh extraction, cross-platform bit identity, performance benchmark or live repository invocation was performed.
+
+## Received completion through Part 1100
+
+Two new complete C++23 drivers stay inline: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A runnable laboratory for numerical contracts|numerical contracts]] and [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A runnable camera oracle with declared conventions|camera contracts]]. Source-reported external driver results are labeled separately; their missing downloads were not treated as tested artifacts.

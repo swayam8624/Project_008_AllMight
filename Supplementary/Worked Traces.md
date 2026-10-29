@@ -1,8 +1,15 @@
 # Worked Traces
 
+## Phase 9-10 worked-trace navigation
+
+The full numerical traces remain in the continuous volumes; this page does not duplicate their calculations:
+
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation|Phase 9 Jacobian trace]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature|Phase 9 integral and quadrature traces]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation|Phase 9 oscillator and stability traces]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems|Phase 9 optimization traces]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#1. A probability model begins with possible outcomes|Phase 10 outcomes and Bayes trace]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#8. Monte Carlo estimates trade computation for uncertainty|Phase 10 Monte Carlo trace]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#9. Finite samples need stable descriptive statistics|Phase 10 online statistics]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10. Inference and error metrics need explicit assumptions|Phase 10 uncertainty and error metrics]]
+
+
 ## Phase 8 - From constraints to a stable SVD contract
 
-Follow one small rank-deficient fit through its geometry, answer, and checks. This supplements [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions|the Phase 8 story]].
+Follow one small rank-deficient fit through its geometry, answer, and checks. This supplements [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation|the Phase 8 story]].
 
 Let
 
@@ -23,7 +30,7 @@ An SVD routine should return dimensions and status, not just three arrays. Check
 
 ## Phase 7 - The moving-panel tracebook
 
-Use active right-handed rotations, column vectors, radians in code, and the [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions#Figure M6 - Follow one point through named spaces|declared illustrative minus-Z projection]] with near 1, far 10 and NDC depth $[-1,1]$.
+Use active right-handed rotations, column vectors, radians in code, and the [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure M6 - Follow one point through named spaces|declared illustrative minus-Z projection]] with near 1, far 10 and NDC depth $[-1,1]$.
 
 ### One local point reaches a screen-relative description
 
@@ -54,7 +61,7 @@ For car → door → mirror, editing the door's local transform makes door-local
 
 ## Phase 6 - The robot panel tracebook
 
-This cumulative trace extends [[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code|the self-contained Phase 6 volume]]. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.
+This cumulative trace extends [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|the self-contained Phase 6 volume]]. The numbers are illustrative laboratory inputs, not observations from a real robot or renderer.
 
 ### One physical object through six representations
 
@@ -642,3 +649,7 @@ Raw image words80000000,7F800000,7FC00001,7F800001 round-trip through the word c
 - A same-size changed payload can pass structure checks while failing an independent integrity comparison.
 
 [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|Teach the complete journey]] · [[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Run the regressions]]
+
+## Received completion through Part 1100
+
+Follow the numerical summation/root/interpolation witnesses in [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall#Numerical reliability figures and their explanations|the numerical figure index]], and the frame/depth/stereo/optics traces in [[Visual Recall/11 - Projective Geometry and Cameras - Visual Recall#Figures and their full explanations|the camera figure index]]. Essential trace explanations remain in the continuous books.

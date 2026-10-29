@@ -4,7 +4,7 @@ The exact SVD defines $A^+$ by reciprocating every positive singular value and t
 
 **Use it when:** rectangular or rank-deficient least squares needs a minimum-norm answer.
 
-**Developed in Phase 8:** The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#The Moore–Penrose inverse and its four identities|the exact pseudoinverse]] · [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Thresholding and regularization are different choices|truncation and regularization]]
+**Developed in Phase 8:** The exact pseudoinverse reciprocates every positive singular value, yielding the least-squares solution with minimum Euclidean norm. A practical cutoff defines a different, truncated operator: discarding even a positive singular value can increase the residual for the original system, so the tolerance and retained rank are part of the mathematical answer. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The Moore–Penrose inverse and its four identities|the exact pseudoinverse]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Thresholding and regularization are different choices|truncation and regularization]]
 
 ## Prerequisites
 
@@ -14,4 +14,4 @@ The exact SVD defines $A^+$ by reciprocating every positive singular value and t
 
 [[PCA and covariance eigensystems]], [[Matrix factorization choices]].
 
-**Teaching path:** [[Continuous Notes/08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions#Pseudoinverse makes least squares and minimum norm one operation|pseudoinverse]].
+**Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Pseudoinverse makes least squares and minimum norm one operation|pseudoinverse]].

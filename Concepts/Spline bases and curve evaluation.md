@@ -21,6 +21,8 @@ A spline is a piecewise polynomial curve whose neighboring pieces join under exp
 
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 
+- [[Bézier curves and De Casteljau evaluation]]
+- [[Cubic Hermite interpolation]]
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Curves as controllable functions|Curves as controllable functions]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Animation curves and motion paths|Animation curves and motion paths]]

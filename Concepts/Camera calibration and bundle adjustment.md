@@ -24,6 +24,15 @@ Camera calibration estimates parameters that map 3D points to image coordinates.
 - [[Stereo correspondence and epipolar geometry]]
 
 - [[Radiance fields and Gaussian splatting]]
+- [[Off-axis stereo projection and disparity]]
+- [[Omnidirectional camera projections]]
+- [[Position reconstruction from depth]]
+- [[Camera gauge freedoms and observability]]
+
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Cameras, projection, and calibration|Cameras, projection, and calibration]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Pose estimation, transforms, and robust fitting|Pose estimation, transforms, and robust fitting]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Stereo, relative orientation, and reconstruction|Stereo, relative orientation, and reconstruction]]
+
+## Phase 11 camera development
+
+Linearize reprojection residuals as r(θ+δ)≈r(θ)+Jδ; the weighted information matrix $J^{\mathsf T}WJ$ reveals parameter combinations that change observations. Null directions are local ambiguities, while small eigenvalues indicate weak constraints. In calibrated monocular structure from motion, global frame choice and common scene scale are gauge freedoms. Fix a pose and scale convention, or add a metric measurement, before interpreting covariance. Repeated nearly identical views may leave focal length, depth, and pose coupled even with many pixels. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].

@@ -1,5 +1,64 @@
 # Keyword Index
 
+## Phase 10 - Probability and Monte Carlo
+
+Received Parts 901-1000 in T01/T06/T07; Phase 11 Parts 1001-1100 are also integrated.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Probability spaces, events, and conditioning]] | Developed | Phase10 | Phase10 |
+| [[Random variables and probability laws]] | Developed | Phase10 | Phase10 |
+| [[Common probability distributions and their assumptions]] | Developed | Phase10 | Phase10 |
+| [[Expectation, covariance, and dependence]] | Developed | Phase10 | Phase10 |
+| [[Multivariate Gaussian distributions and whitening]] | Developed | Phase10 | Phase10 |
+| [[Conditional Gaussians and Schur complements]] | Developed | Phase10 | Phase10 |
+| [[Stateful pseudorandom generators and stream state]] | Developed | Phase10 | Phase10 |
+| [[Stateless keyed sampling and reproducibility]] | Developed | Phase10 | Phase10 |
+| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | Developed | Phase10 | Phase10 |
+| [[Inverse, rejection, and importance sampling]] | Developed | Phase10 | Phase10 |
+| [[Online moments and Welford accumulation]] | Developed | Phase10 | Phase10 |
+| [[Confidence intervals and sequential evidence]] | Developed | Phase10 | Phase10 |
+| [[Robust summaries and error metrics]] | Developed | Phase10 | Phase10 |
+| [[Algorithmic stability]] | Developed | Phase10 | Phase10 |
+| [[Stable quadratic root evaluation]] | Developed | Phase10 | Phase10 |
+| [[Interpolation versus approximation]] | Developed | Phase10 | Phase10 |
+| [[Tensor-product interpolation]] | Developed | Phase10 | Phase10 |
+| [[Cubic Hermite interpolation]] | Developed | Phase10 | Phase10 |
+| [[Bézier curves and De Casteljau evaluation]] | Developed | Phase10 | Phase10 |
+| [[Bracketed and open root solvers]] | Developed | Phase10 | Phase10 |
+| [[A posteriori error bounds for contractive iteration]] | Developed | Phase10 | Phase10 |
+| [[Discretization, truncation, and roundoff]] | Developed | Phase10 | Phase10 |
+| [[Convergence order and Richardson extrapolation]] | Developed | Phase10 | Phase10 |
+| [[Stable probability normalization and log-sum-exp]] | Developed | Phase10 | Phase10 |
+| [[Uniform shuffling without replacement]] | Developed | Phase10 | Phase10 |
+| [[Latin-hypercube sampling]] | Developed | Phase10 | Phase10 |
+| [[Numerical error budgets]] | Developed | Phase10 | Phase10 |
+| [[Reproducible numerical benchmarking]] | Developed | Phase10 | Phase10 |
+
+## Phase 9 - Calculus and optimization
+
+Supplied Parts 801-900 in T04/T03/T02.
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Function contracts: domains, codomains, and images]] | Developed | Phase9 | Phase9 |
+| [[Limits and continuity]] | Developed | Phase9 | Phase9 |
+| [[Derivative as a local linear map]] | Developed | Phase9 | Phase9 |
+| [[Differentiation rules and chain rule]] | Developed | Phase9 | Phase9 |
+| [[Partial derivatives and gradients]] | Developed | Phase9 | Phase9 |
+| [[Directional and total derivatives]] | Developed | Phase9 | Phase9 |
+| [[Jacobians, pushforwards, and pullbacks]] | Developed | Phase9 | Phase9 |
+| [[Hessians and local curvature]] | Developed | Phase9 | Phase9 |
+| [[Taylor models and approximation error]] | Developed | Phase9 | Phase9 |
+| [[Finite differences and step-size balance]] | Developed | Phase9 | Phase9 |
+| [[Definite integrals and the fundamental theorem]] | Developed | Phase9 | Phase9 |
+| [[Numerical quadrature and error]] | Developed | Phase9 | Phase9 |
+| [[ODE initial-value problems and stiffness]] | Developed | Phase9 | Phase9 |
+| [[Time integrators and symplectic updates]] | Developed | Phase9 | Phase9 |
+| [[Newton and quasi-Newton optimization]] | Developed | Phase9 | Phase9 |
+| [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | Developed | Phase9 | Phase9 |
+| [[Implicit differentiation and parameter sensitivities]] | Developed | Phase9 | Phase9 |
+
 ## Phase 8 - Linear systems, decompositions, and matrix functions
 
 All supplied Phase 8 excerpts cover Parts 701–800. Their canonical titles and provenance are tracked in Foundations; the concept links point into a connected teaching narrative.
@@ -7,14 +66,14 @@ All supplied Phase 8 excerpts cover Parts 701–800. Their canonical titles and 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
 | [[Linear systems and fundamental subspaces]] | Developed | Phase8 | Phase8 |
-| [[Gaussian elimination and pivoting]] | Developed | Phase8 | Phase8 |
+| [[Gaussian elimination and pivoting]] | Developed | Phase8 | Phase10|
 | [[LU factorization and reusable solves]] | Developed | Phase8 | Phase8 |
-| [[Symmetric positive-definite matrices and Cholesky]] | Developed | Phase8 | Phase8 |
+| [[Symmetric positive-definite matrices and Cholesky]] | Developed | Phase8 | Phase10|
 | [[QR factorization and least squares]] | Developed | Phase8 | Phase8 |
-| [[Eigenvalues and eigenspaces]] | Developed | Phase8 | Phase8 |
+| [[Eigenvalues and eigenspaces]] | Developed | Phase8 | Phase9|
 | [[Singular value decomposition]] | Developed | Phase8 | University |
 | [[Moore-Penrose pseudoinverse]] | Developed | Phase8 | Phase8 |
-| [[PCA and covariance eigensystems]] | Developed | Phase8 | Phase8 |
+| [[PCA and covariance eigensystems]] | Developed | Phase8 | Phase10|
 | [[Polar decomposition]] | Developed | Phase8 | Phase8 |
 | [[Matrix norms and numerical error]] | Developed | Phase8 | Phase8 |
 | [[Matrix functions]] | Developed | Phase8 | Phase8 |
@@ -28,7 +87,7 @@ Received lesson headings cover 601–634 and 651–700. The 635–650 source gap
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
 | [[Matrices as linear maps and basis images]] | Introduced | Phase7 | Phase7 |
-| [[Matrix multiplication and composition order]] | Introduced | Phase7 | Phase7 |
+| [[Matrix multiplication and composition order]] | Introduced | Phase7 | Phase9|
 | [[Matrix transpose symmetry and trace]] | Introduced | Phase7 | Phase7 |
 | [[Determinants orientation and volume]] | Developed | Phase7 | University |
 | [[Matrix inversion pivoting and residuals]] | Introduced | Phase7 | Phase7 |
@@ -96,12 +155,12 @@ XR labels are source identifiers for the separate seeing/representation series, 
 | [[Eye movements and display-time gaze]] | Introduced | XR01 | XR01 |
 | [[Continuous signals and discrete samples]] | Introduced | XR01 | XR01 |
 | [[Fourier analysis and spectral phase]] | Developed | XR01 | University |
-| [[Sampling aliasing and reconstruction]] | Developed | XR01 | University |
+| [[Sampling aliasing and reconstruction]] | Developed | XR01 | Phase10|
 | [[Convolution and filter footprints]] | Developed | XR01 | University |
 | [[PSF OTF and MTF]] | Introduced | XR01 | XR01 |
 | [[Multiscale texture filtering]] | Introduced | XR01 | XR01 |
 | [[Spatiotemporal sampling and retinal motion]] | Introduced | XR01 | XR01 |
-| [[Antialiasing and sample allocation]] | Introduced | XR01 | XR01 |
+| [[Antialiasing and sample allocation]] | Introduced | XR01 | Phase10|
 | [[Temporal reprojection and history validation]] | Introduced | XR01 | XR01 |
 | [[Color encoding and linear-light operations]] | Developed | XR01 | University |
 | [[Perceptual metrics and display calibration]] | Introduced | XR01 | XR01 |
@@ -290,9 +349,9 @@ See [[Dependency Map]] for the learning order. `Forward` describes curriculum de
 | [[Interval arithmetic]] | Introduced | C004 | C004 |
 | [[Terminating fractions and dyadic rationals]] | Introduced | C005 | C005 |
 | [[Floating-point addition and absorption]] | Introduced | C005 | C005 |
-| [[Absolute and relative error]] | Introduced | C005 | C005 |
+| [[Absolute and relative error]] | Introduced | C005 | Phase10|
 | [[Forward and backward error]] | Introduced | C005 | C005 |
-| [[Accumulated rounding error]] | Introduced | C005 | C005 |
+| [[Accumulated rounding error]] | Introduced | C005 | Phase10|
 | [[Cancellation and loss of significance]] | Introduced | C005 | C005 |
 | [[Sterbenz lemma]] | Introduced | C005 | C005 |
 | [[Stable reformulation]] | Introduced | C005 | C005 |
@@ -323,8 +382,8 @@ This source series develops the graph without advancing numbered curriculum cove
 | [[Bounding volume hierarchies]] | Developed | University | University |
 | [[Lens optics and depth of field]] | Developed | University | University |
 | [[Exposure and sensor response]] | Developed | University | University |
-| [[Probability density and change of measure]] | Developed | University | University |
-| [[Monte Carlo rendering estimators and variance]] | Developed | University | University |
+| [[Probability density and change of measure]] | Developed | University | Phase10|
+| [[Monte Carlo rendering estimators and variance]] | Developed | University | Phase10|
 | [[Optical flow and time to contact]] | Developed | University | University |
 | [[Edge localization and subpixel contours]] | Developed | University | University |
 | [[Hough transform and geometric voting]] | Developed | University | University |
@@ -332,12 +391,12 @@ This source series develops the graph without advancing numbered curriculum cove
 | [[Camera calibration and bundle adjustment]] | Developed | University | University |
 | [[Stereo correspondence and epipolar geometry]] | Developed | University | University |
 | [[PDE fields and discrete Laplacians]] | Developed | University | University |
-| [[ODE integration and stability]] | Developed | University | University |
-| [[Constrained optimization and inverse kinematics]] | Developed | University | University |
+| [[ODE integration and stability]] | Developed | University | Phase9|
+| [[Constrained optimization and inverse kinematics]] | Developed | University | Phase9|
 | [[Surface orientation from image brightness]] | Developed | University | University |
 | [[GPU vertex specification]] | Developed | University | University |
 | [[Homogeneous clipping and perspective interpolation]] | Developed | University | University |
-| [[Automatic differentiation and backpropagation]] | Developed | University | University |
+| [[Automatic differentiation and backpropagation]] | Developed | University | Phase9|
 | [[Learned image features and CNNs]] | Developed | University | University |
 | [[Attention and visual transformers]] | Developed | University | University |
 | [[Contrastive vision and image-language alignment]] | Developed | University | University |
@@ -349,3 +408,19 @@ This source series develops the graph without advancing numbered curriculum cove
 | [[Additive energy and approximate structure]] | Developed | University | University |
 | [[Local rigidity and mesh orientation fields]] | Developed | University | University |
 | [[Perception feedback and robot learning]] | Developed | University | University |
+
+## Phase 11 - Projective geometry and cameras
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Axial depth and Euclidean range]] | Developed | Phase11 | Phase11 |
+| [[Hardware depth-buffer linearization]] | Developed | Phase11 | Phase11 |
+| [[Position reconstruction from depth]] | Developed | Phase11 | Phase11 |
+| [[Screen-space ray generation and mouse picking]] | Developed | Phase11 | Phase11 |
+| [[Off-axis stereo projection and disparity]] | Developed | Phase11 | Phase11 |
+| [[Omnidirectional camera projections]] | Developed | Phase11 | Phase11 |
+
+## Phase 11 - Research mechanisms
+
+- [[Concepts/Camera gauge freedoms and observability|Camera gauge freedoms and observability]] — Developed; full mechanism in the Phase 11 research chapters.
+- [[Concepts/Ray differentials and camera sampling measures|Ray differentials and camera sampling measures]] — Developed; full mechanism in the Phase 11 research chapters.

@@ -10,7 +10,7 @@ tags:
 
 ## Definition and mechanism
 
-Phase 7 stores basis images as matrix columns and derives coordinate conversion $[v]_C=C^{-1}B[v]_B$. The endpoint bases and whether motion is active or passive determine the product; row-major storage does not. [[Continuous Notes/07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions#Coordinates can change while the geometric object stays still|Reconstruction and active/passive example]].
+Phase 7 stores basis images as matrix columns and derives coordinate conversion $[v]_C=C^{-1}B[v]_B$. The endpoint bases and whether motion is active or passive determine the product; row-major storage does not. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Coordinates can change while the geometric object stays still|Reconstruction and active/passive example]].
 
 A basis is an ordered independent spanning set. Independence makes coordinates unique; spanning makes every vector reachable. Dimension counts basis elements over the chosen field, not stored components or bytes. A basis change alters coordinates without necessarily moving the physical vector.
 
@@ -37,4 +37,4 @@ Separate passive coordinate change from active transformation and explain near-d
 
 ## Source and navigation
 
-[[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#A basis is a measuring arrangement, not the vector itself|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A basis is a measuring arrangement, not the vector itself|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]

@@ -29,4 +29,4 @@ Show nontransitivity; separate measurement noise, arithmetic error and input qua
 
 ## Source and navigation
 
-[[Continuous Notes/06 - From Movement to Meaning - Vectors, Geometry and Reliable Code#Reliability begins at the boundary of the calculation|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Reliability begins at the boundary of the calculation|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]

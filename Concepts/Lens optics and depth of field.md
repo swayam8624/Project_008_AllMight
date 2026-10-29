@@ -23,6 +23,12 @@ A pinhole camera maps every scene point to one image point through a single cent
 - [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference]]
 - [[Exposure and sensor response]]
 
+- [[Ray differentials and camera sampling measures]]
+
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Lens optics, focus, and image formation|Lens optics, focus, and image formation]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Photographic composition, history, and communication|Photographic composition, history, and communication]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Photographic workflow and integrated decisions|Photographic workflow and integrated decisions]]
+
+## Phase 11 camera development
+
+A pinhole camera emits one ideal ray per image location. A finite-aperture lens samples a family of rays whose intersections form a blur disk away from the focal plane. A thin-lens camera therefore samples film and lens position, then aims through a focal point. Differentials from film offsets alone omit aperture variation unless the model includes it. Monte Carlo PDFs and camera weights must match the sampled film/aperture measure. The thin-lens model approximates real optics; aberrations and bokeh shape require richer models. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].
