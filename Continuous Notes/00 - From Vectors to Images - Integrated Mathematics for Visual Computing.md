@@ -970,10 +970,6 @@ For arbitrary non-coplanar inputs, first define which plane or projected directi
 
 Often no angle is needed. To test whether unit directions differ by at most $\theta_{\max}$ in $[0,\pi]$, compare their dot product with $\cos\theta_{\max}$. This saves inverse trigonometry and states the actual decision.
 
-
-<!-- end V06.14 -->
-
-<!-- begin V06.15 -->
 ## Surface movement becomes a local frame
 
 The robot needs a front-facing normal and two directions along the panel. A [[#Surface movement becomes a local frame|tangent]] lies in a surface's local tangent plane. A **normal** is perpendicular to that plane. A **bitangent** supplies a second tangent direction, often paired with increasing texture coordinates.
@@ -1041,17 +1037,12 @@ The resulting **TBN frame** consists of tangent, bitangent, and normal. It conve
 
 The distinction between geometric and shading frames is used in real rendering systems; PBRT's triangle implementation separately constructs these quantities and accounts for orientation reversal. That reference is an implementation anchor, not evidence that our simplified lab covers every seam and interpolation rule. [PBRT, Triangle Meshes](https://www.pbr-book.org/4ed/Shapes/Triangle_Meshes).
 
-
-<!-- end V06.15 -->
-
-
 ### Immediate footing — rank and nullspace
 
 The rank of a map is the number of independent output directions it can produce. Its nullspace (kernel) contains inputs mapped to zero. For $A=\begin{bmatrix}1&1\\2&2\end{bmatrix}$, only one output direction is independent, so $\operatorname{rank}(A)=1$; every vector $(t,-t)$ lies in the nullspace. Rank plus nullity equals the input dimension: $\operatorname{rank}(A)+\dim\ker(A)=n$. In solving $Ax=b$, rank shows which constraints are independent and which input directions remain free. In floating-point work, numerical rank uses a tolerance because an exact zero may appear as a small computed singular value.
 
 [[#Rank, the four spaces, and the shape of the answer|Full explanation and worked examples in this book]]
 
-<!-- begin V06.16 -->
 ## Orthonormal frames make reconstruction simple
 
 A [[#Orthonormal frames make reconstruction simple|frame is orthonormal]] when all its axes have length one and are mutually perpendicular. Its Gram matrix is identity. Coordinates of a vector are simply its dot products with the axes:
@@ -1126,10 +1117,6 @@ Validate both $\|Q^\mathsf TQ-I\|$ and $\|V-QR\|$ under declared norms. The firs
 
 For dense general-purpose solves, Householder QR is an important alternative. LAPACK represents the orthogonal factor through elementary reflectors rather than simply materializing a Gram matrix. This is the next-depth connection, not a new dependency for this vault's small laboratory. [LAPACK, QR Factorization](https://www.netlib.org/lapack/lug/node40.html).
 
-
-<!-- end V06.16 -->
-
-<!-- begin V06.17 -->
 ## Light uses the same decomposition in a new role
 
 Our panel is now a surface, not just a movement plane. A ray approaches it with unit direction $\mathbf i$ pointing **toward** the interface. Choose a unit normal $\mathbf n$ pointing back into the incident medium, so front-side incidence obeys $\mathbf i\cdot\mathbf n\le0$.
@@ -1198,17 +1185,12 @@ Because $\mathbf l\cdot(\mathbf l+\mathbf v)=1+\mathbf l\cdot\mathbf v$ and the 
 
 If the inputs have unequal magnitudes, their sum is biased toward the larger one and is not the desired angular bisector. The half-vector supports certain specular-lighting models; it does not by itself define a physically complete reflectance law. The panel's geometry gives a direction, while material modeling determines what that direction means for brightness.
 
-
-<!-- end V06.17 -->
-
-
 ### Immediate footing — gradient
 
 For a differentiable scalar function, the gradient is the vector of partial derivatives. Under the ordinary Euclidean metric it points in the direction of steepest increase. For $f(x,y)=x^2+3y$, $\nabla f=(2x,3)$, so at $(1,2)$ it is $(2,3)$. A small displacement $\delta$ changes the function approximately by $\nabla f\cdot\delta$. In a non-orthonormal metric, the gradient vector depends on that metric even though the differential is a covector. Gradient descent moves opposite the gradient, with step size controlling progress and stability.
 
 [[#Multivariable derivatives and sensitivity|Full explanation and worked examples in this book]]
 
-<!-- begin V06.18 -->
 ## The sensor needs coordinates inside the triangle
 
 Cartesian coordinates tell us where the sensor is in the workcell. [[#The sensor needs coordinates inside the triangle|Barycentric coordinates]] tell us how it sits relative to the panel's three corners.
@@ -1353,10 +1335,6 @@ To see the weighting issue without a full rasterizer, consider two endpoints wit
 
 This formula requires a valid projected configuration and clipping policy. A denominator near zero or a primitive crossing the camera's projective boundary cannot be repaired by casually dividing. The projective story below explains why.
 
-
-<!-- end V06.18 -->
-
-<!-- begin V06.19 -->
 ## Weighted points lead from affine geometry to collision shapes
 
 We have now met three kinds of combinations. They answer different questions:
@@ -1457,27 +1435,9 @@ $$
 
 This lets GJK explore the difference shape on demand. GJK stands for Gilbert–Johnson–Keerthi. Its full simplex update, termination, degeneracy, and contact policies are not supplied by this identity; they belong to later collision lessons. Zero direction also needs a separate support-query policy.
 
-
-<!-- end V06.19 -->
-
-
 # A matrix is a rule acting on geometry
 
 Now turn a rule for one vector into a rule for every vector. Keep the map, coordinate frame, geometric metric and storage layout separate. Determinants, inverses, dual measurements and composed rotations each have a precise job.
-
-<!-- begin V07.00 -->
-<details>
-<summary>Original source metadata</summary>
-
-```yaml
----
-tags: [continuous-notes, phase-7, matrices, transforms, quaternions]
-coverage: "Received Parts 601–634 and 651–700; affine bridge reconstructed"
----
-```
-
-</details>
-
 
 ## From Basis Images to Moving Worlds: Matrices, Transforms and Quaternions
 
@@ -1485,35 +1445,21 @@ The robot in [[#The panel gives us a reason to learn|Phase 6]] could measure dir
 
 This volume develops the machinery needed to answer those questions. We begin with the images of basis vectors, derive matrix multiplication from composition, discover when information is lost, then add origins and coordinate frames. Quaternions arrive when the controller needs an orientation that composes and interpolates cleanly. The last step is a computational contract: what the data means, how it is stored, how failure is reported, and what our tests actually establish.
 
-**Coverage:** six supplied excerpts contain 84 standalone numbered lessons, Parts 601–634 and 651–700. Parts 635–650 have no standalone lesson in these uploads. Their prerequisite bridge is explicitly reconstructed below without assigning invented canonical titles. The [[Supplementary/Foundations#Phase 7 - Parts 601-700|coverage ledger]] preserves that distinction. The narrative develops the phase's connected subject; it does not mark missing source lessons as received.
-
-**How to teach from this file:** read the worked numbers aloud, pause at each figure to predict the next state, then change one assumption. The derivations, essential traces, independent examples and complete reference laboratory remain here. [[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|The compact recall companion]] links directly to the figures and their explanations.
-
-
-<!-- end V07.00 -->
-
-
 ### Immediate footing — quaternion
 
 A quaternion has one scalar and three vector components, written $q=(w,\mathbf v)$. Unit quaternions can represent three-dimensional rotations. For unit axis $\mathbf a$ and angle $\theta$, use $q=(\cos(\theta/2),\mathbf a\sin(\theta/2))$. Applying the corresponding rotation to a vector uses the quaternion product $q(0,\mathbf x)q^{-1}$. The multiplication law makes composition possible and noncommutative. The values $q$ and $-q$ represent the same rotation; arbitrary component-wise interpolation therefore needs care. State the multiplication order, frame convention and normalization contract.
 
 [[#Orientation needs a state that can be composed|Full explanation and worked examples in this book]]
-
-<!-- begin V07.01 -->
 ## Keep the promises visible while moving between representations
 
-| Question | Vocabulary and promise |
-|---|---|
-| What does the table mean? | [[Matrices as linear maps and basis images]]; [[#Jacobians, curvature, and local approximation\|Matrix multiplication and composition order]]; [[Matrix transpose symmetry and trace]]. Shape and basis determine meaning before layout does. |
-| Can the operation be undone reliably? | [[Determinants orientation and volume]]; [[Matrix inversion pivoting and residuals]]; [[#An inverse can exist and still amplify uncertainty\|Conditioning and singularity]]. Algebraic invertibility and numerical usefulness are separate questions. |
-| Which frame describes the point? | [[Linear affine and projective transformations]]; [[#A camera model must close the loop\|Coordinate frames and change of basis]]; [[#A camera model must close the loop\|Camera view and clip-space pipeline]]. Name the input and output spaces. |
-| Where do the entries live? | [[Matrix storage indexing and strides]]; [[Matrix SIMD tiling and cache reuse]]. Memory layout, ownership and execution order need explicit contracts. |
+| Question                                 | Vocabulary and promise                                                                                                                                                                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What does the table mean?                | [[Matrices as linear maps and basis images]]; [[#Jacobians, curvature, and local approximation\|Matrix multiplication and composition order]]; [[Matrix transpose symmetry and trace]]. Shape and basis determine meaning before layout does.           |
+| Can the operation be undone reliably?    | [[Determinants orientation and volume]]; [[Matrix inversion pivoting and residuals]]; [[#An inverse can exist and still amplify uncertainty\|Conditioning and singularity]]. Algebraic invertibility and numerical usefulness are separate questions.   |
+| Which frame describes the point?         | [[Linear affine and projective transformations]]; [[#A camera model must close the loop\|Coordinate frames and change of basis]]; [[#A camera model must close the loop\|Camera view and clip-space pipeline]]. Name the input and output spaces.       |
+| Where do the entries live?               | [[Matrix storage indexing and strides]]; [[Matrix SIMD tiling and cache reuse]]. Memory layout, ownership and execution order need explicit contracts.                                                                                                  |
 | Which orientation operation is intended? | [[Quaternion algebra and Hamilton product]]; [[Quaternion rotation and double cover]]; [[Quaternion matrix and axis-angle conversion]]; [[Quaternion interpolation and shortest paths]]. Component order and multiplication convention are independent. |
-| What can the representation retain? | [[Euler angles and gimbal singularity]]; [[Dual quaternions and rigid motion]]; [[Transform hierarchies TRS and shear]]. A compact representation has a domain, not unlimited expressive power. |
-
-
-<!-- end V07.01 -->
-
+| What can the representation retain?      | [[Euler angles and gimbal singularity]]; [[Dual quaternions and rigid motion]]; [[Transform hierarchies TRS and shear]]. A compact representation has a domain, not unlimited expressive power.                                                         |
 
 ### Immediate footing — expectation
 
@@ -1521,14 +1467,12 @@ Expectation is the probability-weighted average of a random quantity. For a fair
 
 [[#3. Expected values describe centers; covariance describes dependence|Full explanation and worked examples in this book]]
 
-
 ### Immediate footing — covariance
 
 The mean of a random quantity is its expectation: for a random vector $X$, write $\mu=\mathbb{E}[X]$. Covariance measures how deviations from these means vary together: $\operatorname{Cov}(X,Y)=\mathbb{E}[(X-\mathbb{E}[X])(Y-\mathbb{E}[Y])]$. Positive covariance means deviations tend to share a sign; negative covariance means they tend to have opposite signs. The vector covariance matrix is $\Sigma=\mathbb{E}[(X-\mu)(X-\mu)^T]$; it is symmetric positive semidefinite. For centered observations $x_i-\bar{x}$, estimate it by averaging their outer products, with divisor $N$ for the observed-cloud covariance or often $N-1$ for an unbiased population estimate under independent sampling. Its eigenvectors give principal variation directions and eigenvalues give variance along them.
 
 [[#3. Expected values describe centers; covariance describes dependence|Full explanation and worked examples in this book]]
 
-<!-- begin V07.02 -->
 ## The robot needs a rule for moving every direction
 
 The panel from Phase 6 is still on the workbench. We know how to describe a point, a displacement, a tangent and a normal. Now the robot needs to turn an entire tool, stretch a model, express measurements in a different frame, or reverse a calibration. Storing a new answer for every possible input would be impossible. We need a compact rule that determines all those answers.
@@ -1558,11 +1502,6 @@ The geometric coordinate frame is right-handed, positive rotations follow the ri
 Under this convention, $A\in\mathbb R^{m\times n}$ represents a linear map from an $n$-component input to an $m$-component output. It needs one column for each input basis direction, and each column contains the $m$ coordinates of that direction's output. Shape is therefore a mathematical type contract. A $2\times3$ map accepts a three-component vector and produces a two-component vector; equal byte counts do not make incompatible shapes interchangeable.
 
 We also need to distinguish a vector's role from its written orientation. A row of coefficients can represent a measurement, or it can be the row-vector convention's representation of a vector. Those roles should not be inferred from the fact that three numbers happen to be horizontal. Later, a frame change will reveal why the distinction matters.
-
-
-<!-- end V07.02 -->
-
-<!-- begin V07.03 -->
 ## A linear rule is determined by its basis images
 
 A **map** assigns an output to each permitted input. A map $T$ is **linear** when it preserves addition and scalar multiplication:
@@ -1666,12 +1605,6 @@ $$
 [D]=\begin{bmatrix}0&1&0\\0&0&2\end{bmatrix}.
 $$
 This is the basis-image rule applied to a function space, as in MIT 18.06 Lecture 30. [MIT 18.06 Lecture 30, official notes](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/71bffaffa75c005516ee010daf17868b_MIT18_06S10_L30.pdf)
-
-
-
-<!-- end V07.03 -->
-
-<!-- begin V07.04 -->
 ## Keep the transformation separate from its storage
 
 The logical element `A(0, 1)` means row zero, column one regardless of the memory layout. For the $2\times3$ table with rows $(1,2,3)$ and $(4,5,6)$, two compact layouts are
@@ -1697,10 +1630,6 @@ The matrix itself has $mn$ scalar entries. A particular C++ object may also have
 
 For a layout diagnostic, use distinct asymmetric values. Identity is a poor diagnostic because its transpose is identical. Applying a matrix to standard basis vectors isolates its columns: $A\mathbf e_j$ must reproduce column $j$. That test can locate a transposition mistake before camera or hierarchy code makes it harder to see.
 
-
-<!-- end V07.04 -->
-
-<!-- begin V07.05 -->
 ## Combining rules explains the multiplication law
 
 Addition and scalar multiplication are the simplest matrix operations. They act entry by entry:
@@ -1780,10 +1709,6 @@ Grouping also changes cost. If $A$ is $1000\times10$, $B$ is $10\times1000$, and
 
 For a classical dense product of shapes $(M\times K)(K\times N)$, there are $MN$ output entries and $K$ terms per entry, giving $\Theta(MKN)$ work. Matrix-vector multiplication costs $\Theta(MN)$ for an $M\times N$ map. Addition, scalar multiplication and transpose touch $MN$ entries and take $\Theta(MN)$ work. Layout and loop ordering change data reuse; they do not change these mathematical shapes or classical asymptotic counts.
 
-
-<!-- end V07.05 -->
-
-
 ## A mathematical object is more than its coordinates
 
 A graphics calculation begins with an object in a space and a question about that object. A point, a direction, a color, a velocity, a pixel measurement, and a list of unknown parameters may all be stored as arrays of numbers. They do not thereby become the same kind of thing. The meaning of each array depends on the operations it supports, the units of its entries, and the coordinate frame in which those entries were measured.
@@ -1844,7 +1769,6 @@ A condition number measures how strongly a problem's answer can change when its 
 
 [[#Conditioning: weak singular directions amplify uncertainty|Full explanation and worked examples in this book]]
 
-<!-- begin V06.10 -->
 ## A Gram matrix remembers the geometry of a slanted basis
 
 In the slanted basis from earlier, dotting coordinate lists directly gives the wrong answer. Let basis columns be $\mathbf b_1,\ldots,\mathbf b_k$. The [[#A Gram matrix remembers the geometry of a slanted basis|Gram matrix]] stores all pairwise inner products:
@@ -1894,10 +1818,6 @@ $$
 
 QR-based solves are usually a better route when numerical conditioning matters. We will build the orthogonalization intuition shortly rather than hide this behind a matrix recipe.
 
-
-<!-- end V06.10 -->
-
-<!-- begin V07.06 -->
 ## Special matrices tell us what information a rule preserves
 
 The **identity** $I_n$ has ones on the diagonal and zeros elsewhere. It sends every basis direction to itself, so $I_n\mathbf x=\mathbf x$. For an $m\times n$ matrix, use $I_mA=A$ and $AI_n=A$. A transform product must begin with identity, while an accumulation of additions begins with the zero matrix. Starting a product at zero destroys every later contribution.
@@ -1915,10 +1835,6 @@ $$
 
 slides higher layers farther sideways, like a stack of cards. It sends $\mathbf e_1$ to $(1,0)$ and $\mathbf e_2$ to $(k,1)$, preserving area but generally changing angles. Off-diagonal entries mean coordinate coupling, but they are not by themselves proof of shear: rotation also mixes coordinates. Nor does a general matrix with all diagonal entries equal to one automatically have determinant one. For example $\begin{bmatrix}1&2\\3&1\end{bmatrix}$ has determinant $-5$; it is not the area-preserving elementary shear above.
 
-
-<!-- end V07.06 -->
-
-<!-- begin V07.07 -->
 ## Derive rotations from the directions that stay fixed
 
 A **proper rotation** preserves Euclidean lengths, angles and orientation. In two dimensions, rotate the first unit axis through angle $\theta$. Its image is $(\cos\theta,\sin\theta)^{\mathsf T}$. The second unit axis began at angle $\pi/2$, so its image is
@@ -1992,10 +1908,6 @@ A diagonal matrix can represent some nonidentity rotations: in two dimensions $\
 
 Repeated floating-point rotation products can drift away from orthonormality. Check $R^{\mathsf T}R$ against identity with a meaningful residual. Finite entries alone do not prove that a matrix remains a rotation. Later quaternion normalization gives a compact orientation-maintenance method, with its own preconditions.
 
-
-<!-- end V07.07 -->
-
-<!-- begin V07.08 -->
 ## Transpose lets us compare measurements and structure
 
 The **transpose** exchanges logical indices: $(A^{\mathsf T})_{ij}=A_{ji}$. A $2\times3$ table becomes $3\times2$. This operation is not a physical rotation of the represented geometry, nor is it merely a memory-layout conversion. For real columns $\mathbf x,\mathbf y$ in an orthonormal Euclidean basis, $\mathbf x^{\mathsf T}\mathbf y$ is their dot product.
@@ -2038,10 +1950,6 @@ $$
 
 Trace is therefore independent of the chosen basis for the same endomorphism, meaning a linear map from a vector space to itself. It summarizes one invariant; it does not identify the complete transformation. Eigenvalue interpretations will be developed when those terms have their own foundations.
 
-
-<!-- end V07.08 -->
-
-<!-- begin V07.09 -->
 ## Determinant measures oriented volume and exposes lost dimensions
 
 In two dimensions, the columns of $A=\begin{bmatrix}a&b\\c&d\end{bmatrix}$ are the images of the unit square's edge directions. Their oriented parallelogram area is
@@ -2093,10 +2001,6 @@ flowchart LR
 
 A square matrix is **singular** when it has no two-sided inverse. The matrix $\begin{bmatrix}1&2\\2&4\end{bmatrix}$ sends both $(2,0)^{\mathsf T}$ and $(0,1)^{\mathsf T}$ to $(2,4)^{\mathsf T}$. Its nonzero vector $(2,-1)^{\mathsf T}$ maps to zero. An inverse could not distinguish the original inputs. For a square matrix over the reals, these are equivalent: nonzero determinant, independent columns, no nonzero null vector, and existence of an inverse. Rectangular maps need separate questions about left inverses, right inverses, injectivity and surjectivity; do not apply the square determinant test to them.
 
-
-<!-- end V07.09 -->
-
-<!-- begin V07.10 -->
 ## Recovering an input has an algebraic route and a computational route
 
 An inverse $A^{-1}$ must satisfy both $A^{-1}A=I$ and $AA^{-1}=I$ for a square map. It undoes the same specified input/output relationship; it does not reverse lost information. When $C=AB$, undoing $A$ must happen before undoing $B$, so $(AB)^{-1}=B^{-1}A^{-1}$. Scale inverses reciprocate nonzero scales. Rotation inverses transpose an orthogonal matrix. Use known structure when it is guaranteed rather than invoking an unnecessary general inverse.
@@ -2150,10 +2054,6 @@ A **pivot** is the entry used to eliminate other entries in its column. An initi
 
 Dense Gauss–Jordan inversion takes $\Theta(n^3)$ arithmetic and $\Theta(n^2)$ storage. To solve $A\mathbf x=\mathbf b$ for one or several right-hand sides, a factorization and direct solve is usually preferable to forming $A^{-1}$ and multiplying. A transform inverse remains useful when the inverse map itself is the object required, such as a cached world-to-local transform. The requirement decides the operation.
 
-
-<!-- end V07.10 -->
-
-<!-- begin V07.11 -->
 ## An inverse can exist and still amplify uncertainty
 
 An **ill-conditioned problem** is one whose exact answer changes greatly when its input changes slightly, measured relative to the stated input/output scales. **Algorithmic stability** describes how much additional error an algorithm introduces. A stable algorithm cannot erase uncertainty already inherent in an ill-conditioned problem.
@@ -2210,10 +2110,6 @@ At the board, start with two basis images and rebuild a matrix. Apply it by colu
 
 The remaining limitation is now visible. Every linear map still fixes the origin. The robot must also place its tool at a location, carry it through parent frames and look at it from a camera. That need leads to affine transforms and coordinate-frame matrices rather than another arbitrary matrix formula.
 
-
-<!-- end V07.11 -->
-
-<!-- begin V06.21 -->
 ## A normal is a measuring rule before it is an arrow
 
 The panel is scaled nonuniformly. Its edges transform as ordinary movements. Its normal must remain perpendicular to those transformed edges. Why does the same transform not always work?
