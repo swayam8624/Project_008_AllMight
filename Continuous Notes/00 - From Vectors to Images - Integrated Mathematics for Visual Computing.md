@@ -1741,32 +1741,25 @@ $$
 
 A point with coordinates $(3,2)$ maps to $A(3,2)^T=(4,5)^T$. This result can be reconstructed from the columns: $3(2,1)+2(-1,1)=(4,5)$. If the input coordinates had instead been expressed in a skew basis, the same geometric point would have different coordinates, and the matrix entries would have to describe the map relative to that basis. The picture is unchanged; its numerical description is not.
 
-
 ### Immediate footing — eigenpair
 
 An eigenpair is a nonzero vector $v$ and scalar $\lambda$ satisfying $Av=\lambda v$. The map preserves the direction of $v$ and scales it by $\lambda$; a negative value also reverses orientation. For $A=\operatorname{diag}(2,3)$, the coordinate directions $e_1=(1,0)$ and $e_2=(0,1)$ have eigenvalues $2$ and $3$. Not every matrix has a full basis of real eigenvectors. Real symmetric matrices have real eigenvalues and can be diagonalized with orthonormal eigenvectors. Eigenvectors of a general matrix may be sensitive to perturbations, especially when eigenvalues are close.
-
 [[#Eigenvectors reveal the directions a square map does not turn|Full explanation and worked examples in this book]]
-
-
 ### Immediate footing — symmetric positive definite
 
 A real symmetric matrix $A$ is positive definite when $x^TAx>0$ for every nonzero $x$. For $A=\operatorname{diag}(2,5)$, $x^TAx=2x_1^2+5x_2^2$, which is positive except at zero. This property makes the associated quadratic form bowl-shaped and guarantees a unique solution to $Ax=b$. Positive definite matrices admit a Cholesky factorization $A=LL^T$ in exact arithmetic. Symmetry alone is insufficient: $\operatorname{diag}(1,-1)$ is symmetric but indefinite. Finite-precision algorithms must check symmetry and handle loss of positive definiteness.
-
 [[#Positive definiteness is a structural promise|Full explanation and worked examples in this book]]
 
 
 ### Immediate footing — singular value and SVD
 
-For any real $m\times n$ matrix, the singular value decomposition is $A=U\Sigma V^T$. The columns of $V$ are orthonormal input directions; $A$ maps each to an orthogonal output direction in $U$, scaled by a nonnegative singular value in $\Sigma$. For $A=\operatorname{diag}(3,1)$, the coordinate directions are scaled by $3$ and $1$. A zero singular value marks an erased direction; a very small one marks a direction that is hard to invert reliably. Unlike eigendecomposition, SVD applies to rectangular matrices.
-
+For any real $m\times n$ matrix, the singular value decomposition is $A=U\Sigma V^T$. The columns of $V$ are orthonormal input directions; $A$ maps each to an orthogonal output direction in $U$, scaled by a nonnegative singular value in $\Sigma$. For $A=\operatorname{diag}(3,1)$, the coordinate directions are scaled by $3$ and $1$. A zero singular value marks an erased direction; a very small one marks a direction that is hard to invert reliably. Unlike eigen-decomposition, SVD applies to rectangular matrices.
 [[#Singular value decomposition covers every rectangular map|Full explanation and worked examples in this book]]
 
 
 ### Immediate footing — condition number
 
 A condition number measures how strongly a problem's answer can change when its input changes slightly. For an invertible matrix in the 2-norm, $\kappa_2(A)=\sigma_{\max}/\sigma_{\min}$. Thus $\operatorname{diag}(100,1)$ has condition number $100$, while $\operatorname{diag}(100,0.001)$ has condition number $100{,}000$; solving can amplify error along the weakly scaled direction. Conditioning is a property of the mathematical problem and chosen norm, not proof that an algorithm is inaccurate. Stability describes whether an algorithm adds excessive error; both matter when interpreting residuals.
-
 [[#Conditioning: weak singular directions amplify uncertainty|Full explanation and worked examples in this book]]
 
 ## A Gram matrix remembers the geometry of a slanted basis
