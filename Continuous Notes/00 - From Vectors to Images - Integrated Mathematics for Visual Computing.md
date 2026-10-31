@@ -1753,7 +1753,7 @@ A real symmetric matrix $A$ is positive definite when $x^TAx>0$ for every nonzer
 
 ### Immediate footing — singular value and SVD
 
-For any real $m\times n$ matrix, the singular value decomposition is $A=U\Sigma V^T$. The columns of $V$ are orthonormal input directions; $A$ maps each to an orthogonal output direction in $U$, scaled by a nonnegative singular value in $\Sigma$. For $A=\operatorname{diag}(3,1)$, the coordinate directions are scaled by $3$ and $1$. A zero singular value marks an erased direction; a very small one marks a direction that is hard to invert reliably. Unlike eigen-decomposition, SVD applies to rectangular matrices.
+For any real $m\times n$ matrix, the singular value decomposition is $A=U\Sigma V^T$. The columns of $V$ are orthonormal input directions; $A$ maps each to an orthogonal output direction in $U$, scaled by a nonnegative singular value in $\Sigma$. For $A=\operatorname{diag}(3,1)$, the coordinate directions are scaled by $3$ and $1$. A zero singular value marks an erased direction; a very small one marks a direction that is hard to invert reliably. Unlike eigen decomposition, SVD applies to rectangular matrices.
 [[#Singular value decomposition covers every rectangular map|Full explanation and worked examples in this book]]
 
 
