@@ -65,8 +65,6 @@ The vault develops related math in [[Continuous Notes/00 - From Vectors to Image
 
 A **derivation** shows why a formula follows from its assumptions. A **trace** follows the values as an algorithm runs. A **laboratory check** tests a prediction in code or a controlled example. Each catches a different problem: a sound derivation can still be coded with the wrong coordinate convention, while one passing example can hide an unstated restriction.
 
-The final source legend distinguishes publisher captions, locally generated transcription, corresponding official notes, supplemental materials from another course year, and sampled visual evidence. An analyzed source is counted once even when its ideas appear in several chapters. A lecture title alone never establishes that its contents were used.
-
 > [!abstract]- Chapter map
 > - [[#A scene description becomes an image|A scene description becomes an image]]
 > - [[#Mathematical language: points, vectors, and derivatives|Mathematical language: points, vectors, and derivatives]]
@@ -150,7 +148,7 @@ A camera obscura in Santa Monica serves as an intuitive pinhole-camera model: li
 
  For an ideal thin lens with focal length $f$, pupil diameter $D$, and scene radiance $L$ at field angle $\alpha$, sensor-plane irradiance is:
  
-  > $E_{\mathrm{img}}=(\pi/4)L(D/f)^2\cos^4\alpha$ 
+  $$E_{\mathrm{img}}=(\pi/4)L(D/f)^2\cos^4\alpha$$ 
   
   under fixed-pupil geometric-optics assumptions. The fourth power combines projection and distance factors; this is image-plane irradiance, not the irradiance on the surface. The normal’s two degrees of freedom versus one brightness measurement motivates photometric stereo and the course’s recurring constraint-counting argument. [[#MITV-01 - Introduction to Machine Vision|MITV-01]] (video 00:51:15–00:52:27, 01:05:34–01:13:48)
 

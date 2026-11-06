@@ -1661,7 +1661,6 @@ C=AB,\qquad C_{ij}=\sum_{k=1}^{p}A_{ik}B_{kj}.
 $$
 
 The inner dimension is the intermediate coordinate space. In the product $(m\times p)(p\times n)$ it must match, and the result has shape $m\times n$. Equivalently, each column of $AB$ is $A$ applied to the corresponding column of $B$. This is why row-column multiplication is the rule: it makes the stored table agree with composed linear maps.
-
 For
 
 $$
@@ -1714,7 +1713,6 @@ For a classical dense product of shapes $(M\times K)(K\times N)$, there are $MN$
 A graphics calculation begins with an object in a space and a question about that object. A point, a direction, a color, a velocity, a pixel measurement, and a list of unknown parameters may all be stored as arrays of numbers. They do not thereby become the same kind of thing. The meaning of each array depends on the operations it supports, the units of its entries, and the coordinate frame in which those entries were measured.
 
 A vector space supplies operations for adding vectors and multiplying them by scalars. If $u$ and $v$ are vectors and $a$ and $b$ are real numbers, then $au+bv$ is another vector. A basis is a collection of independent vectors that lets every vector be expressed uniquely as a weighted sum. In a chosen basis $B=(b_1,\ldots,b_n)$, the coordinate tuple $[v]_B$ records those weights; it is a description of $v$, not the vector itself. Changing the basis changes the tuple while leaving the represented geometric object unchanged.
-
 A linear map $T$ preserves addition and scalar multiplication:
 
 $$
@@ -1786,7 +1784,6 @@ $$
 The superscript $\mathsf T$ means **transpose**: exchange rows and columns. It lets a column coordinate list act as the row that weights the next expression.
 
 For $c=(1,2)^\mathsf T$, compute $Gc=(3,5)^\mathsf T$, then $c^\mathsf TGc=3+10=13$. The reconstructed vector is $(3,2)$, whose Euclidean squared length is also $13$. Blindly squaring the coordinates would give $5$.
-
 $G$ is symmetric. It is **positive semidefinite** because
 
 $$
@@ -1858,7 +1855,6 @@ The cross terms cancel and $c^2+s^2=1$. The columns are also unit length and mut
 ### The oriented plane explains the Y-rotation signs
 
 In three dimensions, rotation about an axis leaves that axis fixed. Choose the ordered perpendicular-plane coordinates so their basis cross product points along the positive rotation axis. For X use $(y,z)$ because $\mathbf e_y\times\mathbf e_z=\mathbf e_x$. For Y use $(z,x)$ because $\mathbf e_z\times\mathbf e_x=\mathbf e_y$. For Z use $(x,y)$ because $\mathbf e_x\times\mathbf e_y=\mathbf e_z$.
-
 Insert the same planar rotation into each ordered plane. For X,
 
 $$
@@ -2018,7 +2014,6 @@ $$
 Why does the formula work? A diagonal entry of $A\operatorname{adj}A$ is a row's cofactor expansion, hence $\det A$. An off-diagonal entry has the same expansion with a different row inserted, producing a determinant with repeated rows, hence zero. Therefore $A\operatorname{adj}A=(\det A)I$. Division is valid only when $\det A\ne0$.
 
 Verify rather than trust the table. The first row of $AA^{-1}$ is $(-24+40-15,\ 18-30+12,\ 5-8+3)=(1,0,0)$. The second row is $(20-20,-15+16,-4+4)=(0,1,0)$; the third is $(-120+120,90-90,25-24)=(0,0,1)$. The reverse product also equals identity. A left-side check alone is insufficient as a general software interface test, even though exact square algebra makes the two-sided relationship follow.
-
 For a $2\times2$ matrix this construction reduces to
 
 $$
@@ -2031,7 +2026,6 @@ Closed formulas are useful for symbolic reasoning and some carefully implemented
 ### Row reduction makes the inverse observable
 
 Form the augmented table $[A\mid I]$ and apply each row operation to both halves. A row operation is multiplication on the left by an invertible **elementary matrix**. If their combined operation is $E$ and $EA=I$, then $E=A^{-1}$; the right half becomes $EI=A^{-1}$.
-
 For the same calibration, the complete useful trace is:
 
 | Operation | Left half after operation | Right half after operation |
@@ -2050,7 +2044,6 @@ Dense Gauss–Jordan inversion takes $\Theta(n^3)$ arithmetic and $\Theta(n^2)$ 
 ## An inverse can exist and still amplify uncertainty
 
 An **ill-conditioned problem** is one whose exact answer changes greatly when its input changes slightly, measured relative to the stated input/output scales. **Algorithmic stability** describes how much additional error an algorithm introduces. A stable algorithm cannot erase uncertainty already inherent in an ill-conditioned problem.
-
 Take
 
 $$
@@ -2141,7 +2134,6 @@ The inverse compensates for transformed motion; the transpose converts row measu
 Use tangent $\mathbf t=(1,1,0)$ and normal $\mathbf n=(1,-1,0)$. Their dot is zero. Under $A=\operatorname{diag}(2,1,1)$, the tangent becomes $(2,1,0)$. Naively applying $A$ to the normal gives $(2,-1,0)$, whose dot with the new tangent is $3$. The correct normal $(1/2,-1,0)$ gives dot zero.
 
 Re-normalize if a unit shading normal is needed. Translation does not enter this tangent calculation. Under a pure rotation, $A^{-\mathsf T}=A$, which explains why the bug stays hidden until nonuniform scale or shear appears.
-
 ### G4 - Transform the normal and prove the relationship survived
 
 ```mermaid
@@ -2176,10 +2168,6 @@ when $A$ is invertible. The determinant retains area scaling and orientation, in
 **M06-1. Reflection across the horizontal mirror normal.** The shown incident vector has v dot n=-1 and reflected vector r=(2,1); both squared norms are 5.
 For velocity $\mathbf v=(3,4)$ and unit surface normal $\mathbf n=(0,1)$, $\mathbf v\cdot\mathbf n=4$ is signed normal speed: positive means movement toward the chosen normal side. The tangent component is $(3,0)$. This applies projection without assuming a collision response or sign convention. Freya Holmér also uses a velocity projected onto a surface normal for collision-audio intensity; the chosen absolute or inward component depends on the application. [Freya Holmér, Vectors & Dot Product](https://www.youtube.com/watch?v=MOYiVLEnhrw)
 
-
-<!-- end V06.21 -->
-
-<!-- begin V06.22 -->
 ## Oriented areas deserve their own representation
 
 The cross product encodes area as a vector only in a special setting. [[#Oriented areas deserve their own representation|Exterior algebra]] keeps the area itself. Its **wedge product** $\mathbf a\wedge\mathbf b$ is bilinear and antisymmetric:
@@ -2228,18 +2216,11 @@ This reconnects planar rotation to complex-number behavior. A **rotor** encodes 
 With unit plane normal $\mathbf n$, reflection of a vector in the plane can be written $-\mathbf n\mathbf v\mathbf n$. Expanding the geometric product recovers $\mathbf v-2(\mathbf v\cdot\mathbf n)\mathbf n$, the earlier formula. Composition of reflections naturally produces rotations.
 
 This chapter establishes motivation and basic identities, not a complete geometric-algebra implementation or performance claim. Matrices and quaternions remain useful representations with established engine interfaces. The gain here is understanding why vectors, areas, measurements, and orientations should not all be collapsed into an unqualified `Vec3`.
-
-
-<!-- end V06.22 -->
-
-
 ### Immediate footing — homogeneous coordinates
 
 Homogeneous coordinates append a scale component to ordinary coordinates. An affine point can be written $(x,y,z,1)$ and a direction $(d_x,d_y,d_z,0)$. Multiplying a homogeneous tuple by a nonzero common scale leaves the represented projective point unchanged. A tuple with nonzero last component $w$ returns to an affine chart by dividing the first components by $w$. A zero last component represents an ideal direction, so that division is invalid. This representation lets translation and perspective participate in matrix operations, while their geometric meanings remain distinct.
-
 [[#Homogeneous coordinates preserve the role of a location|Full explanation and worked examples in this book]]
 
-<!-- begin V06.20 -->
 ## Homogeneous coordinates preserve the role of a location
 
 Translation affects a point but not a free direction. [[#Figure M6 - Follow one point through named spaces|Homogeneous coordinates]] make that distinction visible in an extra component:
@@ -2293,10 +2274,6 @@ $$
 
 For $x_n=-0.5$ and $W=1920$, the horizontal coordinate is $480$. This maps continuous boundaries; the last pixel index is $W-1$, and sample-center conventions require their own care. Apply this to NDC, not raw clip coordinates.
 
-
-<!-- end V06.20 -->
-
-<!-- begin V07.12 -->
 ## The origin exposes the limit of an ordinary linear map
 
 Our robot can now rotate, stretch and shear a displacement. But it still cannot place the panel somewhere else in the workcell using a three-by-three linear map alone. The reason is already inside the definition of linearity. A linear map $L$ obeys $L(a\mathbf u+b\mathbf v)=aL(\mathbf u)+bL(\mathbf v)$. Set both coefficients to zero and we obtain $L(\mathbf0)=\mathbf0$. The origin is fixed. A translation by a nonzero vector $\mathbf t$ sends zero to $\mathbf t$, so translation is not linear in ordinary three-dimensional coordinates.
@@ -2308,9 +2285,6 @@ Q'-P'=A(Q-P).
 $$
 
 The translations cancel because a displacement measures the difference between locations. That cancellation is the bridge from the vector-space material in Phase 6 to the affine transformations needed for scenes.
-
-**Source boundary:** the supplied excerpts contain standalone lessons for Parts 601–634 and 651–700. They do not contain standalone lessons for Parts 635–650. The affine bridge in this section is explicitly reconstructed prerequisite material, using the neighboring lessons and elementary derivations. It is not a claim that sixteen missing numbered lessons were received, nor an invented assignment of a topic to each missing number.
-
 ### Homogeneous coordinates give points and directions different roles
 
 An **affine map** has the form
@@ -2357,10 +2331,6 @@ flowchart LR
 
 **Caption:** this uses active, right-handed positive rotation about $Z$, column vectors and a fixed parent frame. The two equal three-component tuples begin with different geometric roles. Translation changes only the point result. The arrows describe calculation dependencies; they are not a drawing of the coordinate axes to scale.
 
-
-<!-- end V07.12 -->
-
-<!-- begin V07.13 -->
 ## A frame combines directions with a place to stand
 
 A **basis** supplies independent direction vectors. A **coordinate frame** supplies a basis and an origin. Its origin answers “where is local zero?”; its basis answers “what does one unit along each local axis mean in the parent frame?” Those answers can be encoded together:
@@ -2371,7 +2341,6 @@ F=\begin{bmatrix}B&\mathbf o\\\mathbf0^{\mathsf T}&1\end{bmatrix},
 $$
 
 The upper-left three-by-three block contains the three basis columns; the rightmost upper column contains the local origin expressed in the parent frame. The basis columns must be independent for a full three-dimensional frame. An affine matrix with dependent columns can still map points, but it cannot uniquely convert every parent coordinate back into local coordinates.
-
 For the frame in Figure M5,
 
 $$
@@ -2428,11 +2397,6 @@ F(A,\mathbf t)^{-1}
 $$
 
 The inverse translation is generally not just $-\mathbf t$; it is expressed after the inverse linear action. For a rigid frame whose linear block $R$ is an orthonormal rotation, $R^{-1}=R^{\mathsf T}$, and the inverse is $F(R^{\mathsf T},-R^{\mathsf T}\mathbf t)$. That shortcut does not apply to a basis containing nonunit scale or shear. Check the actual promise, not the variable name `rotation`.
-
-
-<!-- end V07.13 -->
-
-<!-- begin V07.14 -->
 ## Coordinates can change while the geometric object stays still
 
 A basis matrix $B=[\mathbf b_1\ \mathbf b_2\ \mathbf b_3]$ converts coefficients in that basis into the surrounding reference coordinates:
@@ -2481,10 +2445,6 @@ using homogeneous point representatives. The inverse is needed because we first 
 
 **M07-1. A point expressed in a rotated local chart.** For the quarter-turn basis at (1,1), point (3,2) has local coordinates (1,-2) and reconstructs the original point.
 
-
-<!-- end V07.14 -->
-
-<!-- begin V07.15 -->
 ## A camera is another frame, so viewing uses its inverse
 
 **Object space** is the model's authoring frame. A mesh vertex near its own origin does not say where that mesh instance is in the scene. Its origin may be a wheel axle, door hinge, character root, or artist-chosen pivot. The object's model matrix $M$ maps those local points into **world space**, the shared scene frame used to compare separate objects.
@@ -2537,7 +2497,6 @@ Graphics pipelines typically clip primitives using homogeneous inequalities befo
 ### Tangent space supplies a surface-local measuring frame
 
 At a surface point, a tangent $T$, bitangent $B$ and normal $N$ can form a local **TBN frame**. When stored as columns in parent coordinates, $F_{TBN}=[T\ B\ N]$ converts tangent-frame coefficients into that parent description. A normal-map sample decoded to $(0,0,1)$ should map to the local surface normal, because it selects the third basis column.
-
 For $T=(1,0,0)$, $B=(0,0,1)$ and $N=(0,1,0)$,
 
 $$
@@ -2548,10 +2507,6 @@ Its third column is $(0,1,0)$, so the expected mapping works. Notice that this b
 
 Interpolation, compression and deformation can disturb unit lengths and perpendicularity. Renormalizing a vector repairs its length when valid, but does not alone make three arbitrary axes perpendicular. Decide whether the surface frame needs re-orthogonalization, how the handedness sign is retained, and which geometric or shading normal the operation uses. Applying an ordinary basis expansion to a tangent-space direction and transforming a general geometric normal through an arbitrary deformation are related but distinct tasks.
 
-
-<!-- end V07.15 -->
-
-<!-- begin V07.16 -->
 ## A normal transforms as a measurement that must still vanish on tangents
 
 Suppose a surface tangent $\mathbf u$ and normal $\mathbf n$ obey $\mathbf n^{\mathsf T}\mathbf u=0$. Under the object's linear transform $A$, the tangent becomes $\mathbf u'=A\mathbf u$. We want a new normal satisfying $\mathbf n'^{\mathsf T}\mathbf u'=0$ for every transformed tangent. Choose
@@ -2572,10 +2527,6 @@ That is the **inverse-transpose normal transform**. Translation does not enter b
 
 After a valid transform, normalize a shading normal when the shading model requires a unit direction. Normalization cannot repair a normal produced by the wrong matrix, and an inverse cannot be obtained for a singular $A$. If independent transformed tangents still define a surface, their cross product may reconstruct a normal; if the surface collapses, there may be no unique normal to reconstruct. An almost singular transform also needs a conditioning policy, not merely an exact determinant-zero check. The earlier inversion chapter supplies the numerical reason.
 
-
-<!-- end V07.16 -->
-
-<!-- begin V07.20 -->
 ## Orientation needs a state that can be composed
 
 The robot now knows where its local axes point. A rotation matrix records those three axis images explicitly, which is ideal when many vertices must pass through the same transform. But the robot's controller also needs to store an orientation, add a small turn, and interpolate toward a target. These are related operations with different representation needs.
@@ -2642,10 +2593,6 @@ The norm multiplication rule can itself be reconstructed. Compute $(ab)(ab)^*=ab
 
 Computing the norm naively can overflow before the final answer would be problematic. A checked normalization routine first rejects nonfinite inputs, finds $m=\max(|w|,|x|,|y|,|z|)$, rejects $m=0$, forms $s=q/m$, and returns $s/\|s\|$. Its intermediate squares are bounded. This validates a finite direction in four-dimensional coefficient space; it does not prove that arbitrary source data was intended to be an orientation.
 
-
-<!-- end V07.20 -->
-
-<!-- begin V07.21 -->
 ## The sandwich turns half angles into a full rotation
 
 Complex multiplication already rotates a plane: multiplying $x+iy$ by $\cos\theta+i\sin\theta$ produces the familiar sine/cosine rotation. For three dimensions, a single left multiplication generally sends a pure quaternion out of the pure subspace. The rotation action uses both sides:
@@ -2729,11 +2676,6 @@ For $q_Z$ and $\mathbf v=(1,0,0)$, $\mathbf t=(0,\sqrt2,0)$, $w\mathbf t=(0,1,0)
 One adversarial input makes the three contracts visible. Double every coefficient of $q_Z$, obtaining $q=2q_Z=(\sqrt2,0,0,\sqrt2)$, and keep $\mathbf v=(1,0,0)$. The true inverse is $q^{-1}=q_Z^*/2$, so the two scale factors cancel and the action still gives $(0,1,0)$. The conjugate-only sandwich instead produces $(0,4,0)$, because $\|q\|^2=4$. In the unit-optimized formula, however, $\mathbf t=(0,2\sqrt2,0)$, $w\mathbf t=(0,4,0)$, and $\mathbf u\times\mathbf t=(-4,0,0)$. Its answer is $(-3,4,0)$, whose length is five. It is not even the same direction as the conjugate-sandwich result.
 
 This counterexample explains why a debug norm assertion and a checked construction boundary are worthwhile. The optimized routine has a legitimate narrow precondition; it is not defective for requiring unit inputs. The API becomes defective when it exposes unrestricted coefficients while presenting the routine as valid for every quaternion. A test with only identity and a single normalized quarter turn would miss this failure entirely.
-
-
-<!-- end V07.21 -->
-
-<!-- begin V07.22 -->
 ## Composition remembers which frame a new turn belongs to
 
 Apply $q_A$, then $q_B$:
@@ -2767,10 +2709,6 @@ $$
 
 An angular tolerance on $\delta$ has a physical interpretation. Clamping here handles small numerical excess only after finite normalized inputs have been established. Near equality, an appropriately sign-aligned relative quaternion and an $\operatorname{atan2}$ extraction can be more informative than an $\arccos$ of a nearly-one dot product.
 
-
-<!-- end V07.22 -->
-
-<!-- begin V07.23 -->
 ## A matrix and a quaternion should agree on every basis direction
 
 To derive quaternion-to-matrix conversion, rotate $\mathbf e_x$, $\mathbf e_y$, and $\mathbf e_z$ with the expanded action. Put those results in the columns. With normalized $q=(w,x,y,z)$ this yields
@@ -2812,10 +2750,6 @@ The Y and Z branches follow the same diagonal/symmetric-entry logic. At an exact
 
 The input must be a finite matrix close to a **proper rotation**, with $R^TR\approx I$ and $\det R\approx1$. A scale, shear or reflection is outside that conversion contract. Tiny negative radicands caused by rounding can be handled with a narrow documented numerical policy; blindly clamping arbitrary invalid matrices hides the wrong input. Extracting a nearest rotation from a general affine matrix is a separate problem, for which polar decomposition or SVD supplies principled tools later.
 
-
-<!-- end V07.23 -->
-
-<!-- begin V07.24 -->
 ## Animation asks for a path, not merely an intermediate tuple
 
 An animation needs orientations between unit endpoints $q_0$ and $q_1$. Componentwise matrix averaging can collapse an object: the midpoint between the 2D identity and a $180^\circ$ rotation is the zero matrix. Raw quaternion linear interpolation stays on a chord, not the sphere:
@@ -2874,10 +2808,6 @@ Floating-point composition perturbs the unit constraint. Explicit Euler integrat
 
 Normalization restores unit length. Canonicalization chooses a sign representative, for example $w\ge0$. It does not restore length and can introduce a discontinuity at $w=0$. For sampled animation continuity, a common approach aligns each quaternion's sign with the previous stored sample. For a single serialized orientation, a deterministic canonical sign may be useful. Different tasks call for different choices.
 
-
-<!-- end V07.24 -->
-
-<!-- begin V07.25 -->
 ## Euler coordinates remain useful when their chart is explicit
 
 Editors often expose roll, pitch and yaw because people can reason about named controls. The names do not specify an equation. Here roll $\phi$ is about X, pitch $\theta$ about Y, and yaw $\psi$ about Z, with
@@ -2933,10 +2863,6 @@ $$
 
 Clamp $-r_{20}$ only for small roundoff after validating the matrix. Near $\cos\theta=0$, the ordinary roll/yaw equations have nearly-zero arguments and cannot pick a unique original pair. One explicit singular reporting convention is to choose $\phi=0$ and return $\psi=\operatorname{atan2}(-r_{01},r_{11})$, along with the signed limiting pitch. This yields an equivalent orientation at either pitch singularity for this particular sequence. A threshold and continuity policy are still needed nearby. Test the reconstructed rotation, rather than demanding the original typed angle triple: periodicity, alternative Euler branches and singularity make that demand impossible.
 
-
-<!-- end V07.25 -->
-
-<!-- begin V07.26 -->
 ## Rigid motion adds translation without adding scale or shear
 
 A rigid transform acts as $\mathbf p'=R\mathbf p+\mathbf t$, preserving lengths and relative angles. It is perfectly reasonable to store a position vector and a unit quaternion separately. A dual quaternion packages the same rigid motion into one composable algebraic object.
@@ -2990,10 +2916,6 @@ flowchart LR
 
 **Caption:** The branches reflect different contracts. Euler coordinates carry chart choices; a quaternion carries proper rotation; a rigid dual quaternion carries proper rotation plus translation; a general affine matrix can also carry scale, shear and reflection. Data conversions must check those domain boundaries.
 
-
-<!-- end V07.26 -->
-
-<!-- begin V07.27 -->
 ## A transform type must say what its stored fields mean
 
 For a local authoring transform, choose finite translation $\mathbf t$, unit orientation $q$, and axis scales $\mathbf s=(s_x,s_y,s_z)$, with matrix convention $M=TRS$. The **Hadamard product** $\odot$ means componentwise multiplication. A local point and direction then follow different paths:
@@ -3044,10 +2966,6 @@ $$
 
 If an editor requests world TRS, disclose whether decomposition is exact, includes shear, or returns an approximation. A quaternion cannot absorb a reflection because its rotation has determinant positive one. A zero-scale matrix can still map points forward but has no inverse. These are API facts, not exceptional nuisances to hide behind a default identity result.
 
-
-<!-- end V07.27 -->
-
-<!-- begin V07.28 -->
 ## A cached matrix is a dependency promise
 
 Suppose local position, orientation and scale are canonical, while the matrix is cached for repeated use. A setter changes position but leaves the old matrix bytes in place until recomputation. The flag `localDirty` means exactly that those bytes no longer represent the current canonical fields. It does not mean that the transform data is corrupt.
@@ -3088,35 +3006,10 @@ Rebuild the quaternion matrix from its three basis images. At an exact half turn
 
 Finally, derive SLERP in its coefficient-space plane, expose the Euler chart singularity by substitution, verify the two dual-quaternion constraints, and exhibit the nonperpendicular columns of the composed nonuniform-scale example. For the car/door/mirror hierarchy, trace which canonical fields changed and which cached values became stale. Those questions connect algebraic understanding to an implementable transform system.
 
-
-<!-- end V07.28 -->
-
-
 # Measurements become constraints and computable answers
 
 A system of equations describes measurements that must hold together. Rank explains which answers exist; norms give errors a scale; elimination, pivoting and structured decompositions make the answer computable.
-
-<!-- begin V08.00 -->
-<details>
-<summary>Original source metadata</summary>
-
-```yaml
----
-tags:
-  - continuous-notes
-  - linear-algebra
-coverage: Parts 701–800
----
-```
-
-</details>
-
-
 ## From Constraints to Spectra: Systems, Decompositions, and Matrix Functions
-
-
-<!-- end V08.00 -->
-
 
 ### Immediate footing — principal component analysis
 
@@ -54018,11 +53911,6 @@ Two reconstructions can fit exactly the same image measurements and still descri
 ## Evidence and integration
 
 This addition is grounded in the full caption reads for playlist positions 8–11 (review files `V08.md`–`V11.md`). It consolidates and clarifies lecture derivations rather than claiming a new algorithm. The lecture captions contain notation slips and skipped proofs; formulas above state their conventions explicitly and should be cross-checked against the existing Phase 11 convention before integration. Link from the current epipolar/essential-matrix, triangulation, homography, and multi-view chapters. Do not duplicate their introductory definitions; use these passages as an ambiguity-and-model-selection bridge.
-
-
-<!-- end V11.31 -->
-
-<!-- begin V11.32 -->
 ## External course legend and evidence boundary
 
 The selected course is **Multiple View Geometry, Professor Daniel Cremers, TUM/cvprtum**, [playlist](https://www.youtube.com/playlist?list=PLTBdjV_4f-EJn6udZ34tht9EVIW7lbeo4). All **17 playlist positions** are accounted for: **13 full English caption tracks** were read sequentially, and **four caption-blocked positions** use full-text reads of official course-chapter PDF companions. Companion coverage is explicitly different from access to all spoken content or video frames. The chapters above combine overlapping geometry with the supplied curriculum and develop genuinely new links in the research sections.

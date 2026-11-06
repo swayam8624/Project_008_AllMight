@@ -70,3 +70,7 @@ Six variable-length source chunks cover the first 100 parts, not 120. That histo
 ## Independent university courses - worlds images and inference
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Worlds, Images and Inference: Graphics, Vision and Photography]] follows one connected story across CMU 15-462/662, MIT 6.837, MIT 6.801, and Marc Levoy’s Stanford-based photography course recorded at Google. The expanded narrative also includes the supplied visual-computing, MIT projection-theory and UC Davis graphics courses, Stanford CS231n, and 12 research-paper studies. All 177 entries across eight course playlists are accounted for at the end of the volume, with research videos classified separately. [[Visual Recall/University - Graphics Vision and Photography - Visual Recall|Open the linked recall briefs and figure map]]. Numbered curriculum coverage remains separate.
+
+## Game-engine architecture and implementation
+
+[[Continuous Notes/Game Engine - From First Frame to Living Worlds|Open the cumulative game-engine volume]]. Follow one action through input, timing, ownership, rendering, assets, editing, simulation, behaviour, and feedback, then reconstruct the tested CPU laboratory. Future game-engine sources will be woven into this same file. [[Supplementary/Game Engine - Sources and Coverage|Source coverage and remaining ingestion work]] are tracked separately from numbered curriculum progress.
