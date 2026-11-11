@@ -5,12 +5,14 @@ on:
       - 'tools/labs/rigid_contact_lab.cpp'
       - 'tools/labs/persistent_contact_lab.cpp'
       - 'tools/labs/contact_cache_lab.cpp'
+      - 'tools/labs/disk_ccd_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   pull_request:
     paths:
       - 'tools/labs/rigid_contact_lab.cpp'
       - 'tools/labs/persistent_contact_lab.cpp'
       - 'tools/labs/contact_cache_lab.cpp'
+      - 'tools/labs/disk_ccd_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   workflow_dispatch:
 
@@ -28,6 +30,8 @@ jobs:
           /tmp/persistent_contact_strict
           c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/contact_cache_lab.cpp -o /tmp/contact_cache_strict
           /tmp/contact_cache_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_ccd_lab.cpp -o /tmp/disk_ccd_strict
+          /tmp/disk_ccd_strict
       - name: Compile and execute undefined-behavior sanitizer witness
         run: |
           c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_ubsan
@@ -36,3 +40,5 @@ jobs:
           /tmp/persistent_contact_ubsan
           c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/contact_cache_lab.cpp -o /tmp/contact_cache_ubsan
           /tmp/contact_cache_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_ccd_lab.cpp -o /tmp/disk_ccd_ubsan
+          /tmp/disk_ccd_ubsan
