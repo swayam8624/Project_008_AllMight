@@ -1134,3 +1134,21 @@ The scoped diff check passed. Whole-worktree diff checking still reports only th
 ## Game-engine continuous volume — 5 November 2026
 
 Teaching home: [[Continuous Notes/Game Engine - From First Frame to Living Worlds]]. Detailed provenance: [[Supplementary/Game Engine - Sources and Coverage]]. Resume checkpoint: `/Users/swayamsingal/.codex/source-cache/game-engine-2026-11-05/WORK_STATE.json`. The checkpoint retains raw inventories/captions, per-video reading ranges and semantic notes, supplied-book identities and read ranges, code-snapshot boundaries, the exact original laboratory body, and actual validation results. Exhaustive source synthesis is pending; retrieved and partially reviewed captions are not promoted into full-video coverage. The inline CPU laboratory passed its normal build and Apple Clang AddressSanitizer/UndefinedBehaviorSanitizer run. No external Kohi/Hazel engine, GPU backend, editor interaction, network session, or native whole-book Obsidian layout was validated.
+
+
+## Phase 8 additive reconstruction — M018 / original Parts 291–300, November 11, 2026
+
+**Purpose and placement.** The curriculum specifies PIMPL, strong handles, generic math, expression-template lifetimes, intrusive structures, assembly inspection and a reusable container with explicit ownership. This reconstruction continues M017's separately compiled asset-query service in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A registry crosses its last C++ boundary hidden implementation, typed identity and measured abstraction cost|the existing computing volume]] immediately after M017. All prior teaching prose is preserved. [[Supplementary/Foundations#M018 — Parts 291–300: the same asset service becomes a typed, hidden and measurable engine API|The canonical ten titles]] are mapped without claiming a received source transcript.
+
+**Inspectable source:** [[tools/m018/asset_catalog.hpp|asset_catalog.hpp]] has a public incomplete implementation, strongly typed handles, an owned return value and out-of-line special-member declarations. [[tools/m018/asset_catalog.cpp|asset_catalog.cpp]] implements the private pool, catalog identity, generation invalidation, slot reuse, free-list mutation ordering and move policy. [[tools/m018/m018_lab.cpp|m018_lab.cpp]] is a distinct translation unit that tests owned snapshots, cross-pool/stale identities, typed dimensions and units, lazily evaluated borrowed expression nodes and intrusive task-link lifetime. [[tools/m018/assembly_probe.cpp|assembly_probe.cpp]] supplies a named specialization for inspection, and [[tools/m018/build_m018_lab.sh|build_m018_lab.sh]] compiles and executes GCC release with -DNDEBUG, Clang strict and GCC address/undefined sanitizers, then generates GCC/Clang optimized assembly.
+
+**Reproduction:**
+
+~~~bash
+bash tools/m018/build_m018_lab.sh
+~~~
+
+The pre-existing [[.github/workflows/allmight-cpp20-labs.yml|CI workflow]] now triggers on tools/m018 and contains a dedicated multi-translation-unit job. CI configuration alone is not evidence of a passing run. The source tests use runtime throwing checks, rather than assert() disabled by -DNDEBUG. A named assembly symbol is necessary to locate optimized code; its presence does not constitute a comparative benchmark.
+
+**Reference distinction and boundaries.** Supplied *Professional C++*, fifth edition, and *Effective Modern C++* support modern design, ownership, templates and exception discussions but do not prove compatibility of an external implementation. Precise language-contract references: [unique_ptr incomplete-type rule](https://en.cppreference.com/w/cpp/memory/unique_ptr), [PIMPL](https://en.cppreference.com/w/cpp/language/pimpl) and [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines). The source is an **authored laboratory**, not an inspected patch to current KairoMath/Transform.cppm or KairoRenderer/RendererTypes.cppm. No cross-compiler binary plugin ABI, generalized expression-template lifetime system, full exception fault matrix, concurrent registry behavior, GPU resource retirement or comparative performance result is claimed. Earlier source and caption backlogs remain unresolved exactly as recorded.
+
