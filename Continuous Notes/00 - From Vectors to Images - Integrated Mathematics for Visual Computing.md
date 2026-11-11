@@ -34914,6 +34914,77 @@ Left: choosing the first five of nine equal cells and averaging equally gives E[
 
 <!-- end V10.22 -->
 
+
+<!-- BEGIN IMPLEMENTABLE CONTACT MATHEMATICS 2026-11-12 -->
+### From a geometric gap to a numerically trustworthy collision event
+
+A collision algorithm is an example of a mathematical model meeting finite-precision computation. The same problem ties together vector spaces, inner products, gradients, root finding, Jacobians, unilateral constraints, and numerical error. We will derive the complete system so that implementing it later requires translating quantities into memory, not inventing missing mathematics.
+
+Consider two planar disks A and B. Their centres are $\mathbf x_A,\mathbf x_B\in\mathbb R^2$ (metres), their constant velocities over the current candidate interval are $\mathbf v_A,\mathbf v_B\in\mathbb R^2$ (metres per second), and their radii $r_A,r_B$ are nonnegative lengths. Define relative position $\mathbf p=\mathbf x_B-\mathbf x_A$, relative velocity $\mathbf v=\mathbf v_B-\mathbf v_A$, and sum of radii $R=r_A+r_B$. Because only relative separation matters, adding the same velocity $\mathbf u$ to both objects does not change the contact time: $(\mathbf v_B+\mathbf u)-(\mathbf v_A+\mathbf u)=\mathbf v$. This is a Galilean invariance test for the mathematics and its implementation.
+
+At time $t\in[0,h]$, their centre displacement is $\mathbf p(t)=\mathbf p+t\mathbf v$. Their signed surface separation is
+
+$
+g(t)=\|\mathbf p+t\mathbf v\|-R.
+$
+
+Here $g>0$ means separated, $g=0$ means touching, and $g<0$ means overlapping. At a new impact we seek the smallest nonnegative root of $g(t)=0$. Squaring the equality is safe because both the norm and $R$ are nonnegative, giving the polynomial
+
+$
+F(t)=\|\mathbf p+t\mathbf v\|^2-R^2
+=(\mathbf v\cdot\mathbf v)t^2
++2(\mathbf p\cdot\mathbf v)t
++\mathbf p\cdot\mathbf p-R^2.
+$
+
+Write $a=\mathbf v\cdot\mathbf v$ (units m²/s²), $b=2\mathbf p\cdot\mathbf v$ (m²/s), and $c=\mathbf p\cdot\mathbf p-R^2$ (m²). The discriminant $D=b^2-4ac$ has units m⁴/s². If $c>0$, the disks begin separated. If $a=0$, relative motion is zero and a future new impact cannot occur. If $b\ge0$, squared separation is initially nondecreasing, and with $a\ge0$ it never turns toward a contact in forward time. If $D<0$, the infinite straight trajectories miss. Otherwise the earliest root must additionally lie in $[0,h]$ and produce a closing rather than separating contact.
+
+The textbook quadratic root $(-b-\sqrt D)/(2a)$ is not always a numerically safe expression. When $-b$ and $\sqrt D$ are almost equal, subtraction can destroy significant digits. In the approaching branch $b<0$ define $q=-\tfrac12(b-\sqrt D)$, which adds two positive magnitudes instead of subtracting close ones. The two algebraic roots are $c/q$ and $q/a$, because their product is $c/a$ and their sum is $-b/a$. For separated approaching disks, $c/q$ is the entry root. This is a concrete instance of *algebraic reformulation for numerical stability*: mathematically equivalent formulas are not computationally equivalent with floating-point rounding.
+
+A worked collision is a stationary radius-1 disk at $(0,0)$ and a radius-1 disk starting at $(10,0)$ with velocity $(-100,0)$ m/s. We obtain $a=10000$, $b=-2000$, $c=96$, and $D=4{,}000{,}000-3{,}840{,}000=160{,}000$. The entry time is $(2000-400)/20000=0.08$ seconds. A frame of length $h=0.10$ seconds must be split into 0.08 seconds before impact and 0.02 seconds after the response; otherwise even a correct impulse equation is applied at the wrong time.
+
+A contact normal at a non-coincident surface point is the gradient direction of the distance function with respect to the relative centre:
+
+$
+\mathbf n=\nabla_{\mathbf p}\|\mathbf p\|
+=\frac{\mathbf p}{\|\mathbf p\|}.
+$
+
+The derivative of gap with respect to time follows the chain rule:
+
+$
+\dot g(t)=\mathbf n(t)\cdot\mathbf v.
+$
+
+That scalar is the **normal relative velocity**: negative for closing, positive for opening, zero for instantaneous grazing. The derivative is undefined when centres coincide; returning a deterministic fallback normal is an API policy, not a mathematically unique surface normal. This distinction also explains why a root with zero normal velocity is a geometric tangency but need not require an impulse.
+
+For a planar rigid body whose contact point is offset from its centre by $\mathbf r$, velocity at that point is $\mathbf v_{\text{point}}=\mathbf v_{\text{centre}}+\omega(-r_y,r_x)$. Thus the normal relative velocity is $\mathbf n\cdot[(\mathbf v_B+\omega_B\times\mathbf r_B)-(\mathbf v_A+\omega_A\times\mathbf r_A)]$. An impulse $\lambda\mathbf n$ acts positively on B and negatively on A. Applying the linear impulse-momentum law and the planar angular moment law gives a change in normal speed of $k_n\lambda$, with
+
+$
+k_n=m_A^{-1}+m_B^{-1}
++I_A^{-1}(\mathbf r_A\times\mathbf n)^2
++I_B^{-1}(\mathbf r_B\times\mathbf n)^2.
+$
+
+The symbols $m^{-1}$ and $I^{-1}$ are inverse mass and inverse moment of inertia, not inverted coordinates; set them to zero for a body constrained to remain static. The scalar $k_n$ is the one-row version of $\mathbf J\mathbf M^{-1}\mathbf J^\mathsf T$, where $\mathbf J$ maps generalized velocities to the contact's relative normal velocity and $\mathbf M$ is the generalized mass matrix. This expression makes the rotational terms unavoidable: off-centre impulses change the contact speed through angular motion. A normal impulse cannot attract two nonadhesive bodies, so its accumulated multiplier obeys the projection
+
+$
+\lambda_{\mathrm{new}}
+=\max\left(0,\lambda_{\mathrm{old}}+
+\frac{b_{\mathrm{target}}-u_n}{k_n}\right).
+$
+
+Here $u_n$ is current relative normal speed and $b_{\mathrm{target}}$ is the frozen outgoing speed from the beginning of the impact. Only $\Delta\lambda=\lambda_{\mathrm{new}}-\lambda_{\mathrm{old}}$ may be applied to velocities. Re-applying the full stored impulse every iteration repeatedly counts previous impulses. When $k_n=0$, the row is unresponsive and cannot be divided by. With friction, an independent tangent $\mathbf t=(-n_y,n_x)$ gives $k_t$ by replacing $\mathbf n$ with $\mathbf t$; the accumulated tangent multiplier is clamped into $[-\mu\lambda_n,\mu\lambda_n]$. The **sign of its scalar** depends on the chosen tangent basis, not the intuitive world direction.
+
+The gap $g$ and squared polynomial $F$ make different *error scales* visible. If a computed contact is near the surface, a tiny negative $F$ does not necessarily imply meaningful penetration; subtraction of squared large values can amplify relative error. However, a fixed tolerance in metres is also wrong at large translated coordinates: subtracting world-space centres at magnitude $10^{12}$ can lose tiny separation detail before the quadratic is evaluated. An implementation must state a local length-error budget, its world-coordinate scale assumptions, and the policy for rejecting genuinely deep overlaps. The independently tested disk event laboratory first failed randomized collision checks because its squared-gap tolerance misclassified roundoff after impact; the corrected reference compares a linear surface gap using a coordinate-scaled tolerance. This still does **not** certify correctness at arbitrary exponent ranges or replace robust interval predicates.
+
+A conservative broad phase must never filter out a pair which touches at any instant of the candidate interval. For a disk whose centre follows $\mathbf x(t)=\mathbf x_0+t\mathbf v$, each x coordinate remains between $x_0$ and $x_0+hv_x$. Expand both endpoint extrema by the disk radius; repeat in y. Every occupied point over the interval lies in that swept axis-aligned rectangle, so overlapping disks imply overlapping swept rectangles. The converse fails: rectangles may overlap even if the bodies pass at different times. This provides both a formal one-way implication and an implementable oracle test: every pair returned by the exact time-of-impact solver must be present in the broad-phase candidates, while extra candidates are permitted.
+
+To verify an implementation, do not stop at several example pictures. Test invariance under adding a common velocity; symmetry under swapping the body labels with consistently flipped normal; preserved linear momentum for isolated frictionless impacts; kinetic-energy conservation only for ideal isolated elastic impacts; non-increasing energy for inelastic impacts; and no false negatives in candidate filtering. Include a seeded ensemble of unequal-mass impacts, replay the failing seed, inspect the coefficients and intermediate roots, and separate a finite-regression pass from a formal proof. The runnable witnesses in the repository are \`tools/labs/disk_ccd_lab.cpp\`, \`disk_event_pipeline_lab.cpp\`, \`disk_event_property_lab.cpp\`, and \`swept_broadphase_lab.cpp\`; their actual GitHub source and local test state must be checked before citing them as backend evidence.
+
+**Reconstruction check.** Starting from the definition of a signed surface gap, derive the quadratic coefficients and their physical units. Then derive $\mathbf n=\nabla g$, obtain the Jacobian row and inverse effective mass, and explain why the contact multiplier is projected. Implement an independent TOI function using a stable quadratic formulation and verify the 0.08-second collision. Finally implement swept bounds and prove the one-way implication from collision to candidate overlap. A correct answer also identifies what cannot be established by the current tests: rotating convex shapes, acceleration during a step, persistent stacks, certified floating-point predicates, and native Kairo integration.
+<!-- END IMPLEMENTABLE CONTACT MATHEMATICS 2026-11-12 -->
+
 <!-- begin V10.23 -->
 ## Test numerical methods and benchmark reproducibly
 
