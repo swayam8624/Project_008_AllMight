@@ -78085,6 +78085,77 @@ The same historical file-loading lesson's claims about `fopen` outperforming `if
 ---
 
 
+
+<!-- BEGIN IMPLEMENTABLE CONTACT WORLD STEP 2026-11-12 -->
+### Implement one complete collision step and prove what every stage owns
+
+The challenge is not collecting words such as *broadphase*, *narrowphase*, *CCD*, *solver* and *integration*. It is arranging their **data ownership and execution order** so that one frame produces a mathematically defensible next frame. This section connects the independent C++20 laboratories to a reconstructable CPU-world step. It is a learning implementation and verification standard, not evidence that the current Kairo physics runtime already uses these exact files.
+
+Consider a scene of two circular rigid bodies. The current state stores a stable identity, centre in metres, linear velocity in metres per second, radius in metres, inverse mass in inverse kilograms, and—when rotation is supported—angular velocity in radians per second and inverse moment of inertia. A *body* owns its persistent motion state. A *collision candidate* is a temporary unordered pair of body handles. A *narrow-phase contact* owns a measured geometric event: time, normal direction, representative point, separation status, and feature key. A *solver row* owns the effective inverse mass and accumulated normal/tangent impulses for one prepared constraint. The *contact cache* owns the last accepted feature-keyed multipliers across frames and must expire invalid entries. Confusing any of these lifetimes permits stale pointers, duplicate contacts, or impulses applied to the wrong bodies.
+
+A minimal event pipeline can be written as a state machine:
+
+1. Validate every body (finite state, positive radius, nonnegative inverse mass, stable unique handle) and requested $\Delta t\ge0$. Decide what happens if validation fails before mutating any state.
+2. Establish the remaining horizon $h=\Delta t$. Build conservative *swept* bounds for that horizon using the present velocities, then query candidate pairs. Rebuild or update those bounds after **every** velocity-changing event; a pair discarded under old velocities might collide under new velocities.
+3. For each candidate, compute the exact analytic constant-velocity disk TOI. A result may be no contact, first contact in $[0,h]$, initial overlap or an invalid numerical case. Never reinterpret a deep overlap as a new impact with a made-up normal.
+4. Choose the earliest event. If none exists, advance every centre by velocity multiplied by $h$ and finish. If one exists, collect contacts whose times are equal under the declared event-time tolerance and advance **all** bodies to that time.
+5. For the batch, build correctly oriented A-to-B normals, evaluate pre-solve relative normal velocities, and **freeze** each restitution target $b=-e u_n^{\mathrm{before}}$ once per impact. A resting contact would need a different target policy.
+6. Solve the coupled rows using accumulated unilateral impulses. Apply only each iteration's change in multiplier. Iterate at a fixed, documented budget or converge under a declared residual tolerance. A simultaneous batch sharing one body is a coupled system, not independent pairwise elastic collisions.
+7. Subtract the consumed time and re-query the future interval with the *new* velocities. Continue until the frame interval is exhausted. If a bounded event budget expires, return a visible failure and **do not silently accept the partially integrated scene as a completed frame**.
+
+The reason for re-querying is concrete. Imagine disks A, B and C in a line. A first strikes B, transferring its momentum. B can then strike C *inside the same frame* despite having zero velocity at the frame start. A broadphase query performed only once at the start can miss that later event because its swept bounds were computed from velocities that no longer describe the future. Conversely, re-querying the entire scene after every event is slower but makes a small CPU reference comparatively easy to reason about.
+
+#### The exact central-disk collision in memory and on the timeline
+
+Let disk A be fixed at centre $x_A=0$, radius 1 m. Let dynamic disk B start at $x_B=10$ m, radius 1 m, velocity $v_B=-100$ m/s, inverse mass $m_B^{-1}=1$ kg$^{-1}$. Ask for a frame $\Delta t=0.10$ s with restitution $e=1$.
+
+The geometry query constructs relative position $p=10$ m, relative velocity $v=-100$ m/s, combined radius $R=2$ m and quadratic coefficients $a=10000$, $b=-2000$, $c=96$. The first collision occurs at $t=0.08$ s. Before solving, the world updates B's centre from 10 m to 2 m, and decrements remaining time from 0.10 s to 0.02 s. Its A-to-B normal is +x. Relative normal velocity is $u_n=-100$ m/s, so the frozen outgoing target is $+100$ m/s. The inverse effective mass is $k=0+1=1$ kg$^{-1}$, giving contact impulse increment $(100-(-100))/1=200$ kg·m/s. Applying the change to B increases its x velocity by +200 m/s, from -100 to +100 m/s. A remains unchanged because its inverse mass is zero. After the remaining 0.02 s, B's centre is $2+100(0.02)=4$ m. This state is an exact oracle for the idealized one-dimensional model, not a statement about a finite-thickness arbitrary mesh wall.
+
+Here is the same sequence as an explicit state trace:
+
+| State | B position (m) | B velocity (m/s) | Remaining frame (s) | Meaning |
+|---|---:|---:|---:|---|
+| Enter step | 10 | -100 | 0.10 | Validate and create swept search horizon |
+| First TOI located | 10 | -100 | 0.10 | Query only; no state mutation |
+| Advance to impact | 2 | -100 | 0.02 | Geometry has reached contact |
+| Apply impulse | 2 | +100 | 0.02 | Linear velocity changed; position unchanged |
+| Advance remainder | 4 | +100 | 0 | Complete frame |
+
+In an isolated pair of *two dynamic bodies*, equal-and-opposite impulses conserve total linear momentum. An impulse against an externally fixed body should not be tested as conservation of momentum of only the moving disk: the fixed environment has accepted the reaction. With $e=1$ and a frictionless isolated central impact, kinetic energy should also be conserved. With $e<1$, energy loss is part of the model, not integration drift. With multiple simultaneous contacts, a finite row-iteration budget introduces approximation and the separate invariants must be measured rather than assumed.
+
+#### Contact cache ownership and frame validity
+
+Persistent contacts are not a free optimization. To reuse last frame's impulse, identify the same pair of *generated body handles* and stable geometric features, with the same declared orientation. An indexed array position does not identify a feature, because clipping and sorting can reorder contacts. A generation number protects against accidentally attaching an old impulse to a new body that reuses a storage slot.
+
+The cache must decide whether an old normal still agrees with the new normal. Its tangential impulse is a world-space vector represented by a scalar relative to the old tangent, so on a rotated normal it should be projected onto the new tangent basis. The standalone \`contact_cache_lab.cpp\` applies a threshold for excessive normal change, bounds timestep-ratio scaling, and rejects duplicates. These particular thresholds are laboratory policies, not universal physical laws. Reused cached multipliers must be **warm-started exactly once** on the pre-solve velocities before row iteration, not repeatedly added every solver sweep. A changed contact point changes the lever arm and effective mass, and a sufficiently changed manifold must invalidate or transform its cache rather than blindly retaining it.
+
+The C++20 \`persistent_contact_lab.cpp\` explicitly models two simultaneous contact rows sharing one velocity state. The row \`make_row\` computes lever arms, the normal and tangent basis, and scalar inverse effective masses. \`warm_start\` changes body velocities once using cached impulses. \`solve_one\` computes the *current* relative speed, adjusts the accumulated multiplier under the nonnegative and Coulomb bounds, and applies the **difference**. \`sweep\` repeats over the rows. To implement this in a real engine, move the prepared row data into a frame-owned contact arena with stable references and never let a pointer survive its arena lifetime. Contacts should be grouped by constraint island if they share bodies; independent islands can be processed separately, but changing row order may affect a finite-iteration result.
+
+#### Resting penetration and failures are different physics problems
+
+A velocity-level contact solver makes normal relative speed nonclosing; it does **not**, by itself, erase a positive existing penetration depth. If two disks start overlapped, a separate position-level correction, split impulse, constraint projection or compliant response policy is required. A high restitution target is not a position-correction policy. Similarly, the analytic CCD assumption of constant velocity during an interval cannot safely be applied unchanged to high-acceleration, rotating convex bodies.
+
+An event budget serves as an explicit failure boundary. If the CPU reference throws after partially advancing positions, its input vector has already been mutated. Callers must either treat that state as invalid and restore a saved snapshot, or implement a transactional step in which a working copy is committed only when all events succeed. A production engine should decide whether simulation failure crashes, aborts the frame, isolates a problematic island or degrades to a documented fallback. It must never report a partially updated world as a fully successful deterministic step without a policy.
+
+#### How to reproduce and test the independent laboratories
+
+Execute the tools in increasing order of coupling, following their implementation rather than treating their names as coverage badges:
+
+- \`tools/labs/rigid_contact_lab.cpp\` derives one planar contact impulse and its friction limit. It is a small sanity witness.
+- \`tools/labs/persistent_contact_lab.cpp\` demonstrates accumulated sequential impulses, off-centre torque, restitution freezing and two-point warm-start semantics.
+- \`tools/labs/contact_cache_lab.cpp\` demonstrates key ownership, invalidation, rotated tangent projection, timestep changes and stale pruning; it assumes stable features have been generated externally.
+- \`tools/labs/disk_ccd_lab.cpp\` solves analytic disk time-of-impact without mutating the world.
+- \`tools/labs/disk_event_pipeline_lab.cpp\` integrates earliest impact, simultaneous constraints and remaining time; its simple pair search is deliberately exhaustive.
+- \`tools/labs/disk_event_property_lab.cpp\` replays 10,000 seeded two-body impacts and checks restitution, momentum and energy expectations. Its failure is reproducible from the seed.
+- \`tools/labs/swept_broadphase_lab.cpp\` tests swept-AABB candidates against a separate exact disk oracle across deterministic and 200 seeded 35-disk scenes, covering 119,000 unordered comparisons.
+
+All of these are **independent CPU examples**, not automatically compiled into Kairo. A strict compiler build proves that the checked source is well-formed on that toolchain; a sanitizer run probes particular memory and undefined-behaviour faults; an invariant test checks its mathematical observations in covered scenarios. None is by itself a proof of a correct general 3D engine. To use the broadphase in the event stepper, provide the candidate-generator function with the same remaining horizon, replace the all-pairs TOI scan with its candidate list, and compare full output states against the exhaustive reference for identical initial scenes and parameters. Recompute swept bounds after each impulse. Do **not** claim acceleration merely from removing lines of code: measure candidate counts, wall time, allocations and correctness under sparse and dense motion.
+
+A direct implementation plan has a clear acceptance gate. First require matching pair IDs and impact times between the reference all-pairs and accelerated paths; then matching post-impact velocities and positions within a declared numerical tolerance; then long-sequence replay and error metrics; then benchmark candidate count and latency at equal accuracy. Include dense interacting scenes, exact simultaneous contacts, near-grazing paths, static bodies, large coordinate translations, invalid inputs and changed timesteps. Repeat with different fixed seeds and preserve the failing seeds. The no-false-negative broadphase contract is necessary but not sufficient: the event scheduler may still choose the wrong earliest time or handle simultaneous events differently.
+
+**Reconstruction challenge.** Implement a 2D body record, all-pairs disk TOI, scene time advancement, the projected normal impulse and a bounded collision-event loop without looking at the stored code. Explain in prose which function may mutate persistent body state and which may only return geometry. Add the broadphase with a no-false-negative property test, then add contact-cache warm-starting for a resting two-point manifold. Finally justify all failure policies and measure the residual gap, momentum, energy and total simulated time; if a result cannot be observed, it is not yet verified.
+<!-- END IMPLEMENTABLE CONTACT WORLD STEP 2026-11-12 -->
+
 ## Contact forces form a coupled system
 
 A contact solver asks how an action at one contact changes motion at every contact sharing the affected bodies. A stack cannot generally be solved as unrelated point collisions: pushing one body changes the gaps on both sides of it. The supplied physics chapter motivates a simultaneous force formulation while warning about its numerical difficulty. Start with the mechanics before naming a particular solver.
