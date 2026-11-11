@@ -15,7 +15,7 @@ Latin-hypercube sampling divides each coordinate axis into $N$ equal strata and 
 ## Prerequisites
 
 - [[Uniform shuffling without replacement]]
-- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+- [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]]
 - [[Probability density and change of measure]]
 
 ## Used by
