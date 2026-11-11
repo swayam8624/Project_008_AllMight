@@ -453,6 +453,71 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 **Completion classification:** all 16 original titles mapped to continuous authored teaching and one representative, executable, standards-conscious laboratory. This does not certify 16 independent programs, learner recall, received-source equivalence, cross-platform ABI equivalence, or a current Kairo implementation audit. The next canonical source range is M014, Parts 217–230.
 
 
+## M014 — Parts 217–230: one tile planner and its compile-time policy decisions
+
+**Status and provenance:** authored reconstruction grounded in the original integrated curriculum and confirmed language references. **Not a received M014 lesson transcript.** The complete [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A texture tile that chooses its work before the frame begins|narrative]] continues the same generic asset-pipeline problem from M011–M013: a pixel format and policy may be fixed during compilation while tile dimensions, payload length, failure state, and budget limits still demand runtime validation. Original numbered parts are retained **only as coverage traceability**, not as a string of disconnected teaching sections.
+
+| Original part and authoritative title | First-use requirement and inspectable witness |
+|---|---|
+| 217 · Compile-time type traits | An internal pixel format and empty validation policy need compile-time properties; `std::is_empty_v` and `std::is_base_of_v` are checked in the lab and semantic limitations are explained. |
+| 218 · std::integral_constant and type-level values | `PixelTraits<Format>` inherits `std::integral_constant<std::size_t,Channels>`, giving static channel counts for supported formats. |
+| 219 · if constexpr and compile-time branching | Known RGBA versus RGB format selects whether a prepared plan has alpha; both variants are tested. |
+| 220 · constexpr functions | `checked_product` performs safe size multiplication both in `static_assert` and using runtime inputs; overflow is rejected before multiplication. |
+| 221 · constexpr objects | `inline constexpr` tile definition and precomputed Morton table are constant-expression objects, distinct from mutable diagnostics. |
+| 222 · consteval immediate functions | `make_tile_definition` requires a valid compile-time tile configuration, and `make_morton_table` builds the lookup table during constant evaluation. |
+| 223 · constinit static initialization guarantees | `constinit std::uint32_t g_plans_recorded=0` guarantees suitable static initialization but remains mutable and not thread-safe; the single-threaded count is checked. |
+| 224 · Compile-time lookup tables | A sixteen-entry table spreads four coordinate bits; `morton4(3,5)=39` is derived and compile-time/runtime tested. |
+| 225 · Type erasure versus templates | A concrete CRTP recorder and a `std::function<void(const TilePlan&)>` target each receive the same plan under different static/runtime contracts; neither is benchmarked. |
+| 226 · CRTP static polymorphism | `RecorderBase<CountingRecorder>::record` calls `record_impl` via a derived cast; the derived-object precondition and nonvirtual semantics are explained and tested. |
+| 227 · Policy-based design | `TilePlanner<Format,BudgetPolicy,Recorder>` composes budget validation and recording; both 64-byte bounded and stateless no-budget variants are exercised. |
+| 228 · Tag dispatch | `VerifyPayloadTag` and `MetadataOnlyTag` select overloads that verify real bytes or deliberately produce only a manifest; invalid length is rejected in verified mode. |
+| 229 · Empty-base optimization | A holder deriving from an empty policy is measured beside an ordinary empty-policy member; observed sizes are toolchain-specific, not promised. |
+| 230 · [[no_unique_address]] and zero-size policy storage | A policy member eligible for overlap is used in `TilePlanner` and an isolated holder; local `sizeof` results and MSVC portability differences are documented. |
+
+**Executable witness:** [[tools/labs/compile_time_asset_policy_lab.cpp|C++20 reference laboratory]], 258 lines and 10,788 bytes, SHA-256 `f5eb017280bb6b2ae6b1475dfb014694235f805a6948df36548b17145d889951`, Git blob `f4379dbce70c261f2832f8311a628e346f7471f7`, byte-identical to the locally executed source. Compiled and executed successfully with GCC 14.2.0 using `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`; Clang 17.0.0 with `-std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror`; and GCC 14.2.0 release-style `-std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. Each execution printed `compile_time_asset_policy_lab: all checks passed`; local layout observations were `PlainPolicyHolder=16`, `EboPolicyHolder=8` and `CompactPolicyHolder=8` bytes on that Linux target.
+
+**Evidence limits:** the code plans tiles and checks an optional CPU byte span. It does **not** allocate native graphics memory, enqueue a GPU transfer, validate a device format, establish a real asynchronous transaction, measure speed, or certify a portable ABI layout. Its `MetadataOnlyTag` deliberately does not check that a payload exists, so the result cannot be represented as a verified upload. `constinit` supplies no synchronization, CRTP supplies no runtime plugin selection, and local object-size observations cannot be treated as standard-required sizes. No live Kairo/Maveb repository sources were re-inspected. Research and project-code gates remain open.
+
+**Language-source anchors:** [cppreference `if constexpr`](https://en.cppreference.com/w/cpp/language/if), [`constexpr`](https://en.cppreference.com/w/cpp/language/constexpr), [`consteval`](https://en.cppreference.com/w/cpp/language/consteval), [`constinit`](https://en.cppreference.com/w/cpp/language/constinit), [empty base optimization](https://en.cppreference.com/w/cpp/language/ebo), [`[[no_unique_address]]`, including implementation notes](https://en.cppreference.com/w/cpp/language/attributes/no_unique_address), and [class-template type traits](https://en.cppreference.com/w/cpp/types). These clarify specific language rules; they do not stand in for a real cross-compiler benchmark.
+
+**Completion classification:** fourteen original titles mapped to one connected, implementable authored chapter and a representative three-toolchain test. It is *not* fourteen separately certified mastery gates or a received-source integration. Next canonical M015, Parts 231–250, should arise as the in-memory asset store moves beyond its fixed-capacity demonstration into standard container growth, invalidation, storage and lookup choices.
+
+
+## M015 — Parts 231–250: growing the asset registry without losing identities
+
+**Source status:** authored reconstruction from the original integrated 180-chunk / 3,000-part curriculum contract. **No received M015 teaching transcript** is claimed. The single coherent explanation is [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An asset registry grows while its handles must not change|the growing asset registry narrative]], directly after M014 and before the existing general API-contract chapter. The numbered rows below preserve exact titles and indicate what mechanism required each concept; they are not the main teaching body.
+
+| Original part — exact authoritative title | Where the problem forces its use; evidence |
+|---|---|
+| 231 · std::vector internal size/capacity/storage model | A bounded asset depot begins growing; the lab distinguishes live elements from reserved storage and checks contiguous values. |
+| 232 · std::vector geometric growth | Derive the geometric relocation sum and amortized append cost; the lab observes capacity 2→4 on its local implementation, not a standard-prescribed factor. |
+| 233 · std::vector iterator and pointer invalidation | Growth invalidates old element pointers/iterators; the lab checks the growth event without accessing stale addresses. |
+| 234 · std::vector reserve versus resize | `reserve(2)` does not create elements; `resize(5)` constructs new ones with the tested default `int` values. |
+| 235 · std::array fixed contiguous storage | Compile-time fixed channel/counter sequences keep their own element storage and do not use vector growth semantics; array indexing tested. |
+| 236 · std::deque segmented storage | Editor arrival/consumption needs front/back operations without pretending an entire deque is a single contiguous allocation; front/back/index test. |
+| 237 · std::list node-based storage | Editing work transfers nodes while retaining iterators to unaffected nodes; `splice` tested. |
+| 238 · std::forward_list singly linked storage | A singly linked worklist removes a successor using `erase_after`, needing the predecessor iterator; tested. |
+| 239 · std::map balanced-tree semantics | Ordered asset names with logarithmic comparison-based operations and ordered iteration; tree shape remains an implementation detail. |
+| 240 · std::set ordered unique-key semantics | A set of IDs removes duplicates and preserves comparison order; 8,3,8,5 yields three unique values. |
+| 241 · std::unordered_map hash-table semantics | Persistent name-to-generation-handle index uses owned `std::string` keys; its hash lookup and rehash rules are explained. |
+| 242 · std::unordered_set hash-table semantics | Pending-name membership without mapped values; duplicate insertion and `contains` tested. |
+| 243 · Hash function quality and collision behavior | A deliberately constant hash places all 24 distinct names in one bucket without corrupting key equality; lookup correctness is tested. |
+| 244 · Load factor and hash-table rehashing | `load_factor=n/b`, `max_load_factor(0.5)` and `reserve(96)` illustrate the bucket policy; old rehash-invalidated iterators are never dereferenced. |
+| 245 · std::priority_queue heap-backed abstraction | Uploads require priority selection, plus explicit sequence-number tie-breaking because the adapter alone does not guarantee stability. |
+| 246 · std::stack adapter semantics | Editor undo/traversal needs LIFO; push 7,8 then pop yields 8 before 7. |
+| 247 · std::queue adapter semantics | Incoming jobs need FIFO; push 7,8 then pop yields 7 before 8. |
+| 248 · std::span as a non-owning contiguous view | A checksum consumes byte data synchronously without copying it, with owner lifetime and reallocation constraints explicit. |
+| 249 · std::string storage and small-string optimization concept | Asset names own characters; locally observed short/long capacities 15/1000 are not portable SSO or allocation guarantees. |
+| 250 · std::string_view lifetime rules | Borrowed path substring `"stone"` is copied into an owning string before the source is changed; substring may lack a terminating NUL. |
+
+**Tested implementation:** [[tools/labs/asset_container_lab.cpp|C++20 reference laboratory]], 292 lines / 13,525 bytes; Git blob `c9a323bcf4a3f2e41df13db9d10d381bdd71468f`, SHA-256 `e829cf731b17419e282775cf0b8224c210819ed3d81da36fce45014a04e4afae`. The committed bytes are identical to the local file compiled and executed with GCC 14.2.0 using `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`, Clang 17.0.0 using `-std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror`, and GCC 14.2.0 using `-std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. All three executions reported `asset_container_lab: all checks passed`. The implementation tests two distinct rollback injections (before preparation, after candidate slot creation), stale-handle rejection after slot recycling, list/deque/forward_list behaviors, pathological hash collisions, load-factor checks, scheduling semantics and safe ownership boundaries.
+
+**Precisely bounded claims:** `AssetRegistry` is a single-threaded teaching model. It does not prove correct concurrent deletion, GPU fence retirement, persistent identity across sessions, byte-for-byte stable ABI, all custom allocator/hash exception behaviors, uniformly fast worst-case hashing, or measured performance of competing containers. The example is stronger than an append-only depot—it supports removal and generational reuse—but intentionally lacks the full production allocator/threading/hot-reload model. Project-specific `KairoECS/SparseSet.cppm` and `KairoRenderer/RenderGraph.cppm` remain targets **to verify** from current independent repository source; nothing here is attributed to those implementations.
+
+**Conceptual references consulted:** [cppreference vector](https://en.cppreference.com/w/cpp/container/vector), [vector reserve](https://en.cppreference.com/cpp/container/vector/reserve), [vector resize](https://en.cppreference.com/cpp/container/vector/resize), [deque](https://en.cppreference.com/w/cpp/container/deque), [unordered_map](https://en.cppreference.com/cpp/container/unordered_map), [span](https://en.cppreference.com/w/cpp/container/span), [string_view](https://en.cppreference.com/w/cpp/string/basic_string_view). These are supporting language-library sources; the original supplied curriculum remains the title/coverage authority.
+
+**Completion classification:** all 20 titles connected to one engineered narrative and one compile-tested illustrative registry, not 20 individually completed mastery gates or a newly received source batch. The next canonical M016 / Parts 251–270 introduces optional/variant/any/expected-like results, algorithms and iterator categories only when the registry's queries, transforms and failure return paths actually need them.
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |

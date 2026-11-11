@@ -912,6 +912,72 @@ The observed output of each was `generic_asset_pipeline_lab: all checks passed`.
 **No-loss policy:** the original prose remains unchanged. Only the new narrative section, executable lab, source-to-concept coverage rows, recall exercise and README routing are added. Do not reclassify historical M007–M010 or M011/M012 received-source snapshots as received M013 lessons. The next original target is **M014 Parts 217–230**, where compile-time calculation, traits, policies and layout consequences are introduced through the limitations of this generic asset system.
 
 
+## Phase 4 additive reconstruction — M014 / Parts 217–230
+
+**Curriculum identity:** original M014 owns Parts 217–230, exactly fourteen atomic titles: compile-time traits; `std::integral_constant` and type-level values; `if constexpr`; `constexpr` functions/objects; `consteval`; `constinit`; compile-time lookup tables; type erasure versus templates; CRTP; policy-based design; tag dispatch; empty-base optimization; and `[[no_unique_address]]`. The integrated [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A texture tile that chooses its work before the frame begins|tile-planning narrative]] follows directly from the M013 generic asset store. [[Supplementary/Foundations#M014 — Parts 217–230: one tile planner and its compile-time policy decisions|The mapped fourteen titles]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#The tile planner makes a choice — M014 reconstruction|the recall route]] provide auditability without fragmenting the main narrative. **Authored reconstruction, not a received M014 source transcript.**
+
+**Committed source and executed witness:** `tools/labs/compile_time_asset_policy_lab.cpp`, 258 lines and 10,788 UTF-8/ASCII bytes; SHA-256 `f5eb017280bb6b2ae6b1475dfb014694235f805a6948df36548b17145d889951`; Git blob `f4379dbce70c261f2832f8311a628e346f7471f7`, byte-for-byte identical to the executed local source. The following exact commands completed successfully using GCC 14.2.0 and Clang 17.0.0:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_asan
+/tmp/allmight_m014_asan
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_clang
+/tmp/allmight_m014_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_release
+/tmp/allmight_m014_release
+```
+
+Each printed `compile_time_asset_policy_lab: all checks passed` and the local layout line `Layout bytes (plain/EBO/member): 16/8/8`. None reported an address/undefined-behavior sanitizer diagnostic in that witnessed execution. The test asserts the static format traits and generated 16-element Morton table, checks both runtime and compile-time arithmetic, validates two different policies and two tag paths, verifies rejected budget/empty-payload/overflow inputs do not reach a recorder, verifies a static CRTP call, and separately invokes a runtime-erased callback. The compiled test is **not** a GPU backend, a measured comparison of runtime overhead or a general portable layout certificate.
+
+**Source and language verification** (external references are used to support language-level distinctions, not to claim implementation-dependent sizes):
+
+- [C++ `constexpr` and the `if constexpr` statement](https://en.cppreference.com/w/cpp/language/constexpr) / [if statement](https://en.cppreference.com/w/cpp/language/if), for conditional instantiation and constant-evaluation eligibility.
+- [C++20 `consteval` immediate functions](https://en.cppreference.com/w/cpp/language/consteval) and [`constinit`](https://en.cppreference.com/w/cpp/language/constinit), which enforce different kinds of compile-time/static-initialization contracts.
+- [`std::integral_constant`](https://en.cppreference.com/w/cpp/types/integral_constant) and [`std::is_empty`](https://en.cppreference.com/w/cpp/types/is_empty), for type-level values and empty-type checks.
+- [Empty base optimization](https://en.cppreference.com/w/cpp/language/ebo) and [`[[no_unique_address]]`](https://en.cppreference.com/w/cpp/language/attributes/no_unique_address). The latter documents compiler differences, including MSVC's historically distinct extension; do not assume observed 16/8/8 sizes are normative.
+- [`std::function`](https://en.cppreference.com/w/cpp/utility/functional/function) for runtime type-erased callable storage and copyability; it is compared conceptually with CRTP, not benchmarked.
+
+**Limits and future verification:** `TilePlanner` constructs a `TilePlan` and checks a possible CPU byte span; it does not allocate device memory, upload textures, submit or synchronize native GPU work, inspect any current Kairo/Maveb source, or guarantee that a metadata-only plan denotes a ready resource. The mutable `constinit` counter is single-threaded and not thread-safe. An arbitrary `Recorder::record_impl` can have side effects or throw; the lab only witnesses pre-recording failure paths with the included `CountingRecorder`. No controlled dispatch microbenchmark or compiler-disassembly comparison was performed. The original user-supplied books and prior extraction backlogs remain pending exactly as before; this addition does not mark source claims or learner reconstruction complete.
+
+**No-loss integration invariant:** previous teaching, sources, indexes and original numbered source material remain verbatim. This pass adds one continuous first-use chapter, one tested lab, fourteen traced source titles, one recall reconstruction and README navigation. The next original chunk is **M015 / Parts 231–250**, whose container growth, invalidation, ownership and lookup tradeoffs arise from the currently bounded tile/asset storage model.
+
+## Phase 5 additive reconstruction — M015 / Parts 231–250
+
+**Scope and provenance:** the integrated 180-chunk curriculum maps M015 to original Parts 231–250, exactly: vector growth/invalidation/reserve; array/deque/list/forward_list; ordered and unordered associative containers; hashing and load factor; queue/stack/priority_queue; span; string and string_view. The new authored [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An asset registry grows while its handles must not change|growing-asset-registry narrative]] begins from the fixed-capacity asset planner introduced in M013/M014 and shows why physical storage, logical identity, lookup indexing, scheduling and borrowed views need different guarantees. [[Supplementary/Foundations#M015 — Parts 231–250: growing the asset registry without losing identities|Exact 20-title coverage]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#A growing asset store must preserve its promises — M015 retrieval|the reconstruction board]] preserve auditing without turning the teaching into a catalogue. **No original M015 lesson transcript was received in this phase.**
+
+**Executed, byte-identical reference:** `tools/labs/asset_container_lab.cpp`, 292 lines / 13,525 ASCII bytes, Git blob `c9a323bcf4a3f2e41df13db9d10d381bdd71468f`, SHA-256 `e829cf731b17419e282775cf0b8224c210819ed3d81da36fce45014a04e4afae`. The committed blob was checked against the locally compiled file. Actual commands executed:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_san
+/tmp/allmight_m015_san
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_clang
+/tmp/allmight_m015_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_release
+/tmp/allmight_m015_release
+```
+
+GCC 14.2.0 and Clang 17.0.0 were the local compilers. Each final executable printed `asset_container_lab: all checks passed`. The GCC sanitizer run reported no AddressSanitizer or UndefinedBehaviorSanitizer diagnostics; this is not a proof of general memory safety. The locally observed vector growth was `2 -> 4`, and local short/long string capacities were `15/1000`. Both numbers are expressly implementation-dependent observations, not C++ requirements.
+
+**What was independently tested:** `reserve` versus `resize` and resulting live values, required vector capacity growth, array indexing, deque end operations, list `splice` with an unaffected iterator, forward-list predecessor erasure, ordered associative ordering and uniqueness, deliberately colliding hash lookup and one-bucket concentration, max-load/reserve contract, unordered-set membership, explicit priority tie breaking, queue FIFO, stack LIFO, a synchronous checksum span, owning versus borrowed path/name behavior, and a generational asset registry with successful insertion, two failure injections, rollback, erase, stale-handle rejection and slot recycling.
+
+**What was not demonstrated:** no invalid/dangling reference was deliberately dereferenced; the lab does not benchmark container performance, prove memory-layout details, test every allocator or throwing custom hasher, implement an ECS component store, enforce thread safety, guarantee network/filesystem atomicity, or validate GPU queue completion and native resource retirement. `AssetRegistry` uses a vector of optional assets and a string-keyed unordered map, not the actual production `KairoECS/SparseSet.cppm` or `KairoRenderer/RenderGraph.cppm`. Those curriculum-suggested external repositories and specific source revisions remain **uninspected and to verify**. The test's logical handle has 64-bit generation plus slot; that is not a globally persistent or distributed identifier.
+
+**Current library references checked:** [vector contiguous storage and invalidation](https://en.cppreference.com/w/cpp/container/vector), [vector reserve](https://www.cppreference.com/cpp/container/vector/reserve), [vector resize](https://www.cppreference.com/cpp/container/vector/resize), [deque reference versus iterator invalidation](https://en.cppreference.com/w/cpp/container/deque), [unordered_map key/hash agreement, rehash and iterator invalidation](https://en.cppreference.com/cpp/container/unordered_map), [span](https://en.cppreference.com/w/cpp/container/span), [string_view](https://en.cppreference.com/w/cpp/string/basic_string_view). The supplied original contract remains the authority for atomic titles, and the standard-library pages support the language guarantees. The provided *Professional C++* textbook also covers `vector` size/capacity, reserve, invalidation, `span`, and the adapters; its cited excerpts were consulted for explanatory alignment. This is not a new claim of reading that book cover to cover.
+
+**No-loss integration check:** all older text is retained verbatim. The new lesson sits at the M014→existing API chapter transition, supported by one executable lab and appended mapping, recall, references and navigation. The next coherent need is M016 / Parts 251–270, where queries and transformations over the now-growing asset registry require optional results, variants, iterator categories, sorting, searching, transformations, reductions and safe erasure.
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
