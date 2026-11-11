@@ -75,6 +75,35 @@ The implementation has a testable boundary: it assumes a reliable feature matche
 
 The equations above change velocities. They do not, by themselves, repair existing overlaps in positions. A production pipeline generally needs a distinct and carefully scoped policy: geometry generation and signed separation, speculative contact margins, split impulses or position-level stabilization, and consistent timestep handling. Naively adding a large position-error velocity bias can inject energy, make stacks jitter, or break restitution. This CPU witness intentionally has no position integrator, no Baumgarte term, no split impulse and no continuous collision detection. Therefore its passing tests cannot establish the correctness of CCD tunneling prevention or deep-overlap recovery.
 
+## From end-of-frame overlap to continuous time of impact
+
+The contact solver described above only acts on contacts it has been given. A fast-moving disk can start to the left of a thin obstacle and finish to the right of it without overlapping at the *end* of a fixed simulation step. If collision detection samples positions only at the step boundary, it sees no collision, so even a mathematically perfect impulse solver cannot prevent tunneling. This is the reason continuous collision detection (CCD) is a separate geometric question: **what is the first time, within the proposed integration interval, when the moving shapes touch?**
+
+For two disks with initial centres **x_A** and **x_B**, constant velocities **v_A** and **v_B**, and radii **r_A**, **r_B**, define the relative centre separation **p = x_B - x_A**, relative velocity **v = v_B - v_A**, and sum of radii **R = r_A + r_B**. Their separation at time **t** is **p(t) = p + tv**. They first touch when the squared centre distance equals the squared radius sum:
+
+$
+\lVert \mathbf p+t\mathbf v\rVert^2=R^2.
+$
+
+Expanding the dot product gives the quadratic
+
+$
+at^2+bt+c=0,\qquad
+a=\mathbf v\cdot\mathbf v,\quad
+b=2\mathbf p\cdot\mathbf v,\quad
+c=\mathbf p\cdot\mathbf p-R^2.
+$
+
+The meaning of the coefficients is crucial. **c** is the initial squared-distance gap: c<0 means the disks are already overlapping and this witness returns t=0, assigning overlap correction to a separate solver; c=0 means initial touching. If **a=0**, the relative geometry never moves during the interval. For initially separated disks, **b≥0** means squared distance is not initially decreasing, so a collision cannot occur under these constant velocities. A discriminant **D=b²−4ac<0** means the motion line misses the expanded-radius disk. **D=0** gives a tangent or grazing touch, which counts as a contact in this laboratory.
+
+The familiar quadratic expression **(-b−sqrt(D))/(2a)** can lose precision when nearly equal quantities are subtracted. The [swept-disk CPU witness](../tools/labs/disk_ccd_lab.cpp) instead computes a stable intermediate **q = -0.5(b − sqrt(D))** in its restricted **b<0** branch, then evaluates the roots as **t_near = c/q** and **t_far = q/a**. Their product remains **c/a**, and the smaller root is tested against **0≤t≤Δt**. The code uses `std::fma` in the discriminant to avoid one rounding step, but this is still finite-precision arithmetic; reliable collision detection across extreme dynamic ranges needs scale-aware error analysis or a more robust predicate policy.
+
+Consider a disk of radius 1 m stationary at the origin and another radius-1 disk initially at x=10 m moving left at 100 m/s. Its centre must move 8 m before touching, so the time of impact is **0.08 s**. At Δt=0.1 s, the moving disk would end at the origin and overlap if sampled; for an even faster moving disk it could end *past* the obstacle and be missed entirely. An analytical time-of-impact query reports the 0.08 s encounter regardless of the end position. During a simulation step, a practical engine can advance up to this impact, generate a contact normal, solve or schedule the event, and then advance the remaining time, with a bounded substep count and an explicit policy for simultaneous events and resting contacts.
+
+The event's collision normal is the normalized relative separation **n(t) = (p+tv)/|p+tv|**, pointing A to B. When initial centres coincide, there is no unique geometric normal; the witness uses a deterministic velocity-based fallback or +x if relative velocity is zero. This fallback is a test policy rather than a geometrically determined surface normal. The tests explicitly examine grazing touch, no-hit trajectories, hits outside the requested frame, existing overlap, coincident centres, invalid parameters, a high-dynamic-range trajectory, and Galilean invariance under equal velocity added to both bodies. The latter should not change relative motion or time of impact.
+
+**What this does not solve:** disk CCD assumes translational linear motion throughout the interval and fixed radii. It does not include forces or acceleration changing the trajectory, rotation of polygons, concave meshes, vertex-edge events, general convex support functions, conservative advancement, broadphase swept bounds, contact island rescheduling, stable substep integration, or CCD after multiple impulses. It also does not prove the absence of false misses at all floating-point scales. These exclusions must be explicit when moving from a CPU analytic oracle to the engine's full collision pipeline.
+
 ## How to reconstruct and verify the witness
 
 Read the `Row` fields as a prepared contact Jacobian in compressed form: **ra/rb** are the lever arms, **n/t** are the constraint axes, **kn/kt** are scalar rows of the matrix **J M⁻¹ Jᵀ**. The method `relative_velocity` computes **Jv**, `inverse_effective_mass` computes a row's inverse effective mass, `solve_one` projects impulse increments, and `warm_start` applies an already-owned cache once. `make_row` validates data and freezes the impact target. The six tests cover central momentum/energy, friction orientation, angular impulse, separating and static degeneracies, coupled two-contact iteration/next-frame cache, and nonfinite-input rejection.
