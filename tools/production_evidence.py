@@ -11,6 +11,7 @@ no network filesystem durability claim, no pixel decoder or DCC invocation.
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import math
 import os
@@ -102,6 +103,9 @@ def parse_frame(name: str) -> tuple[str, int, int, str] | None:
     if match is None:
         return None
     digits = match.group("frame")
+    # A malformed untrusted name must not trigger huge-integer conversion work.
+    if len(digits) > 12:
+        return None
     return match.group("stem"), int(digits), len(digits), match.group("suffix").lower()
 
 
@@ -117,10 +121,15 @@ def make_plan(
     """Collect deterministic diagnostics without mutating the workspace."""
     if first < 0 or last < first:
         raise ValueError("frame range must be a nonempty nonnegative interval")
+    if last - first + 1 > 100_000:
+        raise ValueError("frame range exceeds the explicit 100000-frame budget")
     if "/" in target_name or "\\" in target_name or target_name in ("", ".", ".."):
         raise ValueError("target_name must be one immediate directory name")
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", target_name):
         raise ValueError("unsafe target name")
+    reserved = {"CON", "PRN", "AUX", "NUL"} | {f"COM{i}" for i in range(1, 10)} | {f"LPT{i}" for i in range(1, 10)}
+    if target_name.split(".", 1)[0].upper() in reserved:
+        raise ValueError("target name is reserved on Windows")
     real_root = root.resolve(strict=True)
     target = workspace_path(real_root, Path(target_name))
     if target == real_root:
@@ -270,6 +279,10 @@ def verify_published(target: Path) -> list[Diagnostic]:
             errors.append(Diagnostic("PATH", "error", "manifest path is not a filename", name))
             continue
         path = target / name
+        resolved = path.resolve(strict=False)
+        if not resolved.is_relative_to(target.resolve(strict=True)):
+            errors.append(Diagnostic("PATH_ESCAPE", "error", "published link escapes target", name))
+            continue
         if not path.is_file() or fingerprint(path) != row["digest"]:
             errors.append(Diagnostic("FINGERPRINT", "error", "published content mismatch", name))
     return sorted(errors)
@@ -278,7 +291,7 @@ def verify_published(target: Path) -> list[Diagnostic]:
 def image_mse(reference: Sequence[float], test: Sequence[float]) -> float:
     if not reference or len(reference) != len(test):
         raise ValueError("image arrays must be nonempty and equally sized")
-    if any(not math.isfinite(x) for x in (*reference, *test)):
+    if any(not math.isfinite(x) for x in itertools.chain(reference, test)):
         raise ValueError("nonfinite pixel channel")
     return math.fsum((a - b) ** 2 for a, b in zip(reference, test)) / len(reference)
 
