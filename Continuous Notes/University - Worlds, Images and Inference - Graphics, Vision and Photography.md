@@ -54286,6 +54286,226 @@ int main() {
 
 For the worked segment from (-1,0) to (+1,0) and a clipping half-space x <= 0, the signed distances are -1 and +1. The crossing interpolation factor is (-1)/(-2)=1/2, giving the new endpoint (0,0) and a surviving segment from (-1,0) to (0,0). The planar clipping result is geometrically local: using it as a full manifold still requires selecting the reference/incident features, handling parallel or degenerate edges, evaluating penetration along the actual reference normal, merging duplicate contact points and giving the surviving contacts stable feature identities. This distinction is essential before attaching cached solver impulses.
 
+#### Full implementation: disk TOI and conservative swept candidate generation
+
+The shortest route from understanding the geometry to implementing it is to inspect two complete CPU witnesses side by side, not to memorize a list of algorithms. First, the disk TOI query takes *only geometry and the time horizon* and returns a first-impact result; it does not mutate body velocities. Second, the swept-AABB broadphase takes disk motion and a horizon and returns *candidate pairs*; it does not assert that those pairs collide. This separation permits the critical oracle relationship: every exact contact pair must be a broad-phase candidate, but candidates may be false positives.
+
+The complete disk query source follows. Its initial-overlap policy and fallback normal are educational decisions; they cannot be generalized without additional shape-specific rules.
+
+```cpp
+// C++20 analytic linear-motion CCD for two disks, not a general rigid-body CCD system.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror disk_ccd_lab.cpp -o /tmp/disk_ccd && /tmp/disk_ccd
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+struct Vec2 { double x{},y{}; };
+constexpr Vec2 operator+(Vec2 a,Vec2 b){return {a.x+b.x,a.y+b.y};}
+constexpr Vec2 operator-(Vec2 a,Vec2 b){return {a.x-b.x,a.y-b.y};}
+constexpr Vec2 operator*(Vec2 a,double t){return {a.x*t,a.y*t};}
+constexpr double dot(Vec2 a,Vec2 b){return a.x*b.x+a.y*b.y;}
+void check(bool b,const char* message){if(!b)throw std::runtime_error(message);}
+void near(double a,double b,double eps=1e-10){check(std::isfinite(a)&&std::abs(a-b)<eps,"numeric result mismatch");}
+struct Disk{Vec2 center{},velocity{};double radius{};};
+struct Hit{double time{};Vec2 normal{};bool initiallyOverlapping{};};
+void validate(const Disk& d){
+ check(std::isfinite(d.center.x)&&std::isfinite(d.center.y)&&
+       std::isfinite(d.velocity.x)&&std::isfinite(d.velocity.y)&&
+       std::isfinite(d.radius)&&d.radius>=0,"invalid disk");
+}
+// Relative separation p(t) = p0 + t*v, with disk radius sum R.
+// Solve |p(t)|^2 = R^2, or a*t^2 + b*t + c = 0.
+std::optional<Hit> first_disk_contact(const Disk& A,const Disk& B,double dt){
+ validate(A);validate(B);
+ check(std::isfinite(dt)&&dt>=0,"invalid frame duration");
+ const Vec2 p=B.center-A.center, v=B.velocity-A.velocity;
+ const double R=A.radius+B.radius;
+ const double a=dot(v,v), b=2*dot(p,v), c=dot(p,p)-R*R;
+ check(std::isfinite(R)&&std::isfinite(a)&&std::isfinite(b)&&std::isfinite(c),
+       "out-of-range relative geometry");
+ auto normalAt=[&](double t){
+   const Vec2 sep=p+v*t;
+   const double d=std::hypot(sep.x,sep.y);
+   if(d>0)return sep*(1.0/d);
+   const double speed=std::hypot(v.x,v.y);
+   // Deterministic fallback for coincident centres; no unique geometric normal exists.
+   return speed>0?v*(-1.0/speed):Vec2{1,0};
+ };
+ if(c<=0)return Hit{0,normalAt(0),c<0}; // existing overlap handled by another stage
+ if(a==0 || b>=0)return std::nullopt; // no relative motion or not closing
+ // fma avoids one rounding in the discriminant when supported by the platform.
+ const double discriminant=std::fma(b,b,-4*a*c);
+ if(!(discriminant>=0))return std::nullopt; // includes NaN rejection
+ const double root=std::sqrt(discriminant);
+ // Numerically stable quadratic roots. Here b<0, so q is nonzero and positive.
+ const double q=-0.5*(b- root);
+ if(!(q>0))return std::nullopt;
+ const double nearRoot=c/q;
+ const double farRoot=q/a;
+ const double t=std::min(nearRoot,farRoot);
+ if(!(std::isfinite(t)&&t>=0&&t<=dt))return std::nullopt;
+ return Hit{t,normalAt(t),false};
+}
+int main(){
+ const Disk still{{0,0},{0,0},1},bullet{{10,0},{-100,0},1};
+ auto h=first_disk_contact(still,bullet,0.1);
+ check(h.has_value(),"tunneling hit missed");near(h->time,0.08);near(h->normal.x,1);
+ check(!first_disk_contact(still,bullet,0.05),"hit beyond frame accepted");
+ check(!first_disk_contact(still,Disk{{10,0},{100,0},1},1),"separating disk hit");
+ check(!first_disk_contact(still,Disk{{10,2.1},{-100,0},1},1),"near miss hit");
+ h=first_disk_contact(still,Disk{{10,2},{-10,0},1},2);
+ check(h.has_value(),"grazing hit missed");near(h->time,1);near(h->normal.y,1);
+ h=first_disk_contact(still,Disk{{1,0},{0,0},1},1);
+ check(h.has_value()&&h->initiallyOverlapping,"overlap policy broken");near(h->time,0);
+ h=first_disk_contact(still,Disk{{0,0},{0,0},1},0);
+ check(h.has_value(),"coincident overlap missed");near(h->normal.x,1);
+ // Relative motion is invariant under a common uniform Galilean velocity.
+ h=first_disk_contact(Disk{{0,0},{55,7},1},Disk{{10,0},{-45,7},1},0.1);
+ check(h.has_value(),"relative velocity test failed");near(h->time,0.08);
+ // Large coordinate and velocity magnitudes exercise the stable-root path.
+ h=first_disk_contact(Disk{{0,0},{0,0},1},Disk{{1000000,0},{-1000000,0},1},2);
+ check(h.has_value(),"large-scale impact missed");near(h->time,0.999998,1e-8);
+ bool rejected=false;
+ try{(void)first_disk_contact(still,bullet,-1);}catch(const std::runtime_error&){rejected=true;}
+ check(rejected,"negative timestep accepted");
+ rejected=false;
+ try{(void)first_disk_contact(still,Disk{{10,0},{-1,0},-1},1);}catch(const std::runtime_error&){rejected=true;}
+ check(rejected,"negative radius accepted");
+ std::cout<<"disk CCD: tunneling, grazing, overlap, misses, invariance, validation PASS\n";
+}
+```
+
+Now implement the broad phase that bounds every disk over the same motion horizon. Notice where bounds are conservatively rounded outward, which pairs are removed from the active set, why a y-interval check remains necessary after x sorting, and why output pairs are sorted before later processing. The seeded test compares against a separate disk-impact oracle; it does not pretend that a false-positive AABB pair is a collision.
+
+```cpp
+// C++20 swept disk-AABB broadphase witness: conservative candidates, never final collisions.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror swept_broadphase_lab.cpp -o /tmp/swept_broadphase && /tmp/swept_broadphase
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+struct Vec { double x{},y{}; };
+struct Disk { std::uint64_t id{}; Vec p{},v{}; double radius{}; };
+struct Box { double minX{},maxX{},minY{},maxY{}; std::size_t index{}; };
+void require(bool condition,const char* message){if(!condition)throw std::runtime_error(message);}
+void validate(const Disk& d){
+ require(std::isfinite(d.p.x)&&std::isfinite(d.p.y)&&std::isfinite(d.v.x)&&
+         std::isfinite(d.v.y)&&std::isfinite(d.radius)&&d.radius>0,"invalid disk");
+}
+Box swept_box(const Disk& d,double dt,std::size_t index){
+ validate(d);require(std::isfinite(dt)&&dt>=0,"invalid time");
+ const double ex=std::fma(d.v.x,dt,d.p.x),ey=std::fma(d.v.y,dt,d.p.y);
+ require(std::isfinite(ex)&&std::isfinite(ey),"nonfinite endpoint");
+ const double negInf=-std::numeric_limits<double>::infinity();
+ const double posInf=std::numeric_limits<double>::infinity();
+ // Outward-round the conservative bounds to avoid loss at an exact boundary.
+ const Box b{std::nextafter(std::min(d.p.x,ex)-d.radius,negInf),
+             std::nextafter(std::max(d.p.x,ex)+d.radius,posInf),
+             std::nextafter(std::min(d.p.y,ey)-d.radius,negInf),
+             std::nextafter(std::max(d.p.y,ey)+d.radius,posInf),index};
+ require(std::isfinite(b.minX)&&std::isfinite(b.maxX)&&
+         std::isfinite(b.minY)&&std::isfinite(b.maxY),"nonfinite swept AABB");
+ return b;
+}
+using Pair=std::pair<std::size_t,std::size_t>;
+std::vector<Pair> broadphase(const std::vector<Disk>& disks,double dt){
+ std::vector<Box> boxes;
+ boxes.reserve(disks.size());
+ for(std::size_t i=0;i<disks.size();++i) {
+  for(std::size_t j=0;j<i;++j)require(disks[i].id!=disks[j].id,"duplicate disk id");
+  boxes.push_back(swept_box(disks[i],dt,i));
+ }
+ std::sort(boxes.begin(),boxes.end(),[&](const Box& a,const Box& b){
+  if(a.minX!=b.minX)return a.minX<b.minX;
+  return disks[a.index].id<disks[b.index].id;
+ });
+ std::vector<Box> active;
+ std::vector<Pair> pairs;
+ for(const Box& box:boxes){
+  // Everything ending strictly before this minimum X cannot overlap this box.
+  active.erase(std::remove_if(active.begin(),active.end(),[&](const Box& a){
+   return a.maxX<box.minX;
+  }),active.end());
+  for(const Box& a:active)if(a.minY<=box.maxY&&box.minY<=a.maxY){
+   const auto i=std::min(a.index,box.index),j=std::max(a.index,box.index);
+   pairs.emplace_back(i,j);
+  }
+  active.push_back(box);
+ }
+ std::sort(pairs.begin(),pairs.end());
+ require(std::adjacent_find(pairs.begin(),pairs.end())==pairs.end(),"duplicate candidate");
+ return pairs;
+}
+// Independent geometry-oracle polynomial, *not* using bounding boxes.
+bool collides(const Disk& A,const Disk& B,double dt){
+ const double px=B.p.x-A.p.x,py=B.p.y-A.p.y;
+ const double vx=B.v.x-A.v.x,vy=B.v.y-A.v.y;
+ const double R=A.radius+B.radius;
+ const double c=px*px+py*py-R*R;
+ if(c<=0)return true;
+ const double a=vx*vx+vy*vy,b=2*(px*vx+py*vy);
+ if(a==0||b>=0)return false;
+ const double disc=std::fma(b,b,-4*a*c);
+ if(disc<0)return false;
+ const double root=std::sqrt(disc),q=-0.5*(b-root);
+ return q>0&&c/q<=dt;
+}
+void verify(const std::vector<Disk>& disks,double dt){
+ const auto candidates=broadphase(disks,dt);
+ for(std::size_t i=0;i<disks.size();++i)for(std::size_t j=i+1;j<disks.size();++j)
+  if(collides(disks[i],disks[j],dt))
+   require(std::binary_search(candidates.begin(),candidates.end(),Pair{i,j}),
+           "broadphase false negative");
+}
+int main(){
+ {
+  const std::vector<Disk> disks{{1,{0,0},{0,0},1},
+   {2,{100,0},{-200,0},1},{3,{0,100},{0,0},1}};
+  verify(disks,1);
+  const auto p=broadphase(disks,1);
+  require(p.size()==1&&p[0]==Pair{0,1},"expected one swept pair");
+ }
+ {
+  // All disks widely spaced with zero velocity: no candidates expected.
+  std::vector<Disk> disks;
+  for(std::uint64_t i=0;i<100;++i)disks.push_back({i+1,{5.0*i,0},{0,0},1});
+  require(broadphase(disks,1).empty(),"disjoint scene had candidates");
+  verify(disks,1);
+ }
+ {
+  std::mt19937_64 gen(0x5A17u);
+  std::uniform_real_distribution<double> coord(-50,50),vel(-25,25),radius(0.2,4);
+  for(int trial=0;trial<200;++trial){
+   std::vector<Disk> disks;
+   for(std::uint64_t i=0;i<35;++i)disks.push_back({i+1,{coord(gen),coord(gen)},
+       {vel(gen),vel(gen)},radius(gen)});
+   verify(disks,0.1+0.01*(trial%40));
+  }
+ }
+ {
+  bool rejected=false;
+  try{(void)broadphase({{1,{0,0},{0,0},1},{1,{3,0},{0,0},1}},1);}
+  catch(const std::runtime_error&){rejected=true;}
+  require(rejected,"duplicate identity accepted");
+  rejected=false;
+  try{(void)broadphase({{1,{0,0},{0,0},1}},-1);}
+  catch(const std::runtime_error&){rejected=true;}
+  require(rejected,"negative dt accepted");
+ }
+ std::cout<<"swept broadphase: deterministic + 200 randomized scenes PASS\n";
+}
+```
+
+These two programs are distinct translation units, each with its own main function and type definitions. Compile and run **separately**. To compose them into an engine library, extract the geometry types and functions into namespaced headers/modules, define ownership and error-return conventions, and make the broad-phase result feed the narrow-phase query. The Game Engine continuous note contains the fully assembled event-step source, including an optional swept broad phase and the exhaustive reference mode. That compositional step is itself a regression gate, not an assumption that the two standalone executables automatically work as a combined engine.
+
 #### Implementation laboratory and debugging contract
 
 Read and execute the standalone \`tools/labs/disk_ccd_lab.cpp\` first, tracing relative position, velocity, radius sum, discriminant, entry root and contact normal. Next inspect \`tools/labs/swept_broadphase_lab.cpp\`: it builds outward-rounded swept bounds, sorts by x, filters candidate pairs and checks its output against an independently implemented analytic disk TOI oracle across deterministic scenes and 200 seeded scenes of 35 disks. The third lab \`tools/labs/disk_event_pipeline_lab.cpp\` supplies the dynamics side, repeatedly querying earliest contact times and resolving a bounded set of events; the event stepper now exposes an optional swept-candidate mode, while retaining the exhaustive candidate mode as a reference. Its published code path was directly inspected, and the differential comparison laboratory is present; a successful hosted execution of that comparison has not yet been confirmed.
