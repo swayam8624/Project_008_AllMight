@@ -14329,7 +14329,63 @@ even
 
 This is another standard GPU pattern.
 
-Pass 10 will discuss ping-pong buffering more broadly.
+#### First-use completion — a stable radix pass is a permutation, not an in-place edit
+
+Ping-pong storage is not only a pattern for alternating GPU kernels. Here it is a **correctness requirement** of a scatter algorithm. A radix pass examines one digit of each key, counts how many entries belong to each digit value, computes each digit's starting output offset, and distributes records into distinct destinations. If the output aliases the input, an early thread may overwrite a record another thread has not yet read. A barrier at the end of the scatter cannot undo that overwrite. The input snapshot must remain readable until *every* output index has been assigned and its value written.
+
+For a least-significant-digit (LSD) radix sort, stability makes successive passes compose correctly. A pass on bit 0 preserves input order among all zeros and separately among all ones. The following pass on bit 1 must preserve the preceding bit-0 ordering within its own zero/one groups. That is why simply partitioning without a stable scatter does not produce a correctly sorted multi-bit key. For four labeled records in arrival order
+$
+[3_A,\ 1_B,\ 2_C,\ 0_D],
+$
+the bit-0 pass writes $[2_C,0_D,3_A,1_B]$. The bit-1 pass writes $[0_D,1_B,2_C,3_A]$. If the original array also contained $2_E$ after $2_C$, the final sorted order must still put $2_C$ before $2_E$. The stable property is observable independently of whether the integer keys look sorted.
+
+For an exclusive scan on the binary pass, let $z_i=1$ if key $i$ has a zero in the selected bit, and $0$ otherwise; let $Z=\sum_i z_i$. For a zero-bit item, its destination is $\sum_{j<i}z_j$. For a one-bit item, its destination is $Z+\sum_{j<i}(1-z_j)$. Both formulas are exclusive prefixes, so no two records receive the same destination and the within-group order is preserved. A GPU implementation normally computes block-local histograms and prefixes, scans the block totals, then scatters with the block prefix added to the local rank. The scan of block totals needs its own inter-dispatch or globally coordinated synchronization; a threadgroup barrier only orders threads within one group.
+
+```cpp
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+
+// Each record carries an identity, so we can verify stability for equal keys.
+struct SortRecord {
+    std::uint32_t key;
+    std::uint32_t identity;
+};
+
+// Two stable one-bit passes sort a two-bit key into ascending order.
+template <std::size_t N>
+std::array<SortRecord, N> sort_two_bits(std::array<SortRecord, N> input)
+{
+    std::array<SortRecord, N> scratch{};
+    auto* read = &input;
+    auto* write = &scratch;
+
+    for (unsigned bit = 0; bit != 2; ++bit) {
+        std::size_t zeroCount = 0;
+        for (const SortRecord& record : *read)
+            zeroCount += ((record.key >> bit) & 1u) == 0u;
+
+        std::size_t zeroOut = 0;
+        std::size_t oneOut = zeroCount;
+        for (const SortRecord& record : *read) {
+            // Exclusive ranks: disjoint destinations, stable in each group.
+            const bool one = ((record.key >> bit) & 1u) != 0u;
+            (*write)[one ? oneOut++ : zeroOut++] = record;
+        }
+
+        // Swap the roles, not the contents of the two allocations.
+        std::swap(read, write);
+    }
+    return *read; // May be either allocation when pass count changes.
+}
+```
+
+The code intentionally exposes the scan's simple serial reference implementation: counting zeros plus per-group running offsets is equivalent to exclusive prefix ranks in input order. It is **not** pretending to be an efficient GPU parallel scan. The GPU version must provide disjoint outputs at every level, global offsets that are ready before scatter, correct device memory visibility between dispatches, and allocation lifetimes extending through the final consumer. Histogram, scan, scatter and indirect consumption are distinct phases even if a backend fuses some operations.
+
+**Buffer parity is part of the API contract.** After an even number of complete passes, the final records are back in the original allocation; after an odd number, they reside in scratch. Returning the original pointer unconditionally can silently return stale data. If a later renderer pass expects one fixed buffer, either expose the actual final-buffer handle or perform an explicit copy after an odd pass and account for its cost. A frame allocator must not recycle the scratch range merely because its CPU-side pointer was swapped: the GPU may still be reading it. The same two-buffer idea is used for Jacobi-style iterative updates, where each iteration must read the previous state rather than partially updated neighbors, but the *reason* for alternation is the dependency of the particular algorithm, not the mere existence of two resources.
+
+A reproducible regression sorts repeated keys with distinct identities and checks both ascending keys and stable identity order; the [first-use C++ witness](../tools/labs/first_use_contract_lab.cpp) contains that check. GPU performance must be assessed separately: record histogram throughput, scan cost, scatter bandwidth, allocation pressure, command dependencies, and the amount of synchronization. A serial fallback can be correct without being fast; a parallel path can be fast and still be wrong if one prefix or visibility edge is missing. We do not need another teaching pass to establish these properties.
 
 ---
 

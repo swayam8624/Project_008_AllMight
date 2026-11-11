@@ -61131,7 +61131,58 @@ Therefore solver behavior can still depend on fixed dt.
 
 Another reason changing physics frequency changes the simulation even if impulse equations themselves have no dt.
 
-Pass 18 will cover this deeply.
+#### First-use completion — restitution, penetration correction, and the timestep are different mechanisms
+
+We can calculate the actual timestep dependence here instead of postponing it. Let the contact normal $n$ point from body A toward body B, and let $r_A,r_B$ run from their centers of mass to their contact points. Their contact-point velocities are
+$
+u_A=v_A+\omega_A\times r_A,\qquad
+u_B=v_B+\omega_B\times r_B.
+$
+The relative normal speed is $v_n=n\cdot(u_B-u_A)$. A negative result means the two contact points are closing along the chosen normal. A normal impulse magnitude $j\geq0$ applies $-jn$ to A and $+jn$ to B; this increases $v_n$ by $jk$, where
+$
+k=m_A^{-1}+m_B^{-1}
+ +(r_A\times n)^TI_A^{-1}(r_A\times n)
+ +(r_B\times n)^TI_B^{-1}(r_B\times n).
+$
+Here $I_A^{-1},I_B^{-1}$ are the *world-space* inverse inertia tensors; fixed bodies contribute zeros. This effective inverse mass is a scalar because we are resolving one normal direction. It is positive for a movable direction, and zero means the chosen impulse cannot change the normal speed: never divide by such a denominator.
+
+For an isolated impact, restitution $e\in[0,1]$ prescribes a post-impact separating speed $v_n^{target}=-e\,v_n^{pre}$ when the pre-solve speed is below a specified negative impact threshold. Thus an unconstrained one-contact impulse is
+$
+j=\max\!\left(0,\frac{v_n^{target}-v_n^{current}}{k}\right).
+$
+When two nonrotating bodies each have mass $1\,\mathrm{kg}$, $k=2\,\mathrm{kg}^{-1}$. If they approach at $-3\,\mathrm{m/s}$ with $e=0.5$, the target is $+1.5\,\mathrm{m/s}$ and $j=(1.5-(-3))/2=2.25\,\mathrm{kg\,m/s}$. No $\Delta t$ appears: this is an instantaneous velocity jump. A physical impulse has units $\mathrm{N\,s}$, not $\mathrm N$; multiplying this impulse by $\Delta t$ a second time would be dimensionally wrong.
+
+Real-time solvers also need to prevent already-overlapping bodies from continuing to sink into each other. This is a *different* goal from restitution. Suppose the measured penetration depth $d$ is positive in metres, the tolerated slop is $s$, and $h$ is the fixed simulation step in seconds. A Baumgarte-style velocity bias can request
+$
+b(h)=\frac{\beta}{h}\max(d-s,0),
+$
+where dimensionless $\beta\in[0,1]$ chooses a fraction of the excess penetration to correct each step. For $d=0.020\,\mathrm m,\ s=0.005\,\mathrm m,\ \beta=0.20$ and $h=1/60\,\mathrm s$, this gives $b=0.18\,\mathrm{m/s}$. Halving the step to $1/120\,\mathrm s$ gives $b=0.36\,\mathrm{m/s}$. The bias is a speed target, not an impulse; a solver converts its requested velocity change to an impulse using $k$. At one idealized step the requested corrective displacement $bh=\beta(d-s)=0.003\,\mathrm m$ is the same, but that does **not** make the complete simulation timestep-invariant. Contact detection, repeated iterations, gravity integration, changing geometry, clamping, warm-start history and impact thresholds all change how often and with what state the correction is applied.
+
+```cpp
+// A single normal-constraint calculation, not a complete stacked-contact solver.
+// Preconditions: finite quantities; h > 0; effectiveInverseMass > 0; normal is unit.
+const double closingSpeed = -3.0;       // m/s: negative means approaching.
+const double restitution = 0.5;
+const double effectiveInverseMass = 2.0; // 1/kg, including angular terms if any.
+const double impactTarget = -restitution * closingSpeed; // +1.5 m/s.
+const double impactImpulse =
+    std::max(0.0, (impactTarget - closingSpeed) / effectiveInverseMass);
+// impactImpulse == 2.25 kg*m/s.
+
+// Position-stabilization target is calculated separately.
+const double penetration = 0.020; // m
+const double slop = 0.005;        // m
+const double beta = 0.20;
+const double h = 1.0 / 60.0;      // s
+const double biasSpeed = beta * std::max(0.0, penetration - slop) / h;
+// biasSpeed == 0.18 m/s. Do not blindly add it to every restitution target.
+```
+
+In a *sequential impulse* solver, each contact keeps an **accumulated normal impulse** $\lambda_n\geq0$, not a fresh isolated impulse every iteration. If an iteration proposes $\Delta\lambda=(v_{target}-v_n)/k$, clamp the **total** $\lambda_{new}=\max(0,\lambda_{old}+\Delta\lambda)$, then apply only $\lambda_{new}-\lambda_{old}$. Clamping each increment independently can forbid necessary impulse reductions and prevent convergence. Warm starting reapplies last frame's accumulated impulses only after verifying that the cached contact still represents the same valid physical features and chosen timestep policy.
+
+Penetration bias and restitution are deliberately not collapsed into one unexplained scalar. Adding both positive targets can inject artificial energy, especially in resting stacks or when collisions persist. Common approaches include position-level correction, split impulses that change positional state without injecting the same kinetic velocity, or velocity targets whose impact and resting-contact branches are explicitly separated. None is universally best. A robust implementation chooses and tests a policy for impact thresholds, slop, iteration count, contact persistence, friction coupling and fast motion. For example, a cube resting on a plane should not repeatedly bounce because the bias velocity is mistaken for a new impact; two separating bodies should not receive a new closing-contact impulse simply because the cached manifold still exists.
+
+The timestep now has three independently checkable roles: it determines when forces change momentum, it enters the chosen numerical integrator, and it can scale an *algorithmic* contact-stabilization target. A fixed-step accumulator also decides whether enough substeps were performed to cover elapsed wall time. If it drops excess accumulated time under overload, simulation time no longer matches wall time, even though every executed physics step used the same $h$. To verify the engine behavior, log accepted wall delta, number of substeps, contact depth, pre-impact $v_n$, $k$, restitution target, bias target, accumulated impulse and final post-solve $v_n$ separately. An unexplained single "impulse value" is not adequate debugging evidence.
 
 ---
 

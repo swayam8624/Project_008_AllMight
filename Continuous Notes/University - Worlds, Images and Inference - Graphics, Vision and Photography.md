@@ -11621,6 +11621,63 @@ If one of several lights is first chosen with probability $q_\ell$, multiply by 
 
 [[Concepts/Multiple importance sampling|Multiple importance sampling]], or MIS, combines estimates produced by different sampling techniques. For one light sample and one BSDF sample, power weights use their squared densities at the same possible contribution. BSDF means bidirectional scattering distribution function; unlike BRDF, the wider term also includes transmission. Both techniques must contribute their estimators. Multiplying the light estimate by a weight below one and omitting the BSDF counterpart generally loses expected energy. When a BSDF-sampled continuation reaches an emitter, the renderer must use the complementary weight when the light technique could also have generated that path. A delta event, such as ideal mirror reflection, uses a separate discrete-event treatment rather than an ordinary finite solid-angle density. [PBRT's complete path integrator](https://pbr-book.org/4ed/Light_Transport_I_Surface_Reflection/A_Better_Path_Tracer)
 
+
+#### First-use completion — construct the two estimators and prove what MIS preserves
+
+At this hit point the desired reflected direct-light integral is
+$
+I=\int_{\Omega}F(\omega)\,d\omega,\qquad
+F(\omega)=L_i(\omega)\,f_s(\omega_o,\omega)\,
+  |n\cdot\omega|\,V(\omega).
+$
+Here $\omega$ is the incoming solid-angle direction, $L_i$ is incoming radiance in that direction, $f_s$ is the scattering function evaluated between the outgoing and incoming directions, $n$ is the surface normal, and $V$ is the visibility indicator (one if the sampled light path is unobstructed, zero otherwise). The absolute cosine is appropriate for a declared scattering domain that includes transmission; reflective-only code may instead use the positive hemisphere. Every probability density in the following formula is **per unit solid angle** at this same shading point. A light's area density cannot be compared numerically to a BSDF's directional density until the area-to-direction Jacobian has been applied.
+
+Two algorithms can sample this integral. A **light sampler** chooses an emitter, a point on it, and the direction $\omega_L$; it must account for the discrete probability of selecting the emitter, area density on the chosen surface, and the change of measure from area to solid angle. A **BSDF sampler** chooses a direction $\omega_B$ based on the material's scattering distribution, and then traces that direction to discover whether it reaches a light. Their directional probability densities are $p_L(\omega)$ and $p_B(\omega)$. Neither technique needs to be uniformly good: light sampling helps with small visible emitters, while BSDF sampling helps with narrow glossy lobes.
+
+With one independently generated sample from each technique, define complementary weights $w_L(\omega)$ and $w_B(\omega)$ such that $w_L+w_B=1$ wherever the integrand can contribute. The combined estimate is
+$
+\widehat I=
+ \frac{w_L(\omega_L)F(\omega_L)}{p_L(\omega_L)}
+ +\frac{w_B(\omega_B)F(\omega_B)}{p_B(\omega_B)}.
+$
+The essential derivation is an expectation, not an appeal to intuition:
+$
+\begin{aligned}
+\mathbb E[\widehat I]
+&=\int p_L(\omega)\frac{w_L(\omega)F(\omega)}{p_L(\omega)}d\omega+
+  \int p_B(\omega)\frac{w_B(\omega)F(\omega)}{p_B(\omega)}d\omega\\
+&=\int [w_L(\omega)+w_B(\omega)]F(\omega)d\omega
+=I.
+\end{aligned}
+$
+This cancellation assumes every nonzero contribution has support from at least one technique, densities are evaluated in a compatible measure, the chosen weights sum to one on supported paths, and the samples belong to the distributions claimed. A missing BSDF estimator breaks the second integral, so it is not enough to copy only the MIS weight into the light estimator. When the implementation uses one next-event-estimation sample and a BSDF-sampled continuation instead of explicitly drawing two samples in one function, the emitter-hit logic must still account for the *complementary* contribution at the correct path vertex.
+
+A common **power heuristic** for one sample from each technique is
+$
+w_L=\frac{p_L^2}{p_L^2+p_B^2},\qquad
+w_B=\frac{p_B^2}{p_L^2+p_B^2}.
+$
+The exponent 2 is a heuristic choice to suppress large weights from poorly matched samplers; it is not required by the unbiasedness proof. If the two techniques take $n_L$ and $n_B$ samples, the weights must account for their sample counts (for example by comparing $n_Lp_L$ and $n_Bp_B$), and each group is averaged with its corresponding sample count. The zero-density cases require an explicit policy: where $p_L=0$ but $p_B>0$, assign all weight to B. Where *both* densities are zero and $F\ne0$, neither estimator can represent the contribution and the sampling design is incomplete.
+
+A small numerical check makes the measures and weights visible. On $x\in(0,1)$, let $F(x)=1$, $p_L(x)=2x$, and $p_B(x)=2(1-x)$. Both are normalized densities. At $x=0.25$, the densities are $0.5$ and $1.5$, so $w_L=0.1$ and $w_B=0.9$. A light-technique observation at this point contributes $0.1/0.5=0.2$; a BSDF-technique observation there contributes $0.9/1.5=0.6$. These are *per-sample terms*, not a demand that a single realization sum to one. Their expected values, integrated under their respective sampling densities, sum to the true $I=1$. The [first-use C++ witness](../tools/labs/first_use_contract_lab.cpp) checks the same decomposition for $F(x)=x^2$, whose true integral is $1/3$, by independent quadrature of both expected contributions.
+
+```text
+direct_light_from_light_sample:
+    choose emitter and point; compute direction, visibility, scattering
+    convert emitter-selection × area PDF to solid-angle pL
+    evaluate BSDF directional PDF pB for that same direction
+    return F(direction) * power_weight(pL, pB) / pL
+
+emission_from_bsdf_sample:
+    trace a direction drawn from the BSDF PDF pB
+    if it reaches a light also sampleable by NEE, evaluate pL for that path
+    return F(direction) * power_weight(pB, pL) / pB
+    # For unsupported competing techniques or delta events, apply the
+    # separately declared event/measure policy rather than 0/0 weighting.
+```
+
+The pseudocode names the two probability contributions; it is not a drop-in path tracer. A real BSDF continuation carries throughput, medium state, visibility, path history, and an emission term that is already scaled consistently. For example, a perfectly specular delta event is a discrete probability mass and cannot be divided or compared as if it were an ordinary finite density over solid angle. A light directly visible from the camera, an environment emitter, and a path that reaches emission after several bounces need explicitly defined emission-handling branches to prevent both omission and double counting. Those implementation distinctions are required **here**, when MIS first affects the result, rather than being left as a promise of a future pass.
+
 **Scope of the retained path-loop examples.** The supplied direct-light skeletons use `max(dot(normal, wi), 0)` and therefore implement reflective-hemisphere next-event estimation. A general BSDF with rough transmission can also contribute from the other hemisphere. It needs the appropriate absolute cosine, BSDF support, medium transition and visibility treatment. Keeping the reflective-only condition while advertising a complete transmissive estimator can omit light paths. The source code is retained for study, with this limitation made explicit.
 
 Throughput $\beta$ stores the accumulated multiplicative transport weight along the camera path. At an ordinary sampled surface event it acquires $f\lvert N\cdot\omega\rvert/p_\omega$. For Lambert reflection sampled with cosine density, this simplifies to reflectance $\rho$. The cancellation is a useful implementation witness, not permission to omit densities for unrelated materials.
@@ -72360,7 +72417,67 @@ $$
 
 So it evaluates only the 3σ ellipse inside its conservative square raster bound.
 
-This exact pixel compositing will be covered properly in Pass 16.
+#### First-use completion — from one Gaussian's footprint to the final pixel
+
+The ellipse test $q\leq9$ only determines whether a projected Gaussian is a *candidate contributor*. It does not yet calculate the final pixel, because several Gaussians can overlap the same sample and obscure each other. For a projected Gaussian $i$, let $q_i=(x-\mu_i)^T\Sigma_{2D,i}^{-1}(x-\mu_i)$ be its squared elliptical distance at pixel sample $x$; $\mu_i$ is its projected center and $\Sigma_{2D,i}$ is the screen covariance, assumed positive definite. The unnormalized weight is $g_i(x)=e^{-q_i/2}$. If its stored opacity is $o_i\in[0,1]$, a common splatting convention defines the effective sample opacity as
+$
+\alpha_i(x)=\min(\alpha_{\max},\,o_i e^{-q_i/2}),
+$
+where $\alpha_{\max}<1$ may be a deliberate numerical clamp. The cutoff and clamp are separate approximations: $q_i>9$ skips the contribution, whereas the clamp caps the contribution of a retained Gaussian. Neither operation turns the Gaussian into an opaque mesh surface.
+
+With overlapping splats, order them from **near to far using one declared camera-depth convention**. Reversed-Z may encode near objects with a larger stored depth, so blindly sorting an API depth value ascending is not universally front-to-back. For the sorted contributors, let $T_0=1$ be the fraction of light not yet blocked, and let $C_0=(0,0,0)$ be accumulated *linear* RGB. For the next Gaussian:
+$
+C_{i+1}=C_i+T_i\alpha_i c_i,\qquad
+T_{i+1}=T_i(1-\alpha_i).
+$
+Here $c_i$ is its view-dependent RGB contribution in the declared linear working space. A background $C_{bg}$ enters *after* the last contributor as $C=C_n+T_n C_{bg}$. This is front-to-back premultiplied-alpha compositing written without pretending that stored Gaussian colors were already premultiplied. The product form
+$
+T_i=\prod_{j<i}(1-\alpha_j)
+$
+explains the recurrence: a farther Gaussian contributes only through the surviving transmittance from every nearer one.
+
+For two overlapping center samples, take a near **red** splat with $\alpha_0=0.6$, and a far **blue** splat with $\alpha_1=0.5$. Start with $T=1,C=(0,0,0)$. Red contributes $(0.6,0,0)$ and leaves $T=0.4$. Blue contributes only $0.4(0.5)(0,0,1)=(0,0,0.2)$, leaving $T=0.2$. The result before background is $C=(0.6,0,0.2)$. Reverse the order and you obtain $C=(0.3,0,0.5)$, still with $T=0.2$. Thus sorting is a **visible mathematical requirement**, not an optional optimization. Overlapping equal-depth or intersecting splats require a declared approximation/tie policy; one global center-depth ordering cannot reproduce all possible volumetric occlusion.
+
+```cpp
+#include <array>
+#include <algorithm>
+#include <cmath>
+#include <span>
+
+struct SplatSample {
+    double ellipticalDistanceSquared; // q, already computed in screen space.
+    double opacity;                    // Stored amplitude in [0,1].
+    std::array<double, 3> linearRGB;   // At this viewing direction.
+};
+
+struct PixelState {
+    std::array<double, 3> linearRGB{0.0, 0.0, 0.0};
+    double transmittance = 1.0;
+};
+
+// Caller guarantees near-to-far order, finite inputs and valid opacities.
+// This CPU reference deliberately shows the exact sequential dependency.
+PixelState composite_front_to_back(std::span<const SplatSample> sorted)
+{
+    PixelState pixel;
+    for (const SplatSample& s : sorted) {
+        const double q = s.ellipticalDistanceSquared;
+        if (q > 9.0) continue; // Explicit 3-sigma squared-distance policy.
+        const double alpha = std::clamp(s.opacity * std::exp(-0.5 * q),
+                                        0.0, 0.999);
+        for (int channel = 0; channel < 3; ++channel)
+            pixel.linearRGB[channel] +=
+                pixel.transmittance * alpha * s.linearRGB[channel];
+        pixel.transmittance *= (1.0 - alpha);
+        if (pixel.transmittance < 1e-4) break; // Declared approximation.
+    }
+    return pixel; // Add T * background before display encoding.
+}
+```
+
+Why stop at a small $T$? If every remaining source and the background have channels in $[0,1]$, the **maximum missing residual contribution** in any channel is bounded by the surviving $T$. Stopping at $10^{-4}$ therefore gives a conditional channel-error bound of at most $10^{-4}$ in that working range; unbounded HDR radiance has **no such numerical error bound without an additional radiance limit**. Likewise, $q\leq9$ encloses $1-e^{-9/2}\approx98.89\%$ of the total probability mass of an ideal normalized two-dimensional Gaussian. That is not a guarantee about image error: learned amplitudes, overlap, colors, sorting and pixel footprints affect the actual rendered result. Keep the cutoff a measured quality/performance parameter.
+
+A GPU tile renderer can assign Gaussian references to screen tiles and sort the tile's references by depth, but it must still evaluate each pixel's $q_i$, opacity, RGB and the recurrence above. The tile list is a conservative candidate structure, not a composited pixel. A prefix sum builds disjoint reference ranges; sorting and sequential transmittance then answer a different question. For correctness, compare a scalar CPU oracle against the GPU's color and $T$ on tiny scenes with one splat, two reversed-order splats, zero opacity, footprint cutoff, overlapping centers, invalid covariance and early termination. The [first-use C++ witness](../tools/labs/first_use_contract_lab.cpp) checks the two-splat numeric example. Source claims about a particular Maveb revision require separately inspected code; this section teaches the algorithm itself rather than asserting a current implementation audit.
 
 ---
 

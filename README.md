@@ -67,6 +67,28 @@ The received sources T01, T06 and T07 cover Parts 901–1000. The continuous nar
 
 [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality|XR: From Light to Perception]] is a separate continuous teaching series, outside the 3,000-part curriculum. XR01 identifies its first supplied source, not M010 or a numbered curriculum part. The anticipated 3–4-source series reuses this same file as later material arrives. Independent module coverage is recorded separately in Foundations; concepts can connect to shared foundations without advancing numbered-curriculum coverage. Future XR sources remain pending.
 
+## First-use completeness and additive narrative revision
+
+The main books are **reader-facing explanations**, not delivery-pass transcripts or an index of topics to learn elsewhere. A concept's first *meaningful use* is the point at which the current equation, algorithm, data structure, code or engineering decision would fail to make sense without that concept. At that point, give the complete depth needed to use it correctly in this system. A link to a glossary, a later chapter, a previous prompt or a different video is never a replacement for that depth. A later chapter may develop the same idea in a genuinely new problem domain, but must not be required to understand the current calculation.
+
+For every nontrivial first use, the narrative must answer **what problem forced this concept, what the quantities mean, which assumptions permit the operation, how the result is derived, what actually changes in memory or state, how the code follows the derivation, what an observable example computes, and what breaks**. Supply numerically checkable intermediate states and important alternatives. Explain symbols and units before relying on them. Establish the scope of a simplified example: scalar and GPU implementations, ideal and finite precision, and CPU and device behavior are different evidence categories. When introducing a specialized term such as covector, effective inverse mass, PDF measure or transmittance, explain the actual mechanism, rather than inserting a dictionary sentence and a link.
+
+A complete explanation **does not mean repeating an entire subject on every occurrence**. If the earlier mechanism was fully taught inside the present reading route, show exactly how the prior invariant applies to the new problem, name any changed assumptions, and include the new derivation or state trace. If the earlier treatment was merely a definition or promise, repair that deficit at this encounter. Depth-preserving compression removes duplicated wording and delivery metadata, never equations, state transitions, constraints, edge cases or independently useful examples.
+
+### Additive merge discipline
+
+New material normally belongs **inside the existing causal chapter at the first use of the relevant mechanism**, not at the tail of a huge volume under a date, pass number or source name. Before writing, inspect the immediately preceding and following paragraphs and search for existing treatments of the same mechanism. If the passage already contains an adequate derivation, add only the missing distinction, proof, example, test or verified correction. If two passages repeat the same explanation verbatim, unify only genuine redundancy and keep every unique worked example, caveat, source citation and runnable code block. Preserve the originals in version history and maintain the exact original-part coverage ledger; do not manufacture completion for unreviewed sources.
+
+Do not retain reader-facing sentences such as "we will explain this in Pass 18" when the present topic needs the mechanism. Replace the scheduling sentence with the missing explanation here. Keep the historical pass number in the source ledger if it identifies provenance. Do not substitute a one-paragraph overview for an algorithm whose correctness depends on a specific invariant or execution order.
+
+A change is **editorially integrated** only when the new explanation is placed at the correct encounter, its local transitions read coherently, terminology and conventions match adjacent material, related earlier claims are reconciled, and its tests/evidence are accurate. Merely appending the input source, preserving all words, passing a Markdown parser, or rendering every equation does not establish semantic integration.
+
+### Proof and execution categories
+
+Explain separately whether code is a full standalone laboratory, a compilable fragment needing a declared API/context, an implementation-specific excerpt, or pseudocode. Full laboratories must compile and run in the declared language mode; a single successful run does not prove platform, concurrency, numerical or GPU correctness. Record expected results, failure conditions and evidence limits. The additional [first-use C++20 contract laboratory](tools/labs/first_use_contract_lab.cpp) exercises coordinate recovery and singularity, stable two-pass radix order, alpha/transmittance compositing, and a two-technique sampling expectation. These small CPU witnesses do not certify the Vulkan/Metal backends.
+
+Use direct links to independent sources and references where they deepen the explanation, but keep enough material locally that the chapter is self-contained. The reader should finish an explanation able to reconstruct the mechanism, not merely able to follow a link.
+
 ## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
