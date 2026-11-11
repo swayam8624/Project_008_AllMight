@@ -35,7 +35,7 @@ An optimization problem specifies an objective, variables, and equality or inequ
 - [[Local rigidity and mesh orientation fields]]
 - [[Perception feedback and robot learning]]
 - [[Newton and quasi-Newton optimization]]
-- [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]]
+- [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt]]
 - [[Implicit differentiation and parameter sensitivities]]
 
 ## Full teaching explanation
