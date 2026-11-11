@@ -6,11 +6,13 @@ on:
     paths:
       - "tools/production_evidence.py"
       - "tools/tests/test_production_evidence.py"
+      - "tools/tests/test_phase30_repository_integrity.py"
       - ".github/workflows/allmight-phase30-evidence.yml"
   pull_request:
     paths:
       - "tools/production_evidence.py"
       - "tools/tests/test_production_evidence.py"
+      - "tools/tests/test_phase30_repository_integrity.py"
       - ".github/workflows/allmight-phase30-evidence.yml"
   workflow_dispatch:
 
@@ -32,6 +34,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Compile Python contract modules
-        run: python -m py_compile tools/production_evidence.py tools/tests/test_production_evidence.py
+        run: python -m py_compile tools/production_evidence.py tools/tests/test_production_evidence.py tools/tests/test_phase30_repository_integrity.py
       - name: Check deterministic publish, unsafe inputs, hashes and metrics
         run: python -m unittest -v tools.tests.test_production_evidence
+      - name: Validate Windows-safe paths, migrated wiki links and exact original 100 parts
+        run: python -m unittest -v tools.tests.test_phase30_repository_integrity
