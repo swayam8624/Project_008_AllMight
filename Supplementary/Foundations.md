@@ -1450,3 +1450,113 @@ The received T01 and T06 excerpts cover 65 lessons. T05 is a byte-identical dupl
 | 500 | Choosing a data structure by measured workload instead of name recognition | M030 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The final choice is an experiment grounded in an operation distribution\|Connected explanation]] | Explained only; dedicated implementation still required |
 
 **Remaining evidence obligations:** no current KairoECS/KairoSpatial source was audited. No AVL/Red-black/B-tree/radix implementation or formal worst-case test suite was executed. No GPU prefix scan or dynamic-graph shortest-path benchmark is established. The lab's pseudo-random tests are reproducible but not a statistical proof of uniformity, and expected O(1) hashing is conditional on workload/hash assumptions. The full source-video/caption review queue remains open; every claim of "authored coverage" is separate from personal mastery, integrated external source coverage and real-engine behavior.
+
+
+## Phase 18 reconstructed Parts 1701–1800: contact solver and CCD
+
+**Status:** authored reconstruction against the supplied integrated original 3,000-part contract. The original 1701–1800 lesson transcripts were **not supplied**. The complete connected treatment is [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From rigid-body prediction to believable contact the constraint solver as an accountable machine|the Phase 18 engine chapter]], with a bounded [[tools/labs/phase18_contact_solver_lab.cpp|C++20 solver and TOI oracle]]. This is not a current Kairo implementation audit or certified learner mastery.
+
+| Original part and exact source title | Narrative home / evidence limit |
+|---|---|
+| 1701 · Collision detection versus collision response | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1702 · Contact point representation | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1703 · Contact normal representation | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1704 · Penetration depth representation | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1705 · Contact manifold representation | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1706 · Persistent contact IDs | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1707 · Relative velocity at a contact point | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1708 · Linear contribution to contact velocity | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1709 · Angular contribution omega cross r | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1710 · Relative normal velocity | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1711 · Desired non-penetrating normal velocity | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1712 · Restitution coefficient | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1713 · Restitution velocity threshold | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1714 · Constraint equations | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1715 · Velocity constraints | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1716 · Position constraints | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1717 · Constraint Jacobian concept | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1718 · Jacobian rows for a normal contact | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1719 · Generalized velocity vector | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1720 · Generalized inverse-mass matrix | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1721 · Effective mass intuition | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1722 · Effective mass derivation for point contact | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1723 · Normal impulse magnitude | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1724 · Applying equal and opposite contact impulses | A contact is geometry plus orientation plus persistent identity — derived + selected 2D impulse witnesses |
+| 1725 · Sequential impulse solver motivation | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1726 · Gauss-Seidel iteration intuition | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1727 · Projected Gauss-Seidel for inequality constraints | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1728 · Iterating contacts multiple times | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1729 · Solver iteration count versus convergence | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1730 · Accumulated impulse clamping | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1731 · Warm starting | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1732 · Cached normal impulse | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1733 · Persistent-contact matching for warm start | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1734 · Friction tangent construction | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1735 · Relative tangential velocity | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1736 · Coulomb friction cone | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1737 · Friction coefficient | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1738 · Static versus dynamic friction concept | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1739 · Tangential effective mass | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1740 · Friction impulse solve | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1741 · Clamping friction by mu times normal impulse | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1742 · Two tangent directions in 3D friction | Restitution changes the desired speed; the inequality limits the impulse — derived + 2D normal/friction/warm-start witnesses |
+| 1743 · Resting-contact jitter | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1744 · Penetration correction | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1745 · Baumgarte stabilization | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1746 · Split impulses concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1747 · Position-based correction concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1748 · Slop tolerances | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1749 · Contact bias | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1750 · Stacking stability | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1751 · Solver ordering effects | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1752 · Shock propagation concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1753 · Constraint graphs and islands | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1754 · Building simulation islands | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1755 · Solving independent islands in parallel | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1756 · Distance constraints | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1757 · Ball-and-socket joint concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1758 · Hinge joint concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1759 · Slider joint concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1760 · Fixed joint concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1761 · Motor constraints | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1762 · Limit constraints | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1763 · Spring constraints | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1764 · Joint Jacobian construction concept | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1765 · Joint effective mass | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1766 · Constraint softness or compliance | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1767 · ERP/CFM-style softness concepts | Penetration, resting jitter and the distinction between velocity correction and position repair — derived; stack and bias representative, joints narrative-only |
+| 1768 · Sleeping motivation | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1769 · Linear sleeping thresholds | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1770 · Angular sleeping thresholds | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1771 · Sleep timers | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1772 · Waking from contacts | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1773 · Waking from forces or impulses | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1774 · Sleeping connected islands | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1775 · Collision filtering categories | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1776 · Collision masks | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1777 · Collision groups | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1778 · Trigger or sensor colliders | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1779 · Trigger begin events | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1780 · Trigger end events | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1781 · Contact begin events | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1782 · Contact end events | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1783 · Event buffering across a fixed step | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1784 · Raycasts against the physics broadphase | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1785 · Shape-level raycast after broadphase pruning | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1786 · Overlap queries | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1787 · Closest-point physics queries | Sleeping, filters, trigger/contact events and query contracts — events lab; sleeping/filtering/queries narrative-only |
+| 1788 · CCD motivation in rigid-body response | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1789 · Time-of-impact events | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1790 · Swept-volume broadphase | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1791 · Conservative advancement for convex CCD | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1792 · Speculative contacts concept | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1793 · Fast-moving projectile handling | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1794 · Contact solver determinism | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1795 · Parallel solver data hazards | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1796 · Constraint batching and graph coloring concept | CCD: positions sampled at endpoints are not a continuous collision argument — analytic swept-disc lab; general convex CCD and parallelism narrative-only |
+| 1797 · Solver profiling | Reconstruct a solver from derivations and falsifiable evidence — 2D test program; not full 3D solver |
+| 1798 · Visualizing impulses and contact normals | Reconstruct a solver from derivations and falsifiable evidence — 2D test program; not full 3D solver |
+| 1799 · Regression tests for stacks, friction, restitution, and tunneling | Reconstruct a solver from derivations and falsifiable evidence — 2D test program; not full 3D solver |
+| 1800 · Implementing a warm-started sequential-impulse contact solver and defending every equation and clamp | Reconstruct a solver from derivations and falsifiable evidence — 2D test program; not full 3D solver |
+
+**Scope of the laboratory:** precomputed 2D contacts, one tangential friction axis, accumulated normal and tangent impulse clamp, feature-keyed cached impulses, simple coupled stack, swept-disc quadratic TOI, deterministic pair-set events. No contact manifold generation, general convex conservative advancement, full 3D normal/tangent solver, articulated joints, sleeping or engine threading is implemented. In particular Part 1800's *complete* multi-body production solver remains a **partial executable witness**, not a certified complete implementation.
