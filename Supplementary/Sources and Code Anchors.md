@@ -880,6 +880,38 @@ The canonical integrated curriculum assigns M012 to Parts 181–200, exactly: co
 **Additive integrity:** all earlier teaching prose and supporting documents are preserved verbatim; this pass inserts the new section, adds a new executable source, and adds new ledger/recall/navigation entries. Any older source-count snapshot that describes only M007–M010 remains a historical *received-source* state, not an instruction to erase or reclassify it. The next canonical work from the original contract is M013, Parts 201–216, integrated where templates and constrained APIs become necessary.
 
 
+## Phase 3 additive reconstruction — M013 / Parts 201–216, November 11, 2026
+
+**Authoritative scope:** the original integrated curriculum assigns M013 to Parts 201–216: function/class templates, non-type template arguments, explicit and partial specialization, deduction, reference collapsing, forwarding, variadic packs and folds, SFINAE, concepts, requires-expressions/clauses and constrained overload resolution. The new [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One asset pipeline, many asset types — generic code without accidental promises|continuous teaching chapter]] emerges from the Phase 2 asset-publication problem instead of providing sixteen isolated glossary entries. [[Supplementary/Foundations#M013 — Parts 201–216: generic asset preparation with constrained APIs|Foundations]] records each canonical title. **No M013 teaching transcript was received** during this pass: this is an authored reconstruction grounded in the known contract, external language references, and an independently executed lab.
+
+**Executable witness, with reproducible identity.** `tools/labs/generic_asset_pipeline_lab.cpp` is 249 lines / 10,302 bytes, SHA-256 `a5db53514d74ae247b4ac42fafb8504ae701bd0746141ab4861ce874f496e30f`, Git blob `e673da4c89e50114b3e49c5b1b32dda7bf019ec8`. The exact committed Git blob matches the locally executed file. The following commands completed successfully:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/generic_asset_pipeline_lab.cpp -o /tmp/allmight_m013_asan
+/tmp/allmight_m013_asan
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/generic_asset_pipeline_lab.cpp -o /tmp/allmight_m013_clang
+/tmp/allmight_m013_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/generic_asset_pipeline_lab.cpp -o /tmp/allmight_m013_release
+/tmp/allmight_m013_release
+```
+
+The observed output of each was `generic_asset_pipeline_lab: all checks passed`. GCC was 14.2.0, Clang was 17.0.0. The initial empty-pack GCC `-Werror` failure was explicitly diagnosed and resolved by marking the otherwise-unused fold helper `[[maybe_unused]]`, then *all three final builds were rerun successfully*. The reference lab uses CPU storage and an append-only depot; it includes no actual graphics API code.
+
+**What the lab proves within its scope:** the compiler accepts declared supported asset types and rejects an unknown type through `Uploadable`; a full trait specialization for meshes and a partial specialization for `Texture<Channels>` compute the intended source-byte counts; a forwarding-reference insertion selects copy versus move based on the caller's value category; a compile-time capacity rejects overflow; a throwing shader constructor leaves the published prefix unchanged and the previously unused slot available; a checked heterogeneous comma fold returns 75 for 12+48+15 and 0 for an empty pack; unknown asset types receive a deliberate fallback route; excessive texel counts reject numeric overflow before multiplication.
+
+**Important nonclaims:** no direct audit of `KairoMath/Matrix.cppm` or `KairoECS/SparseSet.cppm`, no GPU/Metal/Vulkan execution, no concurrency, no generational deletion/reuse, no native resource-lifetime validation, no C++ modules, no build-time/performance comparison or exhaustive exception fault injection. The sample also does not guarantee that C++ template instantiation produces one exact machine-code layout or zero runtime overhead. Those all remain pending evidence.
+
+**Language-reference checks:** [cppreference function-template deduction](https://en.cppreference.com/w/cpp/language/template_argument_deduction) for forwarding-reference and deduction rules; [cppreference concepts/constraints](https://en.cppreference.com/w/cpp/language/constraints) for requires and subsumption; [cppreference partial specializations](https://en.cppreference.com/w/cpp/language/partial_specialization); [cppreference fold expressions](https://en.cppreference.com/w/cpp/language/fold); [cppreference forward](https://en.cppreference.com/w/cpp/utility/forward). These sources support the stated language semantics; none constitutes a measured graphics-engine performance comparison.
+
+**No-loss policy:** the original prose remains unchanged. Only the new narrative section, executable lab, source-to-concept coverage rows, recall exercise and README routing are added. Do not reclassify historical M007–M010 or M011/M012 received-source snapshots as received M013 lessons. The next original target is **M014 Parts 217–230**, where compile-time calculation, traits, policies and layout consequences are introduced through the limitations of this generic asset system.
+
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
