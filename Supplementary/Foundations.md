@@ -421,6 +421,38 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 **Gate distinction:** all 20 original titles have integrated teaching and one representative tested pipeline. This is *authored coverage*, not a claim of 20 separate tested programs, universally exhaustive failure injection, independent user reconstruction or a received transcript. The next unreceived canonical chunk is M013, Parts 201–216; earlier original-source gaps elsewhere remain pending.
 
 
+## M013 — Parts 201–216: generic asset preparation with constrained APIs
+
+**Provenance:** authored reconstruction of the exact original M013 part titles from the integrated 180-chunk / 3,000-part contract, **not** a received M013 source transcript. The actual lesson is the continuous [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One asset pipeline, many asset types — generic code without accidental promises|asset-pipeline narrative]], placed directly after M012 rather than scattered into 16 separate disconnected definitions.
+
+| Original part and authoritative title | Why it becomes necessary, with directly inspectable witness |
+|---|---|
+| 201 · Function templates and type deduction | One `asset_bytes` operation handles multiple supported asset types; `T` is deduced from actual mesh and texture calls. |
+| 202 · Class templates and instantiated types | `AssetDepot<T, Capacity>` represents independent statically typed storage for mesh and shader records. |
+| 203 · Non-type template parameters | `Capacity` and texture `Channels` are compile-time values affecting type identity, storage and byte-size policy. |
+| 204 · Template specialization | A complete `AssetTraits<Mesh>` specialization supplies mesh-specific byte-size behavior. |
+| 205 · Partial specialization | `AssetTraits<Texture<Channels>>` supplies one rule for the family of supported channel counts. |
+| 206 · Template argument deduction | `const T&` and `Args&&` follow distinct deduction rules; callers need not manually name every deduced type. |
+| 207 · Reference collapsing rules | All four `&`/`&&` combinations are derived, with lvalue and rvalue assertions in the lab. |
+| 208 · Forwarding references | The function-template `Args&&...` preserves incoming lvalues and rvalues across a generic API boundary. |
+| 209 · Perfect forwarding with std::forward | `std::forward<Args>(args)...` selects the intended copy or move constructor for `Mesh`; both paths are tested. |
+| 210 · Variadic templates and parameter packs | `total_bytes(const T&... assets)` accepts a heterogeneous, compile-time-checked group, including an empty pack. |
+| 211 · Fold expressions | A built-in comma fold performs checked left-to-right byte accumulation; 12+48+15=75 and zero-argument cases tested. |
+| 212 · SFINAE and substitution failure | `HasByteSize` uses `std::void_t`, `decltype` and `declval` to detect a valid trait expression without a hard error in its substitution context. |
+| 213 · Concepts as compile-time semantic constraints | Named `Uploadable` accepts mesh and supported textures but not an unknown asset; tested with `static_assert`. |
+| 214 · requires expressions | Compound requirements check the label's conversion and exact byte-size result type, but do not execute runtime validation. |
+| 215 · requires clauses | `AssetDepot::emplace` requires `std::constructible_from<T, Args&&...>`; invalid integer-to-mesh construction rejected at compile time. |
+| 216 · Constrained overload resolution | `route` has a generic fallback and a `Uploadable`-constrained overload; correct static routing tested for supported and unknown types. |
+
+**Actual compiled witness:** [[tools/labs/generic_asset_pipeline_lab.cpp|C++20 reference laboratory]], 249 lines / 10,302 bytes (ASCII), SHA-256 `a5db53514d74ae247b4ac42fafb8504ae701bd0746141ab4861ce874f496e30f`, Git blob `e673da4c89e50114b3e49c5b1b32dda7bf019ec8`, verified byte-identical with the executed source. It passed three actual builds: GCC 14.2.0 `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`; Clang 17.0.0 `-std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror`; GCC 14.2.0 `-std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. Each executable printed `generic_asset_pipeline_lab: all checks passed`. An initial compiler warning from the empty pack under GCC `-Werror` was corrected by explicitly marking the sometimes-unused fold helper `[[maybe_unused]]`; the final committed blob is the passing version.
+
+**What was checked:** compile-time admission/rejection; lvalue copying versus rvalue transfer; capacity rejection without state change; failed shader construction without publication; unused slot reuse; traits for 3/4 channels; numerical overflow rejection; batch sum and empty-pack behavior; and preferred constrained overload selection. **What was not checked:** KairoMath/Matrix.cppm, KairoECS/SparseSet.cppm or other live external repository code; C++ module build; GPU execution; multithreaded asset lifetime, cancellation, driver synchronization, full exception fault injection, or comparative performance.
+
+**Language references and research direction:** [cppreference function-template argument deduction](https://en.cppreference.com/w/cpp/language/template_argument_deduction), [cppreference constraints and concepts](https://en.cppreference.com/w/cpp/language/constraints), [cppreference fold expressions](https://en.cppreference.com/w/cpp/language/fold), [cppreference partial class-template specialization](https://en.cppreference.com/w/cpp/language/partial_specialization), [cppreference `std::forward`](https://en.cppreference.com/w/cpp/utility/forward). Next, benchmark the bounded generic depot against a concrete store and a generational/page-backed alternative using identical payload sizes and publication/failure workloads; do not assume generic dispatch is faster without data.
+
+**Completion classification:** all 16 original titles mapped to continuous authored teaching and one representative, executable, standards-conscious laboratory. This does not certify 16 independent programs, learner recall, received-source equivalence, cross-platform ABI equivalence, or a current Kairo implementation audit. The next canonical source range is M014, Parts 217–230.
+
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
