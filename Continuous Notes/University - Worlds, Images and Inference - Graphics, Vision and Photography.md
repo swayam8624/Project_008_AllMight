@@ -54237,6 +54237,55 @@ A sweep-and-prune implementation sorts all swept rectangles by minimum x, remove
 
 Sorting the bounds costs $O(n\log n)$. A naive active vector can still require $O(n^2)$ interval comparisons in a crowded scene, and a scene with every disk overlapping may truly have $\Theta(n^2)$ candidates. These are complexity facts, not reasons to discard correctness. A production engine might use a dynamic BVH, spatial hashing, grid cells, or incremental sorting based on temporal coherence, but each needs the same no-false-negative contract and an explicit strategy for updating bounds after an impact changes velocity.
 
+
+#### Executable segment clipping and feature geometry
+
+Recovering a manifold from a polygon collision begins with actual half-space clipping, not an unexplained contact-point array. This independent C++20 fragment takes an incident segment and retains its part inside one plane, with a consistent convention that nonpositive signed distance is inside. Apply the same operation against both side planes of the reference face and finally reject points whose signed distance from the reference surface violates the chosen contact margin. This implementation returns 0, 1 or 2 points; the caller must attach incident and reference feature identifiers before reordering or caching contacts.
+
+```cpp
+#include <array>
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+
+struct Vec2 { double x{}, y{}; };
+Vec2 operator+(Vec2 a, Vec2 b) { return {a.x+b.x,a.y+b.y}; }
+Vec2 operator-(Vec2 a, Vec2 b) { return {a.x-b.x,a.y-b.y}; }
+Vec2 operator*(Vec2 a, double t) { return {a.x*t,a.y*t}; }
+double dot(Vec2 a, Vec2 b) { return a.x*b.x+a.y*b.y; }
+
+// Keep p if dot(outwardNormal, p-planePoint) <= 0.
+// Input is precisely two segment endpoints, not an arbitrary polygon.
+std::vector<Vec2> clipSegment(Vec2 a, Vec2 b,
+                              Vec2 planePoint, Vec2 outwardNormal) {
+    const double da=dot(outwardNormal,a-planePoint);
+    const double db=dot(outwardNormal,b-planePoint);
+    if (!std::isfinite(da)||!std::isfinite(db))
+        throw std::invalid_argument("invalid plane or segment");
+    const bool insideA=(da<=0),insideB=(db<=0);
+    if (insideA&&insideB) return {a,b};
+    if (!insideA&&!insideB) return {};
+    // Opposite classifications imply a nonzero signed-distance difference.
+    const double denominator=da-db;
+    if (denominator==0) throw std::domain_error("ambiguous crossing");
+    const double t=da/denominator;
+    if (!(t>=0&&t<=1)) throw std::domain_error("crossing outside segment");
+    const Vec2 crossing=a+(b-a)*t;
+    return insideA?std::vector<Vec2>{a,crossing}
+                  :std::vector<Vec2>{crossing,b};
+}
+
+int main() {
+    const auto inside=clipSegment({-1,0},{1,0},{0,0},{1,0});
+    if (inside.size()!=2 || std::abs(inside[1].x)>1e-12)
+        throw std::runtime_error("straddling segment regression failed");
+    std::cout<<"clipped endpoint: "<<inside[1].x<<"\n";
+}
+```
+
+For the worked segment from (-1,0) to (+1,0) and a clipping half-space x <= 0, the signed distances are -1 and +1. The crossing interpolation factor is (-1)/(-2)=1/2, giving the new endpoint (0,0) and a surviving segment from (-1,0) to (0,0). The planar clipping result is geometrically local: using it as a full manifold still requires selecting the reference/incident features, handling parallel or degenerate edges, evaluating penetration along the actual reference normal, merging duplicate contact points and giving the surviving contacts stable feature identities. This distinction is essential before attaching cached solver impulses.
+
 #### Implementation laboratory and debugging contract
 
 Read and execute the standalone \`tools/labs/disk_ccd_lab.cpp\` first, tracing relative position, velocity, radius sum, discriminant, entry root and contact normal. Next inspect \`tools/labs/swept_broadphase_lab.cpp\`: it builds outward-rounded swept bounds, sorts by x, filters candidate pairs and checks its output against an independently implemented analytic disk TOI oracle across deterministic scenes and 200 seeded scenes of 35 disks. The third lab \`tools/labs/disk_event_pipeline_lab.cpp\` supplies the dynamics side, repeatedly querying earliest contact times and resolving a bounded set of events; do not infer that the swept broad phase is already integrated into that event stepper unless their current code path is directly checked.
