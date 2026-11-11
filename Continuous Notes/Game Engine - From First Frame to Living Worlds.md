@@ -78131,6 +78131,299 @@ The cache must decide whether an old normal still agrees with the new normal. It
 
 The C++20 \`persistent_contact_lab.cpp\` explicitly models two simultaneous contact rows sharing one velocity state. The row \`make_row\` computes lever arms, the normal and tangent basis, and scalar inverse effective masses. \`warm_start\` changes body velocities once using cached impulses. \`solve_one\` computes the *current* relative speed, adjusts the accumulated multiplier under the nonnegative and Coulomb bounds, and applies the **difference**. \`sweep\` repeats over the rows. To implement this in a real engine, move the prepared row data into a frame-owned contact arena with stable references and never let a pointer survive its arena lifetime. Contacts should be grouped by constraint island if they share bodies; independent islands can be processed separately, but changing row order may affect a finite-iteration result.
 
+#### Complete persistent-contact implementation and cache policy
+
+An event stepper solves fresh impacts, but a box resting on the floor requires contact constraints that persist and act at spatially offset points. The following complete C++20 laboratory gives the prepared contact row, effective normal and tangent inverse masses, projected accumulated normal and Coulomb tangent impulses, frozen restitution target, repeated sequential solving, and a two-point shared-body manifold. Observe that the updated multiplier is *not* itself the impulse applied each iteration: only the increment from its old value is applied. Observe also that `warm_start` applies the saved impulse once before iteration; doing this every sweep double-counts historical state.
+
+```cpp
+// C++20 sequential-impulse witness. Normal points A->B; units: m, s, kg, radians.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/persistent_contact_lab.cpp -o /tmp/persistent_contact && /tmp/persistent_contact
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <stdexcept>
+#include <vector>
+struct Vec2 { double x{},y{}; };
+constexpr Vec2 operator+(Vec2 a,Vec2 b){return {a.x+b.x,a.y+b.y};}
+constexpr Vec2 operator-(Vec2 a,Vec2 b){return {a.x-b.x,a.y-b.y};}
+constexpr Vec2 operator*(Vec2 a,double k){return {a.x*k,a.y*k};}
+constexpr double dot(Vec2 a,Vec2 b){return a.x*b.x+a.y*b.y;}
+constexpr double cross(Vec2 a,Vec2 b){return a.x*b.y-a.y*b.x;}
+constexpr Vec2 spin(double w,Vec2 r){return {-w*r.y,w*r.x};}
+void ensure(bool p,const char* s){if(!p)throw std::runtime_error(s);}
+void near(double a,double b,double eps=1e-9){
+ if(!(std::isfinite(a)&&std::isfinite(b)&&std::abs(a-b)<=eps))
+  throw std::runtime_error("unexpected numerical result");
+}
+void validate(Vec2 v){ensure(std::isfinite(v.x)&&std::isfinite(v.y),"nonfinite vector");}
+struct Body{Vec2 center{},linear{};double omega{},invMass{},invInertia{};};
+void validate(const Body& b){
+ validate(b.center);validate(b.linear);
+ ensure(std::isfinite(b.omega)&&std::isfinite(b.invMass)&&std::isfinite(b.invInertia),"nonfinite body");
+ ensure(b.invMass>=0&&b.invInertia>=0,"negative inverse mass/inertia");
+}
+struct Contact{
+ std::uint64_t featureId{}; // Cache valid only while bodies, feature and orientation match.
+ Vec2 worldPoint{},normal{0,1};
+ double friction{},restitution{},normalImpulse{},tangentImpulse{},targetNormalSpeed{};
+};
+Vec2 unit(Vec2 v){
+ validate(v);const double m=std::hypot(v.x,v.y);
+ ensure(std::isfinite(m)&&m>std::numeric_limits<double>::min(),"invalid normal");
+ return v*(1/m);
+}
+void validate(const Contact& c){
+ validate(c.worldPoint);validate(c.normal);
+ ensure(std::isfinite(c.friction)&&c.friction>=0&&std::isfinite(c.restitution)
+  &&c.restitution>=0&&c.restitution<=1,"invalid material");
+ ensure(std::isfinite(c.normalImpulse)&&c.normalImpulse>=0
+  &&std::isfinite(c.tangentImpulse)&&std::isfinite(c.targetNormalSpeed),"invalid impulse cache");
+}
+struct Row{Body* a{};Body* b{};Contact* c{};Vec2 ra{},rb{},n{},t{};double kn{},kt{};};
+Vec2 relative_velocity(const Row& r){
+ return r.b->linear+spin(r.b->omega,r.rb)-r.a->linear-spin(r.a->omega,r.ra);
+}
+double inverse_effective_mass(const Row& r,Vec2 d){
+ const double ca=cross(r.ra,d),cb=cross(r.rb,d);
+ return r.a->invMass+r.b->invMass+r.a->invInertia*ca*ca+r.b->invInertia*cb*cb;
+}
+void apply(const Row& r,Vec2 p){
+ r.a->linear=r.a->linear-p*r.a->invMass;
+ r.b->linear=r.b->linear+p*r.b->invMass;
+ r.a->omega-=r.a->invInertia*cross(r.ra,p);
+ r.b->omega+=r.b->invInertia*cross(r.rb,p);
+}
+Row make_row(Body& a,Body& b,Contact& c,double threshold=0.5,bool newImpact=true){
+ validate(a);validate(b);validate(c);
+ ensure(std::isfinite(threshold)&&threshold>=0,"invalid bounce threshold");
+ Row r{&a,&b,&c,c.worldPoint-a.center,c.worldPoint-b.center,unit(c.normal)};
+ r.t={-r.n.y,r.n.x};
+ r.kn=inverse_effective_mass(r,r.n);r.kt=inverse_effective_mass(r,r.t);
+ ensure(std::isfinite(r.kn)&&std::isfinite(r.kt)&&r.kn>=0&&r.kt>=0,"invalid effective mass");
+ // Sample and freeze restitution before applying impulses. No new bounce on persistent rest contact.
+ if(newImpact){
+  const double vn=dot(relative_velocity(r),r.n);
+  c.targetNormalSpeed=vn< -threshold?-c.restitution*vn:0;
+ }else c.targetNormalSpeed=0;
+ ensure(std::abs(c.tangentImpulse)<=c.friction*c.normalImpulse+1e-9,"invalid friction cache");
+ return r;
+}
+void warm_start(const Row& r){
+ if(r.kn>0)apply(r,r.n*r.c->normalImpulse+r.t*r.c->tangentImpulse);
+}
+void solve_one(const Row& r){
+ if(r.kn==0)return; // static/static, or locked in this direction
+ Contact& c=*r.c;
+ const double vn=dot(relative_velocity(r),r.n),oldN=c.normalImpulse;
+ c.normalImpulse=std::max(0.0,oldN+(c.targetNormalSpeed-vn)/r.kn);
+ apply(r,r.n*(c.normalImpulse-oldN));
+ if(r.kt==0)return;
+ const double vt=dot(relative_velocity(r),r.t),oldT=c.tangentImpulse;
+ const double frictionBound=c.friction*c.normalImpulse;
+ c.tangentImpulse=std::clamp(oldT-vt/r.kt,-frictionBound,frictionBound);
+ apply(r,r.t*(c.tangentImpulse-oldT));
+}
+void sweep(std::vector<Row>& rows,int iterations){
+ ensure(iterations>=0&&iterations<=10000,"invalid iteration count");
+ for(int i=0;i<iterations;++i)for(const Row& r:rows)solve_one(r);
+}
+int main(){
+ { // Equal masses: coefficient of restitution one conserves kinetic energy and momentum.
+  Body a{{0,0},{2,0},0,1,1},b{{1,0},{0,0},0,1,1};
+  Contact c{11,{0.5,0},{1,0},0,1};
+  Row r=make_row(a,b,c);std::vector<Row> rows{r};sweep(rows,8);
+  near(a.linear.x,0);near(b.linear.x,2);near(c.normalImpulse,2);
+  near(a.linear.x+b.linear.x,2);near((dot(a.linear,a.linear)+dot(b.linear,b.linear))/2,2);
+  sweep(rows,8);near(c.normalImpulse,2); // Restitution target was not regenerated.
+ }
+ { // Tangent = (-1,0) for upward normal; +1 tangent impulse opposes +x sliding.
+  Body ground{{0,0},{0,0},0,0,0},box{{0,1},{3,-2},0,1,1};
+  Contact c{12,{0,1},{0,1},0.5,0};
+  Row r=make_row(ground,box,c);std::vector<Row> rows{r};sweep(rows,5);
+  near(box.linear.y,0);near(box.linear.x,2);
+  near(c.normalImpulse,2);near(c.tangentImpulse,1);
+ }
+ { // Off-center normal impulse produces angular velocity through r cross P.
+  Body wall{{0,0},{0,0},0,0,0},box{{1,0},{-2,0},0,1,1};
+  Contact c{13,{1,1},{1,0},0,0};
+  Row r=make_row(wall,box,c);std::vector<Row> rows{r};sweep(rows,8);
+  near(box.linear.x,-1);near(box.omega,-1);
+ }
+ { // Separating velocity and zero effective mass cannot generate attractive impulse.
+  Body a{{0,0},{1,0},0,1,1},b{{1,0},{2,0},0,1,1};
+  Contact c{14,{0.5,0},{1,0},0,0};
+  Row r=make_row(a,b,c);std::vector<Row> rows{r};sweep(rows,2);
+  near(c.normalImpulse,0);near(a.linear.x,1);near(b.linear.x,2);
+  a.invMass=a.invInertia=b.invMass=b.invInertia=0;
+  rows={make_row(a,b,c)};sweep(rows,2);near(c.normalImpulse,0);
+ }
+ { // Coupled two-point manifold, then warm-start with the preserved feature cache.
+  Body ground{{0,0},{0,0},0,0,0},box{{0,1},{0,-2},0,1,1};
+  Contact left{15,{-1,1},{0,1},0,0},right{16,{1,1},{0,1},0,0};
+  std::vector<Row> rows{make_row(ground,box,left),make_row(ground,box,right)};
+  sweep(rows,20);near(box.linear.y,0,1e-6);near(box.omega,0,1e-6);
+  ensure(left.normalImpulse>=0&&right.normalImpulse>=0,"unilateral impulse");
+  // Rebuilt velocities are *pre-warm-start*, otherwise the cached impulse is double-applied.
+  box.linear={0,-2};box.omega=0;
+  Row l=make_row(ground,box,left,0.5,false),r=make_row(ground,box,right,0.5,false);
+  warm_start(l);warm_start(r);rows={l,r};sweep(rows,20);
+  near(box.linear.y,0,1e-6);near(box.omega,0,1e-6);
+ }
+ { // A corrupted normal or NaN friction must be rejected rather than poison an island.
+  Body a{},b{};Contact bad{17,{0,0},{0,0},0,0};bool rejected=false;
+  try{(void)make_row(a,b,bad);}catch(const std::runtime_error&){rejected=true;}
+  ensure(rejected,"zero normal accepted");bad.normal={1,0};
+  bad.friction=std::numeric_limits<double>::quiet_NaN();rejected=false;
+  try{(void)make_row(a,b,bad);}catch(const std::runtime_error&){rejected=true;}
+  ensure(rejected,"NaN friction accepted");
+ }
+ std::cout<<"persistent-contact witness: 6 suites PASS\n";
+}
+```
+
+The solver does not automatically know whether a contact in frame N is the same physical contact in frame N+1. That is a geometric and lifetime question. The following independently runnable cache laboratory defines canonical ordered body/feature keys and tests whether impulses may be reused. Its normal-angle threshold, timestep-ratio window and friction-edit behavior are deliberately explicit policies, not universal constants. In a real engine, generation-counted body handles, geometric feature construction, and contact-point motion must be validated before using those keys.
+
+```cpp
+// Standalone C++20 contact cache policy witness; no dependency on Kairo runtime.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror contact_cache_lab.cpp -o /tmp/contact_cache && /tmp/contact_cache
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <stdexcept>
+#include <vector>
+
+struct Vec2 { double x{}, y{}; };
+constexpr Vec2 operator*(Vec2 a, double s) { return {a.x*s, a.y*s}; }
+constexpr double dot(Vec2 a, Vec2 b) { return a.x*b.x+a.y*b.y; }
+constexpr Vec2 tangent(Vec2 n) { return {-n.y, n.x}; }
+void require(bool b, const char* msg) { if (!b) throw std::runtime_error(msg); }
+void near(double a, double b, double eps=1e-10) {
+    require(std::isfinite(a) && std::isfinite(b) && std::abs(a-b)<=eps, "unexpected numeric result");
+}
+Vec2 unit(Vec2 n) {
+    require(std::isfinite(n.x) && std::isfinite(n.y), "nonfinite normal");
+    const double length=std::hypot(n.x,n.y);
+    require(length>1e-12 && std::isfinite(length), "degenerate normal");
+    return n*(1.0/length);
+}
+// Feature indices come from a *narrowphase* feature matcher. They are not array indices.
+// Pair orientation is canonical; swapping bodies is not interchangeable with reusing this cache.
+struct Key {
+    std::uint64_t bodyA{},bodyB{},featureA{},featureB{};
+    auto operator<=>(const Key&) const = default;
+};
+struct ContactInput {
+    Key key{};
+    Vec2 normal{0,1};
+    double friction{}, timeStep{};
+};
+struct CachedImpulse {
+    Vec2 normal{0,1};
+    double normalMagnitude{}, tangentMagnitude{}, friction{},timeStep{};
+    std::uint64_t lastSeenFrame{};
+};
+struct Seed { double normal{}, tangent{}; bool reused{}; };
+class ContactCache {
+    std::map<Key,CachedImpulse> entries_;
+    std::uint64_t frame_{};
+    static constexpr double minimumNormalCosine=0.9659258262890683; // 15 deg
+    static constexpr double maxStepRatio=2.0;
+    static void validate(const ContactInput& in) {
+        require(in.key.bodyA<in.key.bodyB, "body pair must have canonical orientation");
+        require(std::isfinite(in.friction) && in.friction>=0, "invalid friction");
+        require(std::isfinite(in.timeStep) && in.timeStep>0, "invalid timestep");
+        (void)unit(in.normal);
+    }
+public:
+    void begin_frame(std::uint64_t id) {
+        require(id>frame_, "frame ids must increase"); frame_=id;
+    }
+    Seed lookup(const ContactInput& in) const {
+        require(frame_>0, "begin_frame required"); validate(in);
+        const auto it=entries_.find(in.key);
+        if(it==entries_.end()) return {};
+        const auto& old=it->second;
+        // Only the immediately previous frame may warm start. Missing a frame invalidates state.
+        if(old.lastSeenFrame!=frame_-1) return {};
+        const Vec2 previous=unit(old.normal),current=unit(in.normal);
+        const double alignment=dot(previous,current);
+        if(alignment<minimumNormalCosine) return {};
+        const double ratio=in.timeStep/old.timeStep;
+        if(!std::isfinite(ratio) || ratio<1/maxStepRatio || ratio>maxStepRatio) return {};
+        // A material edit invalidates the tangential cache, not the physical normal reaction.
+        // Project the previous world-space tangential impulse onto the current tangent.
+        const Vec2 previousTangentImpulse=tangent(previous)*old.tangentMagnitude;
+        const double normal=old.normalMagnitude*ratio;
+        const double tangentValue=(old.friction==in.friction)
+            ? dot(previousTangentImpulse,tangent(current))*ratio : 0;
+        return {normal,std::clamp(tangentValue,-in.friction*normal,in.friction*normal),true};
+    }
+    void store(const ContactInput& in,double normalImpulse,double tangentImpulse) {
+        require(frame_>0,"begin_frame required"); validate(in);
+        require(std::isfinite(normalImpulse) && normalImpulse>=0,"invalid normal impulse");
+        require(std::isfinite(tangentImpulse),"invalid tangent impulse");
+        require(std::abs(tangentImpulse)<=in.friction*normalImpulse+1e-9,"friction cone exceeded");
+        // A repeated write for the same feature in one frame indicates a duplicate manifold row.
+        const auto it=entries_.find(in.key);
+        require(it==entries_.end() || it->second.lastSeenFrame!=frame_,"duplicate feature key");
+        entries_[in.key]={unit(in.normal),normalImpulse,tangentImpulse,in.friction,in.timeStep,frame_};
+    }
+    void prune() {
+        for(auto it=entries_.begin();it!=entries_.end();) {
+            if(it->second.lastSeenFrame!=frame_)it=entries_.erase(it); else ++it;
+        }
+    }
+    std::size_t size() const { return entries_.size(); }
+};
+int main() {
+    const Key id{4,9,2,7};
+    ContactCache cache; ContactInput in{id,{0,1},0.5,1.0/60.0};
+    cache.begin_frame(1);
+    require(!cache.lookup(in).reused,"new feature had cache");
+    cache.store(in,2,0.5);
+    cache.begin_frame(2);
+    auto seed=cache.lookup(in);
+    require(seed.reused,"persistent identity not reused"); near(seed.normal,2);near(seed.tangent,0.5);
+    // Rotating the tangent frame changes the scalar, but preserves the projection.
+    const double a=10*3.14159265358979323846/180;
+    ContactInput rotated=in;rotated.normal={-std::sin(a),std::cos(a)};
+    seed=cache.lookup(rotated);require(seed.reused,"small normal drift invalidated");
+    near(seed.tangent,0.5*std::cos(a));
+    ContactInput sharp=in;sharp.normal={-0.5,std::sqrt(0.75)};
+    require(!cache.lookup(sharp).reused,"large normal drift accepted");
+    ContactInput swapped=in;swapped.key={9,4,7,2};
+    bool rejected=false;try{(void)cache.lookup(swapped);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected,"reversed body order accepted");
+    ContactInput changedFeature=in;changedFeature.key.featureB=8;
+    require(!cache.lookup(changedFeature).reused,"different geometry feature reused");
+    ContactInput halfStep=in;halfStep.timeStep*=0.5;
+    seed=cache.lookup(halfStep);require(seed.reused,"bounded timestep change rejected");
+    near(seed.normal,1);near(seed.tangent,0.25);
+    ContactInput jumpStep=in;jumpStep.timeStep*=4;
+    require(!cache.lookup(jumpStep).reused,"large timestep jump accepted");
+    ContactInput changedFriction=in;changedFriction.friction=0.1;
+    seed=cache.lookup(changedFriction);require(seed.reused,"material edit erased normal cache");
+    near(seed.normal,2);near(seed.tangent,0);
+    cache.store(in,1,0.25);
+    rejected=false;try{cache.store(in,1,0.25);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected,"duplicate feature admitted");
+    cache.prune();require(cache.size()==1,"prune failure");
+    cache.begin_frame(4);require(!cache.lookup(in).reused,"skipped frame reused");
+    cache.prune();require(cache.size()==0,"stale feature survived prune");
+    ContactInput bad=in;bad.normal={0,0};
+    rejected=false;try{(void)cache.lookup(bad);}catch(const std::runtime_error&){rejected=true;}
+    require(rejected,"degenerate normal accepted");
+    std::cout<<"contact cache: identity, tangent transport, timestep, invalidation PASS\n";
+}
+```
+
+Do not concatenate these two files into one translation unit: they intentionally have distinct small teaching types and independent main functions. The implementation exercise is to unify them under one engine-owned body representation and one collision-manifold representation. Only then may a stable feature ID obtained from polygon clipping choose a cached impulse; only after row construction may the cached impulse be warm-started. The next frame must invalidate vanished features and handle changed normals, material, timestep and body generation before returning a warm-start guess. Record numerical residuals and accumulated multipliers at each iteration; a visually stationary body is not evidence that the constraint residuals are small.
+
 #### Resting penetration and failures are different physics problems
 
 A velocity-level contact solver makes normal relative speed nonclosing; it does **not**, by itself, erase a positive existing penetration depth. If two disks start overlapped, a separate position-level correction, split impulse, constraint projection or compliant response policy is required. A high restitution target is not a position-correction policy. Similarly, the analytic CCD assumption of constant velocity during an interval cannot safely be applied unchanged to high-acceleration, rotating convex bodies.
