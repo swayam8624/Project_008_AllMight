@@ -54189,6 +54189,63 @@ Compute impulses and positional corrections
 
 This is the architecture connecting M075 and M076 to the rigid-body solver material in Phase 18.
 
+
+<!-- BEGIN IMPLEMENTABLE SWEPT COLLISION GEOMETRY 2026-11-12 -->
+#### Construct contact geometry that a solver can actually consume
+
+The collision detector and the dynamics solver answer different questions. Geometry asks **whether two shapes occupy the same place now, which surfaces touch, and whether their swept motion first meets inside the current time interval**. Dynamics asks **what velocity change follows from that contact given masses, inertia and materials**. Treating these as one vaguely named "physics collision" function hides the data boundary where most implementation errors originate.
+
+A useful narrow-phase result is a value containing the ordered pair of body handles, geometric feature IDs, world-space contact position(s), a unit normal with a declared orientation, signed separation or penetration depth, and a status distinguishing separated, touching, overlapping, degenerate and numerically uncertain geometry. The narrow phase should not silently invent friction or change velocity. The rigid-body solver later consumes the geometry and body state, computes effective mass and impulses, and may retain a contact cache keyed to the **same geometric features**, not to an arbitrary row index.
+
+Start with two disks. Let $A$ have centre $\mathbf a$, radius $r_A$, and $B$ have centre $\mathbf b$, radius $r_B$. Put $\mathbf d=\mathbf b-\mathbf a$, $L=\|\mathbf d\|$, and $R=r_A+r_B$. When $L>0$, the A-to-B contact normal is $\mathbf n=\mathbf d/L$, and signed surface separation is $s=L-R$. Positive $s$ means no overlap, negative $s$ means penetration. The corresponding surface witness points are $\mathbf p_A=\mathbf a+r_A\mathbf n$ and $\mathbf p_B=\mathbf b-r_B\mathbf n$. A representative solver point may be their midpoint, but for penetrating disks those two points are distinct and this midpoint is a *policy*, not an actual surface intersection. For coincident centres, $\mathbf n$ is undefined: return an explicit degenerate result or a documented deterministic fallback, and never divide by $L=0$.
+
+For polygons, the same output cannot be obtained by treating every overlap as one generic point. Two boxes resting face-to-face have a contact *segment* in 2D, or often a polygonal patch in 3D. A single point at the centre of the contact region may accidentally fail to provide the torque constraints needed to keep the boxes from tipping. An implementation can first choose a reference face and incident face from the collision normal, then clip the incident feature against the side planes of the reference face, retaining points whose signed separation satisfies the contact policy. In 2D, clipping an incident segment with endpoints $\mathbf q_0,\mathbf q_1$ against a half-space $\mathbf n_s\cdot(\mathbf x-\mathbf o)\le0$ uses signed distances $d_i=\mathbf n_s\cdot(\mathbf q_i-\mathbf o)$. If both are inside, keep both; if both are outside, keep none; if they straddle, insert the crossing at
+
+$
+\mathbf q(t)=\mathbf q_0+t(\mathbf q_1-\mathbf q_0),
+\qquad t=\frac{d_0}{d_0-d_1}.
+$
+
+The denominator vanishes for equal signed distances; this is never an instruction to divide blindly. Treat exact or near-coplanarity according to a consistent signed-distance policy. Clip against both side planes and then evaluate each surviving point's separation from the reference face. Contact feature IDs should encode the contributing incident/reference vertices or edges and their canonical body ordering. When the clipper changes which two points survive, blindly copying the impulse from contact array element 0 of the previous frame into current element 0 can produce a spurious torque. A stable matcher uses feature identity and an explicitly bounded geometric fallback; it must invalidate stale data when topology, body identity or contact orientation changes.
+
+**Memory representation.** One possible compact output type is a struct-of-arrays manifold for batch processing, or an array-of-structs for a small engine. In both cases, each contact row must own its normal (or reference a validated manifold normal), point, signed separation, feature key, and an optional cached impulse whose owner and frame lifetime are explicit. An indexed collider ID alone is unsafe if slots are reused: pair it with a generation. The independent \`tools/labs/contact_cache_lab.cpp\` models canonical pair/feature identifiers and normal/tangent projection, but it assumes some other narrow-phase algorithm has already generated those IDs. Do not mistake a cache policy witness for a complete polygon contact generator.
+
+#### Why continuous collision detection requires motion geometry
+
+A discrete overlap check only sees the shapes at chosen times. A fast disk may pass through a thin object and end the frame on the other side with no overlap. Treat the candidate time interval $[0,h]$ as a geometric dimension. With constant relative velocity $\mathbf v$ and initial relative centre $\mathbf p$, two disks touch whenever
+
+$
+\|\mathbf p+t\mathbf v\|^2=(r_A+r_B)^2.
+$
+
+This is a quadratic in time. Let $a=\mathbf v\cdot\mathbf v$, $b=2\mathbf p\cdot\mathbf v$, and $c=\mathbf p\cdot\mathbf p-(r_A+r_B)^2$. When initially separated ($c>0$), initially approaching ($b<0$) and $D=b^2-4ac\ge0$, the earliest nonnegative root must still be checked against $h$. A stable entry-root formulation for this branch uses $q=-\frac12(b-\sqrt D)$ and $t=c/q$. The point of this algebra is not sophistication for its own sake: computing a root by subtracting nearly equal floating-point numbers can erase the very short time interval that CCD is supposed to detect. Initial overlap is a separate status; it is not a valid instruction to divide by a time or silently push objects apart.
+
+The exact first contact normal is the normalized relative displacement $\mathbf p+t\mathbf v$, provided it is nonzero. For two radius-1 disks, one fixed at the origin and one starting at $(10,0)$ and moving left at 100 m/s, the first contact is at 0.08 s. If the simulation frame is 0.10 s, the physics update must stop at 0.08 s, apply a collision response, and then process the remaining 0.02 s. Reporting the impact at the end of the frame fundamentally changes the trajectory. A grazing root is geometrically valid, although its zero closing normal speed generally means no impulse is required.
+
+#### From swept regions to a broad phase with no missing candidates
+
+Exact collision-time roots are too expensive to run for every pair of a large scene. A broad phase produces a *conservative superset* of collision candidates. For a disk at $\mathbf x$ with constant velocity $\mathbf v$, radius $r$, and horizon $h$, its centre traverses the segment from $\mathbf x$ to $\mathbf x+h\mathbf v$. A rectangle containing every possible disk position is
+
+$
+x_{\min}=\min(x_0,x_0+hv_x)-r,\qquad
+x_{\max}=\max(x_0,x_0+hv_x)+r,
+$
+
+with analogous y bounds. The segment plus disk is geometrically a capsule; the swept axis-aligned bounding rectangle contains the capsule and is cheaper to test. The bounds should be conservatively rounded outward in a finite-precision implementation, and nonfinite endpoints must be rejected. For accelerating or rotating objects, these linear endpoint bounds are not automatically conservative; their motion bounds must include acceleration, angular sweeps and shape extent.
+
+A sweep-and-prune implementation sorts all swept rectangles by minimum x, removes any active rectangle with maximum x strictly below the next rectangle's minimum x, and compares y intervals for the active candidates. If two actual disk regions intersect at some common time, that shared point lies inside *both* swept rectangles, so their x and y intervals overlap. Thus every genuine disk collision must survive as a candidate. The converse is false: broad-phase rectangles can overlap even if disks move past different locations at different times. False positives are acceptable because the narrow phase evaluates exact TOI; false negatives are not.
+
+Sorting the bounds costs $O(n\log n)$. A naive active vector can still require $O(n^2)$ interval comparisons in a crowded scene, and a scene with every disk overlapping may truly have $\Theta(n^2)$ candidates. These are complexity facts, not reasons to discard correctness. A production engine might use a dynamic BVH, spatial hashing, grid cells, or incremental sorting based on temporal coherence, but each needs the same no-false-negative contract and an explicit strategy for updating bounds after an impact changes velocity.
+
+#### Implementation laboratory and debugging contract
+
+Read and execute the standalone \`tools/labs/disk_ccd_lab.cpp\` first, tracing relative position, velocity, radius sum, discriminant, entry root and contact normal. Next inspect \`tools/labs/swept_broadphase_lab.cpp\`: it builds outward-rounded swept bounds, sorts by x, filters candidate pairs and checks its output against an independently implemented analytic disk TOI oracle across deterministic scenes and 200 seeded scenes of 35 disks. The third lab \`tools/labs/disk_event_pipeline_lab.cpp\` supplies the dynamics side, repeatedly querying earliest contact times and resolving a bounded set of events; do not infer that the swept broad phase is already integrated into that event stepper unless their current code path is directly checked.
+
+A geometry debug view should draw each disk at start, at TOI and at end; the centre trajectory; swept rectangles; narrow-phase candidate pairs; true impact pairs; contact normal arrows; and feature IDs. Logs should record the chosen contact time, squared discriminant, surface gap before and after, and the reason any pair was rejected. Useful invariants include body-order symmetry with consistent normal reversal, translation invariance within the chosen numerical scale, a true-TOI-pair subset of the broad-phase set, and finite normalized normals. A no-false-negative test is stronger evidence than a screenshot of several colliding disks, but 119,000 seeded pair comparisons cannot certify all floating-point extremes or complex convex geometry.
+
+**Reconstruct rather than memorize:** derive the disk witnesses and sign convention, write the half-space segment clipper with all four inside/outside cases, design stable feature identifiers, derive the TOI quadratic and stable root, then write and validate the swept-AABB candidate loop. Explain which algorithms are exact analytic solutions under constant velocity and which rely on heuristic tolerances or approximations. Finally enumerate what is *not* implemented by these witnesses: reliable face clipping for all convex polytopes, rotating-body CCD, persistent contact production integration, accurate acceleration bounds, and performance of Kairo's live runtime.
+<!-- END IMPLEMENTABLE SWEPT COLLISION GEOMETRY 2026-11-12 -->
+
 ### Continuous Collision Detection
 
 Original Parts 1263–1270
