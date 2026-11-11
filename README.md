@@ -89,6 +89,16 @@ Explain separately whether code is a full standalone laboratory, a compilable fr
 
 Use direct links to independent sources and references where they deepen the explanation, but keep enough material locally that the chapter is self-contained. The reader should finish an explanation able to reconstruct the mechanism, not merely able to follow a link.
 
+## Rigid-contact laboratory: an executable solver contract
+
+The [C++20 rigid-contact witness](tools/labs/rigid_contact_lab.cpp) is an independent CPU implementation of the velocity-level contact equations used in the engine's collision-response narrative. It connects a contact normal, center-of-mass offset, point velocity, inverse effective mass, accumulated unilateral normal impulse, and Coulomb tangent limit to observable before/after body velocities. Build and run it with:
+
+```sh
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact && /tmp/rigid_contact
+```
+
+The five numerical cases witness equal-mass elastic impact, static-body friction, off-centre angular response, separating pairs and static/static degeneracy. This **does not** certify broad-phase or narrow-phase contact generation, penetrating-body stabilization, full persistent-manifold warm-starting, time-of-impact/CCD, GPU behavior, cross-platform performance or Kairo's production solver. The normal is defined from A to B, the point is world-space, the code uses doubles, and an absent finite effective mass produces no impulse. A production iterative solver must freeze the restitution target once when a collision begins instead of recomputing bounce from each changing iterate.
+
 ## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
