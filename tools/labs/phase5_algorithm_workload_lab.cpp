@@ -275,8 +275,9 @@ std::optional<std::int64_t> a_star(
             if(edge.weight>INF-d)continue;
             const auto cand=d+edge.weight;
             if(cand<gscore[edge.to]) {
+                if(heuristic[edge.to]>INF-cand)
+                    throw std::overflow_error("A* key overflow");
                 gscore[edge.to]=cand;
-                if(heuristic[edge.to]>INF-cand)continue;
                 open.push({cand+heuristic[edge.to],cand,edge.to});
             }
         }
@@ -476,6 +477,32 @@ void test_ring_and_hash() {
     for(std::uint32_t i=0;i<100;++i)
         require(bloom.possibly_contains(i*3),"Bloom false negative");
     // Intentionally no assertion that absent values always report false.
+    // Differential test against the standard map on a fixed random history.
+    // This probes collisions, updates, erasures, growth and tombstone reuse.
+    LinearMap tested;
+    std::unordered_map<int,int> oracle;
+    std::mt19937 rng{20261111u};
+    std::uniform_int_distribution<int> key_draw(0,80);
+    for(int operation=0;operation<1200;++operation) {
+        const int key=key_draw(rng);
+        if(operation%5==0) {
+            const bool ours=tested.erase(key);
+            const bool expected=oracle.erase(key)!=0;
+            require(ours==expected,"hash randomized erase oracle");
+        } else {
+            tested.insert(key,operation);
+            oracle.insert_or_assign(key,operation);
+        }
+        require(tested.size()==oracle.size(),"hash randomized size oracle");
+        for(int query=0;query<81;++query) {
+            const auto got=tested.get(query);
+            const auto found=oracle.find(query);
+            require(got.has_value()==(found!=oracle.end()),
+                    "hash randomized membership oracle");
+            if(found!=oracle.end())
+                require(*got==found->second,"hash randomized value oracle");
+        }
+    }
 }
 
 void test_graphs_and_union() {
