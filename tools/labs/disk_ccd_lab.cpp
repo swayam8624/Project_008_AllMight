@@ -69,7 +69,7 @@ int main(){
  // Relative motion is invariant under a common uniform Galilean velocity.
  h=first_disk_contact(Disk{{0,0},{55,7},1},Disk{{10,0},{-45,7},1},0.1);
  check(h.has_value(),"relative velocity test failed");near(h->time,0.08);
- // Very small time of impact compared to total flight: stable-root path.
+ // Large coordinate and velocity magnitudes exercise the stable-root path.
  h=first_disk_contact(Disk{{0,0},{0,0},1},Disk{{1000000,0},{-1000000,0},1},2);
  check(h.has_value(),"large-scale impact missed");near(h->time,0.999998,1e-8);
  bool rejected=false;
