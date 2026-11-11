@@ -113,6 +113,19 @@ c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_ccd_lab.cpp 
 
 Both new sources were compiled and executed locally with strict C++20 compiler diagnostics and combined AddressSanitizer/UndefinedBehaviorSanitizer. The GitHub copies of the tested sources were re-fetched and hash-matched against their local counterparts. The workflow now includes both. The analytic disk oracle **does not** implement general convex-shape/rotating-body CCD, continuous impulse resolution, production event scheduling or native Kairo simulation; remote GitHub Actions success is separately unconfirmed.
 
+### Complete disk impact event and randomized invariant witnesses
+
+The [event-pipeline C++20 lab](tools/labs/disk_event_pipeline_lab.cpp) connects all-pairs disk contact discovery, earliest time-of-impact selection, advancement to impact, simultaneous normal-impulse iteration, re-querying after velocity changes, and advancement through the remaining step interval. Its nine deterministic scene suites cover tunneling against a static disk, elastic/inelastic response, simultaneous and sequential contacts, separating motion, overlap rejection, exhausted event budgets, and identity/duration validation. The companion [seeded property regression](tools/labs/disk_event_property_lab.cpp) checks **10,000 isolated unequal-mass collisions** over a range of closing speeds and restitution coefficients for event count, outgoing relative speed, linear momentum and non-increasing kinetic energy.
+
+An initial randomized run discovered a genuine floating-point failure: event advancement could leave a near-tangent pair microscopically overlapping because the old squared-gap tolerance did not scale appropriately with translated world coordinates. The event lab now uses a linear surface-gap tolerance scaled by the world-coordinate magnitude. The corrected source and property test passed locally under GCC, Clang, and combined address/undefined-behavior sanitizers; both exact published files were re-fetched and compared against the tested local sources using Git blob hashes. The complete derivation and step-by-step example are integrated in [the contact and CCD chapter](Supplementary/Rigid%20Contact%20-%20Persistent%20Manifolds%20and%20Solver%20Reconstruction.md).
+
+```sh
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_pipeline_lab.cpp -o /tmp/disk_events && /tmp/disk_events
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_property_lab.cpp -o /tmp/disk_properties && /tmp/disk_properties
+```
+
+This is a **self-contained disk-only CPU oracle**, not Kairo production physics. It has an O(n²) pair scan on every event, assumes piecewise constant velocity and instantaneous frictionless impulses, and does not handle acceleration, angular motion, persistent resting manifolds, deep penetration correction, general convex CCD or engine integration. Exceeding the event budget raises an exception, potentially after partial in-place state updates. GitHub-hosted Actions success remains separately unverified.
+
 ## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
