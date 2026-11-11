@@ -104,6 +104,28 @@ The event's collision normal is the normalized relative separation **n(t) = (p+t
 
 **What this does not solve:** disk CCD assumes translational linear motion throughout the interval and fixed radii. It does not include forces or acceleration changing the trajectory, rotation of polygons, concave meshes, vertex-edge events, general convex support functions, conservative advancement, broadphase swept bounds, contact island rescheduling, stable substep integration, or CCD after multiple impulses. It also does not prove the absence of false misses at all floating-point scales. These exclusions must be explicit when moving from a CPU analytic oracle to the engine's full collision pipeline.
 
+## A complete impact event: geometry, first time, impulse and remaining interval
+
+The earlier swept-disk query identifies an impact but does not evolve a scene. The independent [disk event pipeline laboratory](../tools/labs/disk_event_pipeline_lab.cpp) connects geometry, state integration, simultaneous constraints and the remainder of the frame. It does **not** claim to be Kairo's actual world step. The model assumes fixed-radius, non-spinning disks, piecewise constant velocities, instantaneous frictionless impulses, and linear motion between impacts. There are no forces, torque, resting-contact stabilization, soft contacts or arbitrary polygons.
+
+The entire algorithm follows from keeping one variable: **remaining time**. At each iteration, query all unordered disk pairs for their first collision in that remaining interval. If no pair collides, advance every position by its current velocity times the entire remaining interval. If collisions exist, find the earliest time, move *all* disks to that instant, collect other impacts at approximately the same time, freeze each event's incoming normal velocity and restitution target, solve their normal impulses, then repeat the time-of-impact scan because the impulses have changed the future motion.
+
+The numerical trace is visible in the first laboratory test. A radius-1 stationary disk is at x=0. Another radius-1 disk starts at x=10 with velocity −100 m/s, and the requested frame duration is 0.10 s. The moving disk must travel 8 m before the two surfaces meet, giving **TOI=0.08 s**. The world advances both disks through 0.08 s, then an elastic impulse against the infinite-mass disk reverses its incoming velocity to +100 m/s. The remaining time is 0.02 s, so its centre ends at **x=4 m**. An end-of-frame overlap test cannot reconstruct this physically meaningful trajectory by merely reversing the velocity at t=0.10 s.
+
+For non-spinning disk collisions along the line of centres, the inverse effective mass is the sum of inverse masses, **k = m_A⁻¹ + m_B⁻¹**. With unit collision normal **n** pointing from A to B, relative normal speed **u_n=(v_B−v_A)·n**, and fixed impact target **b=−e u_n_before**, the solver's unilateral accumulated impulse is
+
+$
+\lambda_{next}=\max\left(0,\lambda_{previous}
++\frac{b-(\mathbf v_B-\mathbf v_A)\cdot\mathbf n}
+{m_A^{-1}+m_B^{-1}}\right).
+$
+
+Only the difference **Δλ = λ_next − λ_previous** changes velocities. In a simultaneous batch, multiple contact rows may share a disk, so each row modifies the velocities seen by subsequent rows. The laboratory runs 32 sequential sweeps, freezing the original bounce target rather than repeatedly inventing a new restitution event. A symmetric three-disk scene tests two simultaneous impacts; another three-disk scene tests two impacts at *different* times in one frame.
+
+The discovery procedure is **O(n²)** for each rescan because it checks every unordered pair, with no spatial acceleration. The same-time grouping threshold and near-touch geometry threshold are explicit finite-precision policies, not robust computational-geometry predicates. Grazing trajectories with zero closing normal speed are skipped. Deep initial overlaps are rejected rather than repaired. An event budget throws when exhausted, preventing an infinite event loop from masquerading as successful advancement. Importantly, a thrown exception can leave the input scene partly advanced: a production caller needs a rollback snapshot or transactional step if partial state mutation is unacceptable.
+
+The nine deterministic tests exercise fast impacts, isolated elastic momentum and energy conservation, simultaneous row coupling, separating pairs, initial overlap rejection, event-budget exhaustion, chained events, ideal inelastic energy loss, and zero-duration/duplicate-ID validation. These tests establish a small analytic oracle, **not** a general proof of energy or convergence for arbitrary many-body simultaneous collisions, a guarantee against floating-point tunneling, support for rotating convex objects, or a persistent resting-contact engine. For an impact against an externally fixed body, momentum conservation of the two displayed disks alone is not the correct closed-system invariant; the stationary environment receives the reaction.
+
 ## How to reconstruct and verify the witness
 
 Read the `Row` fields as a prepared contact Jacobian in compressed form: **ra/rb** are the lever arms, **n/t** are the constraint axes, **kn/kt** are scalar rows of the matrix **J M⁻¹ Jᵀ**. The method `relative_velocity` computes **Jv**, `inverse_effective_mass` computes a row's inverse effective mass, `solve_one` projects impulse increments, and `warm_start` applies an already-owned cache once. `make_row` validates data and freezes the impact target. The six tests cover central momentum/energy, friction orientation, angular impulse, separating and static degeneracies, coupled two-contact iteration/next-frame cache, and nonfinite-input rejection.
