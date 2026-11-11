@@ -35,7 +35,7 @@ Signal aliasing occurs when distinct signal frequencies produce the same sampled
 - [[Learned image features and CNNs]]
 - [[Radiance fields and Gaussian splatting]]
 - [[Reservoir resampling and ReSTIR]]
-- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+- [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]]
 
 - [[Tensor-product interpolation]]
 ## Recall and next depth
