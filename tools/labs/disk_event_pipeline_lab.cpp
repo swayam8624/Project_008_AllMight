@@ -46,10 +46,16 @@ std::optional<double> time_of_impact(const Disk& a,const Disk& b,double duration
     const double aa=dot(v,v),bb=2*dot(p,v);
     check(std::isfinite(c)&&std::isfinite(aa)&&std::isfinite(bb),"nonfinite geometry");
     // Relative tolerance addresses near-touch floating error in successive events.
-    const double tolerance=64*std::numeric_limits<double>::epsilon()*
-                         std::max({1.0,dot(p,p),radius*radius});
-    check(c>=-tolerance,"pre-existing geometric overlap; stabilization required");
-    if(c<=tolerance) {
+    // The subtraction of world-space centres can lose bits at large translations.
+    // Compare a *linear* surface gap against a length-scale error budget, not
+    // squared-distance error against a fixed radius-scale tolerance.
+    const double distance=std::hypot(p.x,p.y);
+    const double coordinateScale=std::max({1.0,radius,
+        std::hypot(a.centre.x,a.centre.y),std::hypot(b.centre.x,b.centre.y)});
+    const double tolerance=128*std::numeric_limits<double>::epsilon()*coordinateScale;
+    check(std::isfinite(distance)&&std::isfinite(tolerance),"nonfinite contact distance");
+    check(distance>=radius-tolerance,"pre-existing geometric overlap; stabilization required");
+    if(distance<=radius+tolerance) {
         if(bb>=0)return std::nullopt;
         return 0.0;
     }
