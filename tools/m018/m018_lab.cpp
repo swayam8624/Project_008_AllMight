@@ -116,6 +116,15 @@ void test_handles_and_catalog() {
     check(catalog.live_count() == 1, "live count");
     auto owned_snapshot = catalog.lookup(previous);
     check(owned_snapshot && owned_snapshot->name == "teapot", "initial lookup");
+
+    // Grow the slot vector many times; the logical handle must survive
+    // reallocations even though internal Slot addresses may change.
+    for (unsigned i = 0; i < 128; ++i) {
+        const auto extra = catalog.insert({"extra-" + std::to_string(i), 3});
+        check(extra.catalog_id == previous.catalog_id, "stable catalog owner");
+    }
+    check(catalog.lookup(previous)->name == "teapot",
+          "logical handle survives vector growth");
     check(catalog.erase(previous), "first erase");
     check(!catalog.lookup(previous), "stale generation rejected");
     check(owned_snapshot->name == "teapot", "owned copy survives erase");
