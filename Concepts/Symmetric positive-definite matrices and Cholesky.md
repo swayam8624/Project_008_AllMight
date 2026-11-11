@@ -17,7 +17,7 @@ A real symmetric matrix $A$ is positive definite if every nonzero $x$ has positi
 **Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Structure makes a decomposition a better tool than generic elimination|structure-aware factors]].
 - [[Hessians and local curvature]]
 - [[Multivariate Gaussian distributions and whitening]]
-- [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]]
+- [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt]]
 
 ## Full teaching explanation
 
