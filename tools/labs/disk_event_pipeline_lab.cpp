@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 #include <optional>
+#include <utility>
 #include <stdexcept>
 #include <vector>
 
@@ -77,8 +78,68 @@ struct Result { std::size_t events{},batches{}; double simulated{}; };
 // The event cap is a safety boundary: hitting it raises an error, never silently
 // advances through unresolved contacts. All simultaneous candidates are collected
 // deterministically by pair order and their initial restitution targets are frozen.
+// Build swept-AABB candidate pairs for the *current* remaining interval.
+// The reference all-pairs mode is retained for differential testing.
+// A broadphase false positive is allowed; a false negative is not.
+using DiskPair = std::pair<std::size_t,std::size_t>;
+std::vector<DiskPair> candidate_pairs_for_step(const std::vector<Disk>& disks,
+                                                double remaining, bool swept) {
+    std::vector<DiskPair> pairs;
+    if(!swept) {
+        for(std::size_t i=0;i<disks.size();++i)
+            for(std::size_t j=i+1;j<disks.size();++j)
+                pairs.emplace_back(i,j);
+        return pairs;
+    }
+    struct SweptBox {
+        double minX,maxX,minY,maxY;
+        std::size_t index;
+    };
+    std::vector<SweptBox> boxes;
+    boxes.reserve(disks.size());
+    for(std::size_t i=0;i<disks.size();++i) {
+        const auto& d=disks[i];
+        const double xEnd=std::fma(d.velocity.x,remaining,d.centre.x);
+        const double yEnd=std::fma(d.velocity.y,remaining,d.centre.y);
+        check(std::isfinite(xEnd)&&std::isfinite(yEnd),"swept endpoint overflow");
+        const double negative=-std::numeric_limits<double>::infinity();
+        const double positive=std::numeric_limits<double>::infinity();
+        SweptBox b{
+            std::nextafter(std::min(d.centre.x,xEnd)-d.radius,negative),
+            std::nextafter(std::max(d.centre.x,xEnd)+d.radius,positive),
+            std::nextafter(std::min(d.centre.y,yEnd)-d.radius,negative),
+            std::nextafter(std::max(d.centre.y,yEnd)+d.radius,positive),i
+        };
+        check(std::isfinite(b.minX)&&std::isfinite(b.maxX)&&
+              std::isfinite(b.minY)&&std::isfinite(b.maxY),"invalid swept box");
+        boxes.push_back(b);
+    }
+    // Stable body IDs break ties so the sweep itself is repeatable.
+    std::sort(boxes.begin(),boxes.end(),[&](const SweptBox& a,const SweptBox& b) {
+        if(a.minX!=b.minX)return a.minX<b.minX;
+        return disks[a.index].id<disks[b.index].id;
+    });
+    std::vector<SweptBox> active;
+    for(const SweptBox& b:boxes) {
+        active.erase(std::remove_if(active.begin(),active.end(),[&](const SweptBox& a) {
+            return a.maxX<b.minX;
+        }),active.end());
+        for(const auto& a:active) {
+            if(a.minY<=b.maxY && b.minY<=a.maxY)
+                pairs.emplace_back(std::min(a.index,b.index),std::max(a.index,b.index));
+        }
+        active.push_back(b);
+    }
+    // Crucial for deterministic comparison: TOI queries must execute in the
+    // same original index-pair order as the exhaustive reference implementation.
+    std::sort(pairs.begin(),pairs.end());
+    check(std::adjacent_find(pairs.begin(),pairs.end())==pairs.end(),
+          "duplicate swept pair");
+    return pairs;
+}
+
 Result simulate(std::vector<Disk>& disks,double dt,double restitution=1,
-                std::size_t maxEvents=256) {
+                std::size_t maxEvents=256,bool useSweptBroadphase=false) {
     check(std::isfinite(dt)&&dt>=0&&std::isfinite(restitution)&&
           restitution>=0&&restitution<=1,"invalid time or restitution");
     for(const auto& disk:disks)validate(disk);
@@ -90,8 +151,9 @@ Result simulate(std::vector<Disk>& disks,double dt,double restitution=1,
     while(remaining>0) {
         double first=std::numeric_limits<double>::infinity();
         std::vector<Event> candidates;
-        // Broad phase is intentionally all-pairs O(n^2), an exact CPU oracle.
-        for(std::size_t i=0;i<disks.size();++i)for(std::size_t j=i+1;j<disks.size();++j) {
+        // Recompute broadphase candidates after every impact because velocities change.
+        // The all-pairs mode remains the independent reference.
+        for(const auto [i,j] : candidate_pairs_for_step(disks,remaining,useSweptBroadphase)) {
             const auto hit=time_of_impact(disks[i],disks[j],remaining);
             if(!hit)continue;
             if(*hit<first)first=*hit;
