@@ -192,6 +192,33 @@ The first thing to reconstruct is *why each arrow is necessary*. The request's c
 
 **Blank-file laboratory:** Rebuild `ByteCount`; the fake device; the move-only `Resource`; the private `AssetRecord`; `AssetStore::upload` returning a typed result; function/member/functor callbacks; value/reference and owning-lifetime lambda captures; and a six-byte little-endian serializer. Compile under C++20 and warnings as errors, execute the deliberate failure after handle acquisition, then repeat under `-DNDEBUG`. The tested reference and exact commands are in [[tools/labs/safe_asset_pipeline_lab.cpp|the M012 lab]] and the source/evidence record. Do not classify this exercise as complete learner mastery until it can be reconstructed and explained independently.
 
+## One asset pipeline, many types — M013 retrieval
+
+The preceding recall exercise ended with a safe, published asset. Now the editor wants *the same preparation and publication guarantees* for meshes, textures with different channel counts, and shader records. We must avoid duplicating stores without erasing type safety. Redraw this path from memory, then justify every boundary rather than reciting template vocabulary:
+
+```mermaid
+flowchart LR
+  A["Mesh / Texture / CheckedShader"] --> B{"Uploadable<T> satisfied?"}
+  B -->|no| X["Constrained API unavailable at compile time"]
+  B -->|yes| T["AssetTraits<T> selects size policy"]
+  T --> F["Args&&... + std::forward preserve caller's argument category"]
+  F --> C{"Construct next unpublished slot"}
+  C -->|throws| R["Published prefix unchanged"]
+  C -->|succeeds| P["Increment published count; AssetId returned"]
+  P --> S["Checked heterogeneous batch accounting"]
+```
+
+Imagine one `Mesh` containing three unsigned indices, one `Texture<4>` containing twelve texels, and one `Texture<3>` containing five texels. Explain why a trait gives 12, 48 and 15 source bytes, then derive why the checked batch accumulator returns 75. Show why a bound such as `texel_count > max/Channels` must be checked *before* multiplication. Finally explain why none of these counts establishes the actual GPU allocation size.
+
+Now reconstruct the implementation without opening the reference. Start with `template<class T>` function-template deduction. Build `template<class T, size_t Capacity>` with fixed optional slots and explain why the non-type capacity changes the class specialization. Provide the full `AssetTraits<Mesh>` specialization and the partial `AssetTraits<Texture<Channels>>` specialization, then contrast class-template specialization with function overloading. Derive `U& & → U&`, `U& && → U&`, `U&& & → U&`, and `U&& && → U&&`. Use those results to show why `meshes.emplace(input)` makes a copy while `meshes.emplace(std::move(input))` selects a move path; do not assume the moved-from vector must be empty.
+
+The next reconstruction must connect a heterogeneous parameter pack to a checked fold. Show what happens for zero arguments and why a fold's grouping is not itself a universal left-to-right side-effect guarantee. Then implement the earlier `std::void_t` SFINAE detection pattern and a clearer `Uploadable` concept with compound requirements. State exactly what a `requires` expression checks and what it *does not* execute. Constrain `emplace` with `std::constructible_from` and show why the overload `route(const T&)` selects the constrained path for supported assets and the generic fallback for `UnknownAsset`.
+
+Finally prove publication. If the published count is `c`, slots `[0,c)` are live and slots `[c,Capacity)` are empty. When the constructor throws in slot `c`, the count is not incremented. Reconstruct the deliberately failed `CheckedShader(-1)` attempt and show why the previously published version 3 remains valid and version 4 can use the next slot. Explain what would break if we supported deletion, stored raw references after the depot's lifetime, invoked the API concurrently or replaced the CPU-only record with an asynchronously used GPU buffer without retirement bookkeeping.
+
+**Evidence and full explanation:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One asset pipeline, many asset types — generic code without accidental promises|the M013 narrative]], [[tools/labs/generic_asset_pipeline_lab.cpp|the tested C++20 laboratory]] and [[Supplementary/Foundations#M013 — Parts 201–216: generic asset preparation with constrained APIs|the 16-part coverage map]]. The test checks representative semantics, not the learner's independent ability to reconstruct these decisions or current Kairo implementation details.
+
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
