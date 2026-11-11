@@ -1450,3 +1450,113 @@ The received T01 and T06 excerpts cover 65 lessons. T05 is a byte-identical dupl
 | 500 | Choosing a data structure by measured workload instead of name recognition | M030 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The final choice is an experiment grounded in an operation distribution\|Connected explanation]] | Explained only; dedicated implementation still required |
 
 **Remaining evidence obligations:** no current KairoECS/KairoSpatial source was audited. No AVL/Red-black/B-tree/radix implementation or formal worst-case test suite was executed. No GPU prefix scan or dynamic-graph shortest-path benchmark is established. The lab's pseudo-random tests are reproducible but not a statistical proof of uniformity, and expected O(1) hashing is conditional on workload/hash assumptions. The full source-video/caption review queue remains open; every claim of "authored coverage" is separate from personal mastery, integrated external source coverage and real-engine behavior.
+
+
+## Phase 28 M163–M168 — Parts 2701–2800 deterministic and trusted low-level systems
+
+**Authoritative contract:** the original 3,000-part appendix and integrated Phase 28 chunk ranges. **Source provenance:** newly authored reconstruction, not received original part transcripts. [[Continuous Notes/Systems - From Cartridge Bytes to Reproducible State|Full continuous explanation]]; [[tools/labs/phase28_emulator_core_lab.cpp|bounded CPU/NROM test oracle]]. A chapter explanation is not a compiled or reviewed engine implementation.
+
+| Original part / exact title | Mastery chunk and evidence boundary |
+|---|---|
+| 2701 · CPU emulation as state-transition simulation | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2702 · Registers in an emulated CPU | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2703 · Program counter | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2704 · Stack pointer | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2705 · Processor status flags | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2706 · Opcode fetch | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2707 · Instruction decode | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2708 · Instruction dispatch tables | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2709 · Addressing modes | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2710 · Immediate addressing | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2711 · Zero-page addressing | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2712 · Absolute addressing | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2713 · Indexed addressing | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2714 · Indirect addressing | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2715 · Relative branches | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2716 · Instruction-cycle accounting | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2717 · Memory buses | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2718 · Memory-mapped I/O | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2719 · Device address decoding | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2720 · DMA concept | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2721 · Interrupts | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2722 · Non-maskable interrupts | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2723 · Reset vectors | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2724 · 6502 carry flag | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2725 · 6502 zero flag | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2726 · 6502 overflow flag | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2727 · 6502 negative flag | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2728 · 6502 arithmetic overflow versus carry | M163: An executable byte acquires meaning only inside a machine — CPU, NROM bus and 6502 flags lab; several addressing modes and interrupts narrative-only |
+| 2729 · NES cartridge iNES header | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2730 · PRG ROM | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2731 · CHR ROM or RAM | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2732 · Mapper numbers | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2733 · Bank switching | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2734 · Nametables | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2735 · Pattern tables | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2736 · PPU scanlines | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2737 · PPU dots or cycles | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2738 · OAM sprite memory | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2739 · Sprite evaluation concept | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2740 · VBlank and frame timing | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2741 · Controller shift-register input concept | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2742 · APU timing concept | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2743 · Emulator determinism | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2744 · Save-state serialization concept | M164: An iNES file describes cartridge memory; it is not executable code itself — iNES NROM, controller, narrow save-state lab; PPU/APU/mappers narrative-only |
+| 2745 · Processes and threads in an OS | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2746 · System calls | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2747 · File descriptors | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2748 · Opening, reading, writing, and closing files | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2749 · Buffered versus unbuffered I/O | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2750 · Memory-mapped files | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2751 · File offsets and random access | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2752 · Directory traversal | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2753 · Atomic file rename | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2754 · Temporary-file publication patterns | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2755 · File locking concept | M165: From a deterministic emulator state to an operating-system file — authored explanation; OS fault harness not implemented |
+| 2756 · Sockets | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2757 · IP addresses | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2758 · Ports | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2759 · UDP datagrams | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2760 · UDP packet loss | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2761 · UDP packet ordering | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2762 · UDP duplication | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2763 · TCP streams | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2764 · Framing messages over byte streams | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2765 · Network byte order | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2766 · Serialization for network packets | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2767 · Checksums in network transport | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2768 · Latency versus bandwidth | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2769 · Client-server architecture | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2770 · Prediction and reconciliation concept | M166: From a file to a message on an unreliable network — authored explanation; socket/framing tests not implemented |
+| 2771 · Cryptographic hash functions | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2772 · SHA-256 properties | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2773 · Hash collisions versus preimage attacks | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2774 · HMAC concept | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2775 · Key derivation functions | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2776 · HKDF extract | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2777 · HKDF expand | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2778 · Symmetric encryption | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2779 · AES block cipher concept | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2780 · GCM authenticated-encryption mode | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2781 · Nonces | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2782 · Why AES-GCM nonce reuse is catastrophic | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2783 · Authentication tags | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2784 · Additional authenticated data | M167: From received bytes to a trust decision — cryptographic contracts explained; no security-critical crypto implementation |
+| 2785 · Public-key cryptography concept | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2786 · Secret sharing concept | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2787 · Threshold reconstruction | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2788 · Shamir secret-sharing polynomial concept | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2789 · Merkle trees | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2790 · Merkle root construction | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2791 · Merkle inclusion proofs | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2792 · Token vaults | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2793 · Format-preserving encryption concept | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2794 · Redaction pipelines | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2795 · Trust-policy allow/redact/deny decisions | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2796 · Rust-to-Python FFI concepts | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2797 · PyO3 ownership and error boundaries | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2798 · Security threat modeling | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2799 · Distinguishing cryptographic primitives from secure system design | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+| 2800 · Building and testing one deterministic low-level system where bytes, timing, state, and ownership are all explicit | M168: From received bytes to a trust decision — trust/FFI architecture explained; no secure system or FFI lab |
+
+**Do not misreport full Phase 28 as implemented:** M163–M164 have a limited CPU-only executable reference (selected opcodes and peripheral stand-ins). M165–M168 are detailed teaching and source-grounded architecture with no OS/network/cryptography/FFI integrated test. The exact final Part 2800 is only a partial executable witness: the full trusted low-level capstone remains pending. Existing nonreceived source intervals, 15,475 pending caption/book claims and source verification requirements remain open.
