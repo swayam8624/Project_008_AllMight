@@ -66607,6 +66607,398 @@ The older software-rendering episode on wall ordering fixes a visual overlap by 
 The general lesson is to identify both dependencies before moving code. An image-composition dependency says which previous pixels an operation reads or replaces. A data dependency says which current camera or movement values it consumes. Passing a frame's inputs explicitly can make the latter visible. A mutable object field can also work, but it introduces a required write-before-read order and raises the possibility of using a previous frame's value. Renaming a variable alone does not define its lifetime or update contract.
 
 
+## A detected overlap becomes a physically meaningful contact — Phase 18, M103–M104, Parts 1701–1742
+
+The previous chapter built a repeatable rigid-body integrator. It represented a rigid object's center of mass, orientation, linear/angular velocity, mass and inertia, then showed how forces and impulses change motion. The editor could now push a panel and predict its free movement. But consider the next frame: the panel's lower corner intersects the floor. A broadphase can say that their bounding volumes overlap, and a narrowphase can return geometric witnesses. Neither one makes the panel stop, bounce, slide, roll or rest. The integrator alone will continue applying velocity and drive the shapes farther through each other. The missing system is a **contact constraint solver**.
+
+We will keep one physical event all the way from a geometric contact to a numerical impulse. A square panel falls onto a static floor, initially touching at an off-center point. The floor normal points from floor A toward panel B. The panel may move downward and rotate at the same time. We will derive the velocity of the exact contact point, identify the impulse that changes that velocity, impose the one-sided nonpenetration and friction rules, then examine why multiple contacts must be solved repeatedly. Only after deriving this single interaction will the simulation extend to stacks, joints, continuous collision and parallel islands.
+
+The original curriculum explicitly places this missing bridge in **M103 = Parts 1701–1724** and **M104 = 1725–1742**, the first two mastery chunks of Phase 18. Exact source titles are preserved in [[Supplementary/Foundations#Phase 18 contact and constraint response — Parts 1701–1800|the original-part contract]]. This teaching is **authored reconstruction**, not a newly received original source transcript: the repository's historical ledger accurately marks Parts 1701–1800 as unreceived in the earlier supplied batches. The reference [[tools/labs/phase18_contact_solver_lab.cpp|C++20 contact-solver laboratory]] implements a traceable planar (2D) velocity solver and several analytic witnesses. A 2D body has two linear velocity components and one angular velocity component; the 3D equations are explained alongside it. The lab does not claim to be the current KairoPhysicsEngine or a complete 3D convex solver.
+
+### Detection identifies a geometric possibility; response imposes a dynamical rule
+
+A broadphase usually produces possible interacting pairs using AABBs, trees, sweep-and-prune, grids or other conservative spatial structures. It should prefer false-positive candidates to missing a real interaction, because a missed candidate can allow interpenetration. Narrowphase evaluates the actual shapes to determine separation, penetration, contact normal, point witnesses and geometric feature identity. Collision **response** takes those geometric results together with body velocities, masses, inertias and material parameters, and modifies motion so that appropriate constraints hold.
+
+A **contact point** is commonly represented by a world position p and two body-local or world-relative offsets r_A=p−x_A and r_B=p−x_B from the bodies' centers of mass. A contact normal n should be a unit vector with an explicit orientation; here it points **from A to B**. Penetration depth d≥0 describes an overlapping configuration under the chosen geometric approximation. A **manifold** groups one or more related points between two shapes, because a broad flat surface can touch at several locations at once. In 3D, a rectangular box resting on another may need multiple contact points to resist rotation. A single arbitrary point cannot, in general, represent the entire support area.
+
+A **persistent contact ID** identifies which geometric feature pair generated a contact across steps. Vertex-face, edge-edge and other feature IDs allow the solver to match previous impulse estimates with current contact points. Mere pair identity is insufficient when the manifold's points change or slide across the surface. The solver must also check normal orientation and geometric proximity before accepting a cached impulse; reusing an impulse at a different feature or with a flipped normal can inject energy or pull bodies incorrectly.
+
+The solver's state has two distinct units: geometric separation in meters and velocity along a direction in meters per second. Those quantities cannot be added without a conversion involving a timestep. A penetration depth alone does not tell us how large a collision impulse should be, because the same depth could arise from a slow resting overlap or a high-speed impact.
+
+### The corner's velocity differs from the body's center-of-mass velocity
+
+For a rigid body A, the instantaneous velocity of a point at world offset r_A from the center of mass is
+
+\[
+\mathbf v_A(\mathbf p)=
+\mathbf v_A+\boldsymbol\omega_A\times\mathbf r_A.
+\]
+
+In 2D, angular velocity is a scalar ω (about the axis normal to the plane). For r=(r_x,r_y), the angular contribution is ω×r=(-ω r_y, ω r_x). This follows by differentiating the rotated point position: if p=x+R(θ)r_local, then dp/dt=v + (dR/dθ)r_local·dθ/dt. For planar rotation, that derivative produces the 90-degree perpendicular vector scaled by ω.
+
+The relative contact-point velocity of B with respect to A is
+
+\[
+\mathbf v_{\rm rel}=
+(\mathbf v_B+\boldsymbol\omega_B\times\mathbf r_B)
+-(\mathbf v_A+\boldsymbol\omega_A\times\mathbf r_A).
+\]
+
+Its normal component is v_n=n·v_rel. With our A→B normal convention, v_n<0 means the contact points are approaching along the normal, v_n=0 means no relative normal motion, and v_n>0 means separating motion. For an approaching solid contact, response aims to eliminate or appropriately reverse the closing velocity. Notice that a body may have an upward center velocity and still have a downward-moving corner due to rotation; testing only center velocities gives the wrong collision response.
+
+The relative **tangential** velocity is the part perpendicular to the normal:
+
+\[
+\mathbf v_t=
+\mathbf v_{\rm rel}-v_n\mathbf n.
+\]
+
+In the 2D reference there is one unit tangent t=(-n_y,n_x) and a scalar tangential speed t·v_rel. In 3D there is an entire tangent plane and two independent tangent directions. Contact normal, contact point and tangent basis must all share a declared world coordinate system. A local-space normal accidentally treated as world space corrupts both friction and normal impulses.
+
+### A unilateral contact is an inequality constraint, not a spring by default
+
+A geometric nonpenetration condition can be expressed with a signed gap function g(q)≥0, where q contains generalized body positions/orientations, g=0 denotes touching and g<0 denotes penetration. For an ideal rigid, nonadhesive contact, the normal reaction impulse cannot pull bodies together: λ_n≥0. At an exact complementarity solution, contact separation and reaction obey a relation of the form λ_n g=0 under the positional model. A body separated from the surface should have zero contact reaction, while a touching body may have a nonnegative supporting reaction. At the velocity level, discrete solvers instead enforce an approximate one-sided relative-velocity condition with bias, restitution and tolerance policies. Positional and velocity constraints are related but not identical.
+
+The **coefficient of restitution** e is a dimensionless approximation to impact bounciness. In an isolated idealized normal impact, the desired outgoing normal speed is v_n^+=-e v_n^- for an initially closing speed v_n^-<0, where e=0 is inelastic and e=1 is idealized perfectly elastic along the normal. Real contact with multiple points, friction, deformation and simultaneous constraints does not obey this one-dimensional law exactly. Physics engines commonly suppress restitution below a small approach-speed threshold to avoid an object repeatedly bouncing from tiny gravity-induced velocities at rest.
+
+The simulation must choose its material-combination rule when two colliders have different e or friction coefficients. Maximum, minimum, geometric mean and override rules lead to different results; no universal law says every engine uses one. Modern Box2D's published simulation documentation describes its own mixing and threshold policy. Our reference accepts a precombined coefficient and threshold as contact parameters, without silently claiming to duplicate Box2D's current rule.
+
+### Derive one contact Jacobian instead of memorizing an impulse formula
+
+For two 3D rigid bodies, collect generalized velocities as
+
+\[
+\mathbf V=
+\begin{bmatrix}
+\mathbf v_A\\ \boldsymbol\omega_A\\
+\mathbf v_B\\ \boldsymbol\omega_B
+\end{bmatrix}.
+\]
+
+The normal relative velocity can be written as one row of a **constraint Jacobian**:
+
+\[
+v_n=J_n\mathbf V,\qquad
+J_n=
+\begin{bmatrix}
+-\mathbf n^\mathsf T &
+-(\mathbf r_A\times\mathbf n)^\mathsf T &
+\mathbf n^\mathsf T &
+(\mathbf r_B\times\mathbf n)^\mathsf T
+\end{bmatrix}.
+\]
+
+A Jacobian is the linear map from a small generalized velocity change to the corresponding first-order change in a constraint measurement. It does not introduce a mysterious physical force; it packages the geometry of how each degree of freedom contributes to motion along the constraint. The sign pattern follows our definition of B minus A. Reverse the normal convention and the signs change consistently, not arbitrarily.
+
+The generalized inverse-mass matrix is block diagonal:
+
+\[
+M^{-1}=
+\operatorname{diag}\!\left(
+m_A^{-1}I_3,\; I_A^{-1},\;
+m_B^{-1}I_3,\; I_B^{-1}
+\right),
+\]
+
+where m_A,m_B are masses, I_A,I_B world-space inertia tensors about the centers of mass, and static bodies have zero inverse mass and inverse inertia. A kinematic body generally has inverse dynamic mass zero but can still contribute a specified kinematic point velocity; it should not be mistaken for an ordinary static body with zero velocity. For the velocity response, an impulse magnitude Δλ along the normal changes generalized velocity by
+
+\[
+\Delta\mathbf V=M^{-1}J_n^\mathsf T\Delta\lambda.
+\]
+
+Substituting into the contact normal measurement gives
+
+\[
+\Delta v_n=J_nM^{-1}J_n^\mathsf T\Delta\lambda
+=k_n\Delta\lambda.
+\]
+
+Thus the **inverse effective mass** k_n is
+
+\[
+k_n=m_A^{-1}+m_B^{-1}
++(\mathbf r_A\times\mathbf n)^\mathsf T
+ I_A^{-1}(\mathbf r_A\times\mathbf n)
++(\mathbf r_B\times\mathbf n)^\mathsf T
+ I_B^{-1}(\mathbf r_B\times\mathbf n).
+\]
+
+The scalar effective mass is 1/k_n when k_n>0. It accounts for both translation and rotation. A contact far from a center of mass can achieve a desired point-velocity change partly by rotating the body, so the same linear impulse magnitude does not necessarily produce the same point-velocity response as a center contact. For a 2D rigid body, the angular cross products reduce to scalars and the two rotational contributions become squared lever-arm terms times inverse scalar inertia.
+
+In the [[tools/labs/phase18_contact_solver_lab.cpp|reference source]], the corresponding operation is explicit:
+
+~~~cpp
+const double ra = cross(contact.rA, direction);
+const double rb = cross(contact.rB, direction);
+
+const double inverseEffectiveMass =
+    A.inv_mass + B.inv_mass +
+    ra * ra * A.inv_inertia +
+    rb * rb * B.inv_inertia;
+~~~
+
+The normal must be unit length for these formulas to have the intended magnitude. If k_n=0, the two bodies have no dynamic motion available along that constraint direction, so dividing by k_n is invalid; the lab skips that row. Degenerate or invalid mass properties must be rejected, not "fixed" with an arbitrary epsilon that changes physical semantics. In full 3D, world inverse inertia must be updated from body inertia under orientation, using the correct R I_body^{-1} R^T relationship for an orthonormal rotation matrix. A diagonal local inertia tensor cannot generally be used directly as a diagonal world tensor when the body is rotated.
+
+### Apply equal and opposite impulses—and include torque
+
+Once Δλ is known, let the world impulse vector be P=Δλ n. Body A receives −P and B receives +P. Their linear velocity changes are −m_A^{-1}P and +m_B^{-1}P. Angular velocity changes are −I_A^{-1}(r_A×P) and +I_B^{-1}(r_B×P). These signs follow Newton's third law at the same contact location and the definition of torque impulse as r×P.
+
+In the planar reference, an off-center contact uses r_B=(1,0), n=(0,1), a unit inverse mass and inverse moment of inertia. If B's initial center velocity is (0,−4), its contact-point relative normal speed is −4, but its inverse effective mass is k=1+(1×1)²=2. With zero restitution, the required normal impulse magnitude is 4/2=2. Its center velocity changes from −4 to −2, while angular velocity changes from zero to +2. At the contact point, the angular contribution is +2 vertically, so total vertical point speed is −2+2=0. If one had used only the center velocity, the solver would have overcorrected and generated the wrong rotation. The test checks all these numbers independently.
+
+For two equal unit-mass bodies meeting head-on at relative normal speed −2, k=2 and the inelastic impulse is 1. If A starts at +1 along the normal and B at −1, each ends with zero normal velocity and combined linear momentum remains zero. This is a useful invariant: equal-and-opposite impulses preserve total linear momentum of an isolated pair, while restitution and friction govern how kinetic energy changes. A finite-timestep engine that has gravity, damping or external constraints must not assume total momentum is conserved across the entire world step.
+
+### From one constraint to sequential projected Gauss–Seidel
+
+With one contact and a known desired outgoing velocity v_target, the normal impulse increment could be written
+
+\[
+\Delta\lambda_n=
+\frac{v_{\rm target}-v_n}{k_n}.
+\]
+
+However, a contact cannot pull; the **accumulated normal impulse** must obey λ_n≥0. In an iterative solver, do not clamp each isolated Δλ to be nonnegative. That would forbid reducing an impulse that was previously too large. Instead accumulate first, project the total, and apply only the difference:
+
+\[
+\lambda_n^{\rm new}=
+\max\left(0,\lambda_n^{\rm old}
++\frac{v_{\rm target}-v_n}{k_n}\right),
+\qquad
+\Delta\lambda_n=
+\lambda_n^{\rm new}-\lambda_n^{\rm old}.
+\]
+
+This subtle distinction is fundamental. For example, suppose λ_old=5 and the new unconstrained increment is −2. Then λ_new=3 and the solver applies a *negative incremental impulse* of −2, reducing the earlier support impulse while keeping the total nonnegative. Clamping Δλ itself to zero would keep the excessive total impulse and can cause jitter or energy injection.
+
+A **projected Gauss–Seidel (PGS)** solver visits each constraint row, computes its current error, projects the accumulated multiplier into the legal interval or cone and immediately updates the bodies' velocities. The next row sees those updated velocities. This is why the method is called sequential: it reuses the newest state within an iteration. A Jacobi-style method would evaluate rows against a common snapshot and aggregate updates afterward. Their convergence behavior and parallelization options differ.
+
+For multiple contacts, one row's correction can disturb a previously satisfied row. A stack of bodies is a coupled system: a floor normal impulse supports the lower body, while a contact from lower to upper also presses on the lower body. The solver must revisit these rows until the residual approaches an acceptable tolerance or the chosen iteration budget is exhausted. A fixed iteration count is a production performance choice, not a mathematical guarantee of perfect constraints for all configurations. Poor mass ratios, multiple contacts, friction coupling, bias and unfortunate row order can slow convergence or destabilize the approximation.
+
+Our lab explicitly solves a three-body vertical stack: static floor, lower unit-mass body and upper unit-mass body. It iterates the ground/lower and lower/upper normal rows, checks nonpenetrating relative velocities on its analytical test case, then repeats after a gravity-like downward velocity update. It does not implement a complete manifold or robust 3D stacking across every mass and friction ratio.
+
+### Warm starting stores a physically meaningful solution estimate
+
+A pile often changes little from one fixed step to the next. Recomputing every constraint from zero discards useful information. **Warm starting** applies compatible accumulated impulses from the preceding step as an initial guess before the new PGS iterations. It can improve convergence and reduce visible jitter. The cache must be keyed by stable body/shape pair and contact feature IDs, with validity checks for normal direction and geometric correspondence. Using stale impulses from an unrelated face or reversed normal can produce false forces.
+
+The reference first prepares restitution targets from the pre-warm-start approach velocity, then applies the cached normal and tangent impulses only when the caller explicitly enables warm starting. A separate matching helper checks body pair identity, feature ID and normal agreement. This is not a universal persistent-manifold matcher: actual engines must transform local witnesses, detect sliding feature changes, scale impulses appropriately when timesteps vary and invalidate caches when bodies, materials, contact topology or constraint modes change.
+
+An important data-lifetime connection emerges. A contact's cached feature ID is a *logical identity* like an asset handle, not the address of a temporary collision-triangle structure. The narrowphase may rebuild its temporary candidate arrays, and the solver may compact the active contacts, but warm-start mapping must still preserve the correct correspondence. Generational or versioned pair IDs can help prevent reuse collisions. These are exactly the data-structure and ownership concepts from Phases 3–5 applied to physics.
+
+### Coulomb friction is a bounded tangential response
+
+Contact normal constraints prevent bodies from moving into each other; they do not prevent sliding along the surface. **Friction** opposes relative tangential motion, subject to an approximate contact-force bound. For a 2D contact with tangent t perpendicular to n, let v_t=t·v_rel. The tangent inverse effective mass is k_t=J_t M^{-1}J_t^T, with J_t constructed like the normal Jacobian but using t. The unconstrained tangential impulse increment to eliminate slip is −v_t/k_t. However, an ideal Coulomb model bounds the total tangential impulse by
+
+\[
+-\mu\lambda_n\leq\lambda_t\leq\mu\lambda_n
+\]
+
+in 2D, where μ is the chosen friction coefficient and λ_n is the accumulated normal impulse. Once the normal impulse is zero, the contact has no Coulomb capacity to create arbitrary tangential traction.
+
+The iterative update is therefore
+
+\[
+\lambda_t^{\rm new}=
+\operatorname{clamp}\left(
+\lambda_t^{\rm old}-\frac{v_t}{k_t},
+-\mu\lambda_n,+\mu\lambda_n
+\right).
+\]
+
+The applied impulse is again the difference between new and previous accumulated tangential values. With a unit-mass body sliding right at speed 3 and approaching the floor downward at speed 1, normal impulse 1 removes closing speed. For μ=0.5, the maximum tangential impulse magnitude is 0.5; after friction, horizontal speed becomes 2.5 rather than jumping to zero. The lab checks this exact case.
+
+In 3D, the tangent impulse is a 2D vector within the contact plane. A circular Coulomb cone bounds its magnitude, ||λ_t||≤μλ_n. Clamping two tangent components independently to separate intervals creates a box approximation that may exceed the intended circular cone along diagonals; the solver must declare which model it uses. **Static friction** conceptually permits a contact to resist sliding up to its limit, while **dynamic friction** acts during sustained sliding; a production model may use different coefficients, rolling/spinning resistance and regularized transitions. A simplistic scalar friction clamp does not reconstruct every real material behavior.
+
+The coupling of normal and friction impulses matters. Normal support grows or shrinks as the solver iterates, changing the legal tangential impulse bound. Solving only friction once before the normal constraints converge can produce excessive or insufficient traction. The current reference visits normal then tangent rows within each iteration; more sophisticated solvers may use block methods or cone projection.
+
+### Restitution is an impact rule, not an infinite supply of bounce energy
+
+For a unit-mass object approaching a static floor at normal speed −4, restitution e=0.5 requests outgoing speed +2. With k_n=1, the normal impulse magnitude is 2−(−4)=6. This is exactly what the reference's isolated bounce test verifies. In a second test, an approach of only −0.01 falls below the chosen threshold, so the requested outgoing normal speed is zero and the solver stops the small closing motion without a visible bounce.
+
+In a many-contact stack, applying a bounce formula independently at every point can produce interactions that differ substantially from an isolated two-body collision. The impact state should be captured consistently before warm-start impulses and solver iterations, and restitution should not be repeatedly reapplied every iteration as if a new impact occurred. Advanced solvers often separate the restitution phase from steady contact response or use specialized models. Our lab uses a fixed target derived once per solve and states that limitation explicitly.
+
+A solver can be numerically stable and still physically approximate. Games often favor plausible contact, bounded energy injection and real-time predictability over exact solutions to a rigid complementarity problem. Research claims require comparing the actual approximation against a clearly stated reference problem, not calling every stable pile "physically correct."
+
+### One executable trace, with its assumptions visible
+
+The reference implementation uses planar rigid bodies, world-relative contact offsets, normal/tangent impulses, accumulated projection and a fixed-order iterative solve. Its critical loop follows the mathematical derivation rather than hiding it behind an engine API:
+
+~~~cpp
+const double k = inverse_effective_mass(A, B, contact, contact.normal);
+const double vn = dot(relative_velocity(A, B, contact), contact.normal);
+const double requested = (contact.restitution_target - vn) / k;
+
+const double nextTotal =
+    std::max(0.0, contact.accumulated_normal + requested);
+const double appliedDelta = nextTotal - contact.accumulated_normal;
+
+contact.accumulated_normal = nextTotal;
+apply_impulse(A, B, contact, contact.normal * appliedDelta);
+~~~
+
+The real source guards k≤0, validates unit normals, indices, nonnegative inverse masses and material parameters, and performs the corresponding tangent solve. It does not implement 3D multi-point manifold construction, position correction, convex GJK/EPA or GPU simulation. Its value is that each arithmetic operation can be traced back to the constraint equation and each expected output has a test.
+
+**Source/research bridge:** Ian Millington's supplied *Game Physics Engine Development* covers contacts, friction, rigid bodies and constrained dynamics; the original book's exact pages should be checked against the relevant PDF edition rather than inferred from historical text. [Box2D's published overview](https://box2d.org/documentation/) defines manifolds, persistent contact state, joint and contact constraints. [Erin Catto's Solver2D explanation](https://box2d.org/posts/2024/02/solver2d/) develops accumulated-impulse PGS and warm starting directly. These support the conceptual model, not a claim that our 2D code reproduces Box2D's full current solver or that KairoPhysicsEngine has been independently audited.
+
+## Make the contact stable, observable and impossible to confuse with a finished engine — Phase 18, M105–M108, Parts 1743–1800
+
+A single normal impulse is no longer a mystery. We derived the contact-point velocity, expressed its direction as a Jacobian row, computed the inverse effective mass and projected the accumulated impulse so the contact cannot pull two nonadhesive bodies together. We also derived tangential friction and a thresholded restitution target. Yet a real engine can have perfectly implemented formulas and still exhibit a shaking stack, interpenetrating joints, a permanently sleeping object after a collision, repeated trigger events, a fast projectile tunneling through a wall or nondeterministic results across workers. Those are not unrelated final features. They follow from one fact: the solver only approximates a **coupled dynamical system using finite time and finite computation**.
+
+This continuation owns **M105 = Parts 1743–1767**, **M106 = 1768–1787**, **M107 = 1788–1796** and **M108 = 1797–1800**. The original contracts are recorded in [[Supplementary/Foundations#Phase 18 contact and constraint response — Parts 1701–1800|the exact 100-part mapping]]. Our reference remains a mathematically traceable planar velocity solver. It includes a small analytical TOI witness, filter/event tests, feature-based cache transfer and a stacked-contact regression; it does not pretend that this covers full joint mechanics, robust 3D CCD, broadphase integration, sleeping islands or a parallel contact solver.
+
+### Why an object can shake while every impulse formula is individually correct
+
+Suppose a box is meant to rest on a floor. Gravity adds a small downward velocity each fixed step. The solver supplies a supporting normal impulse, but because contacts and positions are discretized, the box may end the step slightly inside the floor. On the next step, geometric separation is recomputed, potentially at slightly different feature points. Limited solver iterations, changing contact normals, imperfect caching, floating-point error and timestep changes can repeatedly move the box across a penetration threshold. The result is **resting-contact jitter**, even when every individual impulse computation is algebraically valid.
+
+Penetration correction needs its own policy. In an ideal continuous unilateral contact, bodies should not penetrate at all. In a numerical engine, exact geometric nonpenetration is often impractical across all discrete timesteps. A small **slop** tolerance permits bounded penetration without generating unnecessarily large corrective velocities for microscopic errors. Let d be penetration depth in meters and s be allowed slop. A Baumgarte-style velocity bias can request a separating speed
+
+\[
+v_{\mathrm{bias}}
+=\frac{\beta}{h}\max(d-s,0),
+\]
+
+where h is the timestep in seconds and β is a chosen dimensionless stabilization fraction. The units are correct: meters divided by seconds gives meters per second. The sign must be consistent with the A→B normal convention so positive requested velocity separates the pair. One should cap or otherwise control the bias; an enormous d or tiny h can create extreme corrective impulses. An overlapping start state may need a separate depenetration path rather than simply multiplying bias without limit.
+
+**Baumgarte stabilization** folds position error into a velocity correction, which may change kinetic energy and introduce visible bounce. A **split impulse** conceptually solves some penetration correction with a separate pseudo-velocity state so it does not directly add to the physical kinetic velocity, although implementation details vary. A **position-level correction** moves poses to reduce constraint error, requiring careful rotational updates and consistency between positions and velocities. These choices are not mathematically identical. A position-based solver can look visually stable yet change energy or momentum in ways that matter for research comparisons.
+
+The tested planar reference does **not** implement this position bias in its solver. It stores geometric penetration/slop metadata to make the future contract visible but deliberately does not silently add an arbitrary correction that could pollute the isolated impulse tests. This is a scoped omission, not an unmentioned complete solution.
+
+### Stacks expose coupling, ordering and the meaning of convergence
+
+A floor supports the bottom box, and the bottom box supports a second box. Their two constraints act on the same lower box. If the floor row changes the lower velocity, it changes the relative velocity at the upper contact. If the upper row changes the lower velocity, it can violate the floor row again. This is why iterative projected Gauss–Seidel revisits contacts.
+
+In matrix language, a set of normal contact rows J forms an effective coupling matrix
+
+\[
+K=JM^{-1}J^\mathsf T.
+\]
+
+The diagonal entries are the inverse effective masses of individual rows; off-diagonal entries describe how impulse along one constraint affects velocity measured by another. Treating every contact as independent discards those off-diagonal effects. A single sweep can therefore leave nonzero residuals. The exact complementarity formulation depends on the chosen discrete velocity/position model, but its inequalities and coupling cannot be solved merely by clamping the impulse of each row once.
+
+The reference creates three bodies: static floor, lower unit-mass body, and upper unit-mass body. Two upward normal constraints are solved repeatedly. After 28 iterations the chosen test checks the lower body is not moving into the floor and the upper body is not moving into the lower one beyond a tight numerical tolerance. The next step applies a small downward velocity increment to both dynamic bodies and reuses matching cached impulses as a warm start. The test verifies residual normal velocities again. It is a deliberately bounded numerical regression, not evidence that 28 iterations always suffice for 1,000 bodies, extreme mass ratios or friction-heavy stacks.
+
+**Solver ordering** matters because each row immediately changes subsequent rows' inputs. A deterministic fixed order helps reproducibility but may converge more slowly than another order on a particular stack. **Shock propagation** is a family of approximations that treats lower or supporting objects more rigidly during parts of the solve, sometimes stabilizing tall stacks at the cost of altered response. Changing body masses, temporarily freezing supports or changing row order can improve a visual scene while degrading another physical property. Such techniques require declared model assumptions and comparisons, not universal "stability" claims.
+
+A rigorous solver test must examine residuals, accumulated impulses, energy changes, penetration depth, contact feature persistence and iteration count as the scene scales. Merely recording a high frame rate proves little about physical correctness.
+
+### Joint constraints differ from contacts because they can push and pull
+
+Contact normal impulses are unilateral: without adhesion, they may push but not pull. A **joint** often enforces an equality relation that can require impulses of either sign. A simple distance joint constrains two anchor points to maintain separation L:
+
+\[
+C(\mathbf q)=\|\mathbf p_B-\mathbf p_A\|-L=0.
+\]
+
+Let d=(p_B−p_A)/||p_B−p_A|| when the separation is nonzero. Differentiating gives a velocity constraint J_d V=0, where the Jacobian uses the same contact-point velocity machinery as a normal contact, but with direction d and without projecting the multiplier onto a nonnegative half-line. At zero separation, direction normalization is undefined, so the implementation needs a fallback based on stored direction or a different constraint parameterization. Equality constraints still need effective mass, accumulated multipliers, a timestep convention and well-defined error control.
+
+A **ball-and-socket joint** connects two 3D anchors while permitting relative rotation; it constrains three relative translation degrees of freedom. A **hinge** also constrains most relative angular motion, leaving rotation about a specified axis; a **slider** allows motion along one translational axis while limiting others; a **fixed joint** attempts to preserve a full relative transform. These descriptions must be turned into Jacobian rows with correct world-space anchor offsets and orientation representations, not just a generic "locked axis" boolean. Degenerate axes, extreme inertias and large angular errors are important failure cases.
+
+A **motor** adds a desired relative speed or orientation drive and bounds available force/torque, so it cannot generate infinite work. A **limit** is often one-sided, like a contact inequality: a hinge may rotate freely inside an interval but require a reaction when reaching an endpoint. A **spring constraint** describes an approximate restoring force related to displacement and damping, or an equivalent implicit/compliant discrete constraint. Solving all joints at the velocity level with hard target values can make stiffness depend strongly on timestep and iteration count. The model must distinguish true physical stiffness from numerical regularization.
+
+The effective mass formula remains J M^{-1} J^T for a scalar constraint row, and a multi-row joint produces a small effective-mass matrix. Invertibility and conditioning matter; redundant or contradictory constraints can make the matrix singular or ill-conditioned. Diagonal row-by-row PGS is a useful approximation, not a guarantee that the full constrained system has a unique feasible solution.
+
+### Softness, compliance and why timestep belongs in the equation
+
+Hard constraints can create jitter when combined with large steps, inconsistent geometry or high mass ratios. **Softness** introduces controlled compliance so a constraint can tolerate some displacement or velocity error rather than demanding an infinitely stiff response. Different solvers implement this differently.
+
+An ERP/CFM-style formulation often uses an error reduction parameter (ERP) to convert positional error into a corrective velocity and a constraint force mixing (CFM) term to regularize the effective system. Their exact definitions, dimensions and update equations depend on the solver and timestep conventions; one must not interchange parameter names from two engines without deriving the mapping. Adding a small constant to a denominator may avoid division by zero but does not automatically implement physically meaningful stiffness.
+
+**Extended Position-Based Dynamics (XPBD)** gives a particularly clear conceptual example. For a positional scalar constraint C(q)=0 with inverse particle masses w_i and compliance α, its iterative update has the characteristic structure
+
+\[
+\Delta\lambda
+=-\frac{C(\mathbf q)+\tilde\alpha\lambda}
+{\sum_i w_i\|\nabla_{\mathbf q_i} C\|^2+\tilde\alpha},
+\qquad
+\tilde\alpha=\frac{\alpha}{h^2},
+\]
+
+with corresponding position corrections derived from the gradients and inverse masses. This is a positional-compliance construction, not simply the velocity PGS impulse equation with a new variable name. Rigid-body rotational degrees of freedom add their own generalized inverse-mass terms. The paper by Macklin, Müller and Chentanez was motivated in part by stiffness changing with timestep/iteration count in ordinary position-based constraint formulations; the generalization must respect the paper's assumptions and solver design.
+
+The current 2D lab implements neither ERP/CFM nor XPBD. The two mathematics are taught here to prevent a future solver from adding a vague "softness float" without explaining its units or effect. Research use requires independent implementation and comparison against a defined reference, not merely referencing a famous paper.
+
+### Contact islands connect the solver to the graph algorithms we just repaired
+
+The phase-5 graph work now becomes directly useful. Construct a graph whose vertices are dynamic bodies and whose edges represent active contact/joint dependencies. Bodies connected by constraint edges influence one another's velocity solution, so they belong to one **solver island**. Disconnected islands can be solved independently and potentially in parallel after external static/kinematic boundary conditions and event ownership have been handled.
+
+Disjoint-set union can group bodies as new contacts connect components. However, removing an edge can split a previously connected island; basic DSU cannot undo that split correctly without additional rebuild or dynamic connectivity logic. Persistent islands need a policy for merging, splitting, sleeping and waking. The graph itself must not confuse the absence of a broadphase candidate with the end of every persistent contact when fat AABBs or prediction are used.
+
+A joint connecting two dynamic bodies can keep both awake. A static floor touching many objects should not automatically union every independent body into one enormous island merely because they all touch the same static object; island construction commonly treats static/kinematic boundaries specially. This illustrates why "just DSU all collision pairs" can make a nominally parallel world effectively serial or produce incorrect sleep propagation.
+
+The concept of **parallel island solving** is simple once independence is proven: if two islands share no dynamically writable body state, their constraint solves can proceed concurrently. But parallelizing within one island requires additional strategies. A graph-coloring approach can assign colors to constraints so that no two same-color constraints write the same body; all constraints of one color can then be processed in parallel, separated by a barrier before the next color. Correct coloring respects write sets and body ownership, not just a visually pleasing graph partition. The Phase 18 reference solves contacts sequentially in a fixed vector order and does not claim an implemented parallel solver.
+
+### Sleeping is a state machine with a wake-up proof
+
+A stable resting pile should not consume expensive narrowphase and solver work forever. **Sleeping** marks sufficiently inactive bodies or connected islands as eligible to skip motion updates until an event requires waking. A naive rule "linear velocity is nearly zero, therefore sleep" fails for spinning objects, gradually accumulating external forces, oscillating joints or bodies supported by moving contacts.
+
+A typical policy considers linear speed, angular speed, an inactivity duration and often island-level conditions. A body below velocity thresholds for one instant may still be in an unstable contact or about to receive an impulse. The lab tests a simple single-body predicate using both speeds and elapsed quiet time. It explicitly does not claim to implement solver-island sleep transitions.
+
+**Waking from contacts** may be needed when an active body collides with a sleeping object or a contact configuration changes. **Waking from forces or impulses** is important because applying a force to a sleeping body that is never awakened can make the force appear to do nothing. A body whose collision mask changes, whose joint is enabled or whose kinematic support moves may also require waking. The wake policy should be deterministic under a fixed-step event ordering where reproducibility is required.
+
+Sleep thresholds need units: linear meters/second, angular radians/second, and timer seconds. Squared-speed comparisons can avoid square roots but must square thresholds consistently. A sleep timer accumulates only while the chosen inactivity conditions hold; nontrivial motion or impulses reset it under a declared rule. Across different fixed timesteps, counting frames is not equivalent to measuring elapsed seconds.
+
+### Collision categories and events must be defined before callbacks fire
+
+Physics worlds rarely want every shape to collide with every other. Collision **categories** mark which class a shape belongs to, and **masks** specify which other categories it accepts. A basic symmetric rule permits a pair only when (category_A & mask_B) is nonzero **and** (category_B & mask_A) is nonzero. The lab tests both an allowed pair and a pair that fails one side. Collision **groups** may override mask behavior for related assemblies according to an engine-specific convention; their exact sign and priority rules are API contracts, not universal laws.
+
+A **trigger** or **sensor** shape is observed for overlap events without necessarily generating a physical collision impulse. This is important for doors, checkpoints, pickup regions, area effects and game logic. A sensor pair should not accidentally enter the normal contact response just because the narrowphase found geometry. Conversely, a solid contact may need both impulses and begin/end notifications. A filtering rule can intentionally suppress either path.
+
+Events are transitions, not continuously repeated facts. If the active contact set was {11,22} in the previous completed fixed step and becomes {22,33}, contact 11 ended, contact 33 began, and contact 22 persisted. Dispatching "begin" again for 22 would be wrong. The lab uses two set snapshots to test this. Real systems need stable pair IDs, contact-vs-sensor distinctions, ordering, duplicate suppression and policies for destroyed shapes or disabled colliders.
+
+An event buffer decouples the physics update from game callbacks. If callbacks mutate the world while the solver traverses its contact arrays, they can invalidate storage, change filter rules midway through solving or create order-dependent behavior. Buffering begin/end/hit events until an explicit step boundary lets the game process them under a defined ownership and mutation policy. Event delivery may be delayed by one step in certain engine designs; the actual API documents that. A queue whose lifetime crosses frame boundaries needs the same ownership and generational-handle discipline as the rest of the engine.
+
+### A raycast is a query pipeline, not just a line equation
+
+An editor or AI system may ask which object lies under a mouse ray. A broadphase raycast prunes spatial nodes whose bounds the ray cannot intersect within the currently interesting range. It produces candidates, not necessarily exact hits. A **shape-level raycast** then intersects the ray against the actual geometry and computes hit fraction/distance, point, normal and shape identity. Choosing the closest valid hit may reduce the maximum ray fraction as nearer hits are found, but traversal correctness must not assume sorted candidates unless the broadphase guarantees their order.
+
+**Overlap queries** ask whether regions or shapes intersect, sometimes returning potentially overlapping broadphase candidates that still require narrowphase confirmation. **Closest-point queries** minimize distance from a query point to a shape or between two shapes, returning witnesses and possibly normals. Degenerate input (zero-length ray, coincident points, inside-shape origins, noninvertible transforms) needs explicit treatment. A raycast returning a hit normal in the wrong coordinate system can corrupt physics debug drawing or camera movement.
+
+The Phase 18 lab does not implement a general broadphase BVH or GJK closest-points query. Earlier spatial/geometry phases already cover candidate pruning and shape queries. Here we specify how their output must feed contact/event logic and what extra evidence a physics-world implementation needs.
+
+### Continuous collision detection addresses time, not just precision
+
+Discrete contact detection tests positions at selected times. An object can be entirely on one side of a thin wall at time t and entirely on the other side at t+h, with no overlapping sampled endpoint. This is **tunneling**. Increasing floating-point precision alone does not fix the missing time interval. A sufficient smaller timestep may help but can be expensive or still fail for extreme speeds.
+
+A **time-of-impact (TOI)** event estimates the earliest time in [0,h] when two moving shapes touch. For one circle of radius r above a static horizontal plane y=0 and downward center speed v_y<0, the signed gap is g(t)=y_0+v_y t−r. Setting g(t)=0 gives
+
+\[
+t_{\mathrm{hit}}=\frac{y_0-r}{-v_y}
+\]
+
+when y_0≥r. If t_hit lies in [0,h], the engine must not simply integrate to the endpoint and ignore the collision. The lab uses y_0=3, r=0.5, v_y=−100 and h=0.1; it obtains t_hit=0.025 seconds. The uncorrected endpoint center would be y=−7, demonstrating why a discrete endpoint overlap test alone is an unsuitable response strategy.
+
+A **swept-volume broadphase** expands bounds to cover the motion between start and end times. For pure translation of a circle or axis-aligned bounding volume, the union of endpoint bounds can conservatively enclose the swept path. Rotating nontrivial shapes require rotational support, angular bounding bounds or other conservative methods; taking only translating endpoints can miss intermediate rotated extents. A swept broadphase returns candidate pairs needing narrowphase TOI tests; it does not solve response by itself.
+
+**Conservative advancement** for moving convex shapes advances through time using a bound on how quickly the separation can close. A simplified step is related to distance divided by an upper bound on closing speed, with safeguards for zero speed, grazing contacts, angular velocity, numerical tolerance and repeated iterations. A signed-distance or GJK distance oracle must obey the geometric assumptions. It is incorrect to promise a robust 3D CCD algorithm from the one-line d/v idea; convex shape interpolation and rotational motion complicate it substantially.
+
+**Speculative contacts** add a constraint before actual geometric penetration when predicted motion suggests an imminent collision. Such contacts can have positive separation and use a velocity limit intended to prevent the bodies from closing more distance than the permitted gap during the step. A speculative contact can prevent tunneling without precisely computing TOI, but it can also create ghost collisions when a potential contact is never realized. Prediction and validation need a clear approximation policy.
+
+Fast projectiles illustrate the choice. A bullet could use an analytic shape cast, specialized TOI path, smaller substeps or speculative contact construction, depending on gameplay and collision geometry. The engine must distinguish the exact impact time from the first broadphase candidate and define how the remaining fraction of the timestep is simulated after an impact.
+
+### Deterministic simulation is more than a fixed timestep
+
+A fixed timestep controls one source of variation but does not guarantee deterministic results. Contact candidate ordering, manifold feature matching, floating-point instruction semantics, task scheduling, solver row order, random decisions and event delivery can still change results. Parallelizing a PGS contact row without preventing simultaneous writes to shared bodies is a C++ data race; even if atomics make every write indivisible, the numerical accumulation order may change and produce different physics outcomes.
+
+The constraint graph suggests one safe parallelization model: partition into independent islands, then parallelize islands; or color contact edges so each batch has disjoint dynamically writable bodies, synchronizing between batches. But differing batch order or cross-platform floating-point behavior can still affect reproducibility. A deterministic mode needs explicit ordering policies, stable IDs, initial-state snapshots, input recording, seed management and comparison tolerances or strict arithmetic conditions.
+
+The Phase 18 laboratory runs a fixed ordered vector of contacts in one thread. Its outcomes are deterministic under the declared arithmetic assumptions and tested values. It is **not** an executed experiment demonstrating determinism across Linux and Apple silicon, nor a claim about the current Kairo solver. This distinction matters when constructing blind simulation research tests.
+
+### How to profile a solver without confusing fast with correct
+
+A solver profiler should count broadphase candidate pairs, narrowphase accepted contacts, manifold points, warm-start hits/misses, PGS iterations, per-island sizes, maximum constraint residual, penetration distributions, clamp events, allocated bytes, sleep/wake transitions, CCD TOI events and event-buffer sizes. It should separate broadphase time, narrowphase time, setup, velocity solving, position solving, integration, event publication and GPU/debug drawing. An isolated elapsed-time measurement cannot identify which subsystem needs repair.
+
+Visual debugging must show contact points and oriented normals, body centers of mass, tangent directions, impulse magnitudes, overlap depth and active/sleeping state. Rendering a normal vector with the wrong world transform may imply the solver is wrong when the debug visualization is wrong. A contact impulse arrow should clarify its scaling and whether it represents the *accumulated total impulse* or just a per-iteration change.
+
+The required **regression matrix** includes isolated restitution, low-speed no-bounce, static-vs-dynamic and equal-mass impacts, off-center angular effects, two-contact friction, stacks with different mass ratios, tolerance/slop boundaries, persistence after feature changes, joints with limits/motors, contact begin/end under destruction, triggers, filtering, sleeping/waking, fast projectile tunneling, and deterministic repeat runs. Error handling should include invalid normals, negative masses/inertias, near-zero effective mass, NaN inputs and overflow/large-world coordinates. A green sanitizer test on one planar example is an important witness, but it does not prove all of these cases.
+
+Our lab currently checks several of these explicitly: equal-and-opposite impulse and momentum, 50%-restitution bounce with threshold suppression, off-center rotational effective mass, Coulomb friction at the active bound, a small stack before/after warm starting, cache invalidation by changed feature, an analytic fast-circle TOI, swept AABB, symmetric filtering, buffered events and a sleep predicate. It is intentionally not a production contact solver with full position correction, joint Jacobians, manifold generation, 3D tangent cones or parallel graph-color execution. Those remain the next genuinely separate implementation tasks, not tiny omitted glossary definitions.
+
+### What it means to finish the bridge from rigid bodies to the next renderer frame
+
+The connected simulation sequence can now be reconstructed: a fixed-step world integrates predicted velocities, a broadphase conservatively finds possible interacting pairs, narrowphase constructs geometry and stable contact identifiers, the solver derives Jacobians and effective mass, applies projected accumulated normal/tangent impulses across coupled constraints, chooses penetration/restitution and tolerance policies, updates poses, buffers events, determines sleep transitions and publishes an immutable or otherwise safely owned snapshot to the renderer. Each output has a distinct space and lifetime. Debug draw consumes already published data; it must not race the solver's mutable arrays.
+
+For the user’s graphics and research programs, this distinction is decisive. A rendering engine can display a beautiful pile of objects even when the solver violates momentum or injects energy; a numerical solver can pass isolated impulse tests while the game's broadphase misses fast contacts or the renderer consumes a stale transform. A research result needs the entire evidence chain, with negative tests and controlled baselines, not an attractive animation alone.
+
+**Source and research bridge:** The supplied *Game Physics Engine Development* motivates the rigid-body/contact/constraint progression and the need for stability tests. [Box2D's current documentation](https://box2d.org/documentation/) discusses contact persistence, events, sleeping and continuous collision; its [simulation documentation](https://box2d.org/documentation/md_simulation.html) describes modern substeps, TOI/speculative handling and contact recycling. [Erin Catto's Solver2D discussion](https://box2d.org/posts/2024/02/solver2d/) provides the projected accumulated-impulse and warm-starting foundation. [Macklin et al.'s XPBD paper](https://doi.org/10.1145/2994258.2994272) supports the compliant constraint formulation as a different solver family. These are **independently identified external references**, not proof that the complete papers or videos have been reproduced; the 2D lab and chapter's executable/analytical results remain separate from Kairo's current implementation status.
+
 ## Grow behaviour and presentation without losing ownership
 
 ### A screen-space circle is still geometry
