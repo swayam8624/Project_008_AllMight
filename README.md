@@ -212,3 +212,8 @@ The new [[tools/m018/m018_lab.cpp|C++20 test program]] is separately compiled an
 
 **Scope of claims:** authored teaching and a representative CPU contract, **not** a newly supplied source transcript or independent proof of reader mastery; no current KairoMath/KairoRenderer audit, native Vulkan/Metal resource-lifetime test, dynamic plugin ABI certification, real CPU performance comparison or exhaustive concurrency/fault-injection proof. Previous source and caption-review backlogs are still active. Existing teaching was preserved; this was an additive insertion at its dependency seam.
 
+
+
+### Phase 8 hosted regression — confirmed pass
+
+The [M018 GitHub Actions run #43038422705](https://github.com/swayam8624/Project_008_AllMight/actions/runs/43038422705), for source commit 9226f19e867fc89cef869f209408d434daaaf27f, completed with **five successful jobs**: GCC sanitizer, GCC release, Clang strict, the existing C++20 module/header-unit/C ABI graph and the new separately compiled M018 PIMPL/type-safe/generic-math laboratory. The M018 executable additionally exercised 128 asset insertions and verified that the original logical handle survived vector growth. The two-compiler assembly outputs were generated and checked for a named function. These are actual hosted regression results, not throughput benchmarks, GPU execution or cross-toolchain ABI certification.
