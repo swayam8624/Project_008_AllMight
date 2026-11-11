@@ -387,6 +387,40 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 **Completion classification:** 20 canonical part titles mapped to a developed narrative and one tested representative laboratory; not marked as 20 individually demonstrated learner mastery gates or a fully verified Kairo code audit. Additional compiler/platform checks, user reconstruction, project-specific anchors, and production performance comparisons remain explicit.
 
 
+## M012 — Parts 181–200: typed asset requests, deferred callbacks and transactional publication
+
+**Provenance and status:** authored reconstruction using the original 3,000-part contract's exact M012 titles (not a received M012 lesson transcript). The material belongs directly in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From an accepted render request to a resource that survives failures and callbacks|the continuing computing-foundations narrative]]. It follows the existing M011 backend selection chapter and precedes the pre-existing general API-contract chapter. The 20 original identifiers remain a coverage map, **not** a substitute for the connected explanation.
+
+| Original part / exact source title | Why the renderer story requires it and where the evidence sits |
+|---|---|
+| 181 · Implicit conversions and converting constructors | A raw integer is not automatically a meaningful byte count; the chapter contrasts implicit construction with deliberate unit conversion. |
+| 182 · explicit constructors and conversion control | `explicit ByteCount(std::size_t)` prevents mistaken copy-initialization; compile-time checks verify the conversion restriction, not range validity. |
+| 183 · User-defined conversion operators | `explicit operator std::size_t()` requires deliberate extraction; contextual conversions and overload effects are explained. |
+| 184 · Function pointers | A synchronous C-style progress callback receives a function pointer plus borrowed context; the lab checks the invocation. |
+| 185 · Member-function pointers | A `Reporter` member pointer requires a particular live instance; the lab calls the member through an object. |
+| 186 · std::function type erasure and overhead | The copyable callable wrapper hides target type, not allocation/copy/lifetime cost; the lab checks an owning target and empty invocation. |
+| 187 · Callable objects and functors | `AddBytes::operator()` carries state for a progress update; pointer-member lifetime remains a borrow. |
+| 188 · Lambdas as generated closure types | The closure object combines an operation with stored or referenced captured state; no concrete closure byte layout is claimed. |
+| 189 · Lambda capture by value | Snapshot and shared-owner captures show the difference between copied scalar state and an owned lifetime. |
+| 190 · Lambda capture by reference and lifetime hazards | A reference capture reads later mutations only while its referent lives; invalid async scene callback is explained but not executed. |
+| 191 · Exceptions: throw, propagation, catch, unwinding | The deliberately injected failure after resource creation unwinds a private local owner; typed result conversion occurs at the public boundary. |
+| 192 · noexcept and optimization/contracts | `Resource` destructor and move operations express non-escaping exception promises; compile-time traits connect to vector insertion guarantees. |
+| 193 · Strong, basic, and no-throw exception guarantees | Prepare privately, publish once, compare stored state and native-handle counts after failure; guarantee is limited to stated observable state. |
+| 194 · Error codes versus exceptions in engine code | Empty input and operational failure map to typed `UploadError`; exception categories remain an implementation detail within the bounded example. |
+| 195 · Assertions as programmer-error checks | The lab's `verify` is active under `NDEBUG`; external input checks and internal invariant failures use distinct policies. |
+| 196 · Undefined behavior and optimizer assumptions | Invalid lifetime, out-of-bounds, aliasing and data-race examples are explained, never deliberately run as undefined behavior. |
+| 197 · Strict aliasing rules | A raw file cannot be safely interpreted as a typed struct merely by pointer cast; object type-access and lifetime conditions are explicit. |
+| 198 · Object representation, bytes, and std::bit_cast | IEEE binary32 `bit_cast` is tested under platform assertions; a separate little-endian serializer establishes portable file bytes. |
+| 199 · Trivial, trivially copyable, and standard-layout properties | `WireHeader` traits are checked without falsely asserting its raw storage is a six-byte file layout; differing type categories are explained. |
+| 200 · Designing a resource-owning C++ type from blank memory to safe API | `Resource` develops empty/owning/moved-from states, matching release, deleted copy, noexcept move and a device-outlives-owner contract; AssetStore adds a failure-atomic publication boundary. |
+
+**Executable verification:** [[tools/labs/safe_asset_pipeline_lab.cpp|C++20 reference laboratory]], 275 lines and 11,473 bytes. Exact committed Git blob `bc811fb2c659b635af290d2f3abb58a6c38a06fc` matches the locally executed lab's Git hash. Local SHA-256: `32e93bc026677e074aaa77711c7b3fea721e0f582e64eb5d86c2d740425df92c`. Ran successfully with GCC 14.2.0, `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`; also compiled and ran under Clang 17.0.0 with warning flags and GCC release-style `-DNDEBUG -O2`. Outputs reported `safe_asset_pipeline_lab: all checks passed`. The tests witness resource counts, strong-state preservation under one injected failure, callback lifetimes, overload shapes, `bit_cast`, and explicit endian encoding; they do not prove all exception interleavings, driver synchronization, exact allocation costs, thread safety or raw Kairo implementation behavior.
+
+**Research/code audit still pending:** the curriculum suggests `KairoAssets/AtomicFile.cppm` and `KairoRenderer/VulkanDevice.cppm`. Neither the live source revisions nor user-project build/test results have been inspected here. Source-verified language discussions: [C++ draft exception specifications](https://eel.is/c++draft/except.spec), [`std::function` callable requirements](https://en.cppreference.com/w/cpp/utility/functional/function), [`std::bit_cast`](https://en.cppreference.com/w/cpp/numeric/bit_cast), and [C++ object representation](https://en.cppreference.com/w/cpp/language/object). Their existence does not claim exhaustive normative clause analysis.
+
+**Gate distinction:** all 20 original titles have integrated teaching and one representative tested pipeline. This is *authored coverage*, not a claim of 20 separate tested programs, universally exhaustive failure injection, independent user reconstruction or a received transcript. The next unreceived canonical chunk is M013, Parts 201–216; earlier original-source gaps elsewhere remain pending.
+
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
