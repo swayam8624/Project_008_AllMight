@@ -100,6 +100,19 @@ c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/persistent_contac
 
 The separate [GitHub Actions regression workflow](.github/workflows/rigid-contact-lab.yml) runs strict builds and UndefinedBehaviorSanitizer for both witnesses; its remote status must be checked rather than inferred from the workflow file. These independently authored 2D CPU checks do not certify production broadphase, narrowphase manifold generation, Kairo runtime physics, CCD, 3D friction, stable stacking over long simulations or platform-specific GPU behavior.
 
+### Verified contact-cache and continuous-collision witnesses
+
+The [contact feature cache policy lab](tools/labs/contact_cache_lab.cpp) tests canonical body/feature identity, normal-angle invalidation, world-to-current-tangent impulse projection, conservative timestep-ratio handling, material-edit invalidation, duplicate feature detection, and frame-to-frame stale pruning. It assumes the narrow phase has **already** produced stable feature identifiers; it is not itself a polygon clipping or feature matching algorithm.
+
+The [swept-disk continuous collision lab](tools/labs/disk_ccd_lab.cpp) reconstructs exact linear-motion circle-circle time of impact from relative motion and a quadratic, with numerically safer root computation, initial-overlap policy, grazing contacts, near misses, relative-motion invariance, and parameter validation. The expanded [contact and CCD teaching chapter](Supplementary/Rigid%20Contact%20-%20Persistent%20Manifolds%20and%20Solver%20Reconstruction.md) gives the mathematics, data representation, numerical trace, caching decisions and failure cases next to the preceding impulse-solver explanation.
+
+```sh
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/contact_cache_lab.cpp -o /tmp/contact_cache && /tmp/contact_cache
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_ccd_lab.cpp -o /tmp/disk_ccd && /tmp/disk_ccd
+```
+
+Both new sources were compiled and executed locally with strict C++20 compiler diagnostics and combined AddressSanitizer/UndefinedBehaviorSanitizer. The GitHub copies of the tested sources were re-fetched and hash-matched against their local counterparts. The workflow now includes both. The analytic disk oracle **does not** implement general convex-shape/rotating-body CCD, continuous impulse resolution, production event scheduling or native Kairo simulation; remote GitHub Actions success is separately unconfirmed.
+
 ## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
