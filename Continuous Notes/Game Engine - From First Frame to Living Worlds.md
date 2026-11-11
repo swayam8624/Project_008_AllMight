@@ -48259,10 +48259,27 @@ Repository-specific passages below describe the supplied Kairo snapshot. They ha
 
 ### Rigid-Body State, Center of Mass, Mass and Inverse Mass, Newtonian Force Accumulation, Gravity, Drag, Springs, Damping, Torque, Angular Momentum, Inertia Tensors, Principal Axes, Shape Inertia, Parallel-Axis Theorem, Composite Bodies, and World-Space Inverse Inertia
 
-This is the beginning of **Phase 17 — Rigid-Body Dynamics: Mass, Inertia, Forces, Motion, and Integration**.
+The pressure-plate crate from our workshop game is now the engineering test case. Until this point, a transform and a velocity could make the crate *look* as though it moves. But an off-centre push must create spin; landing on an edge must affect rotation as well as translation; and a resting crate must stop penetrating the floor without accumulating imaginary energy. The following mechanics are the smallest physical model that can answer all three demands. They are not independent formula topics: each quantity earns its place because the next computation needs it.
 
+### Follow one crate through the complete physical argument
 
-This pass is foundational enough that I do **not** want you to memorize formulas independently. Everything comes from one physical picture:
+Suppose our crate is a homogeneous rectangular box with mass $m=2\\,\\mathrm{kg}$, width $a=2\\,\\mathrm m$, height $b=1\\,\\mathrm m$, and depth $c=1\\,\\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.
+
+For a homogeneous axis-aligned box the centre-of-mass inertia tensor in its local principal frame is diagonal:
+
+$
+I_{\\mathrm{body}}=\\frac{m}{12}\\operatorname{diag}(b^2+c^2,\\;a^2+c^2,\\;a^2+b^2)=\\operatorname{diag}(1/3,5/6,5/6)\\;\\mathrm{kg\\,m^2}.
+$
+
+Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\\,\\mathrm N$ acting $0.5\\,\\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\\,\\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\\,\\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\\tau=r\\times F=(0,0,-5)\\,\\mathrm{N\\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\\alpha_z=\\tau_z/I_{zz}=-6\\,\\mathrm{rad/s^2}$ because $I_{zz}=5/6\\,\\mathrm{kg\\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\\omega\\times(I\\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.
+
+At a fixed timestep $h=0.01\\,\\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\\,\\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\\,\\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.
+
+When the crate touches the plate or floor, the contact impulse must change both $v$ and $\\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.
+
+The sequence below keeps the source's Part 1601–1700 labels for provenance, but those numbers do not divide the reasoning into separate lessons. Keep asking what the crate needs *next* to remain a physically and numerically coherent part of the game.
+
+Everything comes from one physical picture:
 
 $$
 \boxed{
