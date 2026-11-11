@@ -283,6 +283,46 @@ Finish by distinguishing **borrow** from **ownership**. A `span<const uint8_t>` 
 
 **Actual reconstruction witness:** [[tools/labs/asset_container_lab.cpp|M015 C++20 lab]], compiled and run with GCC sanitizers, Clang, and a GCC release-style build. A learner should be able to recreate the sequence of checks without the reference and explain every failure. [[Supplementary/Foundations#M015 — Parts 231–250: growing the asset registry without losing identities|Original 20-part mapping]] · [[Supplementary/Sources and Code Anchors#Phase 5 additive reconstruction — M015 / Parts 231–250|Exact test and provenance ledger]]. Do not claim personal mastery or real Kairo/GPU verification merely because this standalone model passes.
 
+## Query the registry without confusing identity and a snapshot — M016 reconstruction
+
+The previous M015 exercise produced a generation-checked asset registry. The new problem is to report on assets without changing their live ownership and without assuming that a handle stays current forever. Read the [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a living asset registry to reliable queries and transformations|full M016 narrative]] before testing recall; the questions below should be reconstructed as *one processing story*, not as twenty memorized API names.
+
+```mermaid
+flowchart LR
+  A["Live registry + generational handles"] --> B["Capture owned metadata snapshot"]
+  B --> C["Optional result or typed query error"]
+  C --> D["Variant command handling / open diagnostic any"]
+  D --> E["Sort, stable-sort or partition by the intended key"]
+  E --> F["Search only with its required ordering"]
+  F --> G["Transform records into sizes"]
+  G --> H["Accumulate/reduce with numeric contract"]
+  H --> I["Erase from report copy, not live registry"]
+```
+
+Starting with the five records `brick.mesh` (48 bytes, priority 2), `sky.tex` (64, priority 3), `ui.tex` (16, priority 3), `terrain.mesh` (128, priority 1) and `rock.mesh` (48, priority 2), answer each part in coherent explanations:
+
+1. **Describe each result's meaning.** Why does `optional<AssetHandle>` mean “possibly absent” but fail to distinguish an empty query from a missing name? Build `ExpectedLike<AssetHandle,LookupError>` as a C++20 model. Explain exactly what its `has_value()` contract requires before `value()` is accessed and why it is not a full replacement for C++23 `std::expected`. Then distinguish that result from an Inspect/Upload/Evict `variant` and from a diagnostic `any`. Predict a wrong `any_cast`.
+
+2. **Rebuild the report shape.** Group count and error count in a `pair` and three report fields in a `tuple`. Show that `auto [a,b] = pair` copies this pair, while `auto& [a,b] = pair` aliases it. Explain why a named struct can be clearer at a long-lived public API boundary and why a borrowed structured binding needs an owner that outlives it.
+
+3. **Prove the traversal capabilities before selecting the algorithm.** Classify `istream_iterator<int>`, `forward_list<int>::iterator`, `list<int>::iterator`, `deque<int>::iterator` and `vector<int>::iterator` according to input, forward, bidirectional, random-access and contiguous iterator concepts. Why can `std::sort` operate on the vector's random-access iterators but not directly on `list` iterators? Why may binary search over forward iterators have logarithmic comparison count but linear iterator advances?
+
+4. **Choose ordering by what the editor needs.** Write a comparator that first orders byte counts, then asset names so equal byte counts have deterministic tie breaking. Explain why `std::sort` need not preserve the order of comparator-equivalent records and why common introsort-like implementations are not mandated by the C++ standard. For descending priorities, write `stable_sort` and predict the relative order of `sky.tex` vs `ui.tex` and `brick.mesh` vs `rock.mesh`. State the strict-weak-ordering requirements the comparator must satisfy.
+
+5. **Partition only when the task is binary membership.** Use `std::partition` to put mesh records before non-mesh records; verify both halves and use `partition_point` on the resulting already-partitioned range. Explain why the two groups are not automatically sorted and why partitioning does not promise to retain original relative order. Say when `stable_partition` would be appropriate.
+
+6. **Derive the binary-search boundaries.** Once the byte-count ordering is `[16,48,48,64,128]`, prove that `lower_bound(48)` returns index 1 and `upper_bound(48)` returns index 3. Explain why `equal_range` gives `[1,3)` and why `lower_bound(50)` points to index 3 despite having no match. Supply comparator overloads in both element/value and value/element orders. Describe why using a priority-sorted sequence here would violate the precondition.
+
+7. **Compare one-off scanning with a maintained index.** Use `std::find` to look for `sky.tex` in an unsorted name snapshot. Explain when this simple linear scan is preferable to building a fresh hash index, and when repeated lookups should instead use the registry's already maintained name index.
+
+8. **Transform and reduce with the correct numeric meaning.** Derive `[48,64,16,128,48]` using `std::transform` and an output back inserter, then calculate `304` using an explicit `std::size_t{0}` initial accumulator. Write the ordered `std::accumulate` fold and explain why `std::reduce` may regroup operations, even if a particular run happens to use one thread. Use \(10^{20},1,-10^{20},3\) to derive both 3 and 4 from different floating-point groupings. State separate overflow, accuracy and deterministic-reproducibility policies.
+
+9. **Erase at the correct ownership boundary.** Starting with `{1,2,3,4,5,6}`, use `remove_if` to keep odd IDs but demonstrate that the vector still reports size six until `erase` destroys the suffix. Then use C++20 `std::erase_if` to remove the two texture records from an **owned report snapshot**, leaving three rows. Explain why the live asset registry has not evicted those assets and what additional generation validation, index cleanup and GPU retirement a real eviction would require.
+
+**Blank-file witness:** reconstruct the program in [[tools/labs/asset_query_algorithm_lab.cpp|asset_query_algorithm_lab.cpp]] with active failure checks, compile under C++20 with warnings as errors, then rerun with `-DNDEBUG` and sanitizers. The reference was actually run with GCC 14.2 ASan/UBSan, Clang 17 and GCC release flags. Reconstruct the expected values before running it; a passing executable is not a substitute for understanding the data/iterator/lifetime contracts.
+
+**Audit:** [[Supplementary/Foundations#M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline|the original 20-part mapping]] and [[Supplementary/Sources and Code Anchors#Phase 6 additive reconstruction — M016 / Parts 251–270|the source and verification ledger]]. The registry's *live* concurrency, the separately named Kairo implementations and the learner's independent reconstruction remain unverified here.
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
