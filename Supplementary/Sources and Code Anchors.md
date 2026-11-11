@@ -947,6 +947,37 @@ Each printed `compile_time_asset_policy_lab: all checks passed` and the local la
 
 **No-loss integration invariant:** previous teaching, sources, indexes and original numbered source material remain verbatim. This pass adds one continuous first-use chapter, one tested lab, fourteen traced source titles, one recall reconstruction and README navigation. The next original chunk is **M015 / Parts 231–250**, whose container growth, invalidation, ownership and lookup tradeoffs arise from the currently bounded tile/asset storage model.
 
+## Phase 5 additive reconstruction — M015 / Parts 231–250
+
+**Scope and provenance:** the integrated 180-chunk curriculum maps M015 to original Parts 231–250, exactly: vector growth/invalidation/reserve; array/deque/list/forward_list; ordered and unordered associative containers; hashing and load factor; queue/stack/priority_queue; span; string and string_view. The new authored [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An asset registry grows while its handles must not change|growing-asset-registry narrative]] begins from the fixed-capacity asset planner introduced in M013/M014 and shows why physical storage, logical identity, lookup indexing, scheduling and borrowed views need different guarantees. [[Supplementary/Foundations#M015 — Parts 231–250: growing the asset registry without losing identities|Exact 20-title coverage]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#A growing asset store must preserve its promises — M015 retrieval|the reconstruction board]] preserve auditing without turning the teaching into a catalogue. **No original M015 lesson transcript was received in this phase.**
+
+**Executed, byte-identical reference:** `tools/labs/asset_container_lab.cpp`, 292 lines / 13,525 ASCII bytes, Git blob `c9a323bcf4a3f2e41df13db9d10d381bdd71468f`, SHA-256 `e829cf731b17419e282775cf0b8224c210819ed3d81da36fce45014a04e4afae`. The committed blob was checked against the locally compiled file. Actual commands executed:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_san
+/tmp/allmight_m015_san
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_clang
+/tmp/allmight_m015_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_container_lab.cpp -o /tmp/allmight_m015_release
+/tmp/allmight_m015_release
+```
+
+GCC 14.2.0 and Clang 17.0.0 were the local compilers. Each final executable printed `asset_container_lab: all checks passed`. The GCC sanitizer run reported no AddressSanitizer or UndefinedBehaviorSanitizer diagnostics; this is not a proof of general memory safety. The locally observed vector growth was `2 -> 4`, and local short/long string capacities were `15/1000`. Both numbers are expressly implementation-dependent observations, not C++ requirements.
+
+**What was independently tested:** `reserve` versus `resize` and resulting live values, required vector capacity growth, array indexing, deque end operations, list `splice` with an unaffected iterator, forward-list predecessor erasure, ordered associative ordering and uniqueness, deliberately colliding hash lookup and one-bucket concentration, max-load/reserve contract, unordered-set membership, explicit priority tie breaking, queue FIFO, stack LIFO, a synchronous checksum span, owning versus borrowed path/name behavior, and a generational asset registry with successful insertion, two failure injections, rollback, erase, stale-handle rejection and slot recycling.
+
+**What was not demonstrated:** no invalid/dangling reference was deliberately dereferenced; the lab does not benchmark container performance, prove memory-layout details, test every allocator or throwing custom hasher, implement an ECS component store, enforce thread safety, guarantee network/filesystem atomicity, or validate GPU queue completion and native resource retirement. `AssetRegistry` uses a vector of optional assets and a string-keyed unordered map, not the actual production `KairoECS/SparseSet.cppm` or `KairoRenderer/RenderGraph.cppm`. Those curriculum-suggested external repositories and specific source revisions remain **uninspected and to verify**. The test's logical handle has 64-bit generation plus slot; that is not a globally persistent or distributed identifier.
+
+**Current library references checked:** [vector contiguous storage and invalidation](https://en.cppreference.com/w/cpp/container/vector), [vector reserve](https://www.cppreference.com/cpp/container/vector/reserve), [vector resize](https://www.cppreference.com/cpp/container/vector/resize), [deque reference versus iterator invalidation](https://en.cppreference.com/w/cpp/container/deque), [unordered_map key/hash agreement, rehash and iterator invalidation](https://en.cppreference.com/cpp/container/unordered_map), [span](https://en.cppreference.com/w/cpp/container/span), [string_view](https://en.cppreference.com/w/cpp/string/basic_string_view). The supplied original contract remains the authority for atomic titles, and the standard-library pages support the language guarantees. The provided *Professional C++* textbook also covers `vector` size/capacity, reserve, invalidation, `span`, and the adapters; its cited excerpts were consulted for explanatory alignment. This is not a new claim of reading that book cover to cover.
+
+**No-loss integration check:** all older text is retained verbatim. The new lesson sits at the M014→existing API chapter transition, supported by one executable lab and appended mapping, recall, references and navigation. The next coherent need is M016 / Parts 251–270, where queries and transformations over the now-growing asset registry require optional results, variants, iterator categories, sorting, searching, transformations, reductions and safe erasure.
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
