@@ -495,3 +495,16 @@ The first volume covers all Parts 1–100. Prerequisites explain the story's dep
 - [[Camera view and clip-space pipeline]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.
 - [[Visual angle and calibrated rays]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.
 - [[Lens optics and depth of field]] → [[Ray differentials and camera sampling measures]] — prerequisite definitions and assumptions.
+
+
+## Phase 30 — From an actual produced artifact to defensible research evidence
+
+This chain is a **learning dependency**, not a claim that the entire physical pipeline has been executed. Read left → right as a prerequisite to a derived claim.
+
+[[Concepts/Byte and octet]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A cache key is content identity plus the algorithm that interprets it|content hashing and exact input identity]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A safe publication is planned first, then committed at one deliberate boundary|staged immutable publication]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#Engine-side verification begins with bytes but must end with meaning|semantic verification in the engine]].
+
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|C++/CPU ownership and execution]] + [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|color/radiometry and camera conventions]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#Performance results are not screenshots of the profiler|timing-domain and benchmark interpretation]] + [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#Image quality measurements require a data model|pixel measurement contract]].
+
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing|probability, optimization and numerical error]] + [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#Claims must be traceable backward to actual evidence|provenance]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A benchmark only becomes research when it can falsify a claim|research control and ablation]] → [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#The oral capstone: reconstruct one unknown system, not a glossary|independent first-principles oral defense]].
+
+The production model is a testable Python host-neutral reference, not evidence that Blender/Maya/Houdini/Nuke, Kairo/Maveb, Vulkan/Metal or a human oral examination has been run.
