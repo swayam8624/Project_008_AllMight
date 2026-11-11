@@ -19,11 +19,12 @@ permissions:
 
 jobs:
   portable-evidence:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
