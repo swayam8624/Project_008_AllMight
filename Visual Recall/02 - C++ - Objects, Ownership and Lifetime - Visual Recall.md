@@ -356,7 +356,7 @@ The real sources are [[tools/labs/asset_ranges_pmr_lab.cpp|the tested C++20 CPU 
 
 ## Preserve an asset while the engine changes — M018 reconstruction
 
-The editor selected a teapot before the asset service started deleting, reallocating and reusing storage. The renderer has independently compiled clients, several classes of resource handles and mathematical values from different coordinate frames. Reconstruct the API by starting with the event, **not** with a memorized list of PIMPL, concepts and expression templates. The complete reasoning lives in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A registry crosses its last C++ boundary hidden implementation, typed identity and measured abstraction cost|the M018 continuous chapter]]. The actually compiled service and its test program are in [[tools/m018/m018_lab.cpp|the test laboratory]] and [[tools/m018/build_m018_lab.sh|the multi-TU build]].
+The editor selected a teapot before the asset service started deleting, reallocating and reusing storage. The renderer has independently compiled clients, several classes of resource handles and mathematical values from different coordinate frames. Reconstruct the API by starting with the event, **not** with a memorized list of PIMPL, concepts and expression templates. The complete reasoning lives in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost|the M018 continuous chapter]]. The actually compiled service and its test program are in [[tools/m018/m018_lab.cpp|the test laboratory]] and [[tools/m018/build_m018_lab.sh|the multi-TU build]].
 
 **Reconstruction 1 — identity, storage, and ABI.** A mesh occupies slot zero in catalog A at generation one, and the client retains a handle. The vector reallocates, the mesh is erased, and a second mesh occupies the same slot. Explain precisely why a pointer might become invalid on reallocation, why a stale index could identify the wrong mesh, why a generation alone does not distinguish two separate catalogs, and why a MeshTag prevents a texture handle being silently passed to a mesh operation. The correct handle is a value containing a type-level kind and catalog/slot/generation runtime identity. A valid lookup compares all required fields and checks that the slot still holds a live value. After erase, the old generation must fail even when the slot is reused. The returned optional MeshInfo is a copy, so keeping it after erase cannot dangle, although its description is now stale. Confirm with the executable's delete/reuse and cross-catalog tests.
 
@@ -375,6 +375,31 @@ The editor selected a teapot before the asset service started deleting, realloca
 **Mastery criterion:** without looking up the code, reconstruct the public header, its out-of-line implementation, the validation predicate, an exception-safe reuse transition, a typed fixed/dynamic math interface, a lifetime-safe lazy expression evaluation, and a falsifiable compiler-cost experiment. Reading the answers is not evidence of independent reconstruction.
 
 
+## Make the rejected operation part of the lesson
+
+```mermaid
+flowchart LR
+    A["Same scalar, space and extent?"] -->|yes| B["Borrow named operands"]
+    A -->|no| X["Reject expression"]
+    B --> C["All operands still alive?"]
+    C -->|yes| D["Materialize matching output"]
+    C -->|no| Y["Dangling references: invalid"]
+    style X fill:#ffe4e6,stroke:#be123c,color:#881337
+    style Y fill:#ffe4e6,stroke:#be123c,color:#881337
+    style D fill:#dcfce7,stroke:#15803d,color:#14532d
+```
+
+**Read the figure:** type checks decide whether the operation has the right meaning; lifetime checks decide whether its borrowed objects still exist. Both must hold. A successful type check does not extend an operand's lifetime.
+
+| Prompt | Short answer | Full explanation |
+|---|---|---|
+| Two vector types differ; is mixing prevented? | Test the actual eager, lazy and materialization operations. Every path needs the same scalar/space/extent restrictions. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The delayed path must preserve the same mathematical contract|Type contract and examples]] |
+| Does a named inner expression become constexpr? | Naming extends this node's usable lifetime; it does not make references to automatic locals valid in that constexpr initializer. The saved lab uses const. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Expression templates: delaying evaluation can remove an intermediate and create a lifetime bug|Expression lifetime story]] |
+| Why forbid copying this intrusive stack? | Two head pointers can share hooks; popping one clears membership while the other still points at that node. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Intrusive storage exposes a different ownership contract|Copy counterexample and destructor policy]] |
+| Who survives stack destruction? | Caller-owned linked tasks must survive at stable addresses; the destructor clears hooks without deleting tasks. | [[tools/m018/m018_lab.cpp|Executable checks]] |
+
+**Reconstruct:** predict the sequence A.push(task), copy A to B, B.pop(), A.push(task). Explain the duplicate-pop failure in the unchecked design and why the current stack rejects copying before execution. Then draw task/stack destruction order and show a valid unlink-and-reuse sequence.
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
@@ -387,3 +412,8 @@ The editor selected a teapot before the asset service started deleting, realloca
 | Can out-of-range lanes return before a required group barrier? | Generally no. Supply neutral values while preserving the barrier participation contract. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Scan turns local counts into nonoverlapping output regions|Partial-tile example]] |
 
 Explain the two barriers in tiled matrix multiplication: one protects complete tile loading; one protects reuse after every consumer finishes. Explain why a later dispatch still needs the API's execution and memory dependency, rather than assuming a dispatch boundary flushes everything.
+
+
+## API resource stages
+
+A name, initialized API object, allocated storage, initialized bytes and completed use are different states. glCreateBuffers establishes the object; a storage command establishes capacity; null initial data does not mean zero-filled bytes. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A buffer name, an API object, and its storage are separate|Open the worked API distinction]]. A nonzero integer alone proves neither a safe draw range nor safe retirement.

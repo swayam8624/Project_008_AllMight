@@ -53,3 +53,8 @@ Caption/source records: [[Continuous Notes/University - Worlds, Images and Infer
 ## Phase 11 camera development
 
 Clipping and perspective-correct interpolation preserve projective geometry, while texture filtering asks how much surface area maps to a pixel. Neighboring camera rays approximate the image-to-surface footprint. At grazing angles one pixel can cover a long, thin region; a center-only texel lookup may alias detail even when attributes interpolate correctly. Use footprint estimates to select mip levels or anisotropic filters, while respecting visibility edges where derivatives jump. Ray differentials aid sampling but do not replace clipping or multisample coverage. Source basis: PBRT differential-ray texture filtering. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].
+
+
+## Worked clip-plane trace beside the shader explanation
+
+For clip endpoints $(0,0,0,1)$ and $(6,0,0,2)$, the right-plane intersection uses homogeneous edge parameter $1/5$; interpolating the already divided endpoints would use $1/3$. [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Clip coordinates are not normalized device coordinates|The worked trace and pipeline figure]] also explain negative fourth components, the zero-divisor limit and declared depth conventions. This is used by the shader-stage teaching before program compilation and linking are discussed.

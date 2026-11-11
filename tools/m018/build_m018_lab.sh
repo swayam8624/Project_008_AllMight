@@ -21,4 +21,5 @@ g++ -std=c++20 -O2 -S "$here/assembly_probe.cpp" -o "$build/gcc.s"
 clang++ -std=c++20 -O2 -S "$here/assembly_probe.cpp" -o "$build/clang.s"
 grep -q 'allmight_m018_sum3' "$build/gcc.s"
 grep -q 'allmight_m018_sum3' "$build/clang.s"
+python3 "$here/check_note_examples.py" --compiler clang++
 echo "m018: multi-TU PIMPL, GCC/Clang/release/sanitizers/assembly: PASS"

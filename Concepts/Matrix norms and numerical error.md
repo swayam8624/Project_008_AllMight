@@ -15,3 +15,8 @@ The spectral norm is the largest 2-norm stretch and equals the largest singular 
 [[Moore-Penrose pseudoinverse]], [[Matrix functions]], [[Sparse and iterative solvers]].
 
 **Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Matrix norms give scale to residuals and error claims|norms and error]].
+
+
+## A matrix norm can protect a geometry bound
+
+A local sphere under a linear transform is generally an ellipsoid. The Frobenius norm times its original radius gives a safe, possibly loose enclosing radius. Taking only the longest matrix column can fail under shear. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A line corridor can be a cheap prefilter for shadow-caster work|The culling example]] derives the bound, demonstrates the shear counterexample, and links its geometric figure. This connects numerical matrix norms to conservative rejection decisions.

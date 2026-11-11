@@ -32,6 +32,9 @@ concept RealScalar = std::floating_point<T>;
 
 template<RealScalar T, std::size_t N, class Space>
 struct Vector {
+    using scalar_type = T;
+    using space_type = Space;
+    static constexpr std::size_t extent = N;
     std::array<T, N> coordinates{};
     constexpr T& operator[](std::size_t index) { return coordinates[index]; }
     constexpr T operator[](std::size_t index) const { return coordinates[index]; }
@@ -53,18 +56,39 @@ constexpr Quantity<T, Unit> operator+(
 
 // A small expression tree postpones materialization. Its references
 // may dangle when operands or temporary child nodes are destroyed.
-template<class L, class R> struct SumExpr {
+template<class E>
+concept VectorExpression = requires(const E& expr, std::size_t i) {
+    typename E::scalar_type;
+    typename E::space_type;
+    requires RealScalar<typename E::scalar_type>;
+    { E::extent } -> std::convertible_to<std::size_t>;
+    { expr[i] } -> std::same_as<typename E::scalar_type>;
+};
+template<class L, class R>
+concept CompatibleExpressions = VectorExpression<L> && VectorExpression<R>
+    && std::same_as<typename L::scalar_type, typename R::scalar_type>
+    && std::same_as<typename L::space_type, typename R::space_type>
+    && (L::extent == R::extent);
+
+template<class L, class R> requires CompatibleExpressions<L, R>
+struct SumExpr {
+    using scalar_type = typename L::scalar_type;
+    using space_type = typename L::space_type;
+    static constexpr std::size_t extent = L::extent;
     const L& left;
     const R& right;
     constexpr auto operator[](std::size_t i) const {
         return left[i] + right[i];
     }
 };
-template<class L, class R>
+template<class L, class R> requires CompatibleExpressions<L, R>
 constexpr SumExpr<L, R> lazy_add(const L& a, const R& b) {
     return {a, b};
 }
-template<RealScalar T, std::size_t N, class Space, class Expr>
+template<RealScalar T, std::size_t N, class Space, VectorExpression Expr>
+    requires std::same_as<T, typename Expr::scalar_type>
+        && std::same_as<Space, typename Expr::space_type>
+        && (N == Expr::extent)
 constexpr Vector<T, N, Space> materialize(const Expr& expr) {
     Vector<T, N, Space> out{};
     for (std::size_t i = 0; i < N; ++i) out[i] = expr[i];
@@ -83,7 +107,8 @@ T dot_dynamic(std::span<const T> a, std::span<const T> b) {
 }
 
 // Intrusive storage keeps next/link state inside the client's Task object.
-// The stack does not own Tasks. Never destroy a linked task.
+// The stack does not own Tasks. Linked tasks must outlive the stack and
+// remain at the same address; destruction of the stack unlinks survivors.
 struct Task {
     std::string name;
     Task* next{};
@@ -92,6 +117,14 @@ struct Task {
 class IntrusiveTaskStack {
     Task* head_{};
 public:
+    IntrusiveTaskStack() = default;
+    IntrusiveTaskStack(const IntrusiveTaskStack&) = delete;
+    IntrusiveTaskStack& operator=(const IntrusiveTaskStack&) = delete;
+    IntrusiveTaskStack(IntrusiveTaskStack&&) = delete;
+    IntrusiveTaskStack& operator=(IntrusiveTaskStack&&) = delete;
+    ~IntrusiveTaskStack() {
+        while (pop()) {}
+    }
     void push(Task& task) {
         if (task.linked) throw std::logic_error("task already linked");
         task.next = head_;
@@ -106,6 +139,13 @@ public:
         task->linked = false;
         return task;
     }
+};
+
+template<class L, class R>
+concept CanLazyAdd = requires(const L& a, const R& b) { lazy_add(a, b); };
+template<class T, std::size_t N, class Space, class Expr>
+concept CanMaterialize = requires(const Expr& expr) {
+    materialize<T, N, Space>(expr);
 };
 
 void test_handles_and_catalog() {
@@ -150,7 +190,23 @@ void test_handles_and_catalog() {
 void test_generic_math_and_lifetimes() {
     using W3 = Vector<float, 3, WorldSpace>;
     using V3 = Vector<float, 3, ViewSpace>;
+    using W2 = Vector<float, 2, WorldSpace>;
+    using DW3 = Vector<double, 3, WorldSpace>;
     static_assert(!std::same_as<W3, V3>);
+    static_assert(CanLazyAdd<W3, W3>);
+    static_assert(!CanLazyAdd<W3, V3>);
+    static_assert(!CanLazyAdd<W3, W2>);
+    static_assert(!CanLazyAdd<W3, DW3>);
+    using Sum = decltype(lazy_add(std::declval<const W3&>(),
+                                 std::declval<const W3&>()));
+    static_assert(CanMaterialize<float, 3, WorldSpace, Sum>);
+    static_assert(!CanMaterialize<float, 3, ViewSpace, Sum>);
+    static_assert(!CanMaterialize<float, 2, WorldSpace, Sum>);
+    static_assert(!CanMaterialize<double, 3, WorldSpace, Sum>);
+    using NestedSum = decltype(lazy_add(std::declval<const Sum&>(),
+                                       std::declval<const W3&>()));
+    static_assert(CanMaterialize<float, 3, WorldSpace, NestedSum>);
+    static_assert(!CanLazyAdd<NestedSum, V3>);
     static_assert(!std::same_as<MeshHandle, TextureHandle>);
     static_assert(!std::same_as<Quantity<float, Meters>, Quantity<float, Seconds>>);
     static_assert(sizeof(W3) == 3 * sizeof(float));
@@ -175,6 +231,10 @@ void test_generic_math_and_lifetimes() {
 }
 
 void test_intrusive_versus_owning() {
+    static_assert(!std::is_copy_constructible_v<IntrusiveTaskStack>);
+    static_assert(!std::is_copy_assignable_v<IntrusiveTaskStack>);
+    static_assert(!std::is_move_constructible_v<IntrusiveTaskStack>);
+    static_assert(!std::is_move_assignable_v<IntrusiveTaskStack>);
     Task upload{"upload"}, render{"render"};
     IntrusiveTaskStack queue;
     queue.push(upload);
@@ -189,6 +249,17 @@ void test_intrusive_versus_owning() {
     check(queue.pop() == &upload, "intrusive next");
     check(queue.pop() == nullptr, "empty stack");
     check(!upload.linked && !render.linked, "unlink clears membership");
+
+    // Nodes precede the nested stack, so they survive its destructor.
+    {
+        IntrusiveTaskStack temporary;
+        temporary.push(upload);
+        temporary.push(render);
+    }
+    check(!upload.linked && !render.linked && !upload.next && !render.next,
+          "stack destruction unlinks surviving nodes");
+    queue.push(upload);
+    check(queue.pop() == &upload, "unlinked node can join another stack");
 
     // This separately allocated container OWNS string values, unlike the
     // intrusive stack. No performance comparison is inferred.

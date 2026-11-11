@@ -14103,6 +14103,8 @@ Source reading: [caption source](https://www.youtube.com/watch?v=bbPdEkRaVNE). C
 
 A frame-count debounce can expire almost immediately if the loop keeps iterating while rendering is skipped. In a Kohi fix, waiting 30 frames before rebuilding swapchain resources returned early without beginning or ending a normal frame; increasing the threshold to 120 still reached it rapidly. The presenter adds a 16 ms sleep to pace the path, then reports rebuilding about half a second after resizing stops. This is an expedient frame-count-plus-sleep fix, not a general time-based debounce or robust pacing policy. [Resize debounce fix](https://www.youtube.com/watch?v=x8ao57nbMlY)
 
+**Chronology clarification:** after the temporary 120-frame diagnostic, the presenter restores the threshold to 30 frames. The sleep component alone is then about $30\times16\,\mathrm{ms}=0.48\,\mathrm{s}$; 120 such sleeps would instead total about $1.92\,\mathrm{s}$. The observed half-second behavior belongs to the restored threshold. Actual elapsed time also includes loop work and scheduling, so this calculation still does not turn frame counting into a time-based debounce guarantee.
+
 ### Scale movement by elapsed time, and state what the clock means
 
 Suppose an arrow key moves a camera by a fixed 0.1 units each update. At 60 updates per second, that is 6 units per second; at 10 updates per second, it is 1 unit per second. Frame-based movement makes simulation speed depend on rendering speed. The lesson reproduces this mismatch and motivates delta time at 00:30–03:30, then works through the 60-versus-30 frame examples around 03:40–08:30. [TIMESTEPS and DELTA TIME](https://www.youtube.com/watch?v=pctGOMDW-HQ&t=30s) [TIMESTEPS and DELTA TIME](https://www.youtube.com/watch?v=pctGOMDW-HQ&t=220s) [TIMESTEPS and DELTA TIME](https://www.youtube.com/watch?v=pctGOMDW-HQ&t=500s)
@@ -31113,6 +31115,56 @@ Textures fit the same ownership model. A material may hold references to an albe
 
 A shader stage is a small GPU program for one part of the graphics pipeline. A vertex shader runs for each vertex and computes its clip-space position; a fragment shader runs for covered fragments and chooses output values such as color. The lesson first explains those roles and how interpolated values pass between them at roughly 07:00–12:00. “Runs per pixel” is a useful beginner shorthand, but fragments are not always one-to-one with final displayed pixels because of multisampling, coverage, and later tests. [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=420s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=540s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=660s)
 
+#### Clip coordinates are not normalized device coordinates
+
+A vertex shader's `gl_Position` is a four-component [[Concepts/Homogeneous coordinates and perspective division|homogeneous clip coordinate]]. If later vertex-processing stages are active, their final position output is what reaches clipping. Homogeneous coordinates use four numbers to represent a projected position. Multiplying all four by the same positive scale leaves the divided position unchanged; it also scales each clip-plane inequality by that positive factor. The fourth number is not a pixel coordinate. The word “clip” matters: OpenGL evaluates the primitive against clip-volume inequalities before it divides by the fourth component. In the default OpenGL depth convention, a clip point is inside the view volume when
+
+$$
+-w_c\le x_c\le w_c,\qquad
+-w_c\le y_c\le w_c,\qquad
+-w_c\le z_c\le w_c.
+$$
+
+For surviving positions with nonzero fourth component, perspective division produces normalized device coordinates (NDC):
+
+$$
+(x_{\mathrm{ndc}},y_{\mathrm{ndc}},z_{\mathrm{ndc}})=
+\left(\frac{x_c}{w_c},\frac{y_c}{w_c},\frac{z_c}{w_c}\right).
+$$
+
+For example, $(2,0,0,2)$ sits on the right clip-plane boundary because $x_c=w_c$; it divides to NDC $(1,0,0)$. The value $(3,0,0,2)$ is outside the right plane because $3>2$. A triangle crossing that plane may be clipped to a new edge there; it is not correct to clamp its shader output to $[-1,1]$ before the divide. With $w_c=2$, the valid clip coordinate $x_c=1.5$ becomes $x_{\mathrm{ndc}}=0.75$, so pre-clamping it changes the projected position.
+
+
+The fourth coordinate also carries information that division can hide. The point $(0,0,0,-1)$ would divide to $(0,0,0)$, apparently inside the NDC cube. Yet it cannot satisfy $-w_c\leq x_c\leq w_c$: that would require $1\leq0\leq-1$. Testing the divided coordinates alone has lost the sign restriction that made this point invalid for the clip volume. A zero fourth component likewise cannot be handled by ordinary perspective division. Detect invalid projection inputs rather than inserting an arbitrary tiny divisor and calling the resulting image correct.
+
+Clipping an edge creates a new vertex, not a clamped old one. Let the clip endpoints be $A=(0,0,0,1)$ and $B=(6,0,0,2)$. Define the right-plane measurement $g(P)=w_c-x_c$, which is nonnegative on its inner side. We have $g(A)=1$ and $g(B)=-4$. Along the edge $P(t)=(1-t)A+tB$, the plane measurement is linear, so its zero occurs at
+
+$$
+t=\frac{g(A)}{g(A)-g(B)}=\frac15,
+\qquad P(t)=(1.2,0,0,1.2).
+$$
+
+This vertex divides to NDC $(1,0,0)$. Dividing the original endpoints first gives NDC x coordinates 0 and 3; a linear interpolation of those numbers reaches 1 at a parameter of $1/3$. That parameter is different from the clip-edge parameter $1/5$. It cannot replace the parameter used to construct the homogeneous edge intersection or its ordinary perspective-correct attributes. Screen-linear attributes have separate interpolation rules. This is one reason a software rasterizer must keep the pipeline's spaces and interpolation policies explicit.
+
+```mermaid
+flowchart LR
+    V["Final position output: x, y, z, w"] --> C["Clip primitive in homogeneous space"]
+    C --> D["Divide surviving position by w"]
+    D --> N["NDC"]
+    N --> P["Viewport and depth mapping"]
+    style C fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
+    style N fill:#dcfce7,stroke:#15803d,color:#14532d
+```
+
+**Read the figure:** the shader produces a homogeneous position; clipping may create new vertices; division produces normalized coordinates; viewport state then maps those values to window coordinates and depth. Clipping is not a component clamp, and viewport depth mapping is not the same operation as choosing clip-space depth inequalities.
+
+The inequalities above declare OpenGL's default negative-one-to-one depth convention with depth clamping disabled. OpenGL 4.5 and later also provide clip-control state selecting zero-to-one clip depth; then the near inequality is $0\leq z_c$, while the far inequality remains $z_c\leq w_c$. A renderer must state its actual API/state convention rather than attaching one z interval to every backend. The normative mechanisms are in the [OpenGL 4.6 Core specification, sections 13.7–13.8](https://registry.khronos.org/OpenGL/specs/gl/glspec46.core.pdf), printed pages 454–458.
+
+The source recording's first-triangle example uses coordinates already between minus one and one. Its automatic captions at 00:08:40–00:09:26 mix that example with the general role of the model-view-projection transform. That does not establish that every clip coordinate lies in that interval. The new numeric traces and failure cases are original explanations checked separately; no source code or GPU execution from the recording was independently inspected. [OpenGL Shaders, relevant cue](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=520s).
+
+
+#### Return to shader compilation and linking
+
 In OpenGL, source text is compiled into shader objects; compatible compiled stages are then attached and linked into a program object. Compilation and linking are distinct failure points, so check and report both status and info logs. The episode adapts the OpenGL wiki's example around 13:00–18:00, shows separate shader compile diagnostics around 20:00–24:00, and program link checks around 24:00–27:00. Its cleanup deletes stage objects after successful linking and deletes failed objects on error. This lifecycle describes the demonstrated OpenGL implementation, not a backend-neutral shader API. [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=780s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=1200s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=1440s)
 
 The sample vertex stage declares a position input at a fixed attribute location, writes `gl_Position`, and the fragment stage writes an RGBA output. It demonstrates a constant red color around 29:00–34:00, then passes a value from the vertex stage to the fragment stage to create a gradient at 35:00–40:00. The graphics pipeline interpolates the output across the primitive; changing vertex values changes the gradient. It also maps a signed position range into a nonnegative color range using $c'=0.5c+0.5$, since the example's positions range from $-1$ to $1$ while normalized color channels are in $[0,1]$. This visualization is an instructional experiment, not a color-space-correct material model. [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=1740s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=2040s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=2220s) [OpenGL Shaders](https://www.youtube.com/watch?v=QBCCHm_9HV8&t=2340s)
@@ -32187,6 +32239,29 @@ A directory panel needs to know which files it is allowed to show and how the cu
 Keep filesystem paths as paths while navigating. Convert them to display text only at the UI boundary. The episode tries to create a directory with a Russian name and crashes in its string conversion path. That is evidence the shown implementation has a Unicode bug, not evidence that `std::filesystem::path` itself cannot represent the name. A project should define its path encoding and conversion policy, then test names that include accents, CJK characters, and emoji on each supported platform.
 
 Scanning the directory every UI frame makes new files appear immediately in this prototype, but it also makes filesystem work part of the immediate-mode rendering path. For larger projects, maintain a cached listing and refresh it when the user requests it or when a file watcher reports a change. That requires the root to come from the active project rather than a hard-coded relative directory. The episode discusses these improvements but implements neither a project model nor a cache.
+
+#### Keep filesystem work out of the editor’s frame loop
+
+An asset browser should treat a directory listing as data to prepare, not as work to repeat while drawing the panel. The Hazel walkthrough enumerates a folder to build its item buttons, then points out that it could retain the entries and draw from the saved list each frame. It also offers a once-per-second scan as a way to notice files added outside the editor. The episode reports no timing measurement, so this is a design direction rather than a demonstrated performance result. [Content Browser/Asset Panel, 00:34:50–00:35:32; source `src-a82bb4f942703caa7b7f`, point p-000043, unit `u-7cacdd05265ba993707afb39`]
+
+Separate three operations: **enumerate** the current directory, **present** its cached entries in the UI, and **refresh** the cached model when something may have changed. When the user opens a folder, enumerate that folder once and store entries with project-relative paths, stable UI IDs and file kinds. Each UI frame draws the prepared in-memory list. Filtering and sorting can be recomputed when the entries or the chosen filter/sort keys change, rather than automatically repeating all preparation every frame. Refresh on navigation, an explicit refresh action, a project change, or a file-watcher notification. A periodic refresh is a simple fallback when external tools may alter the folder, but the interval is a responsiveness-versus-I/O policy; it is not a universal one-second requirement.
+
+A useful trace is easy to inspect: open `Assets/Materials`, count one directory scan, then render the panel for many frames and confirm the count stays unchanged. Create `wood.png` externally. Before refresh, the cached panel may not show it; after the invalidation or refresh event, it should appear once without duplicate IDs. Navigate into a child folder and back to confirm the new listing replaces the old one. If the browser scans every frame, a large or slow directory can make frame time depend on disk and metadata operations. If the cache never invalidates, it presents stale content. Logging scan count, duration and entry count makes those two failure modes visible.
+
+The cache should not own the meaning of an asset. Keep the displayed label separate from its project-relative identity, and resolve that identity through the project’s asset boundary before opening or assigning it. The source’s path walk also hits a non-ASCII folder-name crash but leaves the cause unresolved; it is evidence to test encoding conversion at the filesystem/UI boundary, not a proven fix by switching to wide strings. The raw source says a cached entry vector and periodic scan are possible improvements; the invalidation contract and trace above are original teaching additions, not claims that the tutorial implemented them.
+
+
+Asynchronous refresh needs an identity guard too. Suppose opening Materials starts request 41. Before it completes, the user opens Textures and starts request 42. Request 42 finishes first; the active panel now shows Textures. When request 41 completes, it must not replace that panel with Materials merely because its result arrived last. Match the result's project, directory and request generation to the active request before publication. A multi-folder cache may retain the Materials result under its own key, but it still must not publish it as the active Textures view. Canceling a worker is an optimization; rejecting stale publication is the correctness rule.
+
+| Event | Active folder / request | Safe publication decision |
+|---|---|---|
+| Open Materials | Materials / 41 | Start its scan; show a declared loading or prior-list state. |
+| Open Textures before 41 finishes | Textures / 42 | Start 42; 41 no longer owns this panel. |
+| Result 42 arrives | Textures / 42 | Publish the complete Textures model. |
+| Result 41 arrives late | Textures / 42 | Do not replace the active view; optionally cache it under Materials. |
+
+Build a complete listing off to the side and publish it as one replacement. On a read failure, keep a stated policy: retain the prior listing with a visible stale/error indication, or replace it with an explicit failed state. Do not expose a half-refreshed mixture as if it were the current folder. A file-watcher event is an invalidation hint that prompts reconciliation; coalesced or missed events are a reason to rescan, not proof that the cached list is complete. A renamed path may change an entry's UI identity; persistent asset identity, if required, needs the project's separate asset-ID policy. These rules are original development of the cache proposal, not behavior verified in the recorded editor.
+
 
 #### Source-to-volume map
 
@@ -46542,6 +46617,8 @@ A simple entity-owned list of component pointers is flexible but can make system
 
 Editor picking needs a screen-space record of which entity produced each pixel. Hazel adds a second color attachment to the scene framebuffer: the usual color target remains visible, while a separate integer target stores entity IDs. Because the 2D renderer batches many quads into one draw call, the ID travels with each vertex; a per-object uniform cannot change between quads inside that call. Writing both outputs in one pass avoids drawing the geometry a second time. [Multiple Render Targets and Framebuffer Refactor](https://www.youtube.com/watch?v=f-GbHye1VFQ)
 
+**Format clarification:** that episode establishes an entity-ID/color output, but the “integer target” wording above does not establish an integer texture format. Its stated RGBA8 support denotes normalized color storage, which differs from an integer-format attachment. Preserve the picking payload/encoding contract separately from the attachment component type and readback format; inspect the implementation before assigning a precise integer representation to this historical example. Writing selectable identity and display color in one pass is the demonstrated design idea. [Khronos framebuffer component types](https://registry.khronos.org/OpenGL/specs/gl/glspec30.pdf).
+
 The previous framebuffer API always created one RGBA8 target and one depth24-stencil8 target. A specification list lets a caller describe color attachments and an optional depth attachment, so later passes can request different layouts such as a depth-only shadow map or multiple floating-point color targets. On invalidation, the implementation recreates textures from that fixed specification while resize changes dimensions. OpenGL also needs its active draw-buffer list configured for multiple fragment outputs; this episode caps that list at four and uses `GL_NONE` for a depth-only pass.
 
 The experiment writes ordinary color at output location 0 and red at location 1, then displays attachment 1 in the viewport. This demonstrates two targets and confirms that the second texture can be read. The specification looks extensible, but the implementation here supports only RGBA8 and depth24-stencil8; filtering/wrap configuration, richer type conversion, other formats, and capability-based draw-buffer limits remain unfinished. Treat the API as a developing abstraction, not a complete framebuffer format system or general OpenGL reference.
@@ -46995,6 +47072,22 @@ The first OpenGL implementation creates a color texture, attaches it to the fram
 
 A fixed 1280 by 720 texture is enough to prove the off-screen path, but it is not a finished viewport. If the docked panel changes size, the framebuffer should be resized to its actual pixel dimensions, respecting the UI scale and any rendering resolution policy. The episode's first image size is wrong because an older render path uses a separate size; matching the panel is explicitly future work. Attachment formats, multisampling, and whether a 2D pass needs depth are also choices to make from the pass requirements, not universal defaults.
 
+#### An editor manipulator can stay in world space while drawing above the scene
+
+An editor gizmo is a viewport control attached to a selected object. Its handles must respond to the world camera and the object's transform, but a handle hidden behind a wall is difficult to use. Kohi's view-system stream proposes a dedicated gizmo view and render pass: keep the gizmo at the object's three-dimensional position, then draw that pass above the ordinary world image so the manipulator remains visible when geometry would otherwise occlude it. The presenter frames this as the goal of the view refactor at 00:38:16–00:39:02, not as a finished feature. [Kohi Ep. 118](https://www.youtube.com/watch?v=CjJqa3iILAQ&t=2296s)
+
+That design separates two questions which are often conflated: where the gizmo is, and whether scene depth is allowed to hide it. A world-space transform and the editor camera still determine the gizmo's projected position and scale. A later overlay pass can then choose an explicit depth policy. Disabling depth testing prevents scene depth from hiding handles that otherwise survive projection, clipping and coverage; it can expose handles behind the selected object or another scene object. Testing depth preserves scene occlusion but can make the active control disappear. A hybrid can draw a faint occluded portion and a strong visible portion, or keep the center/active axis prominent while preserving depth for context. These are design options inferred from the stated goal; the episode does not implement or compare them.
+
+A separate pass also creates a scheduling and input contract. The editor should render the scene view first and the manipulator after it, while selection and hit-testing should agree with the manipulator's visible handles. When the viewport changes size or camera, both scene and gizmo projections must use the same viewport rectangle and current camera data. A rendering pass that remains visible but receives stale coordinates can look plausible while manipulating the wrong world axis. The stream's application-owned view refactor is motivated by adding editor-specific views, while the gizmo and editor-world view remain scaffolding; a resize event also causes the testbed to fail during the session. Thus the safe takeaway is to define the overlay policy and its camera/viewport inputs, then verify rendering and interaction together. [Kohi Ep. 118, 00:35:45–00:42:44 and 03:01:29–03:12:30](https://www.youtube.com/watch?v=CjJqa3iILAQ&t=2145s)
+
+This is a proposed editor interaction, not a demonstrated production gizmo. The episode describes mode handles for translation, rotation, and scale and moves view ownership toward the application, but reports the gizmo/editor view as unconnected or unfinished. No depth-state implementation or completed drag interaction is established by this source.
+
+
+Use the same world point to explain what an overlay changes. With a conventional depth buffer where smaller values are nearer, let a wall store depth 0.2 and a gizmo fragment have depth 0.8. A LESS comparison hides that fragment. A later pass with scene-depth rejection disabled can draw it instead. The three-dimensional location has not changed; its occlusion policy has. A point behind the projection's valid clip volume still needs clipping. An overlay pass is not permission to divide an invalid homogeneous position or force it onto the screen.
+
+Depth writes, depth comparisons and input precedence must be chosen separately. A read-only use of scene depth can distinguish visible and occluded portions without changing the world's depth buffer. A control drawn above a wall may also need priority over the wall during hit testing; otherwise the image offers a handle that the input path cannot select. Whether picking uses a GPU ID image or a CPU geometric test, make that priority consistent with the displayed policy. During a drag, retain the selected axis and the camera/viewport contract rather than silently changing the interpretation as another object becomes hovered. Constant apparent handle size, if desired, also requires an explicit screen-size policy; a world transform alone does not guarantee it across changing depth. These are design requirements and test cases for implementing the proposed control, not a completed implementation from the stream.
+
+
 #### Source-to-volume map
 
 - Existing foundation: `### Use framebuffer attachments for editor interaction`.
@@ -47407,6 +47500,71 @@ Now place a wide crate on a flat floor. Reporting only one corner as the contact
 The geometry of the touching features guides the contact recipe. A point pressing into a face uses the face normal and distance to the projected surface point. Two edges can use a normal perpendicular to both edge directions. Curved features need cases such as edge-face or face-face. These recipes do not have equal priority: the described engine focuses first on common point-face and edge-edge cases and omits rare point-point or point-edge cases. That is an explicit coverage tradeoff. For an engine, the contact test suite should include the support cases the game actually uses, such as a box on a plane, a sphere on a plane, and a crate edge against a wall, plus the intentionally unsupported edge cases so their limitations are visible. (Game Physics Engine Development, PDF pp. 292-295.)
 
 The same page selection connects accuracy to authoring. Designers can build collision shapes manually, but this costs time; imported geometry can be simplified automatically, but the assigned pages do not supply such an algorithm. A practical engine can support both: use imported coarse shapes as a starting point, then let designers inspect and adjust them in an editor. Contact generation should use the authored physical representation, not silently depend on every visual triangle. (Game Physics Engine Development, PDF pp. 287-288.)
+
+
+### From a conservative box check to a sphere–box contact
+
+A collision test should answer a particular question. A broad-phase test asks whether two bounds could overlap, so it may keep extra pairs as long as it never drops a real collision. A narrow-phase primitive test asks whether the actual shapes touch and, when a response is needed, supplies a contact point, a normal with a declared direction, and penetration depth. These outputs are related but not interchangeable: “overlap” alone does not tell a solver which way to push or how far.
+
+For a sphere against an oriented box, first express the sphere center in the box’s local coordinates. Here the box transform contains a translation and an orthonormal rotation; its half extents and sphere radius use the same length unit. Removing a nonuniform scale would turn the sphere into an ellipsoid, so it would not preserve this scalar-radius test. This change of coordinates removes the box’s rotation from the closest-point calculation. If the local center is $c=(c_x,c_y,c_z)$ and the box half extents are $h=(h_x,h_y,h_z)$, clamp each coordinate to its interval:
+
+$$
+q_i=\min(h_i,\max(-h_i,c_i)).
+$$
+
+The point $q$ is the closest point on the box to the sphere center in box coordinates. The squared distance $d^2=\|c-q\|^2$ determines overlap without a square root: the sphere touches or overlaps when $d^2\le r^2$. If it does not, reject the pair. If it does, transform $q$ back to world coordinates and use the vector from the box contact point to the sphere center as the normal, assuming the contact convention points from body 0 (box) toward body 1 (sphere). Its normalized direction is $(c_w-q_w)/\|c_w-q_w\|$, and the penetration is $r-\|c_w-q_w\|$. This is the point used by the supplied box–sphere example (Millington, *Game Physics Engine Development*, PDF pp. 305–309 / printed pp. 282–286; source `src-657cb0089860334fec51`, units `u-66dce93ea6c7148cf4ab515b`, `u-6f4e2c05fe00d4cd342d9e32`, `u-ad7f56799849cbcb02c6b714`, `u-c800d0a78969af102504d0b8`).
+
+A cheap early-out tests the box’s three local axes. If $|c_x|-r>h_x$, the sphere is farther than its radius beyond the box’s x slab, so the shapes cannot touch; the same test applies to y and z. But passing all three tests is only a necessary condition near a corner, not proof of contact. With a unit box $h=(1,1,1)$ and a sphere of radius $0.30$ centered at $c=(1.25,1.25,0)$, both x and y gaps are $0.25$, so each axis test passes: $1.25-0.30=0.95\le1$. The exact closest point is $q=(1,1,0)$, however, and the gap is
+
+$$
+\|c-q\|=\sqrt{0.25^2+0.25^2}=0.3536>0.30.
+$$
+
+The final squared-distance check correctly rejects this corner near miss. If the center instead is $(1.20,1.20,0)$, the same early checks pass and the gap is $\sqrt{0.2^2+0.2^2}=0.2828$, giving about $0.0172$ units of penetration. This is why component-wise slab checks cannot replace the Euclidean closest-point test.
+
+There is also a degenerate case in the textbook-style clamp algorithm: if the sphere center is inside the box, then $q=c$, so $c-q=0$ and normalizing it is undefined. The cited pages’ code forms its normal from this vector without showing an interior-center fallback in the inspected excerpt. A robust implementation must state what it means to resolve a sphere contained by a solid box. One possible policy chooses the nearest face and uses its outward normal, with penetration based on the distance needed to move the sphere completely out; another policy rejects containment as an invalid configuration for that body pair. For a solid box with half extents $(1,1,1)$, center $c=(0.2,0,0)$ and sphere radius $0.3$, the nearest face is $x=1$, at distance $0.8$ from the center. Moving the center outward by $0.8+0.3=1.1$ brings it to $x=1.3$, where the sphere just touches the face from outside. The ordinary exterior formula would instead divide by zero. Equal-distance faces need a deterministic tie rule or a deliberate multi-contact policy. The correct policy depends on whether the box is a solid collider and on the solver’s contact orientation. Do not quietly normalize a zero vector or treat this case as ordinary surface contact.
+
+The same “early reject, then construct contact” idea scales to the separating axis theorem (SAT). A **separating axis** is a direction on which two shapes’ projected intervals do not overlap. One such axis proves the shapes are separated; overlapping projections on a tested axis do not prove intersection. A sphere versus an oriented box has a simple set of box-face axes for inexpensive rejection, followed by the closest-point distance test to settle corner cases. Two oriented boxes need a richer candidate set: the three face normals from each box and the nine cross products between an edge direction from each box. Near-parallel edge directions produce a tiny cross product. An exactly zero cross product supplies no axis. A small nonzero cross product can still encode a relevant separating direction, so calling every small axis redundant would be wrong. Projection comparisons can use an unnormalized nonzero axis because both sides scale together; numerical tolerances must then scale too. A conservative implementation may omit uncertain tiny-axis tests and retain an extra candidate, but that trades exact rejection for possible false-positive overlap. A robust predicate or a higher-precision fallback is needed when exact narrow-phase classification matters. The assigned pages introduce box–box SAT (PDF pp. 311–312 / printed pp. 288–289), but the full fifteen-axis derivation is an explanatory extension here, not a derivation claimed from those two pages.
+
+For each candidate axis $a$, project each box center and radius. If box A has center $c_A$, half extents $h_A$, and orthonormal axes $u_i$, its projection radius is $R_A=\sum_i h_{A,i}|u_i\cdot a|$; the center projection is $s_A=c_A\cdot a$. Compute $R_B,s_B$ likewise. The intervals overlap only if
+
+$$
+|s_B-s_A|\le R_A+R_B.
+$$
+
+A strict gap on any candidate axis is a valid separating witness. Touching policy determines whether equality counts as contact. Floating-point implementations need conservative tolerances chosen in world or normalized units; an arbitrary large epsilon can hide real gaps, while inconsistent tolerances between broad phase and narrow phase can create false negatives. If no axis separates, SAT establishes overlap but does not by itself produce a stable manifold. The minimum-overlap axis can suggest a penetration normal, but feature clipping or other contact generation is still needed to get useful contact points, especially for face–face patches.
+
+Keep the layers visible in code and diagnostics: local-space transform, three-axis early-out, closest-point distance, world-space contact point, oriented unit normal, signed penetration, and special handling for containment and near-parallel axes. Tests should include face, edge and corner contact, a corner near miss that passes the slab checks, exact tangency under the chosen policy, a rotated box, a center inside the box, zero-sized or degenerate extents if allowed, and very large/small coordinate scales. The book’s contact routines intentionally omit some rare feature combinations and describe a particular solver’s conventions; such omissions must be recorded as supported-shape limits, not generalized into a theorem that those contacts never matter.
+
+
+### Keep contact features coherent across frames
+
+A collision query is a snapshot. A resting contact is a relationship that persists while two bodies continue to support or constrain one another. The distinction matters because a detector that returns only the single deepest contact at each frame can keep rediscovering one corner while the rest of a crate’s support patch disappears from the solver’s view. *Game Physics Engine Development* describes a compact way to accumulate a useful contact set over successive frames: identify a contact by its type and by the specific feature on each object, refresh the changing measurements for contacts that recur, add newly observed features, and remove cached features after they have separated far enough. In the book’s box example, a feature is a particular vertex or face for point–face contact, or a particular edge on each box for edge–edge contact (physical PDF pp. 314–315; extracted units `u-1cca6d9fb043a576e1a0a091`, `u-a35966eb6c9d8121000049f5`; claim points `p-000002`–`p-000009`).
+
+This is temporal coherence: nearby frames usually contain related geometry, so the previous frame’s feature identities are useful hints for building the next frame’s contact set. A practical cache key therefore needs the ordered body pair plus contact kind and feature identifiers, with body ordering normalized so the same physical pair does not appear twice in opposite orders. The key identifies *which geometric interpretation* is being revisited; it does not certify that the contact remains valid. Each simulation step must recompute the current world-space contact point, normal, and signed separation or penetration from the current transforms. If a body rotates enough that the old vertex–face pair no longer describes touching features, the old record must fail validation and the newly detected feature pair must be inserted. Do not carry a stale normal or depth forward as if it were current geometry.
+
+The detector and cache have different jobs. A separating-axis test (SAT) can establish that two oriented boxes overlap by testing the three local axes of each box and the nine pairwise cross-product axes; it can stop at the first separating axis. That gives an overlap decision and a candidate axis, not a complete set of contact points. A deepest-feature query can produce one point–face or edge–edge candidate. The cache compares that candidate with the pair’s existing feature records, refreshes a match, or appends a new feature record. It supplies the current candidate records to a contact builder or resolver, which must separately decide which records belong in the active constraint set. For complex polyhedra, feature identification and full manifold generation require more work; the text presents this cache as a practical way to gather contacts over time, not a universal replacement for a robust collision library.
+
+#### A four-sample support trace
+
+Take two boxes, A (a crate) and B (the floor), and let positive $d$ mean overlap depth while negative $d$ means a gap along the contact normal. This sign convention is stated here for the example; implementations must document and consistently apply their own convention. Suppose the detector reports the same lower vertex of A against the same top face of B. Define the normal here as the unit direction of the normal force on the crate A from the floor B: upward, $\mathbf n=(0,1,0)$. This physical force direction is explicit for the example; contact records elsewhere may store a body-order-oriented normal, so their conversion to the solver impulse convention must be documented. The cache identity is `(A, B, point-face, A.vertex_3, B.face_top)`.
+
+| Step | Recomputed contact data | Cache membership | Solver status in this example |
+|---|---|---|---|
+| $k$ | $d=+0.018\,\mathrm m$, point $=(0.42,0,0.10)\,\mathrm m$, $\mathbf n=(0,1,0)$ | Insert the feature. | Active: current penetration needs resolution. |
+| $k+1$ | $d=+0.004\,\mathrm m$, point shifts to $(0.421,0,0.10)\,\mathrm m$, normal remains nearly upward | Match the key and refresh point, normal, and depth. | Active: current penetration needs resolution. |
+| $k+2$ | $d=-0.006\,\mathrm m$ after slight separation | Retain because $d\geq\tau=-0.010\,\mathrm m$. | Inactive under the example activation slop $s=0.001\,\mathrm m$; do not apply support, friction, restitution, or cached impulses. |
+| $k+3$ | $d=-0.014\,\mathrm m$ after the crate moves away | Evict because $d<\tau$. | Inactive; no constraint is emitted. |
+
+The values and thresholds in this trace are illustrative, not values prescribed by the book. The cache retention margin $\tau=-0.010\,\mathrm m$ answers a geometric bookkeeping question: keep a refreshed feature candidate until it is farther away than this distance. The separate activation slop $s=0.001\,\mathrm m$ answers a solver question: only contacts with $d\geq-s$ enter the active constraint set. Thus the candidate at $k+2$ remains cached but is inactive. An engine may choose a different active-set rule, but it must not treat cache membership as proof that a contact currently supports either body. A new frame can also add other vertex–face or edge–edge identities, so retained candidates may accumulate beyond the detector’s one current deepest result.
+
+Why permit a small negative depth in the *cache*? A solver may resolve an overlap so the next measurement is exactly zero or slightly separated. If the cache evicts at zero, resolution itself erases the feature identity. The next step then starts over with only the currently deepest candidate, defeating gradual accumulation of a useful contact set. Retention keeps the identity available for geometric revalidation; it does not require the solver to enforce it. If a retained separated candidate is activated, the solver’s unilateral normal constraint must prevent attraction: with an impulse convention in which positive normal impulse pushes bodies apart, accumulated normal impulse must satisfy $\lambda_n\geq0$. Friction must be bounded by the current normal support (for example, $|\lambda_t|\leq\mu\lambda_n$), and restitution should be generated only for a newly impacting, sufficiently closing contact—not merely because an old key remains cached. An excessively large retention margin is not inherently attractive, but if the active-set policy activates distant candidates it can cause premature repulsion or visible hovering. Keep the geometric retention distance and solver activation slop separate, and test both.
+
+This cache is not a substitute for a sound contact manifold. Validate the feature geometry as well as its ID: for point–face contact, transform the vertex into face-local coordinates, confirm its projection remains within the face polygon (with a stated tolerance), and check that the recomputed normal remains aligned with the current face normal. A crate sliding off the face should invalidate that feature even if its vertex and face IDs still exist. For edge–edge contacts, recheck that the closest points lie on both finite edge segments and that the cross-product normal is well-conditioned; nearly parallel edges need a fallback or rejection rule.
+
+A warm-start impulse is also separate from contact retention. If the solver reuses an earlier accumulated impulse to speed convergence, first validate the current feature, active status, normal alignment, and material/solver state. Keep or reproject the old tangential impulse only when the tangent basis remains compatible; otherwise clear it. Never apply an old impulse merely because the feature key is present. Test a flat box resting on a plane, a slightly tilted box that changes its supporting vertices, a box sliding off the plane, near-parallel edges, and reset or teleport invalidation. For each step, log body pair, feature key, current world point, normal, signed depth, active/inactive decision, warm-start decision, cache action, and eviction reason.
+
+**Evidence boundary.** The source’s direct example is contact-feature caching across frames and a small negative threshold; it says selecting the correct value requires tuning (physical PDF pp. 314–315). The numeric trace, key normalization rule, units check, feature validation, active-set separation, unilateral-impulse rule, warm-start policy, and suggested test cases above are original engineering explanations derived from the mechanism. The source terminology is internally inconsistent: p.314 uses “point–face” for alternate interpretations, then calls a vertex-against-face pair “point–edge”; p.315 again lists “point–edge and edge–edge”; the p.317–318 algorithm tests each vertex against the other box’s faces. This insertion uses “point–face” to name the geometry and records the source discrepancy rather than silently correcting it. The cache shown by the book is an educational implementation, not evidence of a current Kairo or Maveb implementation.
 
 
 ### Sleeping physics bodies without losing a collision chain
@@ -76603,6 +76761,75 @@ This is mathematically necessary.
 
 ---
 
+<!-- BEGIN REVIEWED CERTIFICATE CLARIFICATION -->
+
+### An image-change certificate must name the edits it covers
+
+The retained source proposes an approximate bound using total opacity variation. That idea needs an explicit domain before it can become a certificate. A **certificate** here is a numerical upper bound justified for a declared renderer, input range and class of edits. Calling an estimate conservative does not establish that every permitted edit satisfies it. In particular, a bound depending only on opacity changes cannot cover arbitrary appearance changes.
+
+Start with a counterexample. One layer has opacity one half over black. Change its color from red to blue without changing its opacity. The pixel changes from $(0.5,0,0)$ to $(0,0,0.5)$, giving a maximum-channel difference of $0.5$. Total opacity change is zero. An opacity-only bound predicts zero, or merely its small termination allowance, and fails. Likewise, swap the order of two half-opaque red and blue layers: the image changes from $(0.5,0,0.25)$ to $(0.25,0,0.5)$ while each layer's own opacity and color remain unchanged. Depth order is part of the compositing function.
+
+A correct starting case fixes the contributor order and varies only their opacities. Assume every opacity lies in $[0,1]$, every color channel and the background lie in $[0,M]$, and the renderer uses the same ordered layers before and after the edit. The scalar $M$ is a proven common channel bound for this comparison, not an automatically valid value of one for HDR data. Background composition makes the pixel a convex combination of these colors, so it also lies in $[0,M]$ per channel.
+
+Hold every parameter except the opacity of layer $i$ fixed. Write the pixel as the accumulated foreground $F$, followed by foreground transmittance $T_i$, this layer and the fully composited remainder $B_i$:
+
+$$
+C=F+T_i\bigl(\alpha_i c_i+(1-\alpha_i)B_i\bigr).
+$$
+
+Changing this opacity from $\alpha_i$ to $\widetilde\alpha_i$ changes the pixel by
+
+$$
+\Delta C=T_i(\widetilde\alpha_i-\alpha_i)(c_i-B_i).
+$$
+
+Because $T_i\le1$ and both $c_i$ and $B_i$ are within the same nonnegative range, the maximum absolute channel change is at most $M|\Delta\alpha_i|$. Replace all opacities one at a time and apply the triangle inequality. This gives a deliberately loose but justified bound:
+
+$$
+\|\widetilde C-C\|_\infty
+\le M\min\left(1,\sum_i|\widetilde\alpha_i-\alpha_i|\right).
+$$
+
+The sum is the sum of absolute changes in each layer's **evaluated pixel opacity**, not the difference of final accumulated opacity. Two layer changes can cancel in a final opacity statistic while changing the color. Changing a Gaussian's mean or covariance changes evaluated opacity across its footprint even when its stored base opacity stays fixed. Comparing only the stored opacity parameter misses those spatial changes.
+
+Now allow colors and background to change too, while keeping a common contributor order and a common $[0,M]$ range. With fixed opacities, each layer's color has a nonnegative compositing weight no greater than one. Bounding those weights by one, and again using a sequence of parameter replacements, yields
+
+$$
+\|\widetilde C-C\|_\infty
+\le\min\left(
+ M,
+ M\sum_i|\Delta\alpha_i|
+ +\sum_i\|\Delta c_i\|_\infty
+ +\|\Delta C_{bg}\|_\infty
+\right).
+$$
+
+This is sufficient rather than tight. A sharper certificate can retain transmittance weights and local color contrasts, but must justify them over the full edit envelope. If channels may be negative and only $\|c\|_\infty\le M$ is known, two allowed colors can differ by $2M$. The nonnegative-range contrast argument and its cap of $M$ no longer apply. Declare the actual radiance representation before selecting constants.
+
+Early termination adds another approximation. If a renderer stops with remaining transmittance below $\tau$ and replaces the remainder by its declared background, its per-channel deviation from full compositing is at most $M\tau$ under the nonnegative range assumptions. Comparing two independently terminated images therefore adds at most $M(\tau_{old}+\tau_{new})$ to the exact-image bound. For equal cutoffs $10^{-3}$ this allowance is $0.002M$; for equal cutoffs $10^{-4}$ it is $0.0002M$. These constants follow from the cutoff policy. They do not cover omitted color edits, sorting changes, non-finite inputs, or a different fallback color range.
+
+A support change can sometimes be represented by giving an absent layer zero opacity in a common ordering. A genuine reversal of two surviving layers cannot be justified by merely comparing their original opacity arrays. Either prove the ordering stays fixed over the edit, include a separately derived ordering contribution, or compute a broader envelope over all allowed orderings. The red/blue swap is a small mandatory test for any implementation claiming to handle reordering.
+
+Finally compare the observed per-pixel error with the bound and preserve the tested inputs. A numerical witness can falsify an invalid formula and check arithmetic in a declared case; it does not prove every implementation meets the mathematical assumptions. The source's statements about Maveb certificates remain implementation claims awaiting repository inspection. The derivation here supplies a checkable contract for such an inspection, rather than certifying unseen code.
+
+
+#### Check which transmittance the stopping test actually uses
+
+The residual bound above assumes that the **actual unprocessed remainder** has transmittance below the stated cutoff. A test on the next candidate value is different. In the inspected [Graphdeco forward CUDA kernel](https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu), the code computes a candidate transmittance, checks it against the cutoff, and can stop before accumulating that candidate layer or assigning the candidate transmittance. The stored transmittance can therefore remain above the cutoff. Reading the numeric constant alone does not establish the omitted-energy bound.
+
+For example, let current transmittance be $T=0.009$ and the next opacity be $0.99$. The candidate is $0.00009$, below $10^{-4}$. If this layer is skipped when that test succeeds, a red layer over black loses a contribution of $0.00891$, which is much larger than $10^{-4}$. This is an arithmetic counterexample to applying the after-accumulation remainder bound to a before-accumulation stopping policy; it is not a measured artifact in a trained scene.
+
+If candidate-based stopping uses $T(1-\alpha)<\tau$ and a proven opacity cap $\alpha\le a_{max}<1$, then the discarded current remainder instead satisfies
+
+$$
+T<\frac{\tau}{1-a_{max}}.
+$$
+
+With $a_{max}=0.99$, that worst-case bound is one hundred times the cutoff. It is loose but follows from the actual branch condition. A tighter implementation-specific bound must inspect the actual discarded layer and remainder. Footprint truncation and small-alpha rejection are additional approximation policies; they are not automatically covered by an early-termination allowance. Define whether the comparison target is an ideal untruncated compositor or the same renderer with a particular stop rule disabled.
+
+
+<!-- END REVIEWED CERTIFICATE CLARIFICATION -->
+
 **A useful per-pixel edit bound**
 
 If changed layer opacity difference produces total alpha variation:
@@ -77649,3 +77876,609 @@ The same principle applies to emergent play. A surprising tactic is not automati
 For a practical design review, trace one boundary crossing from three perspectives. First, state the formal rule and the exact system response. Second, name the likely implicit convention a player brings and how the interface communicates the outcome. Third, ask what changes if the content is altered, juxtaposed, or reinvented by players. This prevents the team from treating every unexpected action as either a bug to suppress or a feature to celebrate. It also keeps engine extensibility in service of a chosen play experience rather than treating mod support as an abstract virtue.
 
 The book’s examples and terminology belong to its cultural analysis. They should not be read as claims about any engine’s actual modding support, nor as proof that modification necessarily produces resistance or transformation. The useful bridge is a design responsibility: when the game allows players to change rules or carry play into other contexts, make the resulting boundaries and consequences understandable, then study how people actually use them.
+
+
+---
+
+## From one core action to a coupled play system: Centipede
+
+A **core mechanic** is the repeated action pattern at the center of play: what the player does moment to moment and how those actions connect to input, system response, and the player's decisions. In Centipede, the surface description is simple: move a character along the lower part of the screen and fire upward. But the designers restrict both movement and firing in ways that turn those actions into decisions. Movement is confined to the bottom fifth of the playfield, keeping the player in a vulnerable lane beneath the incoming field. The fire button can be held, yet only one shot can be on screen at a time. A distant shot therefore ties up the weapon until it reaches its target or travels offscreen. The player manages firing time as a limited resource, even though the game does not display an ammunition counter. (*Rules of Play*, PDF pp. 320–321; source `src-05da0e605d74277e274a`, units `u-8119e17f4add2374f9e5e9d0`, `u-7d883240156ab38afb3384f8`.)
+
+That single-shot rule interacts with a field of mushrooms and a segmented centipede. Mushrooms take four hits to destroy. A centipede drops when it reaches a mushroom; shooting a segment turns it into a mushroom, and shooting an interior segment splits the centipede into two moving threats. So firing has a double effect: it removes an immediate enemy segment, but may add an obstacle, accelerate the descent route, or multiply threats. Clearing mushrooms is also double-edged. Fewer mushrooms can slow the centipede, but clearing too many in the lower half triggers a flea. The flea descends and deposits a column of mushrooms, including in hard-to-reach upper areas. The source specifies a threshold but not its numerical value in this discussion, so the useful design model is relational rather than a made-up count. (PDF pp. 320–321; units `u-8119e17f4add2374f9e5e9d0`, `u-7864d288a8495a224edeb70f`.)
+
+Two other creatures make the same objects matter in different ways. Spiders threaten the player's lane and eat mushrooms, creating a choice between allowing them to clear the field and risking collision. Scorpions cross above the player and poison mushrooms; when a centipede reaches a poisoned mushroom, it descends directly toward the player. Mushroom count, mushroom location, and mushroom state therefore affect enemy movement, threat timing, and the player's available firing opportunities. A static obstacle becomes part of an active rules network because each moving entity reads or changes it differently. (PDF p. 321; unit `u-7864d288a8495a224edeb70f`.)
+
+A flea also changes behavior before it dies: the first hit speeds its descent, and the second destroys it. Progress toward removing a threat therefore increases the immediate danger. If a centipede reaches the player's lower region, additional heads can appear and crowd that space. These rules explain why “closer to success” and “safer right now” need not coincide. A useful playtest records both outcomes rather than measuring only how many enemies the player removed. (PDF p. 321; unit `u-7864d288a8495a224edeb70f`.)
+
+```mermaid
+flowchart LR
+    A["Shoot a segment"] --> B["Remove enemy segment"]
+    A --> C["Create a mushroom"]
+    C --> D["Change later descent"]
+    E["Clear lower mushrooms"] --> F["Cross flea threshold"]
+    F --> G["Flea adds mushrooms"]
+    G --> C
+```
+
+The upper path links an immediate reward to a delayed change in threat routing. The lower path shows why removing obstacles cannot be evaluated independently: the rule system can replenish them. Read this as a rule-dependency diagram, not a claim about the original game's software architecture.
+
+This is why a useful mechanic review asks more than “does the player shoot?” It traces the state changes and their later consequences. For example: a player fires at a central segment near the top; the segment becomes a mushroom and the centipede splits; the new obstacle changes subsequent descent, while the two resulting creatures create more simultaneous targets. A shot has made progress and increased danger at once. If the player instead waits until the centipede is near the bottom, there is less distance to travel before clearing the target, but the immediate chance of collision is greater. The player is solving a fast spatial puzzle under a constrained action rate, not merely accumulating hits. (PDF pp. 321–322; unit `u-7864d288a8495a224edeb70f`.)
+
+The system also changes over time. The source describes mushrooms accumulating across levels, centipedes moving faster and sometimes beginning split, and spiders becoming faster and moving in tighter patterns. A completed level briefly releases pressure before the next one increases it. This creates overlapping timescales: the next shot produces immediate tension; the current level produces a short arc toward relief; the whole game gradually increases density and speed. A design document can capture this by listing each entity's rule, then drawing the cross-effects and timing: what it creates, removes, accelerates, blocks, or makes more dangerous. That map is more informative than a feature checklist because it exposes feedback and decision consequences. (PDF p. 322; unit `u-7864d288a8495a224edeb70f`.)
+
+For an engine team, this analysis becomes a testable content contract. Each rule needs an owner and an observable result: the projectile system enforces one active shot; the collision/gameplay layer turns hit segments into mushrooms or split entities; the mushroom state influences descent; flea spawning checks a lower-field threshold; and the presentation communicates danger quickly enough for the player to react. These are proposed system boundaries inferred from the rules, not implementation claims about the arcade code. The lesson is to prototype the coupled loop and measure whether the choices are legible. A screenshot of each enemy or a successful projectile test would not demonstrate that the interactions create the intended pressure-and-relief rhythm.
+
+## Interactive writing is a stateful interface
+
+Steve Meretzky describes game writing as a distinct production task because the player does not necessarily encounter a finished passage in one fixed order. A location description, a response to an attempted action, a hint, and a line of character dialogue may be assembled from separate short pieces. Each piece must still be understandable when it appears, fit the local gameplay state, and avoid spoiling a puzzle. The player may revisit the same room or repeat an action, so a line that works once can become irritating when repeated. The author calls this a difficult tradeoff between making responses interesting and keeping them terse; that is his experience as a designer, not a measured universal law. (*Game Design Theory and Practice*, PDF pp. 221–222; source `src-76941f9eb29394c92fb2`, units `u-1a90d44661fa585ec4c2f32d`, `u-3e1b3d92edca40c1676ca93f`.)
+
+This problem is better understood as an interface contract between authored text and runtime state. A response is selected by context: current room, target object, player action, puzzle flags, prior discoveries, and sometimes difficulty setting. If the game offers only one generic fallback—“that does not work”—it technically rejects an action but provides no useful explanation. Meretzky describes adding responses for reasonable-but-wrong attempts, including responses that explain the failure and hint at what to try next. He also describes varied default replies to common broad commands such as “take all.” In engine terms, that implies a response-selection order: specific authored rule first; then a context-sensitive explanatory response; then a general fallback. The engine should not invent these priorities on its own, but its authoring and dialogue systems need enough state and lookup structure to express them. (PDF p. 224; unit `u-568e1259270aa0ef093e1ed1`.)
+
+The same interview connects nonlinear structure to repetition. If either of two lines can precede a later scene, each branch may need to convey context that a strictly linear story could state only once. That can produce duplicated information. A content system can help writers reuse a fact or phrase, but mechanical reuse is not always stylistically appropriate: the same line may sound natural on first encounter and stale on the fifth. One practical authoring check is to enumerate the state paths that reach each line, note what the player can already know on each path, and count how often the line can recur. This path audit is a proposed workflow derived from the interview, not a procedure the source says it used.
+
+Meretzky also argues that designing with text and graphics changes how much can be revised after implementation begins. His account favors allowing a game to grow during implementation rather than completing a highly detailed plan first. The excerpt describes roughing out story, geography, characters, and puzzles, then revisiting them as the design takes shape. That is a first-person account, not a rule that all projects should avoid detailed preproduction. For an engine and tools team, the concrete implication is to make authored content cheap to inspect and revise: visible conditional state, reusable response data, localization-aware layout, validation for unreachable branches, and playtest capture of player actions can shorten iteration. The pages do not establish those tool features as existing systems; they are requirements inferred from the workflow and its stated difficulty. (PDF pp. 222–224; units `u-3e1b3d92edca40c1676ca93f`, `u-568e1259270aa0ef093e1ed1`.)
+
+The source also resists a simple story-versus-play rule. The following pages say games need not tell stories, while story can strengthen a game when integrated with its play. This reinforces the production question: begin from the activity the player repeats, then decide what story structures make that activity more meaningful. Text cannot compensate for a mechanic that gives the player no consequential action, and a tightly specified mechanic does not require a linear plot. (*Game Design Theory and Practice*, PDF pp. 227–228; source `src-76941f9eb29394c92fb2`, units `u-435367b8190e0ad1d73e772a`, `u-c29662231a64f2683654e15c`.)
+
+**Evidence boundary.** The book presents a design analysis of the arcade game, drawing on Richard Rouse III; it is not source code or an implementation trace. The mechanisms above follow the described rules. The proposed engine ownership and test suggestions are deductions for contemporary production, not claims about the original machine's internal software.
+
+
+---
+
+## Rules can carry cultural values; avoid turning an analytic lens into a label
+
+The supplied *Rules of Play* pages 505–516 add an authoring question missing from the live engine volume: what values do the rules make actionable? A victory condition is a compact way to express priorities. “Accumulate the most” rewards a different relation to resources than “spend everything”; eliminating opponents says something different from coordinating a shared result. This does not mean a game has one fixed ideology or that a designer’s intent determines every player’s interpretation. It means that rules, materials, framing, and the surrounding culture can interact to produce meanings that deserve deliberate review.
+
+The text presents Sutton-Smith’s seven rhetorics of play—progress, fate, power, identity, the imaginary, self, and frivolity—as persuasive cultural discourses, not neutral definitions of what play is. A useful design review asks which discourses a mechanic can support, which it challenges, and where they conflict. One game can evoke several at once; the meaning can change across players and settings. That warning matters because a category is a tool for asking questions, not a verdict that can be assigned mechanically to a game.
+
+Here is what those names ask us to notice. A **progress** rhetoric frames play as growth, practice or learning; a **fate** rhetoric emphasizes fortune and forces outside individual control; a **power** rhetoric emphasizes contest and dominance. **Identity** asks how shared play expresses belonging to a group. The **imaginary** emphasizes invention and make-believe, while **self** emphasizes a person's own experience or fulfillment. **Frivolity** concerns play that disrupts seriousness or makes room for nonsense. These are simplified explanations of analytic lenses, not seven mutually exclusive genres. A cooperative expedition can support skill growth, group identity and invented fiction at once. A random reward can be read as fate by one player and as a progression mechanism by another. The practical question is what the rules and context make plausible, rather than which one label a designer prefers.
+
+The book’s examples make this test concrete. Its account contrasts the Landlord’s Game with Monopoly: both share a board-game structure, but the former’s cited rules teach a critique of land monopoly while the latter’s stated goal rewards property accumulation. The point for an author is that the rule system and victory condition can reverse the meaning of familiar components. The source also uses Vampire: The Masquerade to discuss atmosphere, subculture, and low rules friction as a route for welcoming players beyond an established role-playing audience. These are the book’s historical and critical readings; this review did not independently verify its historical assertions about the games or their audiences.
+
+The gender section is valuable chiefly for its refusal of a simple “good/bad representation” score. It presents Henry Jenkins’s reading of platform games as inheriting boy-adventure conventions, then considers Lara Croft as both an active player-controlled hero and a sexualized image. It also raises different examples—Samus Aran, Ms. Pac-Man, fighting-game characters, and SiSSYFiGHT—to show how a game can communicate through both appearance and the role the player inhabits. Preserve the book’s attribution and historical context; do not repeat its broad claims about what boys, girls, or women prefer as timeless empirical facts. A better authoring exercise is to inspect the concrete design: who can act, who is framed as an object, which actions are rewarded, what the camera emphasizes, and how marketing changes the reading.
+
+The New Games Movement example pushes from representation to social practice. Its “play hard, play fair, nobody hurt” motto and Earthball anecdote describe cooperative play that changes how a group relates to winning. The example can inspire a prototype in which players may defect from a leading team to keep a shared activity alive. It does not prove that the game will transform society; the author’s account is a situated illustration of a designed experience and its interpretation.
+
+For engine authors, this material belongs beside player-facing rules, feedback, narrative framing, and social play. It does not prescribe a subsystem. It offers a review loop: identify the values implied by the win/loss condition; inspect which actions the system makes easy or costly; observe what feedback teaches players to value; then test whether play actually supports the intended interpretation. Record disagreement as evidence about context, not as a failed “correct reading.” The directly read PDF physical pages are 505–516; the full page-unit IDs are in the checkpoint. Pages 511–515 explicitly frame the gender analysis as a debate and complexity demonstration rather than definitive conclusions.
+
+
+
+## Meaning emerges from system and context, then loops through action
+
+*Rules of Play* pages 361–370, “Games as the Play of Meaning,” add a companion concept. A game’s representation is not just a collection of labels and images. Rules establish relationships among signs, and players interpret those signs in context while taking actions. The source’s Virtua Fighter 4 health-bar example shows the same displayed value carrying different practical meanings depending on both players’ health, the time remaining, the arena’s ring-out condition, and the players’ skill. A UI element therefore communicates through its relation to state and available actions, not only through its visual design.
+
+That relationship forms a loop: system and context shape a player’s interpretation; the interpretation guides an action; the action changes state and can change what the next display means. An author can use this as a UI test: show the same cue in several game states and ask what action a player would infer. If an unchanged red bar means “near death” in one situation but “safe lead” in another, provide enough comparative information or feedback for the player to understand why the action should change. This is a design application of the source’s example, not a claim that every game needs a health bar.
+
+The chapter’s “magic circle” and cognitive-frame discussion describes how people understand that an action is part of play, with meanings shaped by rules and social context. Bateson’s “this is play” frame is illustrated through play-fighting: a nip resembles a bite while also communicating that it is not an ordinary attack. The book extends this to Cops and Robbers and Spin the Bottle. These are conceptual examples, not a guarantee that every participant shares the same interpretation or consents to every action. An engine can support boundaries and explicit player choices; the social meaning cannot be inferred from game state alone.
+
+The resulting phrase “space of representational possibility” is useful if kept concrete: a rule set and its content permit a range of actions, outcomes, and interpretations; actual play explores some of them. It does not mean that every theoretical outcome is equally reachable or meaningful. Designer intent sets up conditions, player interaction realizes possibilities, and external context can alter the reading. The supplied pages then begin “Games as Narrative Play” on physical PDF pages 371–372. Those two pages introduce narrative dimensions and questions; they are only the opening of the next chapter, so this checkpoint makes no claim about that full chapter.
+
+The nearest current engine passages—`### What rules promise and what a simulation can enforce` at line 688 and the broad magic-circle/cooperation discussion near line 561—do not teach this system/context account of signs, nor its representational feedback loop. Their headings and actual paragraphs were examined; the content differs. This material should be routed to the game rules, UI feedback, narrative, and social-play portion of the eventual engine volume rather than folded into rendering architecture.
+
+
+
+## Hazel review: an instructive snapshot, not a current architecture guarantee
+
+The Hazel code-review video gives one implementation snapshot that can deepen the generic engine lifecycle discussion. Its layer callbacks include attach/detach, update, UI drawing, and events; the described stack updates in push order but dispatches events in reverse so a top UI layer can consume a click or key first. The existing volume already teaches this general layer contract and reverse event propagation (line 13889, paragraph hash `8a9b34f7c14701b4ee4f0468817d0ed6f8f8ccaf5a8633c347b0948d0998d838`). The Hazel review’s own details are not a separate rule to copy: they are a code-review example of how the ordering was described in that project at that time.
+
+The scene-state account is a more useful addition. In the narrated editor, Play creates a runtime copy so physics and scripts can mutate entities while the saved editor scene stays intact; Stop discards that copy. The presenter distinguishes editor, play, simulate, and pause paths, and explicitly points out duplicated render/update code as a source of drift: a rendering fix applied to one path can be missed in another. A copy-on-play design is one policy, not a universal requirement. It still needs explicit rules for what is saved, which identity survives the copy, and how references/resources are rebuilt. The general current note already advises a copy-on-play world or another explicit runtime-save policy (line 258, hash `4dd8f4dbc8c43e0cc468e7d336bc4bad5800ab772ca19d1501b324b66184bfc8`), and separately documents Hazel runtime scene teardown risks (lines 46708 and 46721, hashes in checkpoint). The new value is the historical trace from editor state into play, and the presenter’s own warning that duplicated update/render branches invite maintenance errors.
+
+The same walkthrough narrates a phase chain: update the physics backend, synchronize simulated transforms back to entities, run script callbacks, process a post-update queue for mutations that cannot safely happen during entity iteration, then update animation/audio; rendering submits commands through a custom queue. It describes that queue as preallocating a hard-coded 10 MiB buffer for function pointers and copied parameters to avoid per-command allocation. At the time of recording, the presenter says the queue is processed on the main thread after update, while a separate render thread is a future architecture. That distinction should be preserved: a queue is not evidence of parallel execution. If a consumer needs results from a separate thread, dependencies, completion, and resource lifetime need additional contracts. The numerical capacity is one project configuration, not a suggested default.
+
+The video also distinguishes Box2D work from a PhysX-backed 3D scene in that historical Hazel snapshot and describes a scene renderer passing mesh, debug, and 2D work through a static renderer facade into the queue. The presenter says some renderer and physics details will receive later videos; this is explicitly not a complete code review. These exact library choices and capacities are implementation-specific. The transferable teaching question is whether each update stage has a defined owner and when scene data becomes safe for the next stage. The supplied transcript’s file-size arguments (“large files are inevitable,” including roughly 3,000-line physics and 6,000-line script glue units) are the reviewer’s opinion about that codebase, not a measured compilation or maintainability result.
+
+The current volume covers lifecycle separation and layer behavior in other episodes, but no inspected paragraph contained the Hazel review’s 10 MiB command-queue details or its explicitly sequential queue processing. The staged addition preserves these as a bounded historical example, not a recommendation. All 58 pending point texts were read; selected raw caption units for the adopted details and their timestamp ranges are listed in the checkpoint. No Hazel repository code, binary, rendering output, or build was independently inspected for this video.
+
+
+
+## Let play become a replayable story
+
+A play session and its retelling are different designed experiences. During play, camera position serves the player’s immediate task: see enough of the world to act. A replay can change that contract. It can slow the action, move to a spectator’s angle, emphasize a turning point, or expose telemetry that helps a player learn. The *Rules of Play* chapter on narrative play treats replay as a way to recast what happened, not simply repeat the original view. Its examples include sports replays with free camera and frame stepping, action-film-like cuts in *Wreckless*, and distinct modes in *Gran Turismo 3* for following a car, surveying a race, studying an ideal line, syncing footage to music, or reading driving telemetry (PDF p. 406; `src-3b3c65abf669eb490856`, unit `u-f4c9a67260d7723d1e42d8f5`). These examples are specific to the book’s argument and era; the design distinction remains useful.
+
+A replay can serve at least three different goals. **Recall** lets someone see an event again. **Analysis** adds information that was not obvious during the moment, such as braking points or the sequence that caused a collision. **Retelling** selects shots, pace, sound, and framing so the event reads as a story. One mode may combine them, but the goals compete: a dramatic camera cut can obscure a precise timing error, while a telemetry overlay can interrupt a cinematic moment. Decide what the viewer should learn or feel before adding camera effects.
+
+The book calls player-edited replays with altered camera positions and motion “recams.” Its historical examples begin with demos that recorded gameplay and could be edited, shared, or even altered into fictional movement. This moves the viewer from the player’s original first-person perspective toward a new authorial viewpoint. A recam is therefore not necessarily a trustworthy record of what a player saw. It can be a commentary, a fictional reconstruction, or a spectator’s composition. That distinction matters whenever replays are used for moderation, competition review, or evidence of a bug: preserve an authoritative event record separately from an edited presentation (PDF p. 407; `src-3b3c65abf669eb490856`, units `u-ae839bc751df382dd169f63e`, `u-27dab920e4890e2a5d679a17`).
+
+An engine can support these goals through different representations. An **input replay** stores inputs and re-simulates from a recorded initial state; it can be compact, but reproducing the action requires compatible simulation/content versions, the same initial state, clocks and random streams, and control over relevant nondeterministic events. A seed alone does not make multithreaded floating-point simulation deterministic. A **snapshot replay** stores periodic world states and event data; it can tolerate some simulation differences, but costs storage and must define interpolation between snapshots. A **rendered capture** stores images or video and is straightforward to view, but offers limited camera freedom and weak access to underlying gameplay data. These are engineering options, not categories asserted by the book. The design intent should decide which representation to investigate.
+
+For editable camera work, record stable actor identities, transforms, animation or pose references, and relevant event times. Keep the playback camera independent from the live gameplay camera so a replay can create a new point of view without changing the original action. Version the data that gives the record meaning: entity identity alone is not enough if a later build changes movement, physics, animation, or content. A recam editor also needs clear boundaries: which events may be cut, which data is authoritative, and when a camera move changes the recording from analysis into authored fiction.
+
+Replays can shape the play that precedes them. The source observes that players sometimes make choices for how dramatic the replay will look, not only for the game’s internal objectives. That can be welcome, as in a racing photo finish, or disruptive if cinematic performance undermines a competitive goal. Treat this as a design hypothesis to test with players. Ask whether the replay makes the action more understandable, whether it changes incentives, and whether edited output is clearly distinguished from authoritative records. A tool for retelling can deepen engagement, but it can also change what players optimize for.
+
+Source boundary: the book provides historical examples and a design lens, not specifications for deterministic simulation, event logs, network authority, or replay file formats. The engineering representations above are original extensions. Do not claim that the source’s cited games used any particular storage architecture unless that implementation is separately inspected.
+
+
+#### Clarification on the FreeType dependency example
+
+The earlier dependency-integration account distinguishes setting up FreeType-GL files from demonstrating combined on-screen text. Files and setup are underway in that episode; the speaker says the combined rendering integration is for the next episode. A library build and a working font-rendering path are separate verification layers. The original caption units and this clarification are recorded in the source review checkpoint.
+
+
+### A scene's save path is part of its editor state
+
+Imagine opening `workshop.scene`, then creating a blank scene. If the editor keeps the previous document's destination, the next ordinary Save can overwrite the workshop. Creating a new scene must therefore clear its file path as well as replace its entities. An opened scene can retain the path from which it was successfully loaded; a new scene begins without a destination. The save command decides policy, while serialization accepts an explicit scene and destination path.
+
+For ordinary Save, use the current destination if one exists. Otherwise request Save As. A cancelled dialog changes neither document contents nor its destination. Selecting a filename is only a proposal: serialize and handle the actual write result before recording a successful save or clearing the dirty flag. If the write fails, retain the dirty document and report the error. After a successful Save As, associate the edited scene with the new destination. Whether overwriting an existing file needs confirmation is a product policy, distinct from whether the disk operation succeeded.
+
+Play mode adds another question: which scene does Save describe? In a copy-on-play editor, the runtime scene can contain simulated transforms and transient objects that do not belong to the authored scene. Saving must explicitly select the authored scene or a deliberate runtime snapshot/export operation. A keyboard shortcut should not silently change that choice when the editor enters Play or Pause. Test new/open/save/save-as/cancel/write-failure paths, then repeat with play mode active. These are proposed checks for the contract, not claims that the tutorial executed them all.
+
+The scene-reset tutorial supplies the empty-path/new-scene/Ctrl+S distinction. The write-success, dirty-state and explicit runtime-save rules above extend that example into a complete editor contract. The original caption unit IDs and exact source mapping are retained in the continuation source ledger.
+
+### Distinguish updating a rotation from changing its representation
+
+Applying a rotation increment can be useful for a gizmo, but an increment does not remove the singularities of an Euler-angle representation. The earlier tutorial's delta-rotation behavior should be read as its update policy. When a decomposition approaches an Euler singularity, different angle triples may represent the same orientation or become unstable to recover. Keep the authoritative orientation, displayed controls and decomposition policy separate; a quaternion state still needs a deliberate conversion policy when Euler controls are shown. The extracted claim that applying deltas itself prevents gimbal lock is too strong.
+
+### Keep shader compilation, linking and activation separate
+
+Compiling a shader stage translates and checks that stage. Linking assembles compatible stages and their interfaces into a program. Making a successfully linked program current selects it for later commands: `glUseProgram` does not perform the link. The existing shader lesson already distinguishes these steps; an extracted caption point that calls activation linking must not be reused as an API definition. [Khronos OpenGL specification, program use](https://registry.khronos.org/OpenGL/specs/gl/glspec46.compatibility.pdf).
+
+The same historical file-loading lesson's claims about `fopen` outperforming `ifstream` are not a benchmark. File size, buffering, platform, build settings and surrounding work affect measurements. Likewise a compiler-specific warning and a proposed warning-suppression setting do not establish portable file-I/O correctness. Keep a shader loader's concrete contract visible: read the intended bytes, detect partial/failing reads, retain meaningful stage/link diagnostics and publish a replacement only after it is usable.
+
+
+---
+
+
+## Contact forces form a coupled system
+
+A contact solver asks how an action at one contact changes motion at every contact sharing the affected bodies. A stack cannot generally be solved as unrelated point collisions: pushing one body changes the gaps on both sides of it. The supplied physics chapter motivates a simultaneous force formulation while warning about its numerical difficulty. Start with the mechanics before naming a particular solver.
+
+A free rigid body has six **configuration degrees of freedom**: three for position and three for orientation. Linear and angular velocity add six independent instantaneous state components. The resulting local phase state has dimension twelve; this does not make the configuration twelve-dimensional. Storing orientation as a unit quaternion uses four scalar slots subject to a norm constraint, so a common position/quaternion/velocity representation stores thirteen numbers while retaining twelve independent state dimensions. The book's wording on physical PDF p. 451 counts velocity when saying twelve degrees of freedom; keep configuration, phase state and storage size distinct.
+
+The usual **constraint Jacobian**, written here as $G$, maps generalized velocity to constraint velocity. For one-dimensional bodies A and B, define gap $g=x_B-x_A-d$, where $d$ is their required separation. Then $G=[-1,1]$ and $\dot g=Gv$. A positive contact reaction $\lambda$ produces generalized body forces $G^T\lambda=(-\lambda,+\lambda)^T$, pushing the bodies apart under this sign convention. With mass matrix $M$, their acceleration response is $M^{-1}G^T\lambda$. Projecting back into gap acceleration gives
+
+$$
+\ddot g=G M^{-1}G^T\lambda+b,
+\qquad W=G M^{-1}G^T.
+$$
+
+The known term $b$ includes external-force acceleration and, for changing geometry, the relevant Jacobian-rate term. $W$ is the contact-space response, often called the **Delassus operator**. It is not the same matrix as the kinematic constraint Jacobian. The supplied book uses a Jacobian-like symbol for its force-to-contact-acceleration relation; explain that mapping rather than silently equating different conventions.
+
+For two translating masses, $W=1/m_A+1/m_B$. If both masses are 2 kg, a 3 N reaction changes relative acceleration by $3\,\mathrm{m/s^2}$: each body accelerates by $1.5\,\mathrm{m/s^2}$ in an opposite direction. This scalar is an inverse effective mass along the contact direction, not either body's ordinary mass.
+
+Now put three translating bodies in a chain with two contact gaps. The two rows of $G$ are $[-1,1,0]$ and $[0,-1,1]$. Their response matrix is
+
+$$
+W=\begin{bmatrix}
+1/m_1+1/m_2 & -1/m_2\\
+-1/m_2 & 1/m_2+1/m_3
+\end{bmatrix}.
+$$
+
+The off-diagonal terms are the coupling. Increasing the first contact's force changes the middle body's acceleration and therefore the second gap's acceleration. For three 2 kg masses, the matrix is $\begin{bmatrix}1&-0.5\\-0.5&1\end{bmatrix}$ in inverse kilograms. A solver that updates one contact and then another must account for that interaction; one pass generally leaves residual error. Iterative solvers trade residual accuracy against bounded execution cost, while a simultaneous formulation still needs a numerical method and degeneracy policy.
+
+For a closed, resting normal contact in a simplified acceleration-level model, let $w=W\lambda+b$ denote normal separation acceleration. The unilateral conditions are
+
+$$
+\lambda\ge0,\qquad w\ge0,\qquad \lambda_i w_i=0\text{ for every contact }i.
+$$
+
+“Unilateral” means a contact may push but cannot pull the bodies together. Either a reaction is zero and separation can occur, or an active reaction holds the constrained normal motion at its boundary. These conditions alone are not a complete time-stepping contact algorithm: closing impacts require an impact/impulse policy, and existing penetration requires an explicit stabilization or position-correction policy. Friction adds tangential limits and further coupling. Solving the unrestricted linear equations and then accepting negative reactions would change the physical problem.
+
+Here are two complete small solves using the three-mass response matrix above. If the known separation accelerations are $b=(-1,-1)^T\,\mathrm{m/s^2}$, choose $\lambda=(2,2)^T\,\mathrm N$. Then $w=W\lambda+b=0$: both contacts remain active and both reactions are nonnegative. If instead $b=(-1,1)^T\,\mathrm{m/s^2}$, blindly solving $W\lambda=-b$ gives $(2/3,-2/3)^T\,\mathrm N$. The negative second reaction would pull a contact together. The unilateral solution is $\lambda=(1,0)^T\,\mathrm N$, giving $w=(0,0.5)^T\,\mathrm{m/s^2}$. The first contact is active; the second exerts no force and is allowed to separate. Check nonnegativity and each product $\lambda_iw_i=0$ explicitly. This tiny example shows what the inequality conditions add to a linear solve.
+
+The supplied chapter discusses linear complementarity problems and pivot methods such as Lemke's method, while explicitly warning about assumptions, impossible configurations and numerical failure. That motivates termination criteria, tolerances, fallback behavior and tests; it does not provide a universal convergence guarantee for an arbitrary game contact system. Many real-time engines use iterative approximations because predictable cost and acceptable residual error matter.
+
+Previous-frame contacts can provide a warm start or collision-search hint. They must be revalidated after motion, teleports, edits or topology changes. A **reduced-coordinate** formulation removes constrained motion from the chosen coordinates; a **full-coordinate** formulation keeps each body's ordinary coordinates and imposes constraints through forces or impulses. Fixed mechanisms can benefit from reduced coordinates, whereas changing contacts make their structure harder to maintain. This is a representation tradeoff, not a claim that one formulation is always superior.
+
+The source basis is *Game Physics Engine Development*, selected physical PDF pp. 447 and 449–451 (printed pp. 424 and 426–428), recorded as `src-f12bb33ee7673a6978ca`. The two- and three-mass witnesses and the explicit $G$/$W$ distinction are explanatory extensions. They are CPU algebra checks, not evidence that an unseen engine's contact solver is correct.
+
+
+## Design a game system that can be continued by players
+
+A game can invite participation at more than one depth. A player may simply play the supplied rules, tell a story about a play session, create an object or character that enters the game, or build a new ruleset from shared components. These are different capabilities. A screenshot or story album carries interpretation outward from play; a character model or object carries authored material inward; a mod can change the structures and rules themselves. *Rules of Play* uses The Sims Family Album and player-made character models to show how modest features, when combined with community sharing, can support kinds of production the designers did not script. Its Icehouse example moves farther upstream: the physical set is a platform for multiple games, so players are also designers of the rulesets played on it. These cases come from a particular cultural/design analysis; they are prompts for design, not a universal claim that open systems always make better games (PDF pp. 529–535; source `src-a7aca6a0bed848445473`, units `u-633235004acd721fa1af6823`, `u-9427a0b93660366182bfcb02`, `u-e7b512db8a5004e94cdb2685`, `u-cb04cb81b90f1a3c999c0e44`, `u-1b7155d27fd862d61d3690f0`).
+
+The important architectural question is not “Is the game open?” in the abstract. Ask what boundary is open and what a participant can do across it. Changing a character's surface appearance changes an attribute. Adding a new object changes the system's elements. A new object can also change relationships by enabling actions that did not previously exist. An album that exports a story changes neither simulation rules nor the object model, but gives play a shareable interpretation outside the running game. These operations ask for distinct contracts: asset formats and validation for new objects; stable identifiers and compatibility rules for references; versioned schemas when old content must load after an update; and a clear boundary between recorded events and a player's later retelling.
+
+This suggests a useful capability ladder for a design review. First, can players express a meaning about play without altering the runtime? Second, can they configure or recombine shipped elements? Third, can they author new elements? Fourth, can they define rules that change the simulation? Fifth, can they distribute and maintain those creations with a community? Each level adds obligations. A color palette needs a modest import path. A new object may need collision, animation, localization, and save compatibility. A ruleset that changes progression may need an explicit multiplayer compatibility identity, because two clients cannot safely assume that identically named content has identical behavior.
+
+The Icehouse discussion makes the design tradeoff concrete: a system needs enough specificity to suggest meaningful possibilities and enough flexibility to permit alternatives. If every component has only one valid use, there is little material for a new ruleset. If components have no legible attributes or affordances, players must invent too much before they can begin. Digital engines face the same tension in data and tools. An extension point should expose meaningful capabilities while keeping invariants explicit. For example, an item schema might let a mod author define name, icon, mass, and permitted actions, but preserve engine-owned object identity and serialization rules. A script hook might permit a custom effect while restricting access to unsafe memory and requiring deterministic behavior in a replay or network session.
+
+There is also a social boundary. “Players can modify it” does not answer who may publish, whose work is credited, how a derivative is identified, or whether players consent to seeing a modified ruleset in a shared session. The book’s open-source analogy highlights broad access, modification, and redistribution as cultural values. Translating those values into a product requires concrete choices: license and attribution, moderation and discovery, version compatibility, sandboxing, and user control over which content is installed. These mechanisms support participation; they do not guarantee that contributions are inclusive or that a community will interpret them as intended.
+
+A practical design exercise is to trace one creation from author to recipient. Identify the authored data, the tools and constraints used to make it, the compatibility version, the permissions and attribution attached to it, the point at which it enters simulation, and the way the recipient sees that it changed the experience. Then test the same path after a save/load cycle and after an update. This trace connects the player-as-producer idea to implementation without reducing the source's cultural claim to a list of engine features: the architecture makes participation possible, while players and communities supply meanings the engine cannot infer.
+
+
+## What a simulation chooses to represent
+
+A game represents its subject through more than pictures and dialogue. It can also represent a relationship by making it a rule that players must act through. In *Diplomacy*, for example, negotiation is not merely described in text: players form alliances, issue orders, and can betray one another under the game's turn structure. A map can carry representational meaning too. *Rules of Play* calls this **procedural representation**: the overall subject emerges from internal representations and the rules governing their interactions. The term belongs to the book's design vocabulary, but it offers a useful question for any simulation: what aspects of the subject are encoded as state and rules, what aspects are communicated by presentation, and what is left for players to infer? (PDF pp. 421–432; source `src-b09b9ffba43d01960978`, units `u-d3cc4fdfc9bbd8432f570f09`, `u-22b2f046b3c7811a2b46922f`, `u-a9a5ca4b471496a7d545c64b`, `u-8c3cb69b191278cca5406961`, `u-4953056cf46aa840725de2b2`).
+
+Consider a city simulation about scarcity. If the game stores only a global food total, then hunger can affect a district only through whatever aggregate rule consumes that total. If it stores household inventories, transport links, and local markets, shortages can arise from distribution failures even while the city has enough food overall. The additional state is not automatically more realistic or more fun. It commits the game to a different set of possible explanations and interventions. Players can now change roads or trade policy and observe local consequences, but the simulation must also define those mechanics, surface the relevant information, and keep their interactions comprehensible.
+
+This is why a simulation model is a designed abstraction. An engineer chooses entities, state variables, transition rules, and time steps. A designer chooses which distinctions matter to play. A renderer chooses which outcomes are visible, and a player forms a mental model from all three. If the player cannot tell whether a citizen is hungry because the district has no food, a road is blocked, or the model simply does not represent local supply, the system's behavior may be mechanically consistent yet hard to learn. A useful design trace therefore pairs each authored concept with a state variable or rule, an observable cue, and an action that can affect it.
+
+Procedural representation also explains why character behavior is not a neutral detail. A non-player character who follows a small set of legible rules communicates a particular kind of world. If civilians avoid danger only when their personal threat meter crosses a threshold, the simulation represents safety as a local response to perceived threat. If they also warn neighbors, create crowd movement, and affect services, the represented social system is richer but harder to predict and validate. The choice is not a contest between “realistic” and “unrealistic.” It is a choice about which relationships the game asks the player to reason about.
+
+For a design review, select one theme—trust, scarcity, risk, cooperation—and draw the chain from state to rule to consequence to presentation. List the information the player needs to predict the consequence, then try a counterexample: can the same visible state lead to different outcomes because of hidden variables? If so, decide whether the hiddenness is an intentional mystery or an accidental gap in communication. This turns the book's term into an actionable method for aligning model scope, player learning, and the claims the game makes through its procedures.
+
+
+## A camera controller is a policy object, not a projection matrix
+
+A camera's view and projection describe how the world reaches the image; a controller decides how input changes the camera state. The *Camera Controllers* episode separates those roles, then extracts a small 2D controller from a sandbox layer so movement, optional rotation, zoom, and bounds can be tuned in one place. The recorded implementation is exploratory: it discovers an uninitialized aspect ratio during debugging, clamps zoom to 0.25 after scrolling can flip the view, scales movement with zoom, and leaves resize behavior unfinished. These are observations about the tutorial's snapshot, not general defaults or proof about a current engine (source `src-739dff35dade6f0568ad`, cue units `u-19a2859ef46c3538a6d5af16`, `u-834bb7417c9b9a0c64139084`, `u-01bf96e48838b40c3f63a9a1`, `u-9fba05789198d5b87500f592`, `u-8df577e6b71640582e729278`).
+
+The reusable lesson is to state each camera policy separately. For a 2D orthographic camera, let $z$ be zoom and $a=w/h$ be the drawable aspect ratio. A common policy keeps vertical world span proportional to $z$ and derives horizontal span as $az$. A controller must define what scrolling does to $z$, whether zoom is clamped, whether movement speed scales with $z$, and how a resize changes the visible world. These are coupled user-facing choices: scaling translation speed with zoom can make navigation feel consistent across scales, while a hard lower zoom bound prevents a camera from inverting or entering an unusable range. Neither choice is mathematically forced.
+
+The video’s debugging sequence is a compact example of how to improve a control loop: observe a symptom, inspect initialization, change one policy, run the interaction again, and record what remains broken. Its resize test matters because changing the window viewport alone does not update an orthographic projection. A controller may need a resize event to recompute bounds, or a different policy such as fixed world width, fixed world height, letterboxing, or stretching. The episode does not finish this work, so teach the failure as a boundary: movement and zoom can be demonstrated while resize correctness is still unresolved.
+
+
+## Write a development focus that can expose contradictions early
+
+A short development focus can act as a consistency check for a game idea. State the intended player experience first; then give separate, smaller commitments for audience, visuals, mechanics, and technology only where they support that experience. For example, the book’s fictional *Winter Carnival Whirlwind* pairs accessible controls and low difficulty with high-contrast characters against snow, a variable-zoom 3D camera for viewing both a manager and the whole carnival, and simple slippery-ice physics. The value of the example is the relationship among decisions: if the game is for new players, visual readability and simple controls reinforce that promise; if the player must manage the whole park and a central character, the camera must make both scales legible. A technology choice is useful in this brief when it enables the promised experience, not because it sounds impressive. (The example is a proposed design exercise in the source, not a shipped game.)
+
+Keep the focus brief enough that it directs the team without trying to replace the design document. Read the main statement and sub-focuses together and look for contradictions before expanding the document: a difficult control scheme would conflict with the stated novice audience; a camera that cannot expose park-wide events would conflict with the management premise. Treat the focus as a revisable working instrument, not a marketing blurb or a binding promise. This is one practical design-document technique from the assigned pages, not a claim that every project must use this exact format. [*Game Design: Theory and Practice*, physical PDF pp. 109–111]
+
+
+---
+
+## A design document is a working reference, not a frozen game
+
+A game design document has to help somebody make a decision. The *Game Design Theory and Practice* excerpt argues that a team document should let a programmer find how an enemy behaves or an artist find what a location needs without reading the whole file front to back. That changes how we write: group information by the question a team member will ask, use headings and an index, keep the current version easy to retrieve, and replace stale descriptions as the design changes. The excerpt contrasts useful gameplay description with three common failures: a thin pitch that leaves the actual rules unspecified, a long lore document that omits the mechanics, and a “pie in the sky” plan that promises more than the team can build. These are the author’s polemical categories, not a measured industry taxonomy (PDF pp. 399–406; source `src-71d23d060884f271ed8d`, units `u-f08a8bae1cd529a5eba011d0`, `u-3f02543f132472cc7309cf74`, `u-23996fa20a12d165df43d9a7`, `u-8b34fd03476e0cc3f60cdbb7`, `u-bcc9671e20baabdf558855c3`, `u-d8b24f5378f9838c00e9d1ef`).
+
+The practical test is retrieval plus action. Ask a teammate to find one gameplay rule, one exception, and one feedback cue. If they cannot find it quickly, the issue may be structure or missing detail. If they find an exact damage number but cannot tell what experience it should produce, the issue may be premature precision. The book recommends describing the qualities a weapon should have and balancing numeric values while the game is playable. That is not a ban on data tables: once tested values become implementation inputs, store them in a versioned source of truth and link the document to them rather than allowing prose and runtime data to drift apart.
+
+Documentation also has an ownership and time dimension. The excerpt argues that the designer remains involved while levels, controls, AI, and balance change, because the document is a springboard for the team’s work rather than the finished game. A useful modern workflow can make that loop visible: each design claim has a status (proposal, prototype observation, approved rule, or superseded), an owner, and a place where implementation evidence lives. Keep art-bible material, technical API contracts, and player-facing design intent distinct, then connect them where a feature crosses boundaries. This avoids asking a single document to serve every audience while preserving a coherent view of the game.
+
+A compact review loop follows: identify the decision the page supports; write the rule, exceptions, and observable result; mark what is still an assumption; try it in a playable build; update the record and notify its readers. This keeps a design document useful as the game changes, rather than treating a large specification as proof that the game already works.
+
+
+## Narrative can be authored, played, and retold
+
+A useful design discussion does not have to settle whether games “are narratives.” *Rules of Play* presents that binary as a poor starting point: a game can be examined through a narrative lens, and the useful question is how its rules, content, and play create narrative experience. The chapter distinguishes **embedded narrative**, the material designed before play (setting, characters, missions, scripted events), from **emergent narrative**, the sequence and meaning that arise as players interact with rules. Many games mix both: a mission supplies a frame and goal, while each player’s route, timing, conflict, and outcome vary. These are the book’s analytic terms, not mutually exclusive product categories (PDF pp. 373–380; source `src-2d00777ffb7d550fdb6c`, units `u-f82310dff4359ccfbffa0ba8`, `u-0bdbb23e17eb5c5f1a03069c`, `u-53206bad1dd58690974b0032`, `u-686fb11d8a3cec5daa2a016d`, `u-d02f3ea482267434e120c533`).
+
+A small dice game makes the distinction tangible. The rules set the shared premise and the storm’s approach; each die roll changes the house being built and the risk that lightning destroys it. The dramatic rhythm is not delivered by a cutscene alone. It comes from the visible state changes, the order of turns, and how each player compares their own position with everyone else’s. In a strategy game, a trade can be both a resource decision and a social act: help an opponent now, or preserve a relationship that may matter later. The mechanics do not force every player to tell the same story, but they shape which stories are easy to recognize and share.
+
+Designers can trace that relationship through four questions: what does the player know before acting; what can the rules change; what information does presentation expose; and what can players infer or tell afterward? A scripted event can establish context, while a systemic outcome can complicate it. If the player’s actions have no perceptible consequence, an intended narrative choice may feel cosmetic. If the system produces a surprising consequence without a readable cue, an emergent story may be difficult to understand. Narrative design therefore includes affordances, feedback, pacing, and spatial structure as well as authored text.
+
+The excerpt’s “narrative space” links an overarching frame to a space of possible actions and consequences. A room layout can stage a choice; a route through connected rooms can pace discovery; a social map can turn movement and resource placement into relationships. This idea need not imply that every possible outcome is a story or that spatial design can replace authored narrative. It asks whether the game’s spaces and rules create meaningful opportunities for action, and whether the resulting changes are legible enough for players to interpret.
+
+For a prototype, write a two-column trace. In one column, record the designed frame: premise, goal, characters, location, and scripted information. In the other, record two plausible play histories: actions, state changes, feedback, and the story a player might tell about them. Where the same rule yields different experiences, identify which variation is intended and which needs better feedback. This lets a team tune authored content and systemic possibility together without claiming that the game can control every player’s interpretation.
+
+
+## Constraints can carry story when consequences stay visible
+
+The *Game Design Theory and Practice* discussion of *The Last Express* describes a mystery organized around one train journey. Its limited setting and constrained movement give the designers a repeated social space: passengers share compartments and corridors, actions can be seen or overheard, and time advances while the player considers what to do. In the example, disposing of a body outside the train avoids one immediate problem but creates another when police board at a later stop; a child’s remark can expose the act. The design lesson is not that fewer choices always make better stories. A constraint works when it channels attention toward consequential decisions and the game lets the player perceive how one action changes later possibilities (PDF pp. 361–363; source `src-0e4e96cb9aa5b4eed033`, units `u-b279328066d554a9b4b67080`, `u-9005a2056f905583f8a03484`).
+
+Sound can be part of that information design. The excerpt presents the train’s movement and environmental sounds as active cues, with music responding to events rather than filling every interval as a continuous score. If quiet stretches let a player notice footsteps, a door, or a distant conversation, reducing music can preserve useful signals. But silence is not automatically suspenseful: it needs a readable relation to the environment, and critical cues need enough salience for the player to hear them under different listening conditions. Treat the specific audio history and production details as a case study from the book, not a current audio-engine specification.
+
+This example also clarifies why a save system is a design mechanic. The book describes color-coded “eggs” as persistent return points intended for different household players, challenging the assumption that a conventional named save file is the only meaningful model. A save interface expresses assumptions about who plays, how they resume, and what progress means. A technical design therefore starts with player contexts—shared device, multiple profiles, branching story, or replay—then chooses a representation that preserves the needed identity and state. Storage implementation follows the contract; it does not define it.
+
+The interview's videotape analogy adds an important distinction: a player profile is not merely one latest save point. Its egg can contain a history that supports returning to earlier moments, without asking the player to name every checkpoint. The source says rewind can usually return within three to five real-time minutes of the desired point. That is a reported user-facing resolution, not evidence about whether the program stores inputs, snapshots or a different history representation. An engine implementing a similar idea must define history retention, reachable rewind points, identity and version compatibility, and the treatment of events outside the saved simulation.
+
+The audio example is equally concrete. Opening a door can make the train louder; a distant door closing or the train slowing at a station changes what the player hears. Those are state-dependent cues. A continuously repeating score could mask them, whereas music reserved for selected situations can become a more salient event. This explains a production choice in terms of information the player can use, rather than treating silence as an automatically dramatic effect.
+
+For each constrained action, document the immediate result, the delayed consequence, the cue that reveals the consequence, and any recovery path. Then play through it from a fresh save and ask whether the outcome feels caused by the player’s choice rather than by hidden designer fiat. This connects authored narrative, simulation state, sound, and persistence while leaving room for different games to choose different levels of freedom.
+
+
+## Theme and structure become meaningful through play
+
+A theme is not merely decoration placed on top of rules. In the *Rules of Play* design reflection on *Ironclad*, the author describes beginning with philosophical images but finding that the first game structure did not carry either theme well. A new structure—pieces occupying both grid squares and intersections, with the two layers influencing one another—made the theme and mechanics feel connected. The lesson is not that every mechanic must literally depict its subject. It is that representation can help players understand a complex relationship, while a rule can make the represented idea actionable. The relationship is reciprocal: theme suggests actions and relationships; structure determines which of them play can express (PDF pp. 289–293; source `src-b7bb9a7016640ab322f8`, units `u-d363557a6b6336d1b6d3fe21`, `u-8d15cd63ffef7ef8fcd664fd`, `u-d5327d181b7884ddb9ddc23d`).
+
+The chapter then shifts from rules as a formal specification to play as the experience those rules enable. “Play is free movement within a more rigid structure” is the book’s broad design formulation. In a game, rules establish boundaries and state changes; players explore the choices those boundaries permit. A strong rule set can still produce lifeless play if it offers no useful decisions, while a player’s playful expression often appears in spaces the formal rules do not prescribe exactly. This distinction helps a team ask two different questions: is the rule system coherent, and does interacting with it produce the intended experience?
+
+Use the idea in a prototype review by pairing each important rule with the player behavior it is meant to invite. Then observe what players actually do. If a theme promises interdependence but the best strategy is to ignore other players, the structure and representation are pulling apart. If a two-layer board makes the relationship visible and choices require attending to both layers, the design uses representation as a guide into complexity. The fix may be a rule change, stronger feedback, different framing, or a simpler theme; do not assume a story label can repair mechanics that teach a contradictory lesson.
+
+The source distinguishes **gameplay**, play within a game's rules; **ludic activities**, a broader range of play such as informal chasing or tossing a ball; and **being playful**, an attitude that can be brought to activities outside a game. Here “ludic” simply means concerned with play. These are the authors’ analytic distinctions, not engine object types. A playful attitude toward organizing a workspace need not create a formal game, while a competitive match adds specific rules and outcomes. Other design traditions define these differently. The transferable method is to check how a player experiences a system in action and whether the represented meaning survives contact with the decisions the game actually supports.
+
+
+## Space is part of the rule for what can happen
+
+A game space does more than contain objects. Its layout determines what can be seen, reached, protected, or hidden, and those possibilities shape both tactics and interpretation. *Rules of Play* calls attention to narrative space: the spatial arrangement of a game can create contexts in which actions acquire meaning. A volleyball net divides allies from opponents; a circle in Mafia makes each participant both observer and subject of observation; a corridor in a maze constrains escape and makes pursuit legible. In a digital action game, a wall may block sight while a power-up’s location and timing create uncertainty. These examples are the book’s design analysis, not a universal claim that every player reads the same story from a layout (PDF pp. 385–390; source `src-a18d9cb026ac631c4d77`, units `u-9731ef69edd9bb796bc0edfb`, `u-14275c2abd3f1afa27a69f05`, `u-524c1eb62ed83ea774a45ffd`).
+
+A useful spatial review separates three questions. What does the geometry physically permit? What does the represented setting suggest should happen there? What can the player perceive from a particular camera or position? If an arena is meant to encourage ambush, sightlines and cover should enable concealment, but the interface must also give players enough information to learn how concealment works. If a room is meant to feel safe, the rules and soundscape should not repeatedly punish ordinary exploration there. Navigation, collision, camera framing, audio, and narrative descriptors all contribute to the player's working interpretation of a place.
+
+Narrative descriptors—images, text, sound, and object behavior—help identify what a space means and which actions fit its frame. The same simple collision layout can suggest different play when described as a tennis court, a prison, or an asteroid field. Yet labels cannot carry the whole design: if the rules contradict the setting in a way that players cannot interpret as intentional, the frame becomes confusing. Conversely, familiar genre conventions can help players predict likely affordances before reading a manual. Those expectations can be used, challenged, or subverted, but the result should remain learnable enough to support purposeful action.
+
+For a level blockout, annotate each region with intended relationships, not only dimensions: who can see whom, where information is hidden, which routes are available, what changes when the player crosses a boundary, and what sounds or visuals signal the change. Then walk the space using the actual camera and movement rules. This ties geometry to player agency and story while keeping the claim modest: designers shape a field of possible interpretations; players realize particular ones through play.
+
+
+## Let a game enter real life with a clear way back out
+
+Most games announce their frame: players sit down, open a menu, or enter a match. *Rules of Play* examines live games that deliberately make this boundary less obvious. In *Seasons of Darkness*, players keep both the fictional vampire activity and the existence of the game secret from bystanders; a gesture can mean a supernatural ability inside the fiction while remaining ordinary-looking outside it. In *Suspicion*, the workplace itself becomes play space, and participants use familiar offices, invitations, and social roles to stage hidden alliances and accusations. These examples show how context can become part of a game’s materials, while also showing that a frame still needs rules, time boundaries, and some way for participants to know when play begins or ends (PDF pp. 565–570; source `src-068dcc8eb09139d505ba`, units `u-4c0a56d6edca068842a0ef7e`, `u-36bf494ca633cbd88703bbfb`, `u-eb83d867220003e0369f7081`, `u-3782ac49fd9d9775ccc22f81`, `u-2b8c1c1df59a4ed73bbde998`).
+
+This design territory has a distinct safety and trust problem. A participant may know the fictional rules but not know whether a colleague is role-playing, whether a boss is in on the game, or whether an accusation is part of the fiction. Real institutions also have power differences that can make nominally voluntary participation feel compulsory. The source treats those blurred boundaries as a way to make culture visible; that interpretation does not establish that every participant felt safe or consented to the consequences. A contemporary design review should test those questions directly.
+
+Before moving play into a shared workplace, campus, street, or online community, specify who can invite whom, how participation is signaled, what outsiders can reasonably infer, what conduct is out of bounds, and how anyone can pause or leave without penalty. Give moderators a way to distinguish in-game accusation from real reporting, and decide what happens to game state when a participant opts out. A short entry ritual can establish the frame for players; an equally explicit exit ritual can return them to ordinary roles and let people raise a concern outside the fiction. Concealment can be a mechanic among consenting players, but it should not conceal the possibility of opting out.
+
+This makes the game’s boundary an authored interface. Rules and props shape how play unfolds; local context supplies meanings and risks the designers cannot fully predict. Teams should therefore prototype with the people who will inhabit that context, observe whether the invitation and exit remain legible, and revise the design when the frame creates unwanted social pressure. Cultural transgression is a design intention in the source’s examples, not a guarantee of beneficial resistance or safe play.
+
+
+The [[Visual Recall/Game Engine - Visual Recall|engine retrieval card]] collects short mechanisms and direct returns to these teaching sections, including the bounds figure and the shared footprint/order/lifetime visual.
+
+
+---
+
+## Let companion AI and level geometry share one contract
+
+A companion that follows the player is not only a navigation feature. It is part of the level’s reachable-state design. In the *Damage Incorporated* example, a rudimentary teammate AI was built before substantial level design. That early version could not jump or swim, and it struggled in tight spaces where companions collided or blocked the player. The author reports that this discovery changed level design: routes had to remain traversable by the follower, and constrained spaces had to be reconsidered. (*Game Design: Theory and Practice*, supplied PDF p. 191, source `src-f508b5433ab08ffd2964`, unit `u-4274992395bc43b21d421cf2`.)
+
+This is a useful engineering dependency. The level asks an agent to reach a goal through a sequence of spaces and transitions. A jump, swim, ladder, or door is a transition type, and the agent must either implement that transition or the level must not require it. A corridor also has capacity: if the follower’s turning and avoidance behavior cannot handle a narrow passage, a route that is connected in the level graph may still fail in movement. So “the path exists” and “this agent can traverse it” are different claims. Test the actual controller on representative spaces before authoring many dependent levels.
+
+A practical prototype can therefore include one player, one companion, and a small route containing the game’s difficult transitions. Record each segment’s requirement—walk, turn, jump, swim, open door—and observe whether the agent reaches the same goal, obstructs the player, or loses formation. When it fails, separate a missing action capability from a path-planning error, collision/avoidance behavior, or a level constraint. That classification tells the team whether to extend the agent, alter the route, or change the companion role. It also gives level designers concrete requirements instead of a vague promise that “the AI will work.”
+
+The book gives a particular production ratio of roughly one quarter code fixes and three quarters level rework for one project. Treat that as the author’s retrospective about that game, not a planning estimate for other teams. The reusable lesson is the sequencing: get a representative behavior prototype running before a large body of dependent level content accumulates, then revise both sides of the contract as evidence arrives. This connects to the book’s separate advice to make a small piece of gameplay work before building the rest (source `src-38b424a735fb2ff45aa0`, supplied PDF p. 308, unit `u-f102e1ff3037239dfbdcf837`).
+
+## Diagnose choices as a five-stage loop
+
+A player action becomes meaningful through a sequence, not merely because input code receives a button. *Rules of Play* describes a choice as: the context before the choice; how the possible choice is conveyed; the mechanism by which the player chooses; the choice’s effect on game state; and how the result is conveyed back. It distinguishes internal stages (context, action processing, state effect) from external stages (showing options and showing results), and describes the result as the context for the next choice. (Supplied PDF pp. 75–78, 82; source `src-13b9f7885ad00561b1b6`, units `u-6eed545c74820be6c499f9b3`, `u-a38c1ea79e016b57769b1e4b`, `u-91dae07d3c354e0ff40d92e3`, `u-35ec59a7f849c8f61bf005e4`, `u-e6592a502e29ad5b23c0982b`.)
+
+Trace a door interaction. First, the door is locked and the player holds a key: that is context. Next, a nearby prompt or visible lock communicates that interaction is possible. The player presses the interact control, the input mechanism identifies the target, and the game rule changes the door from locked to open. Finally, animation, sound, and changed traversal communicate the result. The new open-door state then changes which routes are available. If the player says “I did not know what I could do,” inspect option conveyance. If the button press appears ignored, inspect target selection and input acceptance. If the prompt disappears but the door remains shut, inspect the state transition. If the door opens silently or the passage remains blocked, inspect result presentation and collision synchronization.
+
+The point is not that every game needs a prompt, a sound, or five separate software modules. The five stages are a diagnostic lens for connecting internal state to player-visible possibility and consequence. A single system may own several stages; what matters is that the contract makes each one testable. The supplied *Rules of Play* pages identify these stages and use failures such as arbitrary-feeling decisions or invisible outcomes to explain why the sequence matters. The door example and its engineering checks are an original application of that framework. It extends the current discussion of readable cause and consequence by giving teams a systematic place to look when an action feels confusing.
+
+### Figure E-choice - From opportunity to consequence
+
+```mermaid
+flowchart LR
+    A["Context"] --> B["Convey an option"] --> C["Accept an action"] --> D["Change game state"] --> E["Convey the result"]
+    E --> A
+    classDef cue fill:#e7f0fa,stroke:#496f9b,color:#17324d;
+    class B,E cue;
+```
+
+The blue stages communicate with the player; the other stages describe context and the accepted state change. The diagram is a diagnostic route, not a requirement for five software modules. Reconstruct the locked-door example through each stage before debugging a whole interaction system.
+
+
+## Make a runtime debug control observe one owner at a time
+
+A live debug control can make a game parameter easier to tune: expose a labeled value, let a slider change it while the scene runs, and observe the visual effect without rebuilding. The Sparky development-log example adds a shader intensity parameter and a slider, then narrows the edit from a shared material to one cube material instance. That scope change matters: if the control alters every object sharing a material, the screen may look different but it becomes harder to tell which object’s data caused the result. A good tuning experiment changes one owner and one variable while holding the others steady. The same episode reports a fixed-width label overflow and treats font metrics and menu organization as unfinished work. These are details of this early tool, not a recommendation to expose raw memory addresses as a production UI contract. [Sparky Engine Dev Log #1, 00:24:08–00:34:19]
+
+## Put the theme in the objective, then bound the choices
+
+In an interview, Chris Crawford describes *Balance of Power* as an “un-wargame”: war means failure. The useful design point is that a theme can be carried by the victory and loss conditions themselves. If a game is meant to express the cost of escalation, a rule that treats military victory as success may contradict the intended subject even if the dialogue says otherwise. Crawford’s description is his account of a particular project, not independent history or a rule every political game should follow. (*Game Design: Theory and Practice*, physical PDF p. 291 / printed p. 266; the assigned interview continues through physical PDF pp. 291–300.)
+
+The same interview describes an interactive-story design with a stable dramatic endpoint and choices whose accumulated effects determine the route into that endpoint: characters’ prior responses shape which side they take when the conflict arrives. It calls this a “skeletal plot” and argues for dramatically reasonable choices rather than unlimited actions. As a design exercise, write one fixed event the player cannot remove, list the choices that can change who is prepared for it, and trace how each choice changes the final state. Then ask whether the restriction supports the drama or merely blocks a plausible action without explanation. The account is a proposal discussed in an interview, not evidence that the described tool or story was completed. [PDF pp. 298–300]
+
+A separate idea from Crawford’s description of *Siboot* is a non-transitive combat relation: instead of A beating B, B beating C, and C beating A being merely a novelty, a designer can treat the cycle as a space for readable tactical choices. If using it, state the relationship in the interface or through play feedback so players can infer why a matchup changed. Crawford presents this as a design opportunity; the assigned pages do not establish that any one ring size or implementation is balanced. [PDF pp. 292–293]
+
+## Design for interaction patterns, then tune what players discover
+
+A set of local rules can create a larger play pattern the designer did not specify as a named mechanic. In the book’s *Populous: The Beginning* example, preachers convert nearby enemy warriors, while warriors that are already fighting cannot be converted. The first wave may join the player; the next may encounter those converted fighters and start a battle. That new context means the player has to return and move converted warriors behind the preachers. The design lesson is concrete: conversion radius, time to convert, movement speed, and immunity while fighting shape whether the pattern appears. Change one value too far and the interaction can collapse. This is a case from the authors’ analysis, not a claim that every interaction produces desirable emergence. [*Rules of Play*, physical PDF pp. 175–176]
+
+The *Gearheads* example makes the pattern easier to see. Individual wind-up toys have simple abilities, but players combine them into small “engines.” For instance, a Handy toy can wind a nearby Crush Kringle; the Kringle’s stomp reverses movement, sending Handy toward another Kringle to wind it in turn. The toy interaction becomes a repeatable scoring pattern that the player can discover and intentionally assemble. Designers later tuned the pieces and taught the computer opponent to recognize some advantageous combinations. The useful workflow is therefore: define a few interacting rules, instrument their values, play the combinations, record patterns that appear, then tune whether those patterns are readable, balanced, and interesting. The designer directly authors rules and only indirectly shapes the play that emerges from them. [PDF pp. 176–178]
+
+## Keep the draft history that explains why rules changed
+
+James Ernest’s *Caribbean Star* design notes show how a playable rule set evolves from a theme and a rough draft. The author starts with a two-player cruise-ship premise and ordinary playing cards, writes an initial rulebook to expose missing decisions, then tests it with one playtester. The early draft uses a 30-minute show and a Five that discards a hand. Testing reveals two separate problems: discarding burns through the deck and lets a player avoid bad cards; an all-mistake practice pile has no satisfying way to clear. The revisions swap hands on a Five and add a zero-point Comedy Show. The author then revises the Ace effect to preserve round count, clarifies score order, changes terminology that overloaded “rehearsal,” and halves the target show length to make the numbers easier to explain. These are not universal rules for card games; they are a compact example of recording an observed problem, a candidate change, and the resulting tradeoff.
+
+The notes also explain why simultaneous card selection and a precedence order were chosen: hidden simultaneous choices reduce the first-player concern, while precedence gives the pair a deterministic resolution sequence. The exact Caribbean Star rules are only the final snapshot of a longer iteration. When teaching from a design case, keep the early and final rules separate, and preserve the “why” beside each revision so a future designer can see which playtest observation the change was meant to address. [*Rules of Play*, physical PDF pp. 578–584; final scoring example pp. 577–578]
+
+
+## Multiplayer is a gameplay and operations commitment
+
+A multiplayer mode is not a networking switch applied after the single-player game is complete. The supplied *Game Design: Theory and Practice* pages recount a project where multiplayer was added without being part of the original design plan. The author says it functioned as a short diversion but did not strengthen the game enough to justify the time, and that the team did not want to compromise the single-player experience to support it (PDF p. 277; `src-0898be31835566d45f2a`, unit `u-fa867ea850f6aa70165c4825`). This is a production recollection, not a rule that multiplayer must always be designed first. It does show why the decision changes mechanics and staffing: players can surprise each other in ways a designer cannot script, so maps, rules, pacing, fairness and social interaction need their own playtests.
+
+Treat the earliest prototype as a question about the game’s intended shared activity. If players compete, does the core action stay understandable when another human can interrupt it? If they cooperate, what information and tools let them coordinate? A client/server architecture can decide who owns a simulation value, but it cannot decide whether the interaction is fun, fair or readable. The current networking notes already explain authority and message flow; the additional design implication is to validate those rules in an actual small multiplayer loop before a single-player experience becomes difficult to change.
+
+The same production chapter warns that beta testers may be unusually invested players and may not represent casual audiences; it also notes that some testers can benefit from keeping an exploit undisclosed. Its later discussion recommends community managers to interpret and communicate player feedback and describes player metrics as another source of evidence (PDF pp. 279–280; units `u-e3e73c42b9ad8eb3140f355a`, `u-a4de81035bbfc7ebaf2b8750`). These are the authors’ observations, not a guarantee about every beta cohort. More generally, measurements record selected actions under a particular build and sampling setup; they do not explain why a player acted or whether an outcome felt fair. Combine telemetry with representative playtests, observation, and a clear design question. When a change may alter a valued mechanic, test the consequence with players before treating a metric movement as proof that the design improved.
+
+The system boundary therefore extends past networking code: it includes the intended player relationship, the content and test setup that exercise it, and the post-launch capacity to interpret reports and maintain the experience. That is a design and operations implication drawn from this historical production discussion, not a prescribed live-service architecture.
+
+### A reconnect window needs an ownership policy
+
+A multiplayer dropout is both a connection failure and a game rule. The connection says whether messages can currently arrive; the player seat says who still belongs to the match; the avatar stores the participant’s game state. These identities overlap, but they are not the same object. Deleting an avatar whenever its socket closes can make a brief network interruption count as a forfeit. Reusing its seat immediately can let a late packet affect the next person who occupies that seat.
+
+The supplied *Game Design: Theory and Practice* chapter recommends handling network dropouts so the match can continue, with a possible short opportunity for a player to reclaim a slot after reconnecting. That is a design suggestion in a 2005 book, not evidence that every game should offer the same grace period. The engineering example below turns the choice into an explicit policy. Source location: source `src-a4de9e1680075fe88eb6`, point `p-000012`, raw unit `u-b727c797a8e28a1d429d8f99`; physical PDF page 269, visible footer *Chapter 13: Multi-Player*, p. 244.
+
+For a small cooperative match, let a server-owned player seat move through three states:
+
+```mermaid
+flowchart LR
+    C["Connected"] -->|transport lost| R["Reconnecting"]
+    R -->|authenticated before deadline| C
+    R -->|deadline reached| F["Forfeited"]
+    style C fill:#dcfce7,stroke:#15803d,color:#14532d
+    style R fill:#fef3c7,stroke:#b45309,color:#78350f
+    style F fill:#ffe4e6,stroke:#be123c,color:#881337
+```
+
+`Connected` means a live transport is bound to the seat. `Reconnecting` means the seat and avatar remain owned by that participant, but the server accepts no gameplay commands from the broken transport. `Forfeited` is a terminal match decision for this example: the avatar is removed from active play and its seat cannot be reclaimed in this match. A competitive game could choose a different rule, such as leaving the avatar vulnerable, invoking a bot, or allowing a teammate to take over. Pick one rule and show it to players before a connection drops.
+
+Assume a fixed simulation rate of 60 ticks per second and a 300-tick reconnect window, which is five seconds. At tick 1200 the transport disconnects. The server changes the seat from `Connected` to `Reconnecting`, records deadline tick 1500, preserves the existing player identity and avatar, and rejects commands from the old connection generation. At tick 1430 an authenticated reconnect arrives with the same match and seat token. Because 1430 is before the deadline, the server binds a new transport generation to the existing seat. The avatar continues from its saved authoritative state; the server does not spawn a second avatar or replay the previous move. A command queued on the old generation arrives after reconnect and is rejected. The new connection resumes with the next valid input sequence.
+
+The clock is part of the rule. At exactly 60 simulation ticks per elapsed second, 300 ticks take five seconds. If simulation pauses or the server stalls without advancing ticks, that is five seconds of simulation time, not necessarily five seconds on a player’s clock. A live competitive service may instead use an authoritative monotonic elapsed-time deadline and serialize its expiry into the simulation. Declare the pause and overload policy rather than silently promising wall-clock forgiveness from a tick counter. The trace here intentionally uses simulation ticks.
+
+This boundary needs more than a seat number. Store a stable player or seat identity, a monotonically increasing connection generation, a deadline, and the last accepted input sequence. Keep that sequence history across reconnects for this policy; the client resumes after the last acknowledged command rather than resetting the same logical stream to zero. A bounded generation counter must fail or retire its identity before wraparound. A generation is an identity guard, not authentication: bind it to the authenticated match and participant on the server, rather than trusting a packet’s seat field. On receipt, validate that the match is still active, the authenticated participant owns the seat, the packet’s connection generation is current, and its sequence number is new. A duplicate command can then be ignored, and a delayed command from an earlier connection cannot be mistaken for the first command on a new connection. The reliable/ordered transport may simplify delivery, but it does not remove the need to define application-level ownership when reconnect creates a fresh stream.
+
+The failure trace is an immediate slot reuse. Player A disconnects from seat 3; the server erases A and assigns seat 3 to player B. A delayed packet from A contains only `seat=3` and `move=left`. The receiver looks up the current seat owner and moves B’s avatar. The packet may be validly encoded and still mutate the wrong game state. Stable identity plus a connection generation prevents this aliasing. A second failure is to resume A by constructing a new avatar while the old one remains in the world, producing duplicated inventory, collision, or score state. Rebind the seat’s existing player record rather than rerunning match-entry side effects.
+
+At the deadline, process forfeiture at a defined simulation boundary. First mark the seat terminal, then apply the match’s avatar and score rules once, then publish the transition to clients. Reconnect requests processed after that boundary receive an explicit “match seat expired” response or enter spectator mode. Do not let arrival order across separate network and simulation threads decide whether the player was still eligible. Queue the request for the owning simulation thread and compare it with the authoritative tick and deadline there.
+
+A repeatable test uses a fake clock and a deterministic packet queue: disconnect at tick 1200; accept reconnect at 1499; reject at 1500 under an exclusive deadline rule; deliver one old-generation movement packet; duplicate one new-generation command; and confirm one seat, one avatar, and one accepted move. Then repeat with out-of-order timeout and reconnect events. A saved Python witness executed these deadline, wrong-owner, stale-generation, duplicate-command and stale-timer cases successfully. It validates the stated single-thread state-machine transitions and message guards in that model. It does not prove the policy is fair or fun, and it does not test real network conditions. Playtests must decide whether five seconds is appropriate, whether the avatar should remain in place, and how the match communicates the interruption.
+
+The source motivation is the supplied *Game Design: Theory and Practice*, physical PDF page 269, printed page 244: tolerate unavoidable dropouts and consider allowing a quick return. The concrete state machine, clock, authentication precondition and generation policy here are original engineering development. The identity guard connects to [[Concepts/Object identity and generation handles]]; retaining a seat number alone is insufficient.
+
+This extends the existing networking note’s instruction to define disconnect handling and test reconnects with one worked policy. The seat transition and generation checks are an original synthesis, not behavior shown in the book or a claim about any inspected engine implementation.
+
+
+## A game's interface can carry both its accessibility and its puzzles
+
+The *Loom* analysis offers a useful design bridge between input engineering and authored experience. The interface is not merely the mechanism that maps a mouse event to an action. It decides which kinds of difficulty belong to the player. The book contrasts text parsers (interfaces that interpret typed commands), verb menus, and icon menus with *Loom*'s double-click interaction: one click moves Bobbin to a visible object; a double-click asks the game to perform the contextually useful action. This removes a layer of commands that often repeated an obvious choice. The author argues that this shifts challenge away from remembering a control vocabulary and toward interpreting the world. Treat that as the book's design argument, illustrated by *Loom*, rather than a rule that every game should minimize inputs. A tactical interface may intentionally demand command selection; the question is whether that burden supports the intended play.
+
+The game then gives the simplified interaction a rich second layer. A player hears a short sequence of musical tones while inspecting an object, learns the matching notes on Bobbin's distaff, his staff-like magical instrument, and repeats them to cast a “draft,” the game’s name for a spell. The visible notation teaches the sequence; the expert mode removes that display and asks the player to hear it. For the reversible drafts described, reverse order produces an opposite effect, and a draft learned in one situation may solve a related later puzzle. The same input surface therefore serves movement, contextual interaction, memory, music, and inference. It is simple at the motor level but expressive at the rule level.
+
+For an engine or tools team, this is a reminder to keep three questions separate. First, what input event did the platform report? Second, how does the game interpret that event in the current context? Third, what feedback teaches the player the interpretation? A double-click is not inherently intuitive: the object needs a readable affordance, timing must tolerate real users, and the response must confirm what occurred. A sound sequence is not just an audio asset either; the game must encode its notes, present optional visual scaffolding, accept replay, and preserve the relation between learned drafts and later puzzle targets. Those are authored rules and content relationships built on top of input infrastructure.
+
+The source also identifies the cost of a strong authored structure. Long non-interactive conversations can make the player feel temporarily powerless; a fixed story and puzzles may limit replay after solutions are known; attractive landscapes can obscure navigation. It praises integration between story and mechanics while recognizing that the result remains linear. The useful review is therefore not “simple interface is better,” but: which effort is removed, which cognitive effort is intentionally added, and when does the presentation take control away? A test should observe first-time learning, error recovery, discoverability, and the player's ability to connect a learned rule to a later use. The extracted pages describe a historical adventure game and the author's evaluation; they are not a user study or a general accessibility standard. (*Game Design Theory and Practice*, PDF pp. 256–261; source `src-ffe773c44d6f4eb4af9a`, units `u-5a0a5b34083ad8e00f045d26`, `u-87fc99c0a91edf2291182aa3`, `u-c0616676980f89515bde864c`.)
+
+
+## A setback needs a legible cause and a possible recovery
+
+Rouse's “what players want” chapter frames failure as useful only when it teaches. A player may accept losing to a challenge they could understand and overcome; repeated failure caused by an invisible rule, an arbitrary one-shot obstacle, or a permanently unwinnable state feels like the game has withheld the terms of success. The chapter's recommendation is normative and broad, so an engine team should translate it into a concrete content contract rather than treating it as a measured universal law.
+
+For each high-cost failure, write down the cue that precedes it, the player action that could avoid it, the feedback that explains the result, and a route to continue. In a platforming pit, test that a recovery path exists or that the game ends the trapped state promptly and fairly. For a boss attack, expose a readable wind-up and enough time for the intended response. For a long mission, checkpoints and player-requested saves address different needs: an automatic checkpoint protects progress at authored boundaries; an explicit save lets the player choose when to stop. Rouse argues that automatic saves should complement rather than replace manual saving, and that no player should remain alive in an unwinnable space. These are design recommendations from the cited edition, not platform policy or contemporary user research.
+
+This lens complements state-machine thinking. A save system must specify the captured state and restore behavior; a level rule must specify whether failure resets, branches, or permits recovery. The player-facing promise is only sound when the engine can preserve the corresponding state. A useful test therefore pairs an authored failure with an engine trace: trigger the obstacle, observe the feedback, follow the recovery route, save or checkpoint, reload, and verify that the world returns to a playable state. This connection is a proposed testing method derived from the design claims, not something the source says the cited games implement uniformly. (*Game Design Theory and Practice*, PDF pp. 39–41; source `src-a78b9fc4a709c27d61c4`, units `u-29934507f9b87b5f724583ed`, `u-573371d338b25d622dff2c75`.)
+
+
+## “Game” and “play” change scope with the question
+
+The definition chapter ends with a useful warning against turning a taxonomy into a universal fact. It offers two compatible ways to relate the words. In ordinary classification, games are one subset inside the wider phenomenon of play: children can play without engaging in a bounded game. In the book's analytical framework, however, a game is a complex phenomenon that can be studied through three lenses—rules, play, and culture—so “play” is one aspect inside the larger game being analyzed. The chapter explicitly presents both relations as useful. They are not rival set-theory claims about a single fixed universe; the first compares categories of activity, while the second describes components of a designed game phenomenon. (*Rules of Play*, PDF p. 96 / printed Chapter 7, p. 14; source `src-a3ca4c0db79b24a55daa`, unit `u-db65536d4c9a2e992e11cf35`.)
+
+The authors then settle on an operational definition for the rest of their book: a game is a system in which players engage in artificial conflict, shaped by rules, with a quantifiable outcome. They acknowledge that this deliberately excludes or complicates borderline cases. A cooperative activity can still contain conflict between players and a system; an open-ended role-playing campaign may have many local outcomes without one final score; a city-building sandbox can acquire quantifiable goals because the player chooses them. The value of the definition is not that it resolves every philosophical case. It gives a team a vocabulary for asking what the rules constrain, what state changes, what success means, and whose goal is being counted.
+
+This distinction is useful in tools and architecture reviews. A rule editor can represent formal constraints; an in-game session can expose player activity; a community or modding layer can change the culture around the same rules. These are related views, but the editor's data schema does not fully describe the play experience or the social context. When an authoring tool asks for a “win condition,” it should allow the project to express that a particular mode has several local goals, no fixed winner, or a player-selected target. A rigid single-score field might be a deliberate scope choice, but it should not be mistaken for a universal property of games.
+
+The source also compares definitions by Parlett, Abt, Huizinga, Caillois, Suits, Costikyan, and others. Each definition serves a context. Rules recur across many of them, while voluntary participation, inefficiency, social bonding, make-believe, and a single final outcome do not receive equal support from every author. The lesson is methodological: when importing a definition into design or code, name whose framework is being used and what cases it leaves out. The extracted claim “play is a subset of games” is not a contradiction of “games are a subset of play”; the chapter itself explains the two different analytic scopes. (PDF pp. 85–96; selected raw unit `u-4c897a456424a2f3cb7bb2ef` gives the authors' synthesized definition and caveats.)
+
+## Let players control narrative pacing as well as branching
+
+A game can place story material in different relationships to play. In the supplied *Game Design: Theory and Practice* excerpt, the author distinguishes material delivered outside active play, narrative that unfolds while the player is acting, and materials carried beyond the game (such as a manual, map, or collectible). The categories describe contexts, not competing technologies: one story may use all three. The same excerpt contrasts the designer’s authored story with the sequence the player experiences and later recounts through decisions and play (PDF pp. 229–230; source `src-b2905119c4899f0890b6`, units `u-9a1ae26ae760a13ff036c9e1`, `u-55a0d6a644a743004dde0c60`).
+
+That distinction makes presentation controls part of the interaction contract. A cut-scene fixes timing and viewpoint for a moment; a player may want to skip it, pause it, replay a detail, or return to a prior moment. The book discusses examples ranging from simple skipping to brief rewind and interactive mission briefings (PDF pp. 233–235; units `u-570eeb672ea7daa1fc6b6e65`, `u-ab11ae1be35f19c6e6ba4c67`). Those are examples and the author’s critique of a purely passive presentation style, not a universal requirement that every scene offer every control. A game may intentionally protect a dramatic reveal, but it should make the reason and the player’s available choices clear.
+
+A practical authoring record can name each story element’s context, required player attention, available interruption/replay controls, and whether it changes persistent state. For example, a mission briefing might pause simulation while allowing pause, rewind, and resume; a note found during exploration might leave the world active and remain available later in an archive; a pre-rendered scene may offer skip but not rewind. Then test the transition: when playback ends or is skipped, resume at a defined gameplay state, avoid duplicate one-shot events, and preserve the same mission flags. This implementation trace is an original application of the source’s presentation categories and examples.
+
+A natural ending and a Skip button may both call the same scene finalizer. Guard against applying a one-shot quest change or reward twice when both paths fire. Rewinding presentation also needs a policy for previously committed gameplay events: replaying a sound is different from granting the same item again. These are proposed engine checks derived from the pacing contract, not claims about the cited games' implementations.
+
+The source’s examples are period-specific and do not prove that any one interface improves every game. The useful design question is whether players can receive story at the pace and level of attention the activity supports, and whether controlling presentation leaves the underlying state coherent. This supplements the volume’s embedded/emergent narrative distinction with a separate axis: where information is delivered and how much control the player has over its timing.
+
+
+
+## Count identity collisions without promising uniqueness
+
+Stable identity supports that lifecycle, but the UUID episode demonstrates why names matter. A display name is useful to a person and can be duplicated or changed; persistent references need a stable identity. A transient registry slot or entity handle is useful for fast lookup in a running process, but it may not be valid after destruction or reload. A serialized scene therefore needs a defined mapping between its stable ID and the current runtime entity. The episode’s implementation uses a random 64-bit value and calls it UUID-like. That size is a project choice; it is not interchangeable with the 128-bit UUID representation used in another part of this volume. For uniformly random 64-bit IDs, the approximate chance of at least one collision after $n$ generated IDs is $n(n-1)/(2\cdot 2^{64})$ while the chance remains small: roughly $2.7\times10^{-8}$ at one million IDs, but about $2.7\%$ at one billion. Collision probability depends on both width and count. If IDs are imported, merged across projects, or must be adversarially hard to guess, those requirements need their own design and collision-handling policy. The source’s statement that collisions are unlikely is not a uniqueness proof. [The Cherno, “Universally Unique Identifiers (UUID/GUID),” implementation discussion and 64-bit collision discussion; caption source units u-64be8a20cbd6b3d8b11b3ec3 and u-25f6b2adda4c6e0864b8213c.]
+
+Uniform draws make each bit pattern equally likely; independent draws do not change distribution because earlier values occurred. There are $n(n-1)/2$ pairs among $n$ generated IDs. With $b$ random bits, one pair matches with probability $2^{-b}$. The expected number of matching pairs is therefore $\lambda=n(n-1)/(2\cdot2^b)$. For rare collisions this is also the first-order probability estimate; a common approximation over a wider range is $P\approx1-e^{-\lambda}$. The union bound $P\le\min(1,\lambda)$ is a separate rigorous upper bound under the stated pairwise probability model. An approximation and an upper bound are not interchangeable claims.
+
+### Figure E-ID - Birthday collision risk
+
+![[Visual Recall/Game Engine/identity-birthday-risk.png]]
+
+The curves use independent uniform random IDs and the stated birthday approximation. A logarithmic vertical scale makes very small probabilities visible; a low curve is not zero. Biased generators, reused seeds, imports and adversarially chosen values can violate the model. Persist a collision-detection/resolution policy where identity must be unique within a project. This calculation does not audit a real generator or establish unpredictability.
+
+## Dragging an asset is a typed request, not a pointer gesture
+
+A content browser bridges filesystem organization and scene authoring. A user may drag a scene file into a viewport, but the editor must decide what that gesture means: open a scene, instantiate an asset, replace a component’s reference, or reject the drop. The drag source and drop target form a small protocol. On the source side, the UI starts a drag only while its item is active, attaches a payload with a stable type tag and the item’s path or asset identifier, then closes the source scope. The target accepts only the expected payload type and validates its contents before changing scene state.
+
+The Hazel tutorial walks through ImGui’s begin-source, set-payload, end-source pattern and a matching target. It encounters null or unstable payload observations, duplicate image IDs when multiple entries share a texture, and path conversion concerns. It suggests assigning unique UI identifiers, such as an entry path, to distinguish same-looking items. These are observations in that tutorial’s code, not guarantees that a path is always a safe identity. Payload data must have an explicit length and lifetime; if the UI library copies it only for the duration of a drag, a consumer should copy or resolve it before retaining it. Do not assume a wide path can be losslessly narrowed to `char*`: filesystem path encoding differs by platform. Prefer carrying a project-relative normalized path or stable asset ID, then resolve it through the project’s asset layer. On drop, validate that the reference belongs to the active project, names an allowed asset kind, and still resolves. The editor should report rejection rather than silently opening arbitrary or stale content. [The Cherno, “Content Browser Panel - ImGui Drag Drop,” 00:00–end; claims checked against caption units u-b978ea24c5f555d7ef8d00e7, u-2a5f8a6c7b4367e2f26616f6, and related path/payload units. Exact ImGui API names should be checked against the engine’s pinned library version.]
+
+## Debug geometry makes invisible state inspectable
+
+A physics debugger cannot rely on the game’s final shaded image to reveal collider geometry, raycasts, or contact state. A line-rendering path gives tools a cheap way to draw bounds and diagnostic rays. One simple CPU-facing record contains two endpoints $p_0,p_1$, color, and optionally an entity identifier. The renderer converts each record into the backend’s supported primitive or expands it into triangles. Lines should be batched separately from ordinary sprites when they use a different vertex format or draw mode; starting a batch clears its count and write pointer, and flushing should do nothing for an empty batch. Each submitted segment contributes two endpoints, so a batch of $N$ independent segments has $2N$ endpoint vertices unless a different indexed or connected representation is used.
+
+The line episode starts with a deliberately small 2D/debug implementation and discusses OpenGL line width and smoothing. Its note that line antialiasing may vary with drivers and hardware is a useful portability warning; its tentative “possibly 10” width limit is not a portable contract. Native line behavior differs by API and target. Where consistent thickness, joins, or antialiasing matter, expanding a line to a camera-facing quad gives the engine explicit geometry and a width policy. That expansion introduces edge cases: zero-length segments have no direction, joins can crack, and screen-space thickness differs from world-space thickness. For simple collider overlays those costs may be unnecessary; for production vector-like strokes they must be handled. The debugging path should carry entity identity only if picking or selection uses it, and prefer an integer-format ID attachment. A packed color encoding instead needs its own validated unfiltered, unblended, lossless read/write contract. [The Cherno, “Rendering Lines in a Game Engine,” 00:19:43–00:20:27 and 00:32:07–00:33:01; the note’s API portability caveat is already stated at “Treat vertex data as an agreement between CPU and GPU.”]
+
+## Tell the player through choices the system permits
+
+Engine architecture helps shape interactive storytelling, but it cannot dictate a single theory of good game writing. The assigned *Game Design: Theory and Practice* excerpt argues that game story is strongest when players participate through actions, and contrasts this with presenting the plot as a passive sequence. Its phrase “do, don’t show” is a design position from the author, not a universal rule: cutscenes, dialogue, manuals, and environmental detail can all serve a game when they fit the experience. The practical engine-facing question is whether authored information is connected to an action or decision the player can make, and whether the consequences are legible.
+
+The excerpt also describes a character-design tradeoff. A minimally characterized avatar may leave room for player projection; a strongly authored protagonist can create a more specific designer-authored story, but may make a player feel they are guiding someone else rather than acting as themselves. This is not a simple mute-character rule, and the source’s comparisons among contemporary games should be read as historical examples and authorial interpretation. A prototype can test the intended balance: give players one consequential choice, then observe whether they attribute the outcome to their own decision, to the avatar’s established motives, or to hidden authored constraints.
+
+Nonlinearity also has distinct forms. Branching changes what happens after a choice; allowing the player to choose the order of story pieces changes when information arrives without necessarily creating separate endings. Both can increase agency, but branching content costs production and ordering freedom can disrupt difficulty progression or causal clarity. The source’s claim that nonlinear story can improve popularity or profitability is an argument, not a guarantee. In an engine, expose the state needed to implement the chosen structure—flags, discovered facts, relationship changes, route availability—and make conditions inspectable in authoring and debugging tools. Treat narrative consistency and production cost as design constraints to test, rather than expecting a branching framework to solve them automatically. The excerpt includes only PDF pp. 241–252; p. 252 begins its next chapter on *Loom*, so no larger book section is claimed. [Game Design: Theory and Practice, PDF pp. 241–252, excerpt by author; source unit IDs u-6dfd609fdf7485fd6c879796 through u-8ec557edc60f1c4474c5f6a3.]
+
+## Check units and signs in the buoyancy example before reusing it
+
+The assigned *Game Physics Engine Development* pages explain buoyancy and spring stability, but the printed buoyancy example contains a factor-of-1000 unit error. Pure water has density $\rho=1000\,\mathrm{kg/m^3}$. A block displacing $0.001\,\mathrm{m^3}$ displaces $\rho V=1\,\mathrm{kg}$ of water. With the book's approximation $g=10\,\mathrm{m/s^2}$, the weight of that displaced water is $F_b=\rho Vg=10\,\mathrm{N}$, not $10\,\mathrm{kN}$. Half the volume gives $5\,\mathrm{N}$, not $5\,\mathrm{kN}$. A $0.5\,\mathrm{kg}$ block weighs $5\,\mathrm{N}$ under the same approximation, so half-submergence balances its weight. The book correctly distinguishes mass from weight nearby, but its unit labels are wrong (physical PDF p. 113 / printed p. 90; source `src-5e24b94aa3c73cfcfc58`, unit `u-f4dfc60e5aa8d945d94b371e`).
+
+There is a second issue in the supplied buoyancy expression. The text defines a submerged fraction that is zero when an object is out of the water and one when fully submerged, but the printed expression and code do not consistently meet those conditions. The code's `depth - maxDepth - waterHeight` is negative in the partially submerged range and its multiplication by `maxDepth` rather than division by `2*maxDepth` has the wrong dimensions. The displayed formula also omits $g$ if force is meant to be in newtons. This is visible in the directly read physical PDF pp. 114–115 / printed pp. 91–92 units `u-0021ccb6f7c04486887f68dc` and `u-a30fa5371de291e4e20ae52e`; do not copy that code as written without resolving its sign, scaling, and unit conventions.
+
+For a clearly stated alternative, let $y$ increase upward, let the water plane be at height $y_w$, and let $s>0$ be the vertical half-extent used by this simplified particle model. For an upright box of constant horizontal cross-section, the height fraction equals the displaced-volume fraction. A sphere or irregular hull needs its own volume calculation. Define the submersion fraction
+
+$$
+d=\operatorname{clamp}\!\left(\frac{y_w+s-y_o}{2s},0,1\right),
+$$
+
+where $y_o$ is the object's center height. Above water ($y_o\ge y_w+s$), $d=0$; below the fully submerged threshold ($y_o\le y_w-s$), $d=1$. Then the upward force is
+
+$$
+\mathbf F_b=(0,\rho V g d,0).
+$$
+
+For $V=0.001\,\mathrm{m^3}$, $\rho=1000\,\mathrm{kg/m^3}$ and $g=10\,\mathrm{m/s^2}$, full submersion gives $10\,\mathrm{N}$ and half submersion gives $5\,\mathrm{N}$. A $0.5\,\mathrm{kg}$ body therefore has zero net vertical force at half depth in this idealized example. This is an original unit-consistent alternative under the stated axis and geometry convention, not a silent correction to the cited source code and not an arbitrary-hull solver.
+
+
+
+### Figure E-B - Balance force before stepping the state
+
+![[Visual Recall/Game Engine/box-buoyancy-force.png]]
+
+The water plane is at zero, the box's vertical half-height is $0.1\,\mathrm m$, and its volume is one liter. Full submersion gives $10\,\mathrm N$ upward; its weight is $5\,\mathrm N$ downward. At half submersion the net force is zero. Raising the center reduces displaced volume and produces a downward net force; lowering it increases buoyancy and produces an upward net force. The clipped straight line follows the declared box geometry and constant water density. Arbitrary hulls need displaced-volume geometry and force-application points to produce the corresponding torques.
+
+### A restoring force still needs a stable numerical step
+
+Inside the partially submerged range, the change in buoyancy with center height acts like a spring. With half-height $s$, its stiffness is $k=\rho Vg/(2s)$. For this box, $k=50\,\mathrm{N/m}$. For mass $m=0.5\,\mathrm{kg}$, the small vertical displacement $x$ from equilibrium obeys $\ddot x=-\omega^2x$ with $\omega=\sqrt{k/m}=10\,\mathrm{s^{-1}}$ under this local, undamped model.
+
+Semi-implicit Euler updates velocity before position:
+
+$$
+v_{next}=v-h\omega^2x,\qquad x_{next}=x+h v_{next}.
+$$
+
+Its amplification matrix on $(x,v)^T$ is
+
+$$
+A_h=\begin{bmatrix}1-h^2\omega^2&h\\-h\omega^2&1\end{bmatrix}.
+$$
+
+The determinant is one and the trace is $2-h^2\omega^2$. For this undamped oscillator the eigenvalues lie on the unit circle when $0<h\omega<2$; the endpoint needs care and is excluded from this bounded-oscillation statement. At $h=0.05\,\mathrm s$, the spectral radius is one. At $h=0.25\,\mathrm s$, it is four, so an unstable mode grows geometrically. Stable stepping also has phase and energy error: bounded does not mean exact. Damping, switching out of partial submersion and other constraints change the model and require their own analysis. The growing linearized trajectory would leave the region where this spring approximation describes the box; it is an integration witness, not a predicted full fluid simulation.
+
+### Standalone box-force laboratory
+
+The following complete C++20 program checks the force values, endpoint clipping, translation invariance and invalid inputs. It was compiled and executed with warnings as errors plus address and undefined-behavior sanitizers. Its function returns the upward buoyancy component; the caller must add weight and any other forces separately.
+
+```cpp
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <initializer_list>
+#include <limits>
+#include <stdexcept>
+
+// SI units. y increases upward; gravity is a nonnegative magnitude.
+// Exact height-to-volume fraction for an upright constant-cross-section box.
+double buoyancyY(double y, double surface, double halfHeight,
+                 double volume, double density, double gravity) {
+    for (double x : {y, surface, halfHeight, volume, density, gravity})
+        if (!std::isfinite(x)) throw std::invalid_argument("non-finite input");
+    if (halfHeight <= 0 || volume < 0 || density < 0 || gravity < 0)
+        throw std::invalid_argument("invalid extent or physical coefficient");
+    const double numerator = surface + halfHeight - y;
+    const double denominator = 2 * halfHeight;
+    if (!std::isfinite(numerator) || !std::isfinite(denominator))
+        throw std::overflow_error("submersion arithmetic overflow");
+    const double fraction = std::clamp(numerator / denominator, 0.0, 1.0);
+    const double force = density * volume * gravity * fraction;
+    if (!std::isfinite(force)) throw std::overflow_error("force overflow");
+    return force;
+}
+
+int main() {
+    auto force = [](double y, double surface = 0) {
+        return buoyancyY(y, surface, .1, .001, 1000, 10);
+    };
+    assert(force(.2) == 0);
+    assert(force(.1) == 0);
+    assert(force(0) == 5);
+    assert(force(-.1) == 10);
+    assert(force(-.2) == 10);
+    assert(std::abs(force(.03) - 3.5) < 1e-12);
+    assert(std::abs(force(-.03) - 6.5) < 1e-12);
+    assert(std::abs(force(10.03, 10) - force(.03)) < 1e-10);
+    bool rejected = false;
+    try { buoyancyY(0, 0, 0, .001, 1000, 10); }
+    catch (const std::invalid_argument&) { rejected = true; }
+    assert(rejected);
+    rejected = false;
+    try { force(std::numeric_limits<double>::quiet_NaN()); }
+    catch (const std::invalid_argument&) { rejected = true; }
+    assert(rejected);
+}
+```
+
+## A tool's feature list should follow the game it is meant to enable
+
+In a Hazel question-and-answer session, the developer contrasts open-ended game design with the engine team's feature backlog. A graphics capability such as global illumination is not inherently necessary: whether it matters depends on the game being made. The developer then identifies scripting as the engine system that has caused the most trouble in their own project. This is a report about one team's priorities and experience, not a ranking of engine subsystems or a claim that global illumination is unnecessary in general. (Source `src-c280ad6d2af6ef132653`, units `u-c6e5a4ebd2566c9bdfeb02ca`, `u-774bc088441066bad719e9e5`.)
+
+That distinction gives a practical way to sort a backlog. Start by naming the game or authoring task the engine must support. For a small 2D puzzle game, a dependable scene editor, input path, save/load, and readable scripting boundary may be more valuable than a high-end lighting system. For a large outdoor 3D game, lighting, terrain, streaming, and tools for managing content could move near the front. Then test each proposed engine feature against a playable workflow: what action can a designer or player perform after this feature exists, and what evidence shows that the workflow is improved?
+
+The interview also uses an anecdote about children playing longer with fewer toys to suggest that constraints may invite creative reuse. The speaker says they will link an article or paper but this excerpt does not identify it. Treat the analogy as a hypothesis for tool design, not as developmental research. A minimal tool can still be frustrating if it removes necessary control; a large tool can still be coherent if its features all serve the same creative loop. The useful test is whether the available choices let the intended user make, inspect, revise, and experience a complete small result without fighting unrelated setup.
+
+For an engine team, this turns “simple versus powerful” into an explicit scope decision. Make the first loop complete, then add options when observed projects expose a real limit. Keep the evidence class visible: a developer's personal priority can guide a prototype, while playtests, production data, and external research would be needed to support broader claims about users. This connects engine planning to game design without pretending that an interview excerpt proves the best feature set for every project.
+
+## Describe the interaction before judging the game
+
+The introduction to *Rules of Play* argues that game design has an aesthetic dimension distinct from visual appearance. Here, “aesthetic” means qualities of the play experience, including timing, tension, control and social relationships. A game can have sparse graphics and still shape a rich experience through its rules, feedback, timing, and social arrangement. The authors use *Pong* as a compact example: players move paddles, predict a ball's path, and attempt to return it; a point is scored when one misses. That small system makes the transition from watching a television to acting on it immediately legible, and a two-player match gives the outcome a social audience. The introduction calls this meaningful play despite the game's minimal presentation (PDF pp. 13–24 / printed pages from the Preface and opening; source `src-e893f2660cc9ce34f5d1`, units `u-ff3e3d7f2354d52f5beeb02b`, `u-2b9ceea198a0bb7f6fffa4c6`).
+
+For an engine and design team, the useful distinction is between the visible asset and the interactive relation it participates in. A paddle sprite may be primitive; the important questions include whether input reliably changes paddle position, whether the ball's response can be perceived, whether the players can predict and influence its path, and how a miss changes the score and next serve. Those claims can be tested separately: input latency and collision response can be measured in the implementation; player understanding and satisfaction require play observation. Visual polish cannot substitute for either.
+
+The chapter also calls for a critical vocabulary shared by designers, developers, and readers. That is practical when a review moves from “it feels bad” to an account of what players can do, what rules constrain them, what state changes, what feedback appears, and whose goals the system serves. Naming the interaction makes disagreement concrete: one reviewer may value strategic control, another spectacle, another accessibility. The vocabulary helps expose those values instead of hiding them behind the word “quality.”
+
+The source's claims that this is the “first serious attempt” at an aesthetic theory of interactive systems and that mainstream games are too conservative are its authors' argument about the field at that time, not neutral field surveys. Preserve the useful design lens while attributing those judgments. The pages introduce a program for critical analysis; they do not establish that one aesthetic standard fits every game. (*Rules of Play*, PDF pp. 13–24, source `src-e893f2660cc9ce34f5d1`.)

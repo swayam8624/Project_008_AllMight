@@ -166,3 +166,26 @@ The explanatory extension adds definitions, projection/compositing/retirement wi
 Verification distinguishes source retention from implementation proof. The CPU retirement model was compiled as C++20 with warnings as errors plus address/undefined-behavior sanitizers and executed successfully. Numeric witnesses check the projected covariance, conservative footprint radius, scan offsets, compositing order and affine covariance. No native Vulkan/Metal run or current Kairo/Maveb/Vulkax repository audit is established by those tests. In particular, supplied statements saying a project “currently implements” a feature remain attributed draft observations. Full earlier video coverage and full reading of every book remain unfinished; an extracted claim, a reviewed claim and an integrated explanation are separate states. Parts 1701–1800 remain unreceived in these batches; future Parts 2701–3000 are not implied by this continuation.
 
 Exact hashes, source partitions, complete heading registers, review artifacts and test receipts are retained under `/Users/swayamsingal/.codex/source-cache/manual-integration-2026-11-10/continuation-2026-11-11/`. This checkpoint extends the earlier corpus queue; it does not replace it.
+
+
+### Supervised continuation corrections and earlier-book additions
+
+The continuation now also develops image-change certificates with explicit color/order/termination assumptions and a fixed-order compositing derivation. CPU tests execute 4,000 randomized inequality checks and explicit opacity/color/order counterexamples. Direct inspection of the reference Gaussian CUDA kernel adds a separate caveat for candidate-transmittance stopping before layer accumulation. These are mathematical and CPU bookkeeping checks, not native GPU or current project conformance tests.
+
+Earlier-book/source additions include document purpose and consistency, historical creator interviews, coupled Centipede rules, interactive writing, implicit rules and cultural values, replay/recam, player-created systems, procedural representation, camera policy and contact-response mathematics. The contact derivation distinguishes six configuration degrees of freedom from a twelve-dimensional phase state, and the kinematic constraint Jacobian from the contact-space response matrix. Its three-mass CPU witness checks the coupling terms. Other additions clarify scene save-path/write-failure policy, Euler delta rotation, framebuffer numeric types and shader program activation. Original source statements remain retained beside explicit qualifications.
+
+The live vault moved to `/Users/swayamsingal/Desktop/All Might/Master` during the latest resume. Engine and Graphics matched saved hashes at relocation; an independent 2,433-line insertion in Computing Foundations was preserved. Historical source receipts keep their original paths; `continuation-2026-11-11/WORK_STATE.json` identifies the current workspace. Source claim reading, selected raw verification and narrative integration remain distinct. The full earlier corpus and full-book gaps are not declared complete.
+
+
+### Current supervised checkpoint — November 12, 2026
+
+The authoritative backlog now records **22,831 claim-text points reviewed and 6,884 pending** across 590 retained records. Six additional checkpoint receipts were validated for exact claim text, source-unit membership and unchanged destination quotes/hashes. Reading, selected direct raw checks, staged deltas and published teaching remain separate; these counts are not a full-source integration certificate.
+
+The latest published additions and regression checks are recorded in [[Supplementary/Sources and Code Anchors#November 12 refinement — checked operations and continuous teaching]]. Private outstanding source reviews and full-book gaps remain in the original backlog. The referenced six Pass 10–15 texts, plus Passes 16–17, remain retained in their routed continuous volumes; retention was checked again against the original copies and normalized bodies.
+
+
+### Reconciled claim-reading checkpoint — November 12 continuation
+
+The ledger records **26,131 claim-text points reviewed and 3,584 pending**. A global check found validated earlier reading receipts that had not reached the central ledger; 1,559 distinct pending IDs were reconciled without repeating their source reads. Subsequent new checkpoints were validated separately. Source selection now uses pending IDs and excludes all staged/checkpointed IDs, replacing stale positional queues. Group 1 has no pending claim-text IDs; that does not certify exhaustive raw reading or integration of every idea.
+
+Selected teaching from shader/culling/editor sources is developed in the existing volumes; [[Supplementary/Sources and Code Anchors#November 12 continuation — clipping, conservative bounds and editor state|the continuation evidence]] records its scope. Staged spring-force discrepancies and further collision/design deltas remain awaiting supervisor review. Whole-book coverage and complete earlier-source development remain unfinished.

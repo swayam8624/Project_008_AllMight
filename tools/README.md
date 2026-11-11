@@ -212,3 +212,8 @@ The smoke source set included 33 selected PDF pages imported and classified as s
 - Playlist metadata, extracted PDF text, ASR, and YouTube captions are different evidence types.
 - A successful Ollama response only shows that a model returned text. Human source review is still required.
 - This tool does not prove an engine build or runtime and does not publish or commit the generated draft.
+
+
+## Check selected M018 note examples
+
+Run `bash tools/m018/build_m018_lab.sh` from the repository root for the multi-translation-unit lab, release/strict/sanitizer modes, assembly-symbol checks and the selected saved-note compilation. `python3 tools/m018/check_note_examples.py --compiler clang++` runs only the note check. It uses Python's standard library and the chosen C++20 compiler, builds in a temporary directory, and checks the three-component result. Missing/ambiguous blocks, compiler failures and wrong results fail the command. Other narrative fragments are outside this check. Identify the actual compiler behind g++ on macOS before reporting GNU GCC coverage.

@@ -9109,7 +9109,7 @@ Now connect this to exception safety. Inserting into a previously freed slot fir
 
 An owned lookup returns **std::optional<MeshInfo>**, not a reference into the vector. When the editor calls lookup and stores that result, it receives a copy of the mesh name and vertex count. It can retain the copy after the original asset is erased. That safety has a price: copying a long std::string may allocate, and an owned snapshot can become *out of date* without becoming *dangling*. These are different failure modes. The renderer that needs the current live resource must validate a handle at the time of use, rather than treating a cached description as proof that the live resource still exists.
 
-A complete engine may also need an asset epoch across application restarts, device identity, serialization policies and atomic reader/writer publication. The catalog's monotonically allocated process-local ID makes collisions across distinct in-process instances less likely, but it is not a durable cross-process or network identity. Moving a catalog transfers its implementation and preserves its handles; methods on the resulting moved-from catalog deliberately reject use until it is reassigned. A copy operation is not offered. These are explicit API decisions, not implicit guarantees of every PIMPL design.
+A complete engine may also need an asset epoch across application restarts, device identity, serialization policies and atomic reader/writer publication. The catalog's monotonically allocated process-local ID prevents identity reuse among catalogs served by that counter until exhaustion, at which point construction fails, but it is not a durable cross-process or network identity. Moving a catalog transfers its implementation and preserves its handles; methods on the resulting moved-from catalog deliberately reject use until it is reassigned. A copy operation is not offered. These are explicit API decisions, not implicit guarantees of every PIMPL design.
 
 ### Strong mathematical types do not perform mathematical conversions for us
 
@@ -9124,6 +9124,9 @@ concept RealScalar = std::floating_point<T>;
 
 template<RealScalar T, std::size_t N, class Space>
 struct Vector {
+    using scalar_type = T;
+    using space_type = Space;
+    static constexpr std::size_t extent = N;
     std::array<T, N> coordinates{};
     constexpr T& operator[](std::size_t i) { return coordinates[i]; }
     constexpr T operator[](std::size_t i) const { return coordinates[i]; }
@@ -9134,11 +9137,11 @@ using V3 = Vector<float, 3, ViewSpace>;
 static_assert(!std::same_as<W3, V3>);
 ~~~
 
-The scalar type T, dimension N and space marker are independent template parameters. T controls element representation and permitted operations. N is a **non-type template parameter** selecting the compile-time extent. Space makes the coordinate frame part of the type. A Vector<float,3,WorldSpace> stores the three floats directly in an array rather than allocating them through an abstract base class. The observed representation assertion in the lab checks that this simple specific type contains exactly three float-sized bytes of elements under the tested standard-library/ABI configuration; it does not establish the size of all possible generic vector classes.
+The scalar type T, dimension N and space marker are independent template parameters. T controls element representation and permitted operations. N is a **non-type template parameter** selecting the compile-time extent. Space makes the coordinate frame part of the type. A Vector<float,3,WorldSpace> stores the three floats directly in an array rather than allocating them through an abstract base class. The observed representation assertion in the lab checks that this simple specific type uses exactly 3 * sizeof(float) bytes for its three components under the tested standard-library/ABI configuration; it does not establish the size of all possible generic vector classes.
 
 A phantom **unit** tag can similarly distinguish meters from seconds. Yet it is essential not to confuse tagging with dimensional analysis. A meaningful unit system should define how multiplication, division, powers and conversions transform dimensions: distance divided by time is velocity; a position minus a position yields a displacement, not another position; degrees and radians may both describe angle but require a declared conversion; a point under an affine transform receives translation, while a direction does not.
 
-Coordinate transformation is also not a tag reinterpretation. Under a linear coordinate change with matrix A, a vector transforms according to the declared map, for example **v_view = A v_world**. A point typically needs homogeneous or affine translation as well. Covectors and surface normals do not generally transform by the same matrix as displacement vectors. If coordinates transform by A, dual quantities require the inverse-transpose relationship under the corresponding conventions. These facts were developed in the mathematics volume; putting them into C++ types makes illegal combinations harder to express, but does not replace the derivation or the transformation implementation.
+Coordinate transformation is also not a tag reinterpretation. Under a linear coordinate change with matrix A, a vector transforms according to the declared map, for example $\mathbf{v}_{\mathrm{view}}=A\mathbf{v}_{\mathrm{world}}$. A point typically needs homogeneous or affine translation as well. Covectors and surface normals do not generally transform by the same matrix as displacement vectors. If coordinates transform by A, dual quantities require the inverse-transpose relationship under the corresponding conventions. These facts were developed in the mathematics volume; putting them into C++ types makes illegal combinations harder to express, but does not replace the derivation or the transformation implementation.
 
 The scalar constraint deserves equal scrutiny. The lab's **std::floating_point** concept intentionally admits built-in float, double and long double, and rejects int. A constraint is more useful than a vague generic promise because it states what operations the code is written for. But it also excludes many useful user-defined scalar systems. Automatic-differentiation dual numbers, fixed-point numbers, intervals and arbitrary-precision types may not satisfy std::floating_point. A more powerful engine mathematics library may define a separate field-like concept containing precisely the operations, identities and numerical policies it requires. Merely permitting an **operator+** in a concept is not proof of a mathematical field, floating-point stability, total ordering or differentiability.
 
@@ -9158,19 +9161,46 @@ Our editor also wants to evaluate a mathematical expression with several operand
 
 An expression template postpones element evaluation by constructing a small type describing the addition:
 
+The code below includes the restrictions as well as the delayed arithmetic. **VectorExpression** describes an indexable expression with a scalar type, coordinate space and extent. **CompatibleExpressions** asks whether two expressions agree on all three. The requires clauses make those checks a condition for selecting lazy_add and materialize. The next section explains why each check is needed and how the negative tests exercise it.
+
 ~~~cpp
+template<class E>
+concept VectorExpression = requires(const E& expr, std::size_t i) {
+    typename E::scalar_type;
+    typename E::space_type;
+    requires RealScalar<typename E::scalar_type>;
+    { E::extent } -> std::convertible_to<std::size_t>;
+    { expr[i] } -> std::same_as<typename E::scalar_type>;
+};
 template<class L, class R>
+concept CompatibleExpressions = VectorExpression<L> && VectorExpression<R>
+    && std::same_as<typename L::scalar_type, typename R::scalar_type>
+    && std::same_as<typename L::space_type, typename R::space_type>
+    && (L::extent == R::extent);
+
+template<class L, class R> requires CompatibleExpressions<L, R>
 struct SumExpr {
+    using scalar_type = typename L::scalar_type;
+    using space_type = typename L::space_type;
+    static constexpr std::size_t extent = L::extent;
     const L& left;
     const R& right;
     constexpr auto operator[](std::size_t i) const {
         return left[i] + right[i];
     }
 };
-
-template<class L, class R>
-constexpr SumExpr<L, R> lazy_add(const L& left, const R& right) {
-    return {left, right};
+template<class L, class R> requires CompatibleExpressions<L, R>
+constexpr SumExpr<L, R> lazy_add(const L& a, const R& b) {
+    return {a, b};
+}
+template<RealScalar T, std::size_t N, class Space, VectorExpression Expr>
+    requires std::same_as<T, typename Expr::scalar_type>
+        && std::same_as<Space, typename Expr::space_type>
+        && (N == Expr::extent)
+constexpr Vector<T, N, Space> materialize(const Expr& expr) {
+    Vector<T, N, Space> out{};
+    for (std::size_t i = 0; i < N; ++i) out[i] = expr[i];
+    return out;
 }
 ~~~
 
@@ -9187,20 +9217,38 @@ contains a temporary *inner* SumExpr bound to the outer function's reference par
 The tested example deliberately gives the inner node a name:
 
 ~~~cpp
-constexpr auto inner = lazy_add(a, b);
-constexpr auto lazy = materialize<float, 3, WorldSpace>(
+const auto inner = lazy_add(a, b);
+const auto lazy = materialize<float, 3, WorldSpace>(
     lazy_add(inner, c));
 ~~~
+
+The word **const** here means that we do not modify the named object after initialization. **constexpr** imposes an additional requirement: this particular initializer must be a constant expression. A function declared constexpr can still be called at runtime. Inside the lab function, a, b and c are automatic local objects. The expression node saves references to those particular objects; declaring the saved node constexpr would require an initializer that cannot retain those automatic-local addresses in this way. Giving the node a name fixes its lifetime during this evaluation, but does not make its initializer a constant expression. The complete compiled example therefore uses const for inner and lazy. This is separate from the eager result, which stores its numeric components rather than references and is checked with static_assert.
 
 Here a, b, c and inner remain alive throughout materialization. The resulting three components are 12, 15 and 18, matching eager addition. A mature expression-template library needs an operand-storage policy that distinguishes borrowed lvalues from owned rvalue expression nodes. It also needs rules for aliasing: for a pure componentwise addition, writing output[i] may be safe with exact operand/output aliasing, but shifted spans, matrix products and stencil operations can read locations already overwritten by earlier iterations. A general promise that 'lazy expressions remove all temporaries' is wrong without those constraints.
 
 This design decision connects to numeric reproducibility and SIMD. Fusing loops changes when intermediate values are rounded; using fused multiply-add, vector reductions or fast-math transformations can also change results. Measure both correctness and cost. The compiler may outperform a manually built expression tree on a tiny three-float vector; for a large dynamic vector, a single materialization pass may reduce memory bandwidth. Neither outcome is automatic.
+
+### The delayed path must preserve the same mathematical contract
+
+Suppose the compiler rejects world + view, but accepts lazy_add(world, view) followed by materialize<float,3,WorldSpace>. The numeric components can still add up, yet the output has acquired a coordinate label without any coordinate conversion. We have protected one spelling of addition and left another spelling unchecked. A type distinction is useful only when every entry point respects it.
+
+The complete lab now attaches three pieces of compile-time information to each vector and sum node: scalar_type, space_type and extent. A **type alias** gives an existing type a name inside the class. A **static constexpr extent** records the number of components without storing another field in each vector. A sum node carries the same information as its operands. CompatibleExpressions requires matching scalar types, spaces and extents before lazy_add can construct a node. Materialization checks those three properties again against the requested output. Choosing ViewSpace in the output template argument is therefore a request that must be validated, rather than a conversion operation.
+
+A **requires expression** asks whether an operation is well formed for template parameters, without executing it. The regression checks use that question to test actual operations. They accept WorldSpace-three plus WorldSpace-three; reject WorldSpace plus ViewSpace; reject two components plus three; and reject mixing float and double under this deliberately strict policy. They also reject relabelling or resizing a valid sum during materialization. A nested sum keeps its traits, so adding another node cannot quietly discard the restriction. See the complete [[tools/m018/m018_lab.cpp|constrained vector-expression lab]] for the exact declarations and checks.
+
+These checks do not prove that a reference remains alive. A correctly labelled expression can still borrow a destroyed operand. The small lab continues to borrow its children and evaluate them while all named operands remain alive. A reusable deferred-expression library needs a separate policy for owning temporary child nodes, borrowing stable operands, aliasing and mutation. Compile-time shape compatibility and runtime lifetime validity are different questions; solving one does not solve the other.
 
 ### Intrusive storage exposes a different ownership contract
 
 The catalog's vector is non-intrusive in the sense that its free-list links are stored in the catalog's bookkeeping rather than embedded in an independent mesh object. Contrast that with a per-frame task stack in which each Task contains its own **next** pointer and linked flag. The intrusive stack points directly to caller-owned Task objects. Pushing a Task changes its link, and popping it resets the link. No separate list node is allocated by this simple stack.
 
 The advantage is a clear and often low-allocation representation. But the stack does **not** own the Task objects. Destroying or moving a Task while its address remains linked causes the container to retain an invalid pointer. Linking the same node twice can create cycles or corrupt ordering. The laboratory rejects a duplicate link and clears membership on pop, but it cannot automatically prevent an external owner from prematurely destroying a linked Task. An intrusive production container should define unlinking, hook membership, multiple-list participation, move restrictions and object-destruction policy. Thread-safe linkage would add synchronization requirements not represented in the sample.
+
+There is another owner question inside the container itself. If we copy only its head pointer, both stacks point at the same hooks. Start with upload linked in stack A. Copy A to B. Pop through B: upload is now marked unlinked, but A still points at it. Pushing upload into A again can make it point to itself, so two later pops return the same task. Keeping the task alive does not prevent this logical corruption.
+
+The lab therefore deletes stack copy construction, copy assignment, move construction and move assignment. This small container has one stable identity; it does not promise to transfer a chain. Its destructor pops remaining nodes, clearing their next pointers and membership flags without deleting the tasks. That cleanup has a strict precondition: every linked task must still exist at the same address when the stack is destroyed. Declare caller-owned tasks before a stack that borrows them, or explicitly unlink them before their owner destroys or relocates them. A cleanup loop cannot repair a node that is already gone.
+
+The regression declares two tasks outside a nested stack scope, links them, exits that scope, and checks that both hooks are clear. It then links a surviving task into another stack and pops it successfully. Compile-time checks also verify that copying or moving the stack is unavailable. Thus the example tests both the permitted operation and the forbidden operation that previously defeated its membership flag.
 
 A non-intrusive **std::forward_list<std::string>** instead owns its string elements inside separately managed nodes. This makes the container's ownership obligations explicit, although it can allocate nodes and add pointer indirection. The comparison is not simply 'intrusive fast, non-intrusive slow': data density, iteration order, size, allocator strategy, mutation frequency, object lifetime and locality determine the actual outcome. An array-based queue may outperform both for sequential workloads.
 
@@ -9849,6 +9897,22 @@ flowchart LR
 ```
 
 This same pattern appears in scene loading, shader compilation, pathfinding, image readback, and editor thumbnail generation. The payload changes, but the questions remain: who owns the unfinished result, who may publish it, and what makes its destination still valid?
+
+### A buffer name, an API object, and its storage are separate
+
+A returned integer can name several different stages of a resource's life. In OpenGL, glGenBuffers reserves names; the first glBindBuffer creates the corresponding object state. glCreateBuffers instead creates initialized objects directly. An initialized buffer begins with a zero-sized store. A separate storage operation establishes its byte capacity. Direct state access means naming the object in the command rather than first selecting it through a binding target. These are distinct API promises, not observations of a particular driver's physical allocation strategy.
+
+For an OpenGL 4.5 context with loaded entry points, this fragment expresses two transitions:
+
+```cpp
+GLuint buffer = 0;
+glCreateBuffers(1, &buffer);  // Initialized object; byte capacity is still zero.
+glNamedBufferStorage(buffer, 256, nullptr, 0); // Define a 256-byte store.
+```
+
+The null data pointer does not initialize those bytes to zero; their contents are undefined. Immutable storage prevents replacing the store through the ordinary reallocation commands, not every permitted change to its contents. Allowed writes depend on flags and operations. These contracts are specified in [OpenGL 4.5 Core, sections 6.1–6.2](https://registry.khronos.org/OpenGL/specs/gl/glspec45.core.pdf).
+
+For a wrapper design, track identity, storage extent, initialized ranges, and pending users separately. A nonzero handle is not proof that a vertex fetch has a valid range or initialized data. This also explains why the source lecture's phrase about creating everything on the GPU should not become a general allocation guarantee. The source is an explanatory recording; this context-dependent fragment was checked against the specification, not executed in a native OpenGL context. Its API-dependent calls stay beside the explanation, while the ownership and range rules connect to [[Concepts/Object identity and generation handles]] and [[Concepts/Matrix storage indexing and strides]].
 
 ### Destroying a C++ wrapper may not finish external work
 
@@ -38846,3 +38910,61 @@ A useful trace begins with a 37-byte block containing an identifier and payload.
 The source episode also distinguishes internal-allocation notifications from application-supplied allocation/free callbacks. A notification reports an event for accounting; it does not hand the engine a new memory block to destroy. Mixing those paths can double-free memory or make diagnostics look more complete than they are. Keep each counter's measured scope beside its display: hooked host requests, application device allocations, driver estimates, and resident hardware usage answer different questions.
 
 This clarification resolves the uncertainty noted in [[Game Engine - From First Frame to Living Worlds#Bridge Vulkan allocation callbacks to an engine allocator|the engine allocator walkthrough]]. It checks the interface contract against primary documentation; it does not certify the episode's implementation or every allocation path in Kohi.
+
+
+## A generated binding is still an API boundary
+
+A code generator can remove repetitive wrapper work, but it does not erase the difference between languages. The Sparky branch in this devlog experiments with exposing selected C++ engine operations through C++/CLI. C++/CLI is a C++ extension for working with the .NET managed runtime while interoperating with native C++ code. The language extension is not a language-neutral ABI. Its wrapper calls the native API and converts values at the boundary—for example, a managed string must be converted into the representation expected by the native C++ method. The episode also describes limiting exposure to public or protected operations and says that the branch is a learning project with substantial work remaining. Treat this as a prototype snapshot rather than a production generator or complete C# integration (Sparky Engine Dev Log #12, 00:29:20–00:30:03; source `src-a539341c398d4c55cdb1`, unit `u-486c51f3035705147bf6ac71`, with the branch status in `u-461e47c9ea075d3a77cdba67`).
+
+This small example exposes the actual generator contract. The native API has types, ownership rules, error behavior, and lifetimes. The target language has its own strings, arrays, exceptions, and object model. A wrapper must decide which native operations are visible, how each type is represented, who owns the converted value, how errors cross the boundary, and whether callbacks can safely outlive the wrapper object. Generating a method signature is easy compared with preserving those semantics.
+
+A reliable binding workflow starts from a narrow API surface and an explicit mapping table. For each supported native type, define its target-language form and conversion, including ownership and nullability. For each function, identify which side allocates and releases memory, how errors are reported, and whether references are borrowed or retained. Generate a small wrapper, compile it, and exercise one call in both directions where callbacks are involved. Keep generated output reproducible from the declared source and tool version; inspect representative generated code during development so an accidental mapping does not become hundreds of opaque failures.
+
+The devlog’s filesystem section offers a parallel lesson: a virtual path such as `/models/hero` decouples an asset reference from a workstation’s physical directory, while ordered mounts determine where a request resolves. Both mechanisms insert a stable vocabulary between a client and an implementation. The vocabulary is useful only when its resolution and ownership rules are explicit. The source says packed-asset support is future work, so no archive format or package performance is implied here (00:04:01–00:05:40, unit `u-700ebba84bd2d2a5f5cabfeb`, and future-plan point `p-000011`).
+
+
+A generator does not bypass C++ access control: protected native operations still need a valid class/access context and a deliberate exposure policy. A managed string conversion must specify encoding and temporary-buffer lifetime, not merely make the types compile. A generated signature is evidence of a proposed interface; a compiled wrapper, a successful call and a correct ownership/error path are separate verification steps.
+
+
+### Choose the language boundary before choosing a generator
+
+**Managed code** runs with a runtime's type and execution model; **native code** follows its compiled platform's binary interface and its own ownership contracts. C++/CLI can combine managed and native operations in a .NET bridge. That does not make a native pointer a garbage-collected owner or define how long a borrowed buffer remains valid. Microsoft documents mixed managed/native interoperability and describes C++/CLI as a Windows bridge retained primarily for existing systems. The old Sparky experiment is useful for understanding the boundary, rather than as a default architecture for every new engine. [Microsoft native/.NET interoperability](https://learn.microsoft.com/en-us/cpp/dotnet/native-and-dotnet-interoperability), [C++/CLI scope](https://learn.microsoft.com/en-us/cpp/dotnet/).
+
+For a cross-language engine interface, another design exposes a narrow C-compatible boundary: create an opaque engine handle, perform operations through functions, return explicit status/results, and destroy the handle through its owning module. Keep C++ object layouts, exceptions and allocator assumptions behind that boundary. This does not make one binary portable across all operating systems; each target still has a platform ABI. It does make the supported calling surface easier to specify and bind. Microsoft's .NET guidance recommends a C-style boundary for ordinary C++ interoperability because C++ has no single consistent ABI across its supported compilers and platforms. Choose the actual runtime, platforms, callback needs and ownership model first; then select tooling that can preserve that contract. [Microsoft native interoperability ABI guidance](https://learn.microsoft.com/dotnet/standard/native-interop/abi-support).
+
+
+### A visual description does not identify a shader operator
+
+The 2D-API narration describes leaving a red control at one and lowering green and blue controls to 0.9. It calls the effect “subtracting” those channels “in a way.” That language describes the visible suppression of green and blue; it does not identify the arithmetic operator in an uninspected shader. A standard multiplicative tint is fully compatible with the explanation:
+
+$$
+C_{out}=C_{texture}\odot(1,0.9,0.9),
+$$
+
+where $\odot$ means component-wise multiplication in the declared shader working space. The red component is unchanged and the others are reduced. White factors $(1,1,1)$ are neutral for multiplication. A literal subtraction of those control values would have a very different neutral point, while subtraction of a separately computed offset could again look similar for a particular image.
+
+To distinguish models, use known input texels and inspect the shader or measured output. For a channel value of $0.5$, multiplying by $0.9$ yields $0.45$, whereas subtracting an offset of $0.1$ yields $0.4$. A saturated white input may hide that difference. This small witness explains why visual similarity and casual words are weak evidence about implementation. It does not prove what the historical episode's shader executed. Preserve the mathematical teaching model and label the exact episode operation unverified until its code or a controlled test establishes it.
+
+## A platform escape hatch must also restore process-wide state
+
+The Linux-windowing episode gives a concrete example of why a backend boundary needs to include side effects, not only function signatures. The Kohi #005 Linux platform episode uses Xlib and XCB together for an X11 window. It calls Xlib to disable key-repeat events because repeated key presses would complicate the engine's input handling. The presenter explicitly warns that the call is global to the X server/session rather than scoped to this window. If the process exits without turning repeat back on, the user may continue to experience changed keyboard behavior outside the game. The same episode therefore adds an explicit shutdown action to re-enable repeat before destroying its window. (Kohi #005, source `src-994a368b666ebd1bf250`, units `u-81fe6c39aad8fdcf8055e768`, `u-f4883a4974cbd13730aea658`.)
+
+The transferable engineering lesson is to model a platform call as a resource or state transition with a matching cleanup obligation. Record: what state is changed, who else can observe it, how the change is scoped, and what cleanup runs on normal close and failure. A platform adapter that exposes only `disable_key_repeat()` hides the important contract. A safer boundary either avoids changing global behavior, uses a window-scoped mechanism where available, or makes acquisition and restoration explicit and testable. If initialization fails after changing the setting, rollback still needs to occur. This is proposed API design based on the tutorial's warning, not a claim about all X11 input systems.
+
+The episode’s choice to use both Xlib and XCB is also a reminder to distinguish protocol concepts from bindings and libraries. It demonstrates one historically specific implementation path; its remarks about documentation and deprecation are the speaker's assessment at recording time, not current Linux platform guidance. A modern engine should first identify the presentation and input contracts it needs, then select and verify supported platform APIs for its target environments. The supplied source does not establish present-day X11 recommendations or behavior under Wayland.
+
+### Restore the state that existed before the adapter changed it
+
+Unconditionally enabling repeat on close is not the same as restoring the user's previous setting. Xlib exposes the current keyboard controls, including global auto-repeat mode, through `XGetKeyboardControl`; its global repeat calls affect the keyboard for the selected display. Record the initial state before a deliberate global change and restore that state on the supported cleanup paths. [X.Org Xlib keyboard controls](https://www.x.org/releases/X11R7.6/doc/libX11/specs/libX11/libX11.html).
+
+A destructor or rollback handler can organize normal cleanup, but it cannot guarantee restoration after every abrupt process termination. Global state can also be changed by another client while the application runs. These limitations strengthen the case for an input design that avoids changing shared session preferences. If a platform workaround must change them, its scope, rollback and competing-user assumptions belong in the adapter contract alongside its function signatures. This is a design qualification of the historical tutorial, not a native X11 test on this machine.
+
+### Range count, byte capacity and API guarantees are different quantities
+
+An array containing 32 `VkPushConstantRange` records stores 32 descriptions in host memory. It does not create 128 bytes of push-constant capacity on a device. Each record describes a byte offset, a byte size and the shader stages that use that range. Counting records and counting bytes answer different questions.
+
+For a declared range, its end offset must fit the queried `maxPushConstantsSize`. For example, offset 64 and size 96 end at byte 160: this fails a 128-byte device limit and passes that particular extent check against 256 bytes. Alignment, stage flags and the pipeline's interface still have their own requirements. Passing one byte-count check does not validate an entire pipeline layout. [Khronos physical-device limits](https://docs.vulkan.org/spec/latest/chapters/limits.html).
+
+The name `maxPushConstantsSize` reports this device's supported maximum; the specification separately defines a minimum capability that an implementation must provide. Vulkan 1.0 through 1.3 guarantee at least 128 bytes, while Vulkan 1.4 raises that required minimum to 256 bytes. A device can report more than its baseline minimum. Query the actual property and state the application's supported baseline before designing a block layout. A tutorial's 128-byte example is a useful portable baseline for its version, not a universal maximum for all Vulkan devices. [Khronos versions and limit changes](https://docs.vulkan.org/guide/latest/versions.html).
+
+This distinction applies far beyond push constants: a wrapper's array length, an allocation's host byte size, an API version's guaranteed floor and a device's advertised limit are four separate facts. Keep their units and owners beside their names so a local implementation constant cannot quietly become a claimed hardware rule.

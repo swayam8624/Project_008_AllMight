@@ -1878,6 +1878,50 @@ An animation is a sequence of images shown over time. Resolution controls spatia
 
 Sampling fixes the measurements available; filtering reconstructs a usable image and efficient image operators make those filters practical at scale.
 
+### Animate a pixel by respecting the buffer’s coordinates and lifetime
+
+A CPU pixel buffer is a linear sequence even when the image it represents has two dimensions. For an image with width $W$ and height $H$, the pixel at integer coordinate $(x,y)$ has row-major index
+
+$$
+i=yW+x.
+$$
+
+This formula assumes tightly packed rows and counts pixels, not bytes. The general layout question is [[Concepts/Matrix storage indexing and strides]]. A padded image instead needs its row stride and pixel format; a four-channel byte buffer is not indexed like an array of complete pixel records. The coordinate check must come before this calculation: require $0\le x<W$ and $0\le y<H$. Checking only that the final index is below $WH$ is insufficient: an $x$ value past the right edge can spill into the next row while still producing an in-range index. Conversely, comparing $x$ to the image height is wrong on a non-square image. The buffer has $WH$ slots, but horizontal and vertical coordinates have different limits.
+
+The pixel-programming episode shows an animation that moves a point beyond its allocated buffer and receives an array-index exception. Its narrated debugging then changes an image-height value to 600 as a temporary fix, while the intended rule is to skip an out-of-bounds write. Preserve that boundary rule, not the unexplained dimension edit. For an image of 800 by 600 pixels, `(799,599)` maps to `479999`; `(800,599)` is invalid even though `599*800+800` equals `480000`, the first index past the allocation. For a clearer row-spill counterexample, `(800,0)` maps numerically to 800, which is inside this allocation but names the first pixel of the next row. The same checks protect negative coordinates before any unsigned conversion. In fixed-width C++ storage code, also check multiplication before forming the allocation size: for positive height, require the width to fit within the maximum representable element count divided by the height, then separately account for bytes per pixel. An overflowed allocation size cannot be repaired by a later coordinate check. [3D Game Programming – Episode 5 – Playing with Pixels!, 00:05:01–00:08:44](https://www.youtube.com/watch?v=dwn_UrItwfw&t=301s)
+
+Animation should be computed in a continuous coordinate space and quantized only when choosing the pixel to write. A useful teaching model is
+
+$$
+x(t)=c_x+r_x\sin(2\pi t/T),\qquad y(t)=c_y+r_y\cos(2\pi t/T),
+$$
+
+where $T$ is the period and $(c_x,c_y)$ is the center of the screen. Keep $x(t)$ and $y(t)$ as floating-point values through the motion calculation; reject nonfinite values and values outside the chosen integer-conversion range before converting them to pixel coordinates at the raster boundary, then apply the integer bounds test. A floating-to-integer cast is not a clipping operation. This keeps the path calculation separate from the discrete storage grid. The video uses a time remainder and integer conversion to make a periodic motion, but the speaker explicitly says he is unsure how the conversion rounds. The captions therefore support the experiment, not a precise rounding rule or a smoothness guarantee. A real implementation should use a monotonic elapsed-time source, declare whether it quantizes by truncation or rounding, and test wraparound at the period boundary. [00:02:48–00:04:05](https://www.youtube.com/watch?v=dwn_UrItwfw&t=168s)
+
+We can resolve the cast question using the language rules instead of preserving uncertainty from the narration. For finite values in the destination range, Java floating-to-integer conversion truncates toward zero: 3.9 becomes 3, and -3.9 becomes -3. That differs from floor, which maps -3.9 to -4. Near the left edge, truncating -0.2 produces 0; therefore decide whether the continuous sample is outside the image before converting it if negative subpixel locations should be clipped. Java additionally defines behavior for nonfinite and oversized inputs, while C++ makes a floating-to-integer conversion undefined when the truncated result is not representable. Keep the same explicit finite/range checks in a portable teaching algorithm instead of relying on a language-specific exceptional-value conversion. [Java Language Specification, narrowing conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.3), [C++ draft, floating-integral conversion](https://eel.is/c++draft/conv.fpint).
+
+A changing image also needs a defined policy for old pixels. If every frame represents only the current animation state, clear the pixel buffer once before drawing the new state; otherwise, old samples remain and form trails. If a trail is the intended effect, retain the buffer deliberately and define how it fades or clears. The episode clears all $WH$ pixels before drawing its current contents, then later draws many positions to make a visible tail. This illustrates why clearing belongs to the frame’s rendering policy: clearing inside the loop that creates a trail would erase the very history the effect needs. The reported 13.1 million writes comes from $256\times256$ pixels times 200 repeated draws; it is an arithmetic workload estimate from the tutorial, not a hardware-neutral performance benchmark. [00:09:48–00:13:06](https://www.youtube.com/watch?v=dwn_UrItwfw&t=588s)
+
+The source is a retrieved English VTT caption track, read in full. It does not independently prove what the code finally contained or the runtime speed; the episode itself leaves the temporary dimension adjustment unresolved. The stable lesson is the invariant: map valid coordinates into a known buffer, choose whether the frame is a replacement or accumulated history, then measure the work that policy actually performs.
+
+
+### Treat a render-order fix as evidence about a frame schedule
+
+A visible black line near a render-distance boundary is a symptom, not a root cause. It could come from missing geometry, a gap between meshes, an incorrect draw order, a depth-test/write mismatch, blending, or a projection/clip convention. In this tutorial, the author responds to a viewer report by moving wall generation out of the floor method, making it a separate `walls` method, and then changing where that method is called in the screen’s render sequence. The captioned result changes as the call order changes: the wall appears in front of the distance limiter when drawn after it. That is a useful debugging observation about this particular scene and renderer path. [3D Game Programming – Episode 18.1 – A Few More Things, 00:00:01–00:05:05](https://www.youtube.com/watch?v=98K5Bm2sApY&t=1s)
+
+The transferable method is to make the frame schedule visible. List the passes or geometry groups in the order they are submitted, then vary one ordering decision while holding the scene fixed. Separating `floor`, `walls`, and `distanceLimiter` into named calls makes that experiment easy to state and repeat. A method boundary can improve the programmer’s ability to isolate work; it does not itself change graphics semantics. The later call order is the intervention being tested.
+
+Do not generalize the result to say that the last submitted object always appears in front in a 3D renderer. With depth testing and depth writes active, depth comparison normally determines which fragment wins; submission order alone does not let a farther opaque surface override a nearer one. If reordering changes the image, inspect the actual depth function and clear value, whether both draws write depth, whether either is transparent or an overlay, and whether the geometry shares the same depth. The video captions do not establish those states, so the exact reason the wall/limiter relationship changed remains open. The correct lesson is to turn render order into an explicit experiment and then inspect the state that mediates its effect.
+
+A two-fragment experiment separates three mechanisms. Declare a conventional depth buffer cleared to 1, a LESS comparison, and depth writes enabled. A red opaque fragment at depth 0.2 followed by a blue opaque fragment at 0.8 leaves red: the second fragment fails the depth comparison. Reverse the submissions and the final pixel is still red. Turn depth testing off and let each opaque write replace the color: now the final color follows submission order. The depth-test mechanism is specified separately from color writes in the [Vulkan fragment-operations specification](https://docs.vulkan.org/spec/latest/chapters/fragops.html#fragops-depth). Neither observation establishes which state the tutorial used.
+
+Transparency is a third case. In linear RGB, put half-opacity red and half-opacity blue over black, using straight-color source-over compositing and no intervening rejection. Red then blue gives $(0.25,0,0.5)$; blue then red gives $(0.5,0,0.25)$. The blending operation is order dependent even though both fragments have the same opacity. A real capture must therefore include color/blend state as well as depth state. Equal-depth fragments, a different comparison, stencil rejection, depth bias, reversed-depth conventions and shader-written depth require their own stated experiment. These numeric examples are original explanations; the video captions do not establish any of those settings.
+
+The code-organization portion is similarly bounded. The source moves wall code to reduce clutter and store a forward value in a class member so the extracted method can access it. That solves the narrated scope error, but a longer-lived member is not automatically the right ownership model; if the value is only needed while building one frame, a parameter or frame-local data object may communicate the lifetime more clearly. The captions describe a small repair in an evolving Java renderer, not a general architecture requirement. (Source `src-b79d721772f4fbacfe25`, caption units `u-1587df8a1f6868718677eec3`, `u-3424fc96be48fb4bc2a01718`, `u-b512eb33526c7caa9701317a`, `u-f5fc74bfc8a9608f0d2cf676`, `u-e96e5ea524660c7a37d89430`.)
+
+The cited material is the retrieved English VTT caption track. It records the presenter’s code changes and described image, but no source tree, depth-state capture, or runtime was independently inspected. Treat the described fix as a reproducible question to investigate, not as proof of the graphics pipeline state.
+
+
 ### Sampling, integral images, and the limits of a box average
 
 Sampling can preserve a continuous signal only under a strong condition: its frequency content must be band-limited below half the sampling frequency. At the Nyquist boundary, phase can make a sinusoid’s samples all equal or alternate in ways that cannot distinguish it from other frequencies; therefore content must be strictly below $f_s/2$. For sample spacing $\Delta$, a sinusoid at frequency $f_0$ has the same samples as frequencies $f_0-kf_s$ for integer $k$, because the phase shift per sample changes by $2\pi k$. Those indistinguishable alternatives are aliases. Once sampled, they have collapsed to the same numbers; no later digital filter can determine which original frequency produced them. Anti-alias filtering must happen before sampling. [[#MITV-16 - Fast Convolution, Low Pass Filter Approximations, Integral Images (US 6,457,032)|MITV-16]] (video 00:01:39–00:09:35)
@@ -61552,6 +61596,92 @@ A shadow map renders the scene from the light's point of view and stores the nea
 
 Depth comparisons are sensitive to finite precision and sampling. A tiny mismatch can make a surface incorrectly shadow itself (shadow acne); a depth bias helps but too much bias detaches the shadow (Peter Panning). A point light needs multiple directions or a cube map, while a directional light can use a simpler orthographic projection. Hard shadow maps produce abrupt edges; filtering estimates a softer fraction of blocked samples but can blur or leak at boundaries. The important conceptual separation is that “is this point lit?” is another visibility question, now evaluated from the light rather than the camera.
 
+
+### A line corridor can be a cheap prefilter for shadow-caster work
+
+A culling test is useful only after we name the volume it tests. Frustum culling asks whether a bound intersects the viewing volume for a particular pass. Occlusion culling asks whether other surfaces hide it. A point-to-line distance asks a different, narrower question: is a bounded object close enough to a chosen line that it might matter to a line-centered effect? It can be a cheap candidate filter, but it cannot replace the pass's actual clipping or visibility rules.
+
+A Kohi performance stream explores such a test while discussing cascaded shadow work. The presenter describes a line by a start point and a direction vector, then reasons about whether a mesh's center lies within a chosen radius of it. At 01:48:08 the idea is introduced as a distance-to-line check; around 01:50:04 the presenter looks up the cross-product formula and notes that the available representation has a direction, not finite endpoints. At 01:57:36 he states the construction in terms of the point minus line start, crossed with the direction, divided by the direction length. This is live narration and code editing, so the teaching below reconstructs the geometry and does not claim to reproduce a verified implementation. [Kohi Ep. 161, 01:48:08–01:57:36](https://www.youtube.com/watch?v=dJYWL9YAelY&t=6488s)
+
+Let $a$ be a point on an infinite line, let $d$ be its nonzero direction, and let $p$ be the query point. The perpendicular distance is
+
+$$
+\operatorname{dist}(p,\ell)=\frac{\|(p-a)\times d\|}{\|d\|}.
+$$
+
+The cross-product magnitude is the area of a parallelogram whose base has length $\|d\|$ and whose height is the perpendicular distance. Dividing by the base leaves the height. This works even if $d$ is not normalized; a zero direction is invalid and needs an explicit policy.
+
+A small reference implementation makes the operation order explicit. Inputs are ordinary finite-scale coordinates with representable intermediate products; the extreme-magnitude policy is discussed below. This reference is used in the saved numerical checks, and is not a native engine implementation.
+
+```python
+import math
+
+def length(v):
+    return math.hypot(*v)
+
+def cross(a, b):
+    return (a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2],
+            a[0]*b[1]-a[1]*b[0])
+
+def line_distance(p, origin, direction):
+    magnitude = length(direction)
+    if magnitude == 0:
+        raise ValueError("zero direction")
+    return length(cross(tuple(x-y for x,y in zip(p,origin)), direction))/magnitude
+```
+
+For a numerical check, take $a=(0,0,0)$, $d=(0,0,4)$ and $p=(3,0,2)$. Then $(p-a)\times d=(3,0,2)\times(0,0,4)=(0,-12,0)$, whose length is 12. Since $\|d\|=4$, the point is 3 units from the line. If an object is represented by a sphere of radius $r_s=0.5$ and the effect accepts a corridor radius $r_c=0.4$, this object is safely outside because $3>r_s+r_c=0.9$. A sphere centered at $p=(0.6,0,2)$ is a candidate because $0.6\leq0.9$. The second result means “keep for a more exact test,” not “definitely contributes.”
+
+Before rejecting a shadow caster, prove that this corridor encloses the relevant shadow region. For directional light, imagine every possible receiver point lies within radius $r_c$ of a line parallel to the light rays. Extending a receiver along that light direction does not change its distance from the line. Therefore a point that can cast onto that receiver is also inside the same infinite corridor. A caster sphere wholly outside the corridor can then be rejected. Without that enclosure argument, an arbitrary camera line and guessed radius can discard a caster whose shadow reaches the scene. A light with diverging rays needs a different bound. The tutorial's line construction does not by itself prove this enclosure for every cascade.
+
+The sphere makes the point test conservative for an entire mesh: any point of a sphere lies at most $r_s$ from its center, so if the center is farther than $r_s+r_c$, the sphere cannot reach the corridor. A false positive costs later work but keeps a possible contributor. A false negative can remove real work from the image. That asymmetry is why the radius must enclose the transformed geometry. The stream first considers extents, then notices that scaling and transforms change the bound and leaves caching/recalculation as a question (02:00:42–02:06:41). A robust implementation can transform a local box's corners and bound those world-space points, or use a conservative affine-transform bound; simply measuring untransformed local extents is insufficient under scale. The source's evolving calculation should not be read as proof that its final radius is conservative.
+
+For a reusable transformed bound, write a world point as $x_w=A x_l+t$, where $A$ is the three-by-three linear part and $t$ is translation. A local sphere of center $c_l$ and radius $r_l$ maps to an ellipsoid in general. Its center is $A c_l+t$. A safe enclosing sphere can use
+
+$$
+r_w=\|A\|_F r_l,\qquad
+\|A\|_F=\sqrt{\sum_{i=1}^3\sum_{j=1}^3 A_{ij}^2}.
+$$
+
+The subscript F names the [[Concepts/Matrix norms and numerical error|Frobenius norm]]: square every matrix entry, add, then take the square root. The Cauchy–Schwarz inequality says $|v\cdot u|\leq\|v\|\|u\|$: a dot product cannot exceed the product of the two vector lengths in magnitude. Applying it to each matrix row gives $\|Au\|^2\leq\|A\|_F^2\|u\|^2$, which proves the enclosure. It may be loose. For a rotation followed by independent axis scales, the largest absolute scale gives the tighter radius multiplier. Translation moves the center and does not enlarge the radius.
+
+Do not extend that largest-scale shortcut to an arbitrary sheared matrix by taking only its longest column. For $A=\begin{bmatrix}1&1&0\\0&1&0\\0&0&1\end{bmatrix}$, the longest column has length $\sqrt2\approx1.414$, but the maximum length stretch is approximately $1.618$. A local unit sphere can therefore escape that guessed world sphere. The Frobenius multiplier is 2 and safely encloses it. Recompute bounds for animation, morphing or shader displacement when those change the geometry; a correct static transform does not cover an independently moving surface. This bound and counterexample are original mathematical development, not a claim that the episode implemented them.
+
+An infinite line also has no near/far endpoint. If the target is a finite segment from $a$ to $b$, compute $t=((p-a)\cdot(b-a))/\|b-a\|^2$, clamp $t$ to $[0,1]$, and measure to $a+t(b-a)$. For a ray, clamp only below zero. If the target is instead a shadow cascade's frustum, use that cascade's actual planes or a conservative bound for the cascade. Distance to a line alone says nothing about depth range, side planes, occlusion, or whether a caster can project into the receiver region. The stream's dialogue moves among “line,” radius, and cascade clipping; keep these as distinct geometric contracts.
+
+#### Compute pass inputs before gathering objects
+
+The same session exposes a separate reliability lesson. The geometry-gathering loop tries to use a cascade center and radius before the loop has reached the iteration that computes the farthest cascade data. At 02:33:03 the presenter notices that the center has not been set; around 02:34:20 he identifies that the required last-cascade value is not available on the first iteration. At 02:35:58 he proposes splitting the work: first calculate cascade data, then run another pass to gather rendered geometry. [Kohi Ep. 161, 02:33:03–02:35:58](https://www.youtube.com/watch?v=dJYWL9YAelY&t=9183s)
+
+This is a producer-consumer dependency. The culling query consumes a completed center, direction, and radius; therefore the cascade setup must produce all of them before object gathering begins. The safe structure is conceptually:
+
+```text
+for each cascade:
+    compute split, projection, center, and bounds
+
+for each cascade:
+    for each candidate object:
+        test the completed bounds
+        append possible contributors
+```
+
+The extra traversal is not automatically slower than a tangled single loop. It can avoid reading partially initialized state and makes the dependency visible. If later profiling shows the second traversal is expensive, the design can be reorganized while preserving the invariant that every query sees fully constructed cascade data. This is a general scheduling rule for render preparation: establish complete pass inputs, held unchanged while they are queried, before parallel or batched consumers inspect them.
+
+The presenter later observes fewer geometries in the shadow pass while moving and turning the camera, calling the result an optimization (02:49:34). A later timing overlay is described as roughly two milliseconds, but the session has uncertain capture/timer conditions and labels the shadow pass as dominant (02:51:57). This is useful as a debugging sequence—form a candidate test, observe whether submitted work changes, then profile—but not a controlled benchmark or proof that the whole application is CPU-bound. Keep the measured scope, timer, camera path, and scene density attached to any performance conclusion.
+
+The same stream says that transparent meshes are separated and submitted last in a forward-rendering path, with distance ordering, while the presenter notes that this policy may change for deferred rendering or order-independent transparency (01:45:48). That is a different correctness/performance tradeoff from shadow-caster culling: alpha blending can depend on ordering, while shadow inclusion depends on whether an object contributes to the shadow pass. One scene list should not silently impose a camera transparency order on every pass.
+
+**Evidence limit.** These explanations derive from English caption cues, not a repository inspection or independent build. The episode contains exploratory narration and corrections while coding. In particular, it does not establish that the final line test handles every transform, that the line represents the exact cascade volume, or that the reported frame-time change came from this change alone. Use the math as a reviewable design pattern; validate any implementation against known bounds and the actual shadow-pass volume.
+
+In floating-point code, rescale extreme directions or use stable norm calculations before evaluating cross products and squared distances. The exact distance formula is invariant under rescaling a nonzero direction; overflow and underflow in a naive implementation are not. Keep the invalid-zero-direction policy separate from a tolerance chosen for roundoff.
+
+
+![[Visual Recall/Game Engine/corridor-and-shear.png]]
+
+**Figure — a safe rejection needs an enclosing bound.** Left: the shaded strip is the y=0 cross-section of a line corridor with radius 0.4. Each object sphere has radius 0.5. The center at x=0.6 is retained; the center at x=3 is rejected. Retention means possible contribution, not proved visibility. Right: shearing a unit sphere creates an ellipsoid. Its central z=0 cross-section escapes the dashed radius-1.414 guess; the marked direction stretches to 1.618. The larger Frobenius radius 2 is safe but is not drawn. Both panels use equal horizontal and vertical length scales within each panel. [[Visual Recall/Game Engine/corridor-and-shear.svg|Editable geometric figure]].
+
+
+
 ### Shadow maps reuse visibility from the light’s viewpoint
 
 A shadow asks whether a surface point can see a light. For a point light, render the scene once from the light’s position and store the nearest depth in a light-space depth map. Then render from the camera. For each camera fragment, recover its 3D position, project that position into light space, and compare its light-space depth $z_f$ with the stored nearest depth $z_s$ at that shadow-map texel. The point receives direct light when $z_f\le z_s+\epsilon$; otherwise a nearer occluder blocks it. The key duality is visibility from the eye versus visibility from the light. [[#MITG-19 - Shadow maps|MITG-19]] (00:17:03–00:25:41)
@@ -83895,3 +84025,22 @@ That means the complete **1801–2700 sequence we planned across the 18 passes i
 
 
 Graph connections: [[Radiance fields and Gaussian splatting]], [[Expectation, covariance, and dependence]], and [[Prefix scan and stream compaction]]. These link nodes supplement the inline derivations; the equations and examples remain in this book.
+
+
+
+#### Check which transmittance the stopping test actually uses
+
+The residual bound above assumes that the **actual unprocessed remainder** has transmittance below the stated cutoff. A test on the next candidate value is different. In the inspected [Graphdeco forward CUDA kernel](https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/main/cuda_rasterizer/forward.cu), the code computes a candidate transmittance, checks it against the cutoff, and can stop before accumulating that candidate layer or assigning the candidate transmittance. The stored transmittance can therefore remain above the cutoff. Reading the numeric constant alone does not establish the omitted-energy bound.
+
+For example, let current transmittance be $T=0.009$ and the next opacity be $0.99$. The candidate is $0.00009$, below $10^{-4}$. If this layer is skipped when that test succeeds, a red layer over black loses a contribution of $0.00891$, which is much larger than $10^{-4}$. This is an arithmetic counterexample to applying the after-accumulation remainder bound to a before-accumulation stopping policy; it is not a measured artifact in a trained scene.
+
+If candidate-based stopping uses $T(1-\alpha)<\tau$ and a proven opacity cap $\alpha\le a_{max}<1$, then the discarded current remainder instead satisfies
+
+$$
+T<\frac{\tau}{1-a_{max}}.
+$$
+
+With $a_{max}=0.99$, that worst-case bound is one hundred times the cutoff. It is loose but follows from the actual branch condition. A tighter implementation-specific bound must inspect the actual discarded layer and remainder. Footprint truncation and small-alpha rejection are additional approximation policies; they are not automatically covered by an early-termination allowance. Define whether the comparison target is an ideal untruncated compositor or the same renderer with a particular stop rule disabled.
+
+
+For color edits, changing order and a complete fixed-order derivation, see [[Game Engine - From First Frame to Living Worlds#An image-change certificate must name the edits it covers|the image-change certificate contract]].

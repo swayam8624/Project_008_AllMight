@@ -203,3 +203,27 @@ Reconstruct without looking: show why the screen midpoint gives $u=0.2$ for $w=(
 
 - **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#5. Build a pose first, then deform the surface|Animate in a declared space]]** — Sample pose, resolve the hierarchy, morph before skinning, and build matching current/previous transforms. A global-joint palette already outputs world space. Why does adding the mesh world transform again break it?
 
+
+
+- **[[Game Engine - From First Frame to Living Worlds#An image-change certificate must name the edits it covers|Image-change bounds need assumptions]]** — An opacity-only bound misses a red-to-blue edit at fixed opacity and a depth-order swap. State color range, evaluated per-pixel alpha changes, contributor order, color/background changes, and termination policy before calling an estimate a certificate.
+
+
+## A moving pixel still needs a storage contract
+
+| Prompt | Short answer | Expand |
+|---|---|---|
+| Flat index is valid; coordinates valid? | Not necessarily. At width 800, x=800,y=0 spills into the next row. Check each coordinate before indexing. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Animate a pixel by respecting the buffer’s coordinates and lifetime|Pixel trace and layout assumptions]] |
+| Cast a negative subpixel location? | Truncation can map -0.2 to 0; decide continuous clipping before conversion and reject nonfinite/out-of-range values. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Animate a pixel by respecting the buffer’s coordinates and lifetime|Java/C++ conversion distinction]] |
+| Clear each frame or retain pixels? | Replacement frame versus intentional history. Clear once at the chosen frame boundary; define trail decay separately. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Animate a pixel by respecting the buffer’s coordinates and lifetime|Animation and buffer-lifetime story]] |
+
+
+## Conservative culling: keep the region and the bound distinct
+
+| Prompt | Short answer | Teaching / figure |
+|---|---|---|
+| What does point-to-line distance measure? | Perpendicular distance to an infinite line; no endpoint, frustum or occlusion test. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A line corridor can be a cheap prefilter for shadow-caster work|Derivation and reference code]] |
+| When is rejecting a caster safe? | The corridor must enclose its possible contribution region; the object sphere must enclose transformed geometry. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A line corridor can be a cheap prefilter for shadow-caster work|Enclosure argument]] |
+| Sphere radius 0.5, corridor radius 0.4? | Center distance above 0.9 rejects. A smaller distance only retains a candidate. | [[Visual Recall/Game Engine/corridor-and-shear.png|Cross-section figure]] |
+| Largest matrix column bounds every stretch? | No under shear: a 1.414 guess misses a 1.618 stretch. Frobenius radius multiplier 2 is safe here. | [[Visual Recall/Game Engine/corridor-and-shear.svg|Editable figure]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A line corridor can be a cheap prefilter for shadow-caster work|Proof and failure case]] |
+
+**Reconstruct:** prove the distance formula by parallelogram area; explain why an enclosing receiver corridor matters for directional shadows; show what breaks if scale or animation escapes the cached object bound.
