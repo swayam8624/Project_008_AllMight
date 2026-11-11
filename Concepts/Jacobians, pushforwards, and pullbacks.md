@@ -27,7 +27,7 @@ The Jacobian is the matrix of first derivatives of a vector-valued function. It 
 
 - [[Automatic differentiation and backpropagation]]
 - [[Hessians and local curvature]]
-- [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]]
+- [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt]]
 
 ## Full teaching explanation
 
