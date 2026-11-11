@@ -602,6 +602,28 @@ The module graph and script in `tools/modules/` additionally passed a *local* GC
 | What does copying or moving this value mean? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Copy a meaning rather than just its bytes\|Copy, assignment and transfer story]] |
 | Which boilerplate should exist at all? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From three repairs to five decisions to zero boilerplate\|Composition and ownership]] |
 
+## M018 — Parts 291–300: the same asset service becomes a typed, hidden and measurable engine API
+
+**Canonical boundary:** original curriculum Parts 291–300 are taught in one additive continuous chapter at [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A registry crosses its last C++ boundary hidden implementation, typed identity and measured abstraction cost|A registry crosses its last C++ boundary]]. This is an **authored reconstruction**, not a newly received transcript, independent learner assessment or Kairo implementation audit. The design continues directly from M017's separately compiled API and M015–M016's generation-aware registry. The actual multi-translation-unit witness lives in [[tools/m018/m018_lab.cpp|m018_lab.cpp]], [[tools/m018/asset_catalog.hpp|the public header]], [[tools/m018/asset_catalog.cpp|the hidden implementation]] and [[tools/m018/build_m018_lab.sh|its build script]].
+
+| Original part / exact canonical title | Integrated teaching and observable proof boundary |
+|---|---|
+| 291 · PIMPL for compilation and ABI isolation | Incomplete Impl in the public header; out-of-line destructor and moves after definition; compiler dependency, deep-const caveat, allocation/indirection cost and ABI limitations are developed. |
+| 292 · Strong typedefs and type-safe handles | Distinct MeshHandle and TextureHandle, logical slot-generation-catalog identity, invalidation after delete/reuse and cross-catalog rejection; compile-time and runtime checks. |
+| 293 · Phantom/tag types for units and spaces | WorldSpace/ViewSpace and Meters/Seconds distinguish values at compile time without extra tag fields; actual affine/covector transformations and unit algebra are explained rather than faked by casts. |
+| 294 · Generic math types constrained by scalar concepts | A deliberately restricted floating-point scalar concept controls Vector and Quantity; limitations for dual, interval and fixed-point scalars and numerical laws are explicit. |
+| 295 · Compile-time dimensions versus dynamic dimensions | Fixed three-dimensional array/vector comparison with a runtime std::span dot product; mismatched runtime extents throw, and views borrow without owning. |
+| 296 · Expression templates and temporary-elimination concepts | An eager addition is compared with reference-bearing lazy expression nodes; named inner-node lifetime is tested and temporaries, aliasing and reassociation hazards are explained. |
+| 297 · Intrusive versus non-intrusive generic abstractions | Caller-owned Task with embedded next pointer, linked-state validation, pop/unlink check and contrast to owning forward_list nodes; no speed claim. |
+| 298 · Designing a zero-cost abstraction and verifying its cost | Distinguishes compile-time-only tags from PIMPL's real costs; requires workload, compiler, ISA, allocation count, disassembly and statistically sound benchmark comparisons. |
+| 299 · Reading generated assembly for a generic C++ function | A separate generic_sum3 wrapper is compiled to GCC and Clang assembly; no instruction-sequence universality or cycle-count inference is asserted. |
+| 300 · Building a reusable engine container API with explicit ownership and invalidation rules | Catalog owns Impl and slot storage, rejects stale/foreign handles, returns owned copies, prepares free-list failure safety, and makes moved-from behavior explicit. |
+
+**Evidence distinction:** the published repository source is real source code, not proof by commentary. Its build script runs GCC release with -DNDEBUG, Clang strict and GCC address/undefined sanitizers on the separately compiled catalog and tests; the tests use a throwing check function rather than assert(), so release checks remain active. It also produces separate optimized assembly for two compilers. Hosted GitHub Actions must be checked for a final passing result; configuring a workflow is not itself evidence that the work ran.
+
+**Out of scope and remaining hard requirements:** no current KairoMath/Transform.cppm or KairoRenderer/RendererTypes.cppm audit, no full stable binary plugin ABI, no thread-safe catalog, no GPU deferred destruction, no process-persistent handle identity, no exhaustive generation-overflow test or exception-injection matrix, no general expression-template lifetime framework or actual cache/performance benchmark. Parts 301–400 can now build directly on the stated machine-observation method. Prior source gaps, mathematics corpus and video verification queue remain unchanged.
+
+
 ## M001 - Parts 1-20
 
 | Part | Definition, mechanism, and concrete reconstruction cue |

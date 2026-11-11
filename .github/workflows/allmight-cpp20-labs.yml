@@ -6,11 +6,13 @@ on:
     paths:
       - "tools/labs/**"
       - "tools/modules/**"
+      - "tools/m018/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   pull_request:
     paths:
       - "tools/labs/**"
       - "tools/modules/**"
+      - "tools/m018/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   workflow_dispatch:
 
@@ -70,3 +72,12 @@ jobs:
       - name: Build C++20 module graph and execute C/C++ consumers
         shell: bash
         run: bash tools/modules/build_module_lab.sh
+
+  m018-compilation-boundaries:
+    name: M018 PIMPL, typed handles, scalar and expression labs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build distinct translation units; validate checks in release and sanitizer modes
+        run: bash tools/m018/build_m018_lab.sh
