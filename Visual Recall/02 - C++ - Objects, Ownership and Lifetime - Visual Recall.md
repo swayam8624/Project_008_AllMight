@@ -158,6 +158,40 @@ A renderer's command is **one of several known shapes**; the runtime backend is 
 **Blank-file reconstruction:** Recreate `Clear`, `DrawMesh`, `Upload`, `Request`, `Backend` and `CountingBackend` with a single exclusive owner; verify command counts, derived destructor execution, failed runtime cast, slicing, shared virtual base, generation-aware equality, NaN's unordered comparison, overload selection and static default-argument binding. Full code and the checked build command are in [[tools/labs/backend_choice_lab.cpp|the M011 C++20 laboratory]]; complete derivations and failure explanations are in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From one owned resource to many requests and a replaceable backend|the continuous narrative]]. Do not infer Kairo or GPU execution from this standalone test.
 
 
+## One request, one transaction, callbacks that may outlive their caller — M012 reconstruction
+
+Read the complete [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From an accepted render request to a resource that survives failures and callbacks|M012 narrative]] only *after* attempting this recall route. The important picture begins with an editor requesting a resource and ends with either a fully published asset or the original published store unchanged.
+
+```mermaid
+flowchart LR
+    U["Upload request: bytes, label"] --> V["Validate units, format and bounds"]
+    V --> P["Privately acquire and prepare"]
+    P --> C{"Preparation succeeds?"}
+    C -->|no| R["Unwind owners; typed failure"]
+    C -->|yes| S["Commit complete AssetRecord"]
+    S --> N["Notify only under safe callback lifetime"]
+```
+
+The first thing to reconstruct is *why each arrow is necessary*. The request's count must be distinct from an asset index, because identical raw integer types do not carry the same domain meaning. The file must be decoded as checked bytes, not by assuming any pointer cast creates a live `WireHeader`. Preparation must be private because callbacks or render systems must never observe half-constructed state. Every acquired handle must have one owner before a throwing operation can intervene. Publication needs a precise boundary: an exception before the commit must not modify existing records under the stated guarantee; a callback that throws afterward is a different event requiring its own policy.
+
+| Reconstruction question | Minimum evidence the reader must produce |
+|---|---|
+| Why is a raw `std::size_t` a dangerous API for bytes? | Show accidental unit mixing; write `explicit ByteCount` with explicit conversion back. |
+| Can a function pointer close over a local variable? | No: a plain pointer carries a callable identity; extra state needs a context, whose lifetime is separately guaranteed. |
+| Why is a member-function pointer not an ordinary callback address? | Explain the required instance and demonstrate `object.*member` invocation. |
+| What does a functor or lambda actually store? | Draw state fields or references; contrast capture of an integer, pointer, view and `this`. |
+| How do value and reference captures differ after mutation? | Predict snapshot 10 and live view 20; explain why a deferred reference may dangle. |
+| What changes when a lambda is stored in `std::function`? | Type erasure, copyable target, possible storage cost, empty-call error; no guaranteed inline capacity. |
+| Which exceptions cause cleanup, and what cannot be rolled back? | Distinguish stack unwinding/local RAII from preexisting external side effects. |
+| What are the basic, strong and no-throw guarantees? | State valid-but-changed, unchanged observable state, and non-escaping exceptions; give each an example. |
+| Why must the native resource move be non-throwing? | Trace vector growth, element relocation, and the relevant strong-guarantee conditions. |
+| Why can't input validation live only in `assert`? | `NDEBUG` can remove it; show typed invalid-input errors separately from programmer invariant failures. |
+| What do `bit_cast` and trivially copyable prove? | A constrained representation-value operation, not a portable six-byte disk schema. |
+| Why is a typed pointer into an arbitrary file unsafe? | Length, alignment, lifetime, alias rules, endian and padding are independent checks. |
+| How do we demonstrate rollback? | Reproduce counts: (0,0,0), (1,1,0), (1,2,1), (2,3,1), then 0 live at destruction. |
+
+**Blank-file laboratory:** Rebuild `ByteCount`; the fake device; the move-only `Resource`; the private `AssetRecord`; `AssetStore::upload` returning a typed result; function/member/functor callbacks; value/reference and owning-lifetime lambda captures; and a six-byte little-endian serializer. Compile under C++20 and warnings as errors, execute the deliberate failure after handle acquisition, then repeat under `-DNDEBUG`. The tested reference and exact commands are in [[tools/labs/safe_asset_pipeline_lab.cpp|the M012 lab]] and the source/evidence record. Do not classify this exercise as complete learner mastery until it can be reconstructed and explained independently.
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
