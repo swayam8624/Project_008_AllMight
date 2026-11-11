@@ -45,7 +45,7 @@ class RepositoryPortability(unittest.TestCase):
             for link in wiki_links:
                 if any(old in link for old in OLD_TITLES):
                     hits.append(f"{path.relative_to(ROOT)}: {link}")
-        self.assertEqual(hits, [], "stale note links after Windows-safe rename")
+        self.assertEqual(hits, [], "stale note links after Windows-safe rename:\n" + "\n".join(hits))
 
     def test_all_one_hundred_canonical_phase30_titles_mapped_once(self):
         path = ROOT / "Supplementary" / "Foundations.md"
