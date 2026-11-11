@@ -48,4 +48,4 @@ Explain why returning a local pointer is invalid even if bytes remain.
 
 [[Supplementary/Foundations#M008 - Parts 113-126|C008 development and corrections]]
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]] · [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Storage is a place; an object is its occupant|C007 development]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage is a place; an object is its occupant|C007 development]]

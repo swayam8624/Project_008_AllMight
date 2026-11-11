@@ -31,4 +31,4 @@ Reconstruct both recorded failure event arrays. Pending: smart owners, polymorph
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Destruction closes the ownership interval|Teaching mechanism and examples]] · [[Supplementary/Foundations#M009 - Parts 127-147|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Destruction closes the ownership interval|Teaching mechanism and examples]] · [[Supplementary/Foundations#M009 - Parts 127-147|Exact coverage]] · [[Dependency Map]]

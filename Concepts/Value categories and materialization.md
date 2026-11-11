@@ -34,4 +34,4 @@ Classify rr, std::move(rr), ++i and i++. Pending: overlapping subobjects and det
 
 [[Supplementary/Foundations#M009 - Parts 127-147|C009 development]]
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#An expression has a type and a category|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An expression has a type and a category|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]

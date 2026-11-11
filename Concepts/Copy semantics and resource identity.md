@@ -29,4 +29,4 @@ Choose duplicate, share, remap or reject for four engine types. Pending: graph-c
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Copy a meaning rather than just its bytes|Teaching mechanism and examples]] · [[Supplementary/Foundations#M009 - Parts 127-147|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Copy a meaning rather than just its bytes|Teaching mechanism and examples]] · [[Supplementary/Foundations#M009 - Parts 127-147|Exact coverage]] · [[Dependency Map]]

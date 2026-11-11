@@ -43,4 +43,4 @@ Explain fixed-width integer types without the label, work the example above, the
 
 [[Supplementary/Foundations#M008 - Parts 113-126|C008 development and corrections]]
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]] · [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Choose a type for its promise, not its familiar size|C007 development]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose a type for its promise, not its familiar size|C007 development]]

@@ -27,4 +27,4 @@ Mutate the original after both bindings and predict their values. Pending: user-
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Binding chooses a referent, not always the one you imagined|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Binding chooses a referent, not always the one you imagined|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]

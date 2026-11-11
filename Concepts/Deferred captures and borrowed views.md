@@ -28,4 +28,4 @@ Contrast capturing string versus string_view by value. Pending: scheduling, canc
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Borrowed views and deferred work need an owner story|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Borrowed views and deferred work need an owner story|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]

@@ -26,4 +26,4 @@ Explain absence, stale access and one-past access separately. Pending: optional/
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A pointer carries an access contract|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A pointer carries an access contract|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]

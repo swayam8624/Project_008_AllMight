@@ -4,12 +4,23 @@
 
 This library entry point leads to self-contained teaching stories. Definitions, worked examples, traces, assumptions and laboratory checkpoints stay inside each volume. Concept links provide navigation and later growth.
 
+
+## Current combined reading route
+
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Computing foundations]] combines the original bits and C++ teaching and adds general API/build contracts, shader buffer layout and GPU programming. The original 01 and 02 live files were retired after the approved merge audit; byte-identical recovery copies remain in the checkpoint.
+- [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Graphics, vision and photography]] includes received geometry/collision material from Parts 1101–1300 and rendering/material/transport material from Parts 1801–2100.
+- [[Continuous Notes/Game Engine - From First Frame to Living Worlds|Game engine]] includes spatial indices/navigation, ECS, architecture, serialization and rigid-body material routed from Parts 1301–1700, plus renderer ownership and history-validity teaching.
+- [[Supplementary/Manual Integration - Pending Source Queue|Retained source queue]] keeps earlier captions, extracted books, mathematics books and unfinished teaching in scope. New inputs do not replace pending work. Parts 1701–1800 are not received in the current supplied batches.
+
+The full source routing, corrections and actual verification are in [[Supplementary/Manual Integration - Sources and Verification]].
+
+
 ## Teaching library
 
 | Volume | Source coverage | Current state | Read |
 |---|---|---|---|
-| 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory\|Open volume 01]] |
-| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–160 · M007–M010; planned Parts 101–300 · M007–M018 | 4/12 sources integrated; objects, borrows, value transfer, ownership and lifetime, inline examples and laboratories | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs\|Open volume 02]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall\|Visual recall]] |
+| 01 · From Signals to Meaning: Bits, Numbers, and Memory | Parts 1–100 · M001–M006 | All six sources integrated; concept-led narrative | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\|Open volume 01]] |
+| 02 · C++: From Objects to Reliable Programs | Accepted Parts 101–160 · M007–M010; planned Parts 101–300 · M007–M018 | 4/12 sources integrated; objects, borrows, value transfer, ownership and lifetime, inline examples and laboratories | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs\|Open volume 02]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall\|Visual recall]] |
 | Phase 6 · From Movement to Meaning: Vectors, Geometry, and Reliable Code | Parts 501–600 · user-labeled M031–M036 | All phase topics developed; 99 supplied lesson headings plus explicit Part 542 reconstruction; panel narrative and inline tested C++ | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn\|Open Phase 6]] |
 | Phase 7 · From Basis Images to Moving Worlds: Matrices, Transforms and Quaternions | Received Parts 601–634 and 651–700 · six excerpts | 84 supplied lesson headings; missing 635–650 sources explicitly distinguished from reconstructed affine bridge; figures and scalar laboratory | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations\|Open Phase 7]] · [[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall\|Visual recall]] |
 | Phase 8 · From Constraints to Spectra: Systems, Decompositions, and Matrix Functions | Parts 701–800 · seven excerpts | All 100 supplied lessons mapped to expanded explanations; full derivations, worked algorithms, inline LU/storage/API examples, geometric figures and active recall | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation\|Open Phase 8]] · [[Visual Recall/08 - Linear Algebra - Visual Recall\|Visual recall]] |
@@ -26,16 +37,16 @@ Numbered developed coverage is disjoint: Parts 1–160, 501–634, 651–700, an
 
 ## Follow the curriculum questions
 
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Prologue - How a physical state became a byte|How can a physical state remember a meaning?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|How do the same bits encode counts and negative values?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields|How do we inspect decisions and pack fields safely?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|What happens when an arithmetic result does not fit?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|How does a movable scale represent fractions?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|What was lost before, during, or after an operation?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep|Which range, resolution and storage bargain fits the data?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|What makes a location valid to access?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement|What must another reader know, validate and trust?]]
-- [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|Can we reconstruct and diagnose the whole pipeline?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Prologue - How a physical state became a byte|How can a physical state remember a meaning?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|How do the same bits encode counts and negative values?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bits become decisions and compact fields|How do we inspect decisions and pack fields safely?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|What happens when an arithmetic result does not fit?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A stretching ruler for real-valued quantities|How does a movable scale represent fractions?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty|What was lost before, during, or after an operation?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choosing what information to keep|Which range, resolution and storage bargain fits the data?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|What makes a location valid to access?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bytes become a durable agreement|What must another reader know, validate and trust?]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The complete journey - Encode, compute, store, and investigate|Can we reconstruct and diagnose the whole pipeline?]]
 
 ## Phase 6-10 mathematical learning route
 
@@ -55,7 +66,7 @@ Visual-recall companions cover every current continuous volume and the independe
 
 ## Cumulative companions
 
-[[Supplementary/Derivations]] contains longer proofs. [[Supplementary/Code Snippets]] contains canonical implementations and experiments. [[Supplementary/Worked Traces]] adds deeper traces; essential ones remain in the volume.
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstruct the representation and lifetime proofs]] contains longer proofs. [[Supplementary/Code Snippets]] contains canonical implementations and experiments. [[Supplementary/Worked Traces]] adds deeper traces; essential ones remain in the volume.
 
 [[Supplementary/Foundations]] retains its prior entries and source-gap records, and now adds 165 supplied Phase 9–10 lesson rows with exact titles and chapter links. Part 542 remains identified reconstruction. [[Supplementary/Sources and Code Anchors]] records source claims, primary-reference enrichment, corrections, commands, results and limitations. [[Keyword Index]], [[Dependency Map]] and Concepts hold the reusable graph. Independent C++ examples and runnable laboratories remain inside their teaching volumes; only project-dependent excerpts are separated.
 
@@ -63,7 +74,7 @@ Visual-recall companions cover every current continuous volume and the independe
 
 Read the [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|panel problem]], then [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#An arrow is not the address written beside it|point and movement]], [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A basis is a measuring arrangement, not the vector itself|coordinate meaning]], [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A ruler needs more than coordinate components|measurement]], [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Projection separates useful movement from sideways movement|decomposition]], and [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Oriented area tells us which side of the panel is front|orientation]]. Continue through surface frames, lighting, interpolation, collision and perspective to [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A complete scalar laboratory makes the story executable|the executable capstone]].
 
-The C++ story begins with [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving a program a buildable shape|source and build]], then [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Storage is a place; an object is its occupant|storage and lifetime]], and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Bringing the object model back to bytes|layout]]. Its complete twelve-chunk weave remains pending future sources.
+The C++ story begins with [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Giving a program a buildable shape|source and build]], then [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage is a place; an object is its occupant|storage and lifetime]], and [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bringing the object model back to bytes|layout]]. Its complete twelve-chunk weave remains pending future sources.
 
 Six variable-length source chunks cover the first 100 parts, not 120. That historical correction belongs to source tracking; a teacher can present the story without announcing chunk numbers.
 
@@ -74,3 +85,8 @@ Six variable-length source chunks cover the first 100 parts, not 120. That histo
 ## Game-engine architecture and implementation
 
 [[Continuous Notes/Game Engine - From First Frame to Living Worlds|Open the cumulative game-engine volume]]. Follow one action through input, timing, ownership, rendering, assets, editing, simulation, behaviour, and feedback, then reconstruct the tested CPU laboratory. Future game-engine sources will be woven into this same file. [[Supplementary/Game Engine - Sources and Coverage|Source coverage and remaining ingestion work]] are tracked separately from numbered curriculum progress.
+
+
+## Latest supplied continuation through Part 2700
+
+The latest received Parts 2157–2700 are integrated across [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From generated GPU work to safe explicit execution|Computing Foundations]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From declared rendering work to editable captured worlds|Game Engine]] and [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From captured kernels to illuminated animated surfaces|Graphics]]. The [[Supplementary/Manual Integration - Sources and Verification#Explicit execution, captured worlds and animation - continuation received 2026-11-11|continuation ledger]] records routing, source preservation and evidence limits. The earlier source backlog remains active; this update does not certify complete coverage of every book or video.

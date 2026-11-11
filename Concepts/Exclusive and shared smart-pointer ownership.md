@@ -30,4 +30,4 @@ Explain why `unique_ptr<Derived>` converted to `unique_ptr<Base>` needs a valid 
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Exclusive ownership: `unique_ptr` makes transfer visible|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Exclusive ownership: `unique_ptr` makes transfer visible|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]

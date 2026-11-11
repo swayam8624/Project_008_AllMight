@@ -26,3 +26,6 @@ A partial differential equation constrains a field through spatial and temporal 
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#PDEs, fields, and discrete solvers|PDEs, fields, and discrete solvers]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Dynamics, forces, and numerical integration|Dynamics, forces, and numerical integration]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Meshes, connectivity, and geometry processing|Meshes, connectivity, and geometry processing]]
+
+
+Expanded direct teaching: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A triangle turns a differential into a concrete field calculation]].

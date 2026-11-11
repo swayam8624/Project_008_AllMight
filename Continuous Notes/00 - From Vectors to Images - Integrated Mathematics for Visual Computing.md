@@ -296,6 +296,24 @@ An **inverse** undoes a mapping. We display it to explain the relationship, not 
 
 A **passive change** changes the description while preserving the physical vector. An **active transform** moves or changes the physical object while keeping the describing frame fixed. They may use related matrices but answer different questions.
 
+### Recover a component with the right measuring rule
+
+Our slanted basis reconstructs the panel movement correctly, but it leaves a practical question: how do we recover its coordinates from an arrow measured in world space? Dotting with each basis vector works only for an orthonormal basis. In the example $b_1=(1,0)$, $b_2=(1,1)$ and $v=(3,2)$, those two dot products are $(3,5)$, whereas the actual coefficients are $(1,2)$.
+
+The solution is a [[Concepts/Reciprocal bases and coordinate measurements|reciprocal basis]]: measuring vectors $b^1,b^2$ satisfying $b^i\cdot b_j=\delta^i_j$. The symbol $\delta^i_j$ is one when the indices match and zero otherwise. Each reciprocal vector accepts its own basis direction and rejects the other. Here choose
+
+$$
+b^1=(1,-1),\qquad b^2=(0,1).
+$$
+
+Now $b^1\cdot v=1$ and $b^2\cdot v=2$. Reconstruction and measurement are different jobs, performed by two related bases. In matrix form, with basis directions as columns of $B$, the rows of $B^{-1}$ recover coordinates. In Euclidean world coordinates the reciprocal vectors are the columns of $B^{-\mathsf T}$. The superscript $\mathsf T$ means transpose; the inverse transpose means invert and then transpose. In code, solve a system rather than repeatedly constructing an inverse.
+
+A **covector** is a linear scalar measurement: a rule $\ell$ satisfying $\ell(au+bv)=a\ell(u)+b\ell(v)$. A reciprocal coordinate measurement is one example. The rule is the primary object. Drawing a reciprocal vector is possible because our Euclidean inner product identifies a covector with an arrow. A different inner product gives a different representing arrow for the same measurement rule. This distinction will explain normal transformation and gradients without memorizing unrelated exceptions.
+
+**Teaching trace.** Ask what $(3,5)$ means before calling it wrong: it is the list of dot measurements against the original basis, not the coefficient list. The Gram matrix $G=B^{\mathsf T}B$ relates the two by $Gc=B^{\mathsf T}v$. It stores the geometry needed to convert measurements into coefficients. For our movement, $c=(1,2)$, $Gc=(3,5)$ and $c^{\mathsf T}Gc=13$. Thus the same numbers have different meanings depending on the operation that produced them.
+
+This development uses the reciprocal-vector treatment in *Mathematical Methods for Physics and Engineering*, physical PDF page 264, together with the inner-product discussion on pages 250–251. The numerical example and teaching sequence above are original reconstructions.
+
 ### G1 - One movement, two descriptions
 
 ```mermaid
@@ -417,6 +435,30 @@ A norm measures vector size and obeys nonnegativity, vanishing only at zero, sca
 
 [[#A ruler needs more than coordinate components|Full explanation and worked examples in this book]]
 
+### The same vector rules can describe a triangle's boundary
+
+The word “vector” describes algebraic operations, not a requirement to draw a spatial arrow. A list of mesh-vertex temperatures is a vector: add temperatures componentwise and multiply the list by a scalar. A polynomial is another example: add its coefficients and scale them. The basis names tell us what each coefficient measures.
+
+For a small mesh, choose three vertices $v_0,v_1,v_2$ and directed edges $e_{01},e_{12},e_{20}$. A **chain** is a formal weighted combination of mesh elements. A 1-chain weights edges, while a 0-chain weights vertices. “Formal” means that we initially manipulate the coefficients and named elements; adding two edges does not require geometrically joining them into a new straight edge.
+
+Define the boundary of an edge by its endpoint difference:
+
+$$
+\partial e_{01}=v_1-v_0,\quad
+\partial e_{12}=v_2-v_1,\quad
+\partial e_{20}=v_0-v_2.
+$$
+
+Extend the operation linearly to combinations of edges. The oriented triangle boundary is $e_{01}+e_{12}+e_{20}$. Taking its boundary again gives zero because every vertex appears once with each sign. A **cycle** is a chain with zero boundary. A **boundary** is a chain obtained as the boundary of a higher-dimensional chain. Every boundary is a cycle, but a cycle need not be a boundary in the available mesh.
+
+The distinction is tangible. Three edges without a filled face have a loop that does not bound an available face. Add the face and that same loop becomes its boundary. **Homology** identifies cycles that differ by available boundaries. Its dimensions, called **Betti numbers** when computed over a field, count independent surviving classes: connected components in dimension zero, loops in dimension one, enclosed shells in dimension two. “Independent” means one class cannot be built as a linear combination of the others. These counts do not completely classify every geometric or topological shape.
+
+We can even change the coefficient system. Over the two-element field $\mathbb F_2$, coefficients are zero or one, with $1+1=0$. A mesh element present twice cancels. Signs disappear because $-1=1$. Over the real numbers we retain signed coefficients and orientation. The geometric mesh can stay the same while the algebraic question changes. Never apply real-valued elimination and a numerical rank tolerance to a modulo-two matrix and assume it computes the same homology.
+
+The boundary map becomes an ordinary matrix once the elements are ordered. Rows represent output elements; columns describe each input element's boundary. The identity $\partial\partial=0$ becomes a matrix product equal to zero. This is a useful early example of what linear algebra will do: encode a meaningful operation by its action on a basis. It also supplies an exact implementation invariant, independent of how attractive the mesh looks.
+
+The chain/cycle/boundary treatment follows the selected physical PDF pages 105–107 of Edelsbrunner and Harer's *Computational Topology*. The signed real-coefficient triangle and the comparison with $\mathbb F_2$ are explicit teaching reconstructions; the cited book develops the modulo-two setup in detail.
+
 ## A ruler needs more than coordinate components
 
 The robot must measure how far the sensor travels. In perpendicular unit axes, the [[#A ruler needs more than coordinate components|Euclidean length]] of $\mathbf v=(x,y,z)$ is
@@ -482,6 +524,50 @@ $$
 $$
 
 avoids a square root. It remains necessary to consider overflow and underflow in the squared quantities. Never compare a squared distance in square metres with an ordinary radius in metres.
+
+### Choose what a length is meant to measure
+
+A **norm** assigns a nonnegative size to a vector. It is zero only at the zero vector, scales by the absolute value of a scalar, and obeys the triangle inequality. A **distance** can then be defined by the norm of a difference: $d(x,y)=\|x-y\|$. Not every useful distance comes from a norm, and not every norm comes from an inner product. Those are progressively stronger structures.
+
+For a displacement $(3,2)$, Euclidean length is $\sqrt{13}$, taxicab length is $|3|+|2|=5$, and maximum-component length is $\max(3,2)=3$. Taxicab length describes axis-aligned travel cost; maximum-component length describes the largest coordinate deviation. Their different answers do not contradict one another. They measure different questions. A **unit ball** is the set of vectors with norm at most one: a circle for Euclidean length, a diamond for the taxicab norm, and a square for the maximum norm in two dimensions.
+
+An inner product supplies more structure: angles, perpendicularity and the usual orthogonal projection. A norm induced by an inner product satisfies the parallelogram identity
+
+$$
+\|u+v\|^2+\|u-v\|^2=2\|u\|^2+2\|v\|^2.
+$$
+
+For $u=(1,0)$ and $v=(0,1)$, the taxicab norm gives $8$ on the left and $4$ on the right. Therefore its geometry cannot be explained by quietly reusing the Euclidean dot product and angle formulas. The word “length” alone does not justify a particular projection algorithm.
+
+A **metric matrix** $G$ can encode a chosen inner product in coordinates:
+
+$$
+\langle u,v\rangle_G=u^{\mathsf T}Gv,\qquad
+\|u\|_G=\sqrt{u^{\mathsf T}Gu}.
+$$
+
+Require $G$ to be symmetric positive definite: $G^{\mathsf T}=G$, and $u^{\mathsf T}Gu>0$ whenever $u\ne0$. The first condition makes the two argument orders agree; the second prevents a nonzero movement from receiving zero or negative squared length. A positive semidefinite matrix allows zero-size nonzero directions and therefore defines only a seminorm unless the space is restricted appropriately. A **seminorm** obeys the norm rules except that zero size need not identify the zero vector.
+
+If $G=\operatorname{diag}(1,4)$, a unit vertical displacement costs twice as much as a unit horizontal displacement. The unit ball is the ellipse $x^2+4y^2\le1$. This could encode an anisotropic movement penalty: “anisotropic” means direction-dependent. It is a modeling decision. By contrast, $G=B^{\mathsf T}B$ for a slanted basis describes the same old Euclidean ruler in new coordinates. Changing the ruler and changing coordinates are distinct operations even though both involve a matrix called $G$.
+
+If coordinates change by $u=Bc$, the metric becomes $G_c=B^{\mathsf T}G_uB$. Check this by substitution into $u^{\mathsf T}G_uu$. The measured size stays the same. Units matter too: combining metres and radians in one coordinate vector requires a stated scaling or physical model. Adding their raw squares does not create a universal physical length.
+
+### Bound a measurement using a dual norm
+
+Suppose an error vector $e$ lies in a unit ball and a sensor reports the scalar $a^{\mathsf T}e$. How large can that reading become? The [[Concepts/Norms, dual norms and error budgets|dual norm]] answers precisely that question:
+
+$$
+\|a\|_* = \max_{\|e\|\le1} a^{\mathsf T}e,
+\qquad |a^{\mathsf T}e|\le\|a\|_*\|e\|.
+$$
+
+The absolute-value bound follows because a norm ball is symmetric: if it contains $e$, it contains $-e$. A measurement is therefore bounded by its sensitivity norm times the allowed error size. For a Euclidean ball, Cauchy–Schwarz gives $\|a\|_* =\|a\|_2$. For a box $\|e\|_\infty\le1$, each component can align independently with its coefficient, so $\|a\|_* =\sum_i|a_i|=\|a\|_1$. For a taxicab ball, concentrating its budget in the largest coefficient gives the maximum-component dual norm.
+
+For $a=(2,-3)$ and componentwise errors bounded by $0.1$, the worst magnitude is $0.1(2+3)=0.5$. Under a Euclidean radius-$0.1$ error model it is $0.1\sqrt{13}\approx0.360555$. State the error model before promising a tolerance.
+
+For the positive-definite metric above, the dual measurement norm is $\sqrt{a^{\mathsf T}G^{-1}a}$. A practical implementation solves $Gz=a$ and evaluates $a^{\mathsf T}z$. This same expression will later control confidence widths and steepest descent. We have already established its meaning here: the largest possible scalar response over the allowed displacement ball.
+
+The dual-norm and convex-geometry foundations are developed in Boyd and Vandenberghe, physical PDF pages 66–67 and Chapter 8. These error examples are original applications, not extracted performance guarantees.
 
 ## Reading the C++ laboratories
 
@@ -727,6 +813,63 @@ A radian measures angle as arc length divided by radius. One full circle is $2\p
 
 [[#Rotation first becomes understandable in a plane|Full explanation and worked examples in this book]]
 
+### A rail, a wall, and a feasible region use the same nearest-point question
+
+The rail projection minimizes distance to a line. We can ask the same question for a **feasible set** $C$, the collection of states that satisfy the current constraints:
+
+$$
+P_C(x)=\underset{y\in C}{\operatorname{argmin}}\;\frac12\|x-y\|_2^2.
+$$
+
+The notation $\operatorname{argmin}$ requests a minimizing point, whereas $\min$ requests the smallest objective value. For a nonempty closed convex set in finite-dimensional Euclidean space, this point exists and is unique. “Closed” includes the set's limit points. “Convex” means that the straight segment joining any two feasible points remains feasible.
+
+Here is why uniqueness needs an argument. If two different points $p,q$ were equally nearest, convexity would make their midpoint feasible, while
+
+$$
+\left\|x-\frac{p+q}{2}\right\|^2
+=\frac{\|x-p\|^2+\|x-q\|^2}{2}-\frac{\|p-q\|^2}{4}
+$$
+
+would make it strictly nearer. A nonconvex set can have several equally nearest points: the center of a circle has every point on the circumference as a Euclidean nearest point. The circumference and the filled disk have different projection behavior.
+
+At a nearest point $p$, every feasible direction toward another point $y$ must initially fail to reduce distance. Differentiate along $p+t(y-p)$ at $t=0$ to obtain
+
+$$
+(x-p)^{\mathsf T}(y-p)\le0\qquad\text{for all }y\in C.
+$$
+
+For a whole line or plane, feasible directions occur with both signs, so this becomes perpendicularity. At a corner or boundary, only an inequality remains. This explains why the old rail derivation is one case of a broader rule.
+
+A **halfspace** is one side of a plane, $C=\{y:a^{\mathsf T}y\le b\}$, with nonzero normal $a$. If $x$ is already inside, leave it alone. Otherwise
+
+$$
+P_C(x)=x-\frac{a^{\mathsf T}x-b}{a^{\mathsf T}a}a.
+$$
+
+For $a=(1,1)$, $b=1$ and $x=(2,2)$, the projection is $(1/2,1/2)$. The residual $(3/2,3/2)$ points outward. For every feasible $y$, its dot product with $y-p$ is nonpositive, exactly as the optimality condition requires.
+
+An axis-aligned box permits independent coordinate clamping under Euclidean distance. A slanted intersection of constraints generally does not. Repeatedly projecting onto each halfspace is an iterative algorithm, and one pass need not produce the nearest point in the intersection. An **active constraint** is one satisfied at equality at the solution; it helps identify which boundary currently matters.
+
+If our error ruler is $G$, the nearest point on the plane $a^{\mathsf T}y=b$ is instead
+
+$$
+p=x-\frac{a^{\mathsf T}x-b}{a^{\mathsf T}G^{-1}a}\,G^{-1}a.
+$$
+
+This follows by requiring the objective's change to vanish along every feasible tangent direction. The correction follows $G^{-1}a$, not generally the Euclidean normal $a$. With $G=\operatorname{diag}(1,4)$ and the same point and plane, $G^{-1}a=(1,1/4)$, the multiplier is $3/(5/4)=12/5$, and $p=(-2/5,7/5)$. It lies on the plane. Vertical error is expensive, so the solution changes the horizontal coordinate more strongly. Its squared $G$-distance is $36/5$, compared with $45/4$ for the Euclidean projection. The “closest” answer changes when the chosen cost changes.
+
+Finally, the Euclidean residual $x-p$ provides a separating measurement when $x$ lies outside a closed convex set. Every point of the set is on one side of the supporting plane through $p$; a parallel plane midway between $x$ and $p$ strictly separates the point from the set. This connects projection to collision separation and constrained optimization without introducing a different mysterious mechanism.
+
+This section develops the projection and separation treatment in *Convex Optimization*, physical PDF pages 411–414, using original rail/wall and weighted-distance examples.
+
+### A line fit is projection in observation space
+
+Three measurements at times $t=(0,1,2)$ have values $y=(1,1,3)$. Fit the model $\widehat y_i=c+mt_i$. Its possible predicted data vectors form the span of $(1,1,1)$ and $(0,1,2)$ in three-dimensional observation space. The closest prediction is therefore a projection onto that span, even though the fitted curve is a line in the original time-value plot.
+
+Requiring residual $r=y-\widehat y$ to be perpendicular to both generating vectors gives $\sum_i r_i=0$ and $\sum_i t_ir_i=0$. Substitute the model to obtain $3c+3m=5$ and $3c+5m=7$. Subtraction gives $m=1$, then $c=2/3$. The prediction is $(2/3,5/3,8/3)$ and residual is $(1/3,-2/3,1/3)$. Its ordinary sum and time-weighted sum are both zero. These are direct witnesses of least-squares optimality, not a promise that the linear model is scientifically correct.
+
+MIT's projection lesson emphasizes this connection between regression and linear projection. The numerical dataset here is an original example. The later matrix and QR chapters develop stable algorithms and rank-deficient cases. [MIT OCW: Projection Matrices and Least Squares](https://www.ocw.mit.edu/courses/18-06sc-linear-algebra-fall-2011/pages/least-squares-determinants-and-eigenvalues/projection-matrices-and-least-squares/)
+
 ## Rotation first becomes understandable in a plane
 
 Before constructing the panel's three-dimensional frame, rotate its sensor sweep within a plane. [[#Rotation first becomes understandable in a plane|Complex numbers]] provide a compact explanation.
@@ -934,6 +1077,18 @@ is precisely tangent-plane rejection. A nested cross has now become a previously
 
 A derivative is the best linear prediction of how a function changes near an input. For $f(x)=x^2$, $f(x+h)-f(x)=2xh+h^2$, so near $x=3$ the leading change is $6h$ and $f'(3)=6$. The derivative is local: the omitted $h^2$ term matters for larger steps. Derivative units are output units divided by input units. At corners or discontinuities an ordinary derivative may not exist, so algorithms that rely on smoothness must state that assumption.
 [[#Functions, limits, continuity, and scalar change|Full explanation and worked examples in this book]]
+
+### A volume also constructs reciprocal measuring directions
+
+In three dimensions, independent basis vectors $b_1,b_2,b_3$ have reciprocal directions
+
+$$
+b^1=\frac{b_2\times b_3}{b_1\cdot(b_2\times b_3)},\quad
+b^2=\frac{b_3\times b_1}{b_1\cdot(b_2\times b_3)},\quad
+b^3=\frac{b_1\times b_2}{b_1\cdot(b_2\times b_3)}.
+$$
+
+The denominator is signed volume. A cross product measures oriented area; a scalar triple product measures oriented volume. These formulas explain the geometry, but a nearly collapsed volume makes reciprocal measurements sensitive to error. They are not a recommendation to use cross-product inversion for every floating-point basis solve. The cross product and signed volume just derived supply every operation in this construction.
 
 ## An angle is a question with a domain
 
@@ -1190,6 +1345,30 @@ If the inputs have unequal magnitudes, their sum is biased toward the larger one
 For a differentiable scalar function, the gradient is the vector of partial derivatives. Under the ordinary Euclidean metric it points in the direction of steepest increase. For $f(x,y)=x^2+3y$, $\nabla f=(2x,3)$, so at $(1,2)$ it is $(2,3)$. A small displacement $\delta$ changes the function approximately by $\nabla f\cdot\delta$. In a non-orthonormal metric, the gradient vector depends on that metric even though the differential is a covector. Gradient descent moves opposite the gradient, with step size controlling progress and stability.
 
 [[#Multivariable derivatives and sensitivity|Full explanation and worked examples in this book]]
+
+### A derivative measures change; a gradient needs a ruler
+
+At a fixed point, the differential $df$ is a linear measurement of a small displacement $h$. If the coordinate derivatives form the column $g$, then $df[h]=g^{\mathsf T}h$. The notation does not require that $g$ itself already be the physically correct steepest-direction arrow. It is first a list of coefficients of a covector.
+
+With inner product $\langle u,h\rangle_G=u^{\mathsf T}Gh$, the [[Concepts/Metric gradients and differential measurements|gradient]] is the vector satisfying $df[h]=\langle\operatorname{grad}_G f,h\rangle_G$ for every displacement. Therefore
+
+$$
+\operatorname{grad}_G f=G^{-1}g.
+$$
+
+In ordinary orthonormal Euclidean coordinates $G=I$, so the distinction is invisible: the coordinate derivative column and gradient arrow have the same numbers. In slanted coordinates or a deliberately weighted error geometry, the distinction changes the answer.
+
+Take $f(x,y)=x+y$ and $G=\operatorname{diag}(1,4)$. Then $g=(1,1)$ but $\operatorname{grad}_Gf=(1,1/4)$. Among directions with $h^{\mathsf T}Gh\le1$, the largest first-order increase is
+
+$$
+\max g^{\mathsf T}h=\sqrt{g^{\mathsf T}G^{-1}g}=\frac{\sqrt5}{2},
+$$
+
+attained by $h=(1,1/4)/(\sqrt5/2)$. This is the dual-norm bound applied to a derivative. Moving a Euclidean unit distance along $(1,1)$ answers a different optimization question.
+
+If $u=Bc$ is a coordinate change, the derivative coefficients transform as $g_c=B^{\mathsf T}g_u$, while the metric transforms as $G_c=B^{\mathsf T}G_uB$. Combining them gives the correct coordinate transformation of the gradient vector. This explains why normals, derivatives and directions can use related but different matrix formulas. Establish the role of the quantity before choosing the multiplication.
+
+For teaching, trace one small move. In the slanted basis $B=[(1,0),(1,1)]$, let the world function be $f(u_x,u_y)=u_y$. Then $f(Bc)=c_2$, so $g_c=(0,1)$ and $G_c=\begin{pmatrix}1&1\\1&2\end{pmatrix}$. Solving $G_cz=g_c$ gives $z=(-1,1)$. Reconstruct $Bz=(0,1)$: the world gradient points vertically, as expected. Treating $(0,1)$ as slanted-basis vector coefficients would instead produce $(1,1)$ and the wrong direction.
 
 ## The sensor needs coordinates inside the triangle
 
@@ -2700,7 +2879,6 @@ Suppose $q$ maps an object's local directions into world space. A delta expresse
 The inverse of $-q$ is $-q^{-1}$, so $(-q)p(-q)^{-1}=qpq^{-1}$. Thus $q$ and $-q$ are different algebraic values with the same three-dimensional rotation action. Unit quaternion coefficients lie on $S^3$, the unit sphere in four-dimensional coefficient space; opposite points correspond to the same physical orientation. This is the **double cover**.
 
 A $360^\circ$ axis-angle turn gives $(-1,0,0,0)$ and therefore identity action, while $720^\circ$ returns the coefficients to $(1,0,0,0)$. A chosen continuous quaternion trajectory can record the path between those representatives, but a final orientation does not record an object's accumulated number of turns. Keep turn count separately if the application needs it.
-
 Component equality and orientation equality therefore answer different questions. For normalized $a,b$, the shortest relative angle is
 
 $$
@@ -2807,6 +2985,52 @@ flowchart LR
 Floating-point composition perturbs the unit constraint. Explicit Euler integration also leaves the unit sphere even in exact arithmetic because it follows a tangent-line approximation to curved motion. A renormalization policy can normalize after each update or when the measured squared-norm error exceeds a justified threshold. Use finite/range-safe normalization; a NaN can evade an ordinary `if (n2 <= 0)` test, and squaring extreme finite coefficients can overflow.
 
 Normalization restores unit length. Canonicalization chooses a sign representative, for example $w\ge0$. It does not restore length and can introduce a discontinuity at $w=0$. For sampled animation continuity, a common approach aligns each quaternion's sign with the previous stored sample. For a single serialized orientation, a deterministic canonical sign may be useful. Different tasks call for different choices.
+
+### Angle rates are not three components of angular velocity
+
+The panel's orientation is a state. Angular velocity describes its instantaneous rotation. Three numbers used to label the state do not automatically have derivatives equal to angular-velocity components. This distinction connects the earlier basis lesson to a common simulation failure.
+
+The set $SO(3)$ consists of real matrices satisfying $R^{\mathsf T}R=I$ and $\det R=1$: length-preserving, orientation-preserving three-dimensional rotations. It is not a vector space under ordinary matrix addition. Adding two valid rotations does not generally yield another valid rotation. A **configuration** is the current state, and a **local coordinate chart** assigns numerical parameters to a neighborhood of configurations. Euler angles provide one such local description, with singularities analogous to the loss of a longitude direction at a geographical pole.
+
+Declare a convention before deriving anything. Here use column vectors, active right-handed rotations, and
+
+$$
+R=R_z(\psi)R_y(\theta)R_x(\phi),
+$$
+
+where $\psi$ is yaw, $\theta$ pitch and $\phi$ roll. The rightmost rotation acts first. Contributions to world angular velocity are rotations about the actual instantaneous axes:
+
+$$
+\omega=
+\dot\phi\,R_z(\psi)R_y(\theta)e_x
++\dot\theta\,R_z(\psi)e_y
++\dot\psi\,e_z.
+$$
+
+Roll's axis has already been moved by pitch and yaw; pitch's axis has been moved by yaw. Define $q=(\phi,\theta,\psi)$ and collect these axes as columns of $E(q)$. Then $\omega=E(q)\dot q$. This is a change from parameter rates to physical instantaneous rotation, not a fixed orthogonal basis transform.
+
+At zero yaw and pitch, the axes are $e_x,e_y,e_z$, so their rate coefficients do equal world angular-velocity components. At $\theta=\pi/2$, the first column becomes $-e_z$ and the last remains $e_z$. The columns are dependent. Equal nonzero roll and yaw rates can cancel to give zero angular velocity. The rigid body still has three rotational degrees of freedom; the chosen angle coordinates have become singular.
+
+More generally, these columns give
+
+$$
+\|\omega\|^2=
+\dot\phi^2+\dot\theta^2+\dot\psi^2
+-2\sin\theta\,\dot\phi\dot\psi.
+$$
+
+Simply summing the squared angle rates drops the cross term. Near the singularity, recovering angle rates from a small physical rotation can require very large cancelling coefficients, exactly like recovering coordinates in a nearly dependent slanted basis.
+
+Rotational kinetic energy supplies another useful ruler. With symmetric physical inertia $I_w$ expressed in world coordinates,
+
+$$
+T=\frac12\omega^{\mathsf T}I_w\omega
+=\frac12\dot q^{\mathsf T}E^{\mathsf T}I_wE\dot q.
+$$
+
+The matrix $E^{\mathsf T}I_wE$ measures kinetic cost in angle-rate coordinates. It can lose rank at a chart singularity even when the physical body's inertia is positive definite. That is a coordinate failure, not disappearance of physical inertia. Re-expressing orientation with a quaternion or rotation matrix avoids this particular chart problem, while introducing its own representation constraints and integration requirements.
+
+Arnold's *Mathematical Methods of Classical Mechanics*, physical pages 165–166, printed pages 148–149, motivates this distinction using a symmetric top and a proper-Euler construction with stationary and body axes. Those scanned pages were rendered and visually read. The yaw-pitch-roll sequence above is explicitly a different convention, derived here so its axes, cross term and singularity can be checked independently.
 
 ## Euler coordinates remain useful when their chart is explicit
 
@@ -2957,7 +3181,6 @@ With nonuniform scale, the linear product becomes $R_AS_AR_BS_B$. The middle fac
 The same structural problem affects inverse storage: $(RS)^{-1}=S^{-1}R^T$, while storing inverse fields in the original order would yield $R^TS^{-1}$. Uniform scale commutes with rotation; arbitrary nonuniform scale does not. Some particular rotations and scale patterns also commute, but they are conditions to verify, not a default assumption.
 
 The failure is a property of the restricted representation, rather than an inability to invert the underlying map. A general invertible affine matrix remains closed under inversion. A TRS object can consequently provide `inverseTransformPoint` by reversing its operations, or provide an inverse affine matrix, while correctly declining to promise another exact TRS object. Returning a transform with guessed reciprocal scales and inverse orientation silently changes the operation. The return type and name should express whether the result is exact, approximate, or potentially unavailable.
-
 Store editable local transforms as TRS when useful, and compute general world affine matrices by hierarchy multiplication:
 
 $$
@@ -3014,10 +3237,8 @@ A system of equations describes measurements that must hold together. Rank expla
 ### Immediate footing — principal component analysis
 
 Principal component analysis (PCA) finds directions along which centered measurements vary most. Subtract the mean from each observation, form its covariance matrix, and choose orthonormal eigenvectors in decreasing eigenvalue order. For covariance $\operatorname{diag}(9,1)$, the first coordinate direction has variance $9$ and the second has variance $1$. Keeping only the first direction is a lossy one-dimensional description. The result depends on centering, units and scaling. Variance explains a dataset; a large principal component does not by itself establish a causal mechanism.
-
 [[#PCA turns a cloud of points into measured variation|Full explanation and worked examples in this book]]
 
-<!-- begin V08.01 -->
 ## The graphics problem hiding inside a matrix equation
 
 Imagine a graphics engine fitting a flat surface to noisy depth samples, solving for a camera correction, estimating the dominant direction in a point cloud, or integrating a small deformation over time. Every one of these tasks asks a related question: what does a collection of linear measurements allow us to know, and how can we compute that answer without inventing information the data did not contain?
@@ -3027,10 +3248,6 @@ We will follow one chain. A row of a matrix is a measurement or constraint. A sy
 This phase builds directly on the earlier geometry and transform stories. [[#The panel gives us a reason to learn|Phase 6]] supplies vectors, dot products, Gram matrices, projections, and the meaning of orthogonality. [[#Keep the promises visible while moving between representations|Phase 7]] supplies matrix maps, basis images, determinants, composition, and storage/layout contracts. Phase 8 asks what can be recovered when those maps are observed through measurements, and what numerical risk remains when a direction is almost lost.
 
 The connecting question is always the same: **what information enters, what information can the map preserve, and what evidence tells us the computed answer is trustworthy?** This chapter combines the supplied Phase 8 lessons into a concept-led teaching sequence. The exact canonical titles remain in [[Supplementary/Foundations#Phase 8 - Parts 701-800|the coverage ledger]], while this chapter teaches them as one story.
-
-
-<!-- end V08.01 -->
-
 
 ## Constraints, rank, and what data can determine
 
@@ -6219,6 +6436,76 @@ The concept is fundamental in fluid mechanics, particle transport, heat transfer
 <!-- end V09.02 -->
 
 <!-- begin V09.03 -->
+### A triangle turns a differential into a concrete field calculation
+
+Suppose a scalar value is stored at every vertex of the panel mesh: temperature, displacement error, or a texture coordinate. A **scalar field** assigns one number to each location; a **vector field** assigns a vector. Inside one nondegenerate triangle, linearly interpolate the three scalar values with barycentric basis functions $\lambda_i$:
+
+$$
+f(x)=\sum_{i=0}^2 f_i\lambda_i(x),\qquad
+\sum_i\lambda_i(x)=1.
+$$
+
+Each basis function is one at its own vertex and zero at the others. Its gradient is constant on a flat triangle and perpendicular to the opposite edge. This gives an actual local derivative instead of treating a mesh as an arbitrary collection of unrelated numbers.
+
+For $A=(0,0)$, $B=(2,0)$, $C=(0,1)$, the basis functions are $\lambda_A=1-x/2-y$, $\lambda_B=x/2$ and $\lambda_C=y$. If values are $(0,2,3)$, the interpolated field is $f(x,y)=x+3y$ and its gradient is $(1,3)$. Adding the same constant to all three values changes $f$ but leaves its gradient unchanged because $\sum_i\nabla\lambda_i=0$.
+
+For a three-dimensional triangle, this gradient lies in its tangent plane. Only tangential changes are determined by the surface samples. A normal-direction derivative cannot be recovered from one surface field without an extension model. This is a geometric limitation, not a missing line of code.
+
+Define the **Dirichlet energy** as the integrated squared change,
+
+$$
+E(f)=\frac12\int_{\text{mesh}}\|\nabla f\|^2\,dA.
+$$
+
+The integral sums local change over surface area. On our triangle, area is one and $\|\nabla f\|^2=10$, so the energy is five. The factor $1/2$ is a declared convention that makes the derivative of a quadratic expression cleaner.
+
+The same energy can be assembled into a **stiffness matrix** $S$:
+
+$$
+E(f)=\frac12 f^{\mathsf T}Sf,\qquad
+S_{ij}=\int\nabla\lambda_i\cdot\nabla\lambda_j\,dA.
+$$
+
+Here $f$ now denotes the vector of vertex coefficients. The continuous field and its coefficient vector are related but different representations. Each triangle contributes a small matrix; adding contributions at shared vertices assembles the global operator.
+
+For an edge $ij$, the usual cotangent weight is $w_{ij}=(\cot\alpha+\cot\beta)/2$, where the angles lie opposite that edge in its incident triangles. At a boundary only one triangle contributes. Set $S_{ij}=-w_{ij}$ off the diagonal and $S_{ii}=\sum_jw_{ij}$. For our single triangle, the edge weights on $AB$, $AC$, $BC$ are $1/4$, $1$, $0$. Therefore
+
+$$
+S=\begin{pmatrix}5/4&-1/4&-1\\-1/4&1/4&0\\-1&0&1\end{pmatrix},
+\qquad \frac12(0,2,3)S(0,2,3)^{\mathsf T}=5.
+$$
+
+This agrees with the direct gradient integral. It is a useful check on signs and factors of two. The matrix is symmetric positive semidefinite, and constants lie in its null space when the assembled boundary treatment permits them. A negative individual cotangent weight can occur on obtuse configurations; it does not alone prove that the assembled finite-element energy is negative. It does, however, matter to positivity and maximum-principle properties of algorithms that interpret the weights as local averaging weights.
+
+### Storage coefficients are not yet a continuous inner product
+
+A second matrix, the **mass matrix** $M$, represents the field inner product. For piecewise-linear basis functions, $M_{ij}=\int\lambda_i\lambda_j\,dA$. A common diagonal approximation, called **lumped mass**, allocates one third of each triangle's area to each incident vertex. On our unit-area triangle, $M=\operatorname{diag}(1/3,1/3,1/3)$ under that approximation. State which mass convention is used; different conventions change the discrete operator.
+
+With the nonnegative stiffness convention above, a discrete Laplace operator approximating $\Delta$ is $-M^{-1}S$. Heat diffusion with coefficient $\kappa>0$ becomes
+
+$$
+M\dot f=-\kappa Sf.
+$$
+
+The sign makes energy decay. In fact,
+
+$$
+\frac{d}{dt}\frac12 f^{\mathsf T}Mf
+=-\kappa f^{\mathsf T}Sf\le0
+$$
+
+when the matrices are fixed and the boundary treatment supplies no external input. A reversed sign produces growth instead of smoothing. Multiplying by $M^{-1}$ also shows why $M^{-1}S$ need not be symmetric under an ordinary coefficient dot product even though it is self-adjoint under $\langle u,v\rangle_M=u^{\mathsf T}Mv$. “Self-adjoint” means that moving the operator from one inner-product argument to the other leaves the measurement unchanged. This is the earlier metric lesson applied to fields.
+
+Boundary conditions remain part of the problem: fixing boundary values, prescribing flux, and leaving a boundary natural are different models. A cotangent formula alone does not choose among them. The corresponding graphics chapter develops mesh processing; the mathematics needed to interpret its coefficients and energy is now present here.
+
+### Positive energy and staying within a range are different guarantees
+
+A harmonic interior value solves $\sum_jw_{ij}(f_i-f_j)=0$. If the weights are nonnegative and their sum is positive, rearrange it as $f_i=\sum_j[w_{ij}/\sum_kw_{ik}]f_j$. The coefficients are then nonnegative and sum to one, so the value lies between its neighbors' minimum and maximum. This local averaging property helps establish a discrete maximum principle: with suitable connectedness and fixed boundary data, an interior solution cannot create a new extreme. A positive-semidefinite energy matrix alone does not prove that property when individual weights can be negative.
+
+This distinction motivates research beyond a textbook cotangent formula. Sharp and Crane's *A Laplacian for Nonmanifold Triangle Meshes* constructs an operator with nonnegative weights, including at boundaries, using a tufted cover and intrinsic Delaunay triangulation. A cover makes local sheets available for the construction; intrinsic triangulation uses the surface's metric rather than requiring every edge to be a straight segment in ambient space. The authors report improved behavior for several geometry-processing tasks. That is a specific operator and evidence set, not a universal guarantee for every mesh solver. [Authors' project and paper](https://www.cs.cmu.edu/~kmcrane/Projects/NonmanifoldLaplace/index.html)
+
+The gradient and cotangent derivation was directly checked against *Polygon Mesh Processing*, physical PDF pages 54–58, printed pages 42–46. Its text contains embedded form-feed glyphs, so cached form-feed segments are not reliable physical page numbers; these citations were verified against the original PDF page objects.
+
 ## Jacobians, curvature, and local approximation
 ### The Jacobian: the matrix of local change
 
@@ -12293,6 +12580,62 @@ Bayesian updates are not merely formulas for classifiers. They provide a princip
 <!-- end V10.02 -->
 
 <!-- begin V10.03 -->
+### Measure uncertainty along an actual direction
+
+Return to the panel's measured corner. A random vector $X$ represents repeated possible measurements, rather than one deterministic arrow. Its mean $\mu=\mathbb E[X]$ is computed componentwise. Its covariance is
+
+$$
+\Sigma=\mathbb E[(X-\mu)(X-\mu)^{\mathsf T}].
+$$
+
+The diagonal records coordinate variances; an off-diagonal entry records how two centered components change together. The expectation assumes the required second moments exist. A distribution with sufficiently heavy tails need not have a finite covariance. Writing a matrix symbol does not establish that the underlying quantities are defined.
+
+A covector $a$ asks one scalar question about the uncertain measurement: $Y=a^{\mathsf T}X$. By distributing the products,
+
+$$
+\mathbb E[Y]=a^{\mathsf T}\mu,\qquad
+\operatorname{Var}(Y)=a^{\mathsf T}\Sigma a.
+$$
+
+Thus covariance defines a directional uncertainty ruler. It is positive semidefinite because every scalar variance is nonnegative. It can be singular when some linear combination has no variation. Positive semidefinite does not mean that every listed coordinate has positive uncertainty or that an inverse exists.
+
+For
+
+$$
+\Sigma=\begin{pmatrix}4&3\\3&4\end{pmatrix},
+\quad a_+=\frac{(1,1)}{\sqrt2},\quad
+a_-=\frac{(1,-1)}{\sqrt2},
+$$
+
+the directional variances are $7$ and $1$. Both coordinate variances were $4$, yet the diagonal directions have very different uncertainty. A diagonal-only approximation would report $4$ for both and discard the correlation that matters to the panel fit.
+
+**Uncorrelated is not independent.** Let $X$ be uniform on $[-1,1]$ and let $Y=X^2$. Symmetry gives $\mathbb E[X]=\mathbb E[X^3]=0$, so $\operatorname{Cov}(X,Y)=0$. But $Y$ is determined by $X$ and the variables are not independent. Covariance captures linear dependence, not every possible relationship. In a jointly Gaussian model, zero cross-covariance does imply independence; that stronger conclusion belongs to the model assumption.
+
+Under a deterministic linear transformation $Z=AX+b$, covariance transforms as $A\Sigma A^{\mathsf T}$. The translation disappears after subtracting the mean. Under a nonlinear transformation $Z=f(X)$, a local approximation uses $J\Sigma J^{\mathsf T}$, where $J$ is the derivative matrix at the chosen expansion point. It can fail for large uncertainty or strong curvature. For a simple warning, $Y=X^2$ expanded around mean-zero $X$ has derivative zero, so first-order propagation predicts zero variance even though $X^2$ varies. Higher-order terms or direct integration are needed.
+
+### Whiten residuals without pretending every ellipse has the same probability
+
+A **residual** is a prediction error, such as measured minus predicted image coordinates. If its covariance $\Sigma$ is positive definite, factor it as $\Sigma=LL^{\mathsf T}$ with invertible lower-triangular $L$. Solve $Lz=r$ to obtain a **whitened residual** $z$. Whitening makes a random residual with that covariance have identity covariance. It does not make a non-Gaussian distribution Gaussian.
+
+The squared Mahalanobis distance is
+
+$$
+d_M^2=r^{\mathsf T}\Sigma^{-1}r=z^{\mathsf T}z.
+$$
+
+This is a dimensionless error score when the covariance carries the correct units. For the covariance above, a residual $r=(2,2)$ gives $d_M^2=8/7$, whereas $r=(2,-2)$ gives $8$. They have equal Euclidean size, but one points along a much less certain direction and is less surprising under this model.
+
+An ellipse $r^{\mathsf T}\Sigma^{-1}r\le1$ is a geometric level set. Its probability content depends on dimension and distribution. For a centered two-dimensional Gaussian with known covariance, the squared distance follows a chi-square distribution with two degrees of freedom, meaning the sum of squares of two independent standard normal variables; the unit ellipse contains $1-e^{-1/2}\approx39.35\%$, not the familiar one-dimensional 68% interval probability. Estimating covariance from finite data changes the inference problem again.
+
+If covariance is singular, a pseudoinverse score must be accompanied by a support check. A residual in a direction that the model declares impossible cannot be made acceptable merely because the pseudoinverse assigns that null direction zero weight. Add an explicit observation-noise model or restrict calculations to the supported subspace as appropriate.
+
+These definitions and linear transformation identities build on *All of Statistics*, physical PDF pages 63–71. The panel-direction examples, nonlinear counterexample, whitening trace and probability-content warning are original developments connecting probability to the vector geometry already taught here.
+
+
+![[Visual Recall/Integrated Mathematics/metrics-and-measurements.png]]
+
+**Figure — one vector, several measurement questions.** The unit balls compare three norms; the reciprocal basis separates reconstruction from coordinate measurements; the plane example compares Euclidean and weighted nearest points; the covariance ellipse has directional variances 7 and 1. It is a unit Mahalanobis level set, not a universally calibrated confidence region. Every plotted coordinate and metric is specified in the worked examples above.
+
 ## 2. Random quantities and their probability laws
 
 ### Random variables: turning outcomes into mathematical quantities
@@ -16916,6 +17259,288 @@ and check $\|U^\mathsf TU-I\|$ and $\|V^\mathsf TV-I\|$ with dimensions appropri
 Differential equations lead to matrix functions and simulation. Optimization uses the derivative and solver tools already developed. Numerical analysis distinguishes the mathematical problem, the approximation and the arithmetic that executes it.
 
 <!-- begin V09.05 -->
+## Heat on a rod: why boundaries, modes, and mesh operators belong together
+
+Take a straight metal rod of length $L$. Its sides are insulated, its ends are held at prescribed temperatures, and someone briefly warms one small region near the middle. The temperature field $u(x,t)$ changes smoothly: the hot spot spreads and its peak falls. We want a model that tells us how the end conditions affect that spreading, how a triangle mesh can approximate it on a curved surface, and what numerical evidence would show that our computation is behaving as intended.
+
+For a uniform rod with no internal heat source, the one-dimensional heat equation is
+
+$$
+\frac{\partial u}{\partial t}=\kappa\frac{\partial^2u}{\partial x^2},\qquad 0<x<L,
+$$
+
+where $u$ is temperature and $\kappa$ is thermal diffusivity. For a material with conductivity $k$, density $\rho$ and specific heat capacity $c$, $\kappa=k/(\rho c)$. Conductivity is measured in watts per metre per kelvin, volumetric heat capacity in joules per cubic metre per kelvin, so $\kappa$ has units $\mathrm{m^2/s}$. The second spatial derivative has units temperature per square metre; multiplying by diffusivity gives temperature per second, as required by the left side.
+
+The differential equation describes the interior. It does not specify what the ends do. Those conditions are part of the model, because they determine which temperature patterns can persist and which can appear as independent modes. A simulation without its boundary conditions is an incomplete physical problem.
+
+```mermaid
+graph LR
+  A[Rod material and heat law] --> B[Choose endpoint boundary conditions]
+  B --> C[Find spatial eigenmodes]
+  C --> D[Expand initial temperature]
+  D --> E[Each mode decays at its own rate]
+  E --> F[Compare with a discrete mesh operator]
+```
+
+### Boundary conditions choose the modes
+
+A Dirichlet condition prescribes the field value at a boundary. First hold both ends at a reference temperature and subtract that reference so the boundary values are zero: $u(0,t)=u(L,t)=0$. Seek one separable solution $u(x,t)=X(x)T(t)$. Substitution gives
+
+$$
+XT'=\kappa X''T
+\quad\Longrightarrow\quad
+\frac{1}{\kappa}\frac{T'}{T}=\frac{X''}{X}.
+$$
+
+The left side depends only on time; the right side depends only on position. For the equality to hold for every $x$ and $t$, each side must equal one constant. Choose it to be $-\lambda$ so that the spatial solutions can be oscillatory while the time solutions decay:
+
+$$
+X''+\lambda X=0,\qquad T'+\kappa\lambda T=0.
+$$
+
+The general spatial solution for $\lambda=\mu^2>0$ is $X=A\cos(\mu x)+B\sin(\mu x)$. The boundary at $x=0$ forces $A=0$; the boundary at $x=L$ then requires $\sin(\mu L)=0$. Nonzero solutions exist only when $\mu L=n\pi$ for positive integer $n$. Thus the allowed eigenvalues and eigenfunctions are
+
+$$
+\lambda_n=\left(\frac{n\pi}{L}\right)^2,
+\qquad
+X_n(x)=\sin\left(\frac{n\pi x}{L}\right),
+\qquad n=1,2,\ldots
+$$
+
+and the matching time factor is $T_n(t)=e^{-\kappa\lambda_nt}$. A boundary condition has turned a continuum of possible spatial frequencies into a discrete family. The first mode has one broad arch; higher modes have more zero crossings and shorter wavelengths. Their decay rate grows like $n^2$: fine ripples disappear much faster than broad temperature differences.
+
+The rod's initial temperature $f(x)=u(x,0)$ is expanded in this sine family:
+
+$$
+f(x)=\sum_{n=1}^{\infty}b_n\sin\left(\frac{n\pi x}{L}\right),
+\qquad
+b_n=\frac{2}{L}\int_0^L f(x)\sin\left(\frac{n\pi x}{L}\right)dx.
+$$
+
+Orthogonality makes this projection possible: the integral of the product of two different sine modes over $[0,L]$ is zero, while the squared norm of each mode is $L/2$. By linearity, the complete solution is
+
+$$
+u(x,t)=\sum_{n=1}^{\infty}b_n\sin\left(\frac{n\pi x}{L}\right)e^{-\kappa(n\pi/L)^2t}.
+$$
+
+Each term solves the same PDE and boundary conditions; adding solutions remains a solution because the equation is linear. The coefficients encode the initial pattern; the boundary-selected modes and exponential factors encode how it evolves. The series is not merely a symbolic trick: it says every resolved initial pattern is a weighted sum of independently decaying shapes.
+
+Other endpoint physics changes the spectrum. If the ends are insulated, there is no heat flux through them, so $u_x(0,t)=u_x(L,t)=0$. The spatial modes become $X_n(x)=\cos(n\pi x/L)$ for $n=0,1,2,\ldots$, including a constant mode. That zero mode does not decay: in an insulated rod the average temperature stays fixed. If one end is held at zero and the other insulated, the eigenfunctions are shifted half-wave patterns such as $\sin((n+1/2)\pi x/L)$. A Neumann condition prescribes a normal derivative or associated flux; insulation is the zero-flux case. A Robin condition mixes the value and its normal derivative. For convective heat exchange it can take the form $-k\,\partial_nu=h_c(u-u_{\mathrm{ambient}})$, with outward normal derivative $\partial_n$, conductivity $k$ and heat-transfer coefficient $h_c$. These conditions lead to different eigenvalue equations. Boundary conditions therefore define the operator and its modes together.
+
+The zero mode is not an annoying exception. It carries the conserved average under no-flux conditions. For a uniform rod, integrating the heat equation gives
+
+$$
+\frac{d}{dt}\int_0^L u(x,t)dx
+=\kappa\int_0^L u_{xx}(x,t)dx
+=\kappa\big[u_x(L,t)-u_x(0,t)\big].
+$$
+
+Insulated endpoints make the right side zero. The rod redistributes heat internally, but its total excess heat—and, for constant heat capacity and cross-section, its spatial average—does not change. Fixed-temperature ends can exchange heat with their reservoirs, so that same integral need not be conserved.
+
+### Derivatives act on modes by multiplying their frequency
+
+Why are sine waves so useful? Differentiation does not create a new spatial frequency. For a complex wave $e^{ikx}$,
+
+$$
+\frac{d}{dx}e^{ikx}=ik e^{ikx},
+\qquad
+\frac{d^2}{dx^2}e^{ikx}=-k^2 e^{ikx}.
+$$
+
+A derivative is therefore multiplication by $ik$ in the frequency representation, and the second derivative is multiplication by $-k^2$. For finite-interval Dirichlet modes, differentiating the sine once gives a cosine, then twice returns the original sine with multiplier $-(n\pi/L)^2$. That is exactly the spatial eigenvalue relation $X_n''=-\lambda_nX_n$. The heat equation consequently becomes a separate scalar decay equation for every mode: $\dot a_n=-\kappa\lambda_na_n$.
+
+This makes the “high frequencies decay faster” statement precise. If the initial temperature contains only a low mode and a high mode, after elapsed time $t$ their amplitudes are multiplied by $e^{-\kappa k^2t}$. When the high mode has four times the wavenumber, it has sixteen times the decay exponent. Smoothing is thus a low-pass operation. It removes oscillations because second derivatives penalize rapid spatial variation.
+
+A Fourier series describes periodic patterns; a sine expansion on $[0,L]$ can be understood by extending a function oddly outside the interval and then periodically. A cosine expansion corresponds to an even extension. The chosen extension matters at the endpoints. If the interior initial temperature does not agree with the fixed end values at $t=0$, the odd periodic extension has a jump. The series still represents the interior in a limiting sense, but convergence near that jump oscillates. This is one way that boundary assumptions show up as ringing rather than disappearing behind the algebra.
+
+### From a mesh Laplacian to a heat operator
+
+The earlier triangle-field calculation constructed a cotangent stiffness matrix for vertex values. We can now give it a clear evolution meaning. Let $u_i(t)$ be a temperature stored at mesh vertex $i$. Build a stiffness matrix $S$ from the surface geometry and a mass matrix $M$ from the areas represented by the vertices. For a common cotangent convention, each interior edge $(i,j)$ has weight $w_{ij}=\tfrac12(\cot\alpha_{ij}+\cot\beta_{ij})$. Set $S_{ij}=-w_{ij}$ off the diagonal and choose $S_{ii}=\sum_{j\ne i}w_{ij}$. Then $S$ is symmetric and, for a suitable mesh, positive semidefinite. A lumped mass matrix is diagonal with $M_{ii}=A_i$, a local area; a consistent finite-element mass matrix can include off-diagonal terms.
+
+With this positive stiffness convention, the discrete heat equation is
+
+$$
+M\dot{\mathbf u}=-\kappa S\mathbf u.
+$$
+
+If the previous mesh note uses $\Delta=-M^{-1}S$, this is the same statement $\dot{\mathbf u}=\kappa\Delta\mathbf u$. Signs vary across libraries, so test the constant field and a known mode before wiring a new matrix into an update. For a constant vector $\mathbf 1$, every edge difference vanishes, giving $S\mathbf 1=0$ when there is no imposed-temperature boundary. Thus an isolated closed surface or natural no-flux boundary has a zero mode, just like the insulated rod.
+
+The mass matrix is not bookkeeping overhead. It turns an integrated stiffness balance into a rate per unit area or length. On a triangulated surface, $M$ has units square metres and cotangent entries in $S$ are dimensionless; therefore $M^{-1}S$ has units inverse square metres. Multiplying by surface diffusivity $\kappa$ in square metres per second gives a rate in inverse seconds. In a one-dimensional finite-element rod, the mass entries instead have units metres and the stiffness entries have units inverse metres, so $M^{-1}S$ still has units inverse square metres. The matrix dimensions depend on the domain dimension, but the discrete operator approximating a second spatial derivative always carries inverse-length-squared units.
+
+Under a coordinate scaling by factor $s$, areas on a surface scale as $s^2$ while cotangent weights are invariant. Thus $M^{-1}S$ scales as $s^{-2}$. The diffusivity must be expressed in the same physical length units as the geometry. A mesh stored in millimetres paired with $\kappa$ in square metres per second is inconsistent until one representation is converted. Dimensional checks catch this error even when every number in the code looks plausible.
+
+The generalized eigenproblem
+
+$$
+S\boldsymbol\phi_n=\lambda_nM\boldsymbol\phi_n
+$$
+
+is the mesh counterpart of the rod's spatial mode equation. Its eigenvectors are discrete temperature patterns; its eigenvalues measure how rapidly each pattern bends across the surface. The evolution of a mode amplitude is $a_n(t)=a_n(0)e^{-\kappa\lambda_nt}$. Because $S$ is symmetric and $M$ is positive definite, these modes can be chosen orthogonal in the mass-weighted inner product $\langle u,v\rangle_M=u^TMv$. This is the finite-dimensional version of the orthogonality that made the sine-series coefficients independent.
+
+```mermaid
+graph LR
+  A[Triangle geometry and adjacency] --> B[Stiffness S]
+  C[Vertex control areas] --> D[Mass matrix M]
+  B --> E[Generalized modes S phi = lambda M phi]
+  D --> E
+  E --> F["Decay exp(-kappa lambda t)"]
+  F --> G[Implicit or explicit time step]
+```
+
+### Explicit steps have a mesh-dependent stability limit
+
+For the standard centered second difference on a uniform 1D grid with spacing $h$, an interior value has discrete Laplacian
+
+$$
+(L_hu)_j=\frac{u_{j-1}-2u_j+u_{j+1}}{h^2}.
+$$
+
+Dirichlet endpoints are held fixed; consider the unknown interior values. A discrete sine mode $u_j=\sin(k\pi j/(N+1))$, with $h=L/(N+1)$, is an eigenvector of $L_h$ with eigenvalue
+
+$$
+\mu_k=-\frac{4}{h^2}\sin^2\left(\frac{k\pi}{2(N+1)}\right).
+$$
+
+The magnitude is largest for the most rapidly alternating grid pattern and approaches $4/h^2$. Forward Euler updates $u^{n+1}=u^n+\kappa\Delta t L_hu^n$. A mode is multiplied each step by $g_k=1+\kappa\Delta t\mu_k$. For no growth in magnitude we need $|g_k|\le1$ for every mode. The most restrictive eigenvalue gives
+
+$$
+0\le\frac{\kappa\Delta t}{h^2}\le\frac12,
+\qquad\text{or}\qquad
+\Delta t\le\frac{h^2}{2\kappa}.
+$$
+
+This is a stability bound for the stated standard 1D grid and explicit forward Euler scheme. It is not a universal bound for every mesh, boundary condition, or time integrator. In an unstructured mesh, use the largest eigenvalue of the mass-normalized stiffness operator or a proven bound for the chosen discretization; the spectral scale still behaves like inverse length squared.
+
+A numerical witness makes the instability visible. Let $h=0.25\,\mathrm m$ and $\kappa=0.1\,\mathrm{m^2/s}$. The limit is $0.25^2/(2\cdot0.1)=0.3125\,\mathrm s$. If we take $\Delta t=0.375\,\mathrm s$, then $r=\kappa\Delta t/h^2=0.6$. For a unit-length rod with three interior vertices, the highest Dirichlet mode has $g=1-4(0.6)\sin^2(3\pi/8)\approx-1.048528$. Its sign flips and its magnitude grows by about $4.85\%$ per step. On an even periodic grid, the exact alternating mode instead has $g=1-4r=-1.4$, giving $40\%$ growth. Distinguish the finite-boundary eigenvalue from this limiting or periodic case. At the threshold $r=0.5$, that limiting mode has amplification $-1$: it does not grow, but it is not damped and remains a poor practical choice near the stability edge.
+
+Implicit Euler uses the new-time temperature in the Laplacian:
+
+$$
+\frac{\mathbf u^{n+1}-\mathbf u^n}{\Delta t}=-\kappa M^{-1}S\mathbf u^{n+1},
+\qquad
+(M+\kappa\Delta tS)\mathbf u^{n+1}=M\mathbf u^n.
+$$
+
+For a generalized eigenmode with $\lambda_n\ge0$, its amplification is $1/(1+\kappa\Delta t\lambda_n)$, which lies between zero and one for any positive step. This gives unconditional linear stability for diffusion with a positive semidefinite stiffness and positive mass matrix. It requires a linear solve, and a large step can still erase detail or be inaccurate even though it does not blow up. Stability and fidelity are different questions.
+
+On a 2D mesh with area mass matrix, the explicit stability limit is controlled by a largest eigenvalue of order $1/h^2$, where $h$ is a representative edge length. Refining edge length by two can therefore require roughly four times as many explicit steps for the same simulated duration. This cost is one reason implicit diffusion is attractive in geometry processing. It does not follow that every mesh flow should be implicit: intended feature behavior, accuracy, solver conditioning and cost still matter.
+
+### A Green function is an impulse response
+
+A Green function answers a concrete experiment: what field is produced by a unit point source, subject to the same boundaries as the original problem? For a linear operator $L$ with homogeneous boundary conditions, define $G(x,\xi)$ by
+
+$$
+L_xG(x,\xi)=\delta(x-\xi),
+$$
+
+where the subscript reminds us that $L$ differentiates in the observation coordinate $x$. A distributed source $f(\xi)$ is a superposition of point sources, so the solution is
+
+$$
+u(x)=\int G(x,\xi)f(\xi)\,d\xi.
+$$
+
+For time-dependent heat flow, the impulse response depends on elapsed time. With the rod's normalized Dirichlet eigenfunctions $\phi_n(x)=\sqrt{2/L}\sin(n\pi x/L)$, the heat kernel is
+
+$$
+H_D(x,\xi,t)=\sum_{n=1}^{\infty}\phi_n(x)\phi_n(\xi)e^{-\kappa(n\pi/L)^2t},\qquad t>0.
+$$
+
+A point of heat inserted at $\xi$ spreads according to $H_D$; an initial field evolves as $u(x,t)=\int_0^LH_D(x,\xi,t)u(\xi,0)d\xi$. A time-varying source $s(\xi,\tau)$ contributes through a space-time convolution, integrating $H_D(x,\xi,t-\tau)s(\xi,\tau)$ over earlier times $\tau$ and source positions $\xi$. This is the continuous analogue of repeatedly applying a linear diffusion update to source inputs.
+
+The kernel is symmetric in $x$ and $\xi$ for a self-adjoint diffusion operator with the same homogeneous boundary conditions on both arguments. In the rod case this follows term by term because each factor is $\phi_n(x)\phi_n(\xi)$. More generally, Green-function reciprocity follows from self-adjointness and the boundary terms vanishing under the chosen domain and boundary conditions. If coefficients, boundary conditions, or the operator make the problem non-self-adjoint, do not assume $G(x,\xi)=G(\xi,x)$. For a weighted Sturm–Liouville problem, symmetry may be with respect to the appropriate weighted inner product or measure rather than plain coordinate integration.
+
+There is a subtle zero-mode case. With insulated boundaries, the Laplacian has a constant eigenfunction with eigenvalue zero. The steady Poisson equation $-u_{xx}=f$ with pure Neumann conditions cannot have a solution for arbitrary nonzero-mean $f$: integrating both sides shows the source must satisfy the net-flux compatibility condition. Even when compatible, the solution is defined only up to an added constant until a mean or reference value is fixed. The transient heat kernel remains meaningful; the zero mode simply preserves the average instead of decaying. A numerical inverse that silently divides by a zero eigenvalue is not a valid Green-function construction.
+
+### Sampling, truncation, and ringing
+
+A continuous field becomes finite data only after sampling. On a regular 1D grid, the highest alternating mode is near the Nyquist frequency, roughly one half-cycle per sample spacing. Shorter wavelengths cannot be represented uniquely: they alias into lower-frequency patterns. On irregular triangle meshes there is no single global Nyquist number, but local edge length and element shape limit which oscillations are resolved. If the initial hot spot is narrower than the sampling scale, the mesh may miss its peak or encode it as a misleading pattern. Subsequent heat flow smooths the samples it received; it cannot reconstruct the lost sub-grid event.
+
+A truncated Fourier or eigenfunction sum introduces another approximation. Keeping only the first $N$ modes reconstructs the broad structure well when the field is smooth, but a sharp jump needs many modes. Near a discontinuity, partial sums can overshoot and oscillate (Gibbs behavior); increasing $N$ narrows the affected region but does not remove the limiting overshoot at the jump. In heat flow, each mode is additionally multiplied by an exponential decay. At positive time, high-frequency terms are strongly damped, but at time zero the series must still represent the initial/boundary data correctly. If initial temperature and fixed endpoint temperatures disagree at a corner in space-time, a rapid boundary layer is physically implied, not a failure of the series method.
+
+For a finite mesh, eigenvalue truncation and timestep are separate resolution controls. Dropping small-scale eigenvectors discards spatial detail; taking a large implicit-Euler step changes each mode's decay relative to the continuous evolution (its factor $1/(1+x)$ exceeds $e^{-x}$ for $x>0$); taking an unstable explicit step amplifies the highest modes. A visually smooth result is not proof of accuracy because excessive smoothing can hide aliasing, poor mesh quality, or a wrong boundary condition. Report sample spacing, kept modes or timestep, and error against a known field when making a quantitative claim.
+
+### Manufactured fields make the solver testable
+
+A manufactured solution gives an analytic answer for a problem with known boundaries and coefficients. For fixed-zero endpoints choose one sine mode
+
+$$
+u(x,t)=A\sin\left(\frac{\pi x}{L}\right)e^{-\kappa(\pi/L)^2t}.
+$$
+
+It satisfies both the PDE and $u(0,t)=u(L,t)=0$. With $L=1\,\mathrm m$, $\kappa=0.1\,\mathrm{m^2/s}$, $A=100\,\mathrm K$ and $t=1\,\mathrm s$, the center temperature is
+
+$$
+u(L/2,1)=100e^{-0.1\pi^2}\,\mathrm K\approx37.27\,\mathrm K.
+$$
+
+For a second, independently decaying mode at twice the wavenumber, the decay exponent is four times larger. A two-mode initial field tests that the solver handles superposition and does not accidentally mix modes in a uniform rod with homogeneous endpoints. Compare grid values to the analytic field at fixed physical times while halving $h$ and reducing $\Delta t$ consistently; measure error rather than relying on a plot.
+
+For a no-flux test choose
+
+$$
+u(x,t)=20+5\cos\left(\frac{\pi x}{L}\right)e^{-\kappa(\pi/L)^2t}.
+$$
+
+Its derivative is zero at $x=0$ and $x=L$, and its spatial mean is $20$ at every time. A discrete solver should preserve the corresponding mass-weighted mean up to rounding and linear-solver tolerance. For fixed-temperature endpoints, instead measure boundary flux. Fourier’s law gives heat flux $q=-k u_x$; integrating the temperature equation yields the net heat change from inflow at one boundary minus outflow at the other. The rod’s interior energy need not be conserved when reservoirs hold its ends at fixed temperature.
+
+On the mesh, the matching tests are: $S\mathbf1=0$ for a no-flux/closed setting; symmetry $S=S^T$; nonnegative generalized eigenvalues; exponential decay of each measured eigenmode at rate $\kappa\lambda_n$; and conservation of $\mathbf1^TM\mathbf u$ when no heat crosses the boundary and no source is present. For Dirichlet vertices fixed to a reservoir, remove or constrain those degrees of freedom and verify the change in total heat matches integrated boundary flux. A matrix can be symmetric and still have the wrong units, scale, boundary rows, or source signs, so keep the analytic rod and unit checks beside the structural matrix checks.
+
+The rod story now carries through to a curved triangle mesh. Material and boundary conditions define a differential operator; its self-adjoint eigenmodes form a basis; spatial derivatives multiply modes by their squared frequencies; the mesh stiffness and mass matrices approximate that operator; and time integration advances its modes according to their decay rates. Green functions express how localized heat sources propagate under those same boundaries. Sampling and truncation set what detail can be represented, while manufactured solutions and flux balances tell us whether the computed field matches the stated model.
+
+### What the boundary means to the discrete solver
+
+Boundary data must be encoded in the discrete unknowns and matrix, not merely displayed as a condition in a comment. With fixed-temperature Dirichlet endpoints, the endpoint values are known and are removed from the unknown vector or incorporated into the right-hand side. If a known endpoint value is nonzero, its neighboring stencil contains a source contribution proportional to that value. A common error is to drop the endpoint neighbor term when constructing the reduced matrix, thereby solving a different rod with an insulated or shortened boundary.
+
+For an insulated endpoint, the Neumann condition $u_x=0$ says the normal heat flux vanishes. A finite-volume view writes heat balance in terms of fluxes through cell faces; the boundary face contributes zero flux. A finite-difference view can use a ghost value reflected across the endpoint, such as $u_{-1}=u_1$, so the centered derivative $(u_1-u_{-1})/(2h)$ is zero. Either construction should leave the constant vector in the nullspace and conserve the weighted sum. Dirichlet and Neumann are not interchangeable “edge handling” options: one couples the rod to a reservoir; the other isolates it.
+
+For a curved mesh, an open boundary has an analogous choice. A natural finite-element boundary on the diffusion problem usually represents zero flux unless a boundary term is supplied. Pinning boundary temperatures imposes a Dirichlet constraint. A Robin boundary can represent transfer to an ambient temperature, with flux proportional to the difference between the surface temperature and ambient. If the application actually intends a heat bath but the implementation leaves the natural no-flux condition, total mesh heat will be conserved incorrectly. Boundary semantics are part of the physics API.
+
+Self-adjointness explains why a clean mode decomposition exists. For the one-dimensional operator $A=-d^2/dx^2$ with homogeneous Dirichlet conditions, integration by parts gives
+
+$$
+\int_0^L f^*Ag\,dx-\int_0^L(Af)^*g\,dx
+=\left[-f^*g'+(f')^*g\right]_0^L=0.
+$$
+
+The boundary term vanishes because both functions are zero at each end. For homogeneous Neumann conditions, it vanishes because both derivatives are zero. Other boundary conditions may also yield a self-adjoint operator, but this must be checked rather than assumed. The eigenvalues are real, distinct-eigenvalue modes are orthogonal, and the operator can be diagonalized in that basis. This is the continuum reason the heat equation reduces to independent exponential decays.
+
+The same fact has a discrete energy witness. If $S$ is symmetric positive semidefinite and $M$ is positive definite, then
+
+$$
+\frac{d}{dt}\left(\frac12\mathbf u^TM\mathbf u\right)
+=\mathbf u^TM\dot{\mathbf u}
+=-\kappa\mathbf u^TS\mathbf u\le0.
+$$
+
+This quadratic norm is not the total heat; it measures squared temperature variation around the chosen zero reference. It decreases under diffusion. Total heat in the no-flux case is instead $\mathbf1^TM\mathbf u$, and it stays constant because $S\mathbf1=0$. Keeping these two quantities separate prevents the false claim that “heat is conserved” means every norm or every boundary case is conserved.
+
+### Spatial and temporal error have different signatures
+
+For a smooth sine mode with wavenumber $k$, the centered difference approximates the second derivative by the discrete eigenvalue
+
+$$
+\mu_h=-\frac{4}{h^2}\sin^2\left(\frac{kh}{2}\right)
+=-k^2+\frac{k^4h^2}{12}+O(h^4).
+$$
+
+The leading error is proportional to $h^2$ for a fixed resolved mode. Since $|\mu_h|$ is slightly less than $k^2$ at small but finite $kh$, the discrete mode decays a little more slowly than the continuum mode. Near the grid's highest frequency, the approximation is no longer close to $-k^2$; the grid cannot represent finer structure. This is spatial discretization error, distinct from the forward-Euler time error and its stability limit.
+
+A convergence experiment should separate them. Fix a smooth analytic initial field, hold temporal error small while refining $h$, and compare at a fixed time to estimate spatial convergence. Then fix a sufficiently fine spatial grid and reduce $\Delta t$ to measure temporal convergence. Finally sweep the ratio $r=\kappa\Delta t/h^2$ toward the stability edge to verify the predicted highest-mode amplification. If both $h$ and $\Delta t$ change arbitrarily in one experiment, a smaller error cannot be attributed to either change.
+
+A practical manufactured solution can include a source term as well. Choose a smooth field $u_*(x,t)$ satisfying the desired boundary values, then define
+
+$$
+s(x,t)=\partial_tu_*(x,t)-\kappa\partial_{xx}u_*(x,t).
+$$
+
+The field $u_*$ is now an exact solution of $u_t=\kappa u_{xx}+s$ by construction. For example, let $u_*=e^{-t}\sin(\pi x/L)+t\sin(2\pi x/L)$, whose endpoints remain zero. Differentiate it analytically to construct $s$. This tests the source assembly, boundary treatment, spatial operator and time stepping together without needing a complicated closed-form solution to an unrelated physical problem. Report a normed error, such as $\|u_h-u_*\|_M$, at stated times.
+
+The mode formulas also support an impulse-response check. A sharply localized initial heat pulse can be projected onto the sine basis; its coefficient for mode $n$ is the pulse's inner product with $\phi_n$. At later times, each coefficient must be multiplied by $e^{-\kappa\lambda_nt}$. Compare direct time stepping against this truncated spectral reference on a fine grid. The two methods will not match exactly because one has grid and timestep error and the other has truncation error, but their discrepancy should shrink under the declared refinements. This test exercises the same linear evolution from two independent representations.
+
+For a self-adjoint problem with a zero Neumann mode, the steady Green function for an inverse Laplacian is singular because constants are annihilated. One must project out the constant mode, enforce a zero-mean source, and choose a gauge such as zero-mean solution. For the transient heat kernel, the constant mode is retained: it is the long-time average left after all nonconstant modes decay. This distinction matters in mesh processing too. Solving a Poisson equation for geometry may need a pinned vertex or mean constraint; evolving heat on a closed surface should generally preserve the mean rather than accidentally delete it.
+
+The continuous and discrete models therefore have matching but not identical contracts. In the continuum, the boundary condition defines the operator domain and Green identity. In the mesh, it determines constrained rows, boundary flux terms and the nullspace. In the spectrum, it selects modes and eigenvalues. In the time step, it controls stability and decay. Verifying one layer with the appropriate witness makes it possible to localize a bad result instead of compensating for it with an arbitrary damping factor or a smaller timestep.
+
 ## ODEs and numerical simulation
 ### Explicit Euler: deriving a simulator from a differential equation
 
@@ -29350,6 +29975,165 @@ A PDF conversion must be derived for the geometry and sampling measure used by t
 <!-- end V10.08 -->
 
 <!-- begin V10.09 -->
+### Monte Carlo estimates an expectation by sampling
+
+Suppose the quantity of interest can be written as an expectation $I=E[g(X)]$. Draw IID samples $X_1,\ldots,X_n$ from the modeled distribution and use
+
+$$
+\hat I_n=\frac{1}{n}\sum_{i=1}^n g(X_i).
+$$
+
+If $E|g(X)|<\infty$, then $E[\hat I_n]=I$: the estimator is unbiased. If $\operatorname{Var}(g(X))<\infty$, then $\operatorname{Var}(\hat I_n)=\operatorname{Var}(g(X))/n$. Under the law of large numbers, the estimate converges to $I$ in probability (and under standard IID integrability conditions, almost surely). Unbiasedness is a finite-sample expectation identity. Consistency is an asymptotic convergence property. Neither says that a particular finite estimate must be close to the answer; an unbiased estimator can have enormous variance.
+
+A simple integral makes the construction visible. The target $I=\int_0^1 x\,dx=1/2$ equals $E[U]$ when $U\sim\operatorname{Uniform}(0,1)$. If ten independent uniform samples happen to be approximately
+
+$$
+0.05,\ 0.15,\ 0.25,\ 0.35,\ 0.45,\ 0.55,\ 0.65,\ 0.75,\ 0.85,\ 0.95,
+$$
+
+their mean is $0.50$. Their sample variance is approximately $0.0917$ and the estimated standard error of the mean is $\sqrt{0.0917/10}\approx0.096$. Treating those as random IID uniform draws, a large-sample normal interval using $1.96$ standard errors would be roughly $0.50\pm0.19$, or $[0.31,0.69]$. This is a noisy estimate even though the observed mean equals the exact integral. The sequence above is evenly spaced for arithmetic clarity, not evidence of independent random sampling; a randomized stratified estimator would need its own variance calculation.
+
+For IID observations with finite variance, a central-limit approximation says the standardized sample mean approaches a standard normal distribution as $n$ grows. This motivates the approximate interval $\hat I_n\pm1.96\,s_g/\sqrt n$ for a nominal 95% interval, where $s_g$ is the sample standard deviation of $g(X_i)$. It is an approximation, not an exact finite-sample coverage guarantee. Heavy tails, very small sample sizes, correlated samples, adaptive stopping, and a misspecified sampling model can all invalidate the usual interval. There is no universal sample count such as “30” that repairs every distribution or dependence problem.
+
+A rigorous finite-sample alternative follows from assumptions such as boundedness. If $Y_i\in[a,b]$ are independent with common mean $\mu$, Hoeffding's inequality gives
+
+$$
+P(|\bar Y_n-\mu|\ge\epsilon)\le2\exp\left(-\frac{2n\epsilon^2}{(b-a)^2}\right).
+$$
+
+Solving this bound yields a two-sided interval radius $(b-a)\sqrt{\log(2/\alpha)/(2n)}$ with coverage at least $1-\alpha$. For eight independent Bernoulli trials with four observed successes, $a=0,b=1,n=8,\alpha=0.05$, so the radius is $\sqrt{\log(40)/16}\approx0.480$. The resulting interval is approximately $[0.020,0.980]$, clipped to the parameter range $[0,1]$. It is much wider than a normal approximation at this small sample size, but its guarantee relies only on independent bounded observations and the stated mean model. Tighter intervals are possible with more assumptions or exact binomial methods.
+
+### Confidence and credible intervals answer different questions
+
+A frequentist $1-\alpha$ confidence procedure is a rule that maps random data to a random set $C(X)$. Its coverage statement is $P_\theta(\theta\in C(X))\ge1-\alpha$ for each parameter value $\theta$ in the model. Before observing data, the interval is random and the fixed parameter is covered with the stated long-run frequency. After one interval has been calculated, the frequentist statement does not assign probability $0.95$ to the fixed parameter lying inside that particular interval.
+
+A Bayesian credible interval is calculated from a posterior distribution. Given observed data $x$, a $1-\alpha$ credible set $C(x)$ is chosen so that $P(\Theta\in C(x)\mid X=x)=1-\alpha$. Here $\Theta$ is modeled as random under the prior and likelihood. The statement is conditional on the observed data and depends on that prior/model. A 95% credible interval need not have 95% frequentist coverage across repeated datasets; frequentist coverage is a separate property to check.
+
+For that dataset of four successes and four failures, a uniform prior $p\sim\operatorname{Beta}(1,1)$ gives posterior $p\mid x\sim\operatorname{Beta}(5,5)$. A Beta$(a,b)$ density on $0<p<1$ is proportional to $p^{a-1}(1-p)^{b-1}$. The four successes and four failures contribute likelihood $p^4(1-p)^4$, so multiplying prior and likelihood changes the two exponents from zero to four and produces the stated posterior. The posterior mean is $5/10=0.5$. A credible interval is obtained by taking posterior quantiles of that Beta distribution. The frequentist Hoeffding interval we just computed is instead derived from a sampling guarantee that holds for every fixed $p$. They may have different widths and interpretations while using the same observed count. Neither interval can be described correctly by its “95%” label alone.
+
+A common failure is to calculate a posterior after choosing a prior but report it as a confidence interval without qualification. Another is to select a frequentist interval after many repeated looks and quote the single-look coverage as if nothing had been selected. Each procedure must include how the data were generated, how the interval was chosen, and whether optional stopping or multiple comparisons were part of that rule.
+
+### Sampling selection changes the uncertainty story
+
+Stopping when the data look favorable can bias a naïve summary. Let $X_i$ be IID Bernoulli$(p)$ trials. Observe one trial; stop immediately if it succeeds, otherwise observe exactly one more trial and then stop. The stopping time $N$ is therefore either one or two. The reported sample mean is $1$ after an immediate success, $1/2$ after failure then success, and $0$ after two failures. Its expectation is $p+(1-p)p/2$, which is $0.28$ when $p=0.2$, rather than $0.2$. The estimator is biased upward under this stopping rule. The reason is selection: the sample size and the reported data are linked by the success condition. The fixed-$n$ identity $E[\bar X_n]=p$ does not apply automatically to $\bar X_N$. If we instead stop at the first success with no two-trial cap, the stopped mean is $1/N$, not always one.
+
+The same effect appears in adaptive systems. If a renderer keeps allocating paths to a pixel until its current estimate crosses a brightness threshold, then reports the stopped mean without an appropriate sequential method, the selected estimate can be biased. If a vision pipeline examines many candidate boxes and reports the one with the highest noisy score, that winning score is upward-selected even when each individual score estimator is unbiased. If an engine repeatedly checks a collision confidence interval and stops the first time it excludes zero, ordinary fixed-time coverage no longer automatically applies to the stopped interval.
+
+Not every data-dependent policy destroys unbiasedness. Some carefully designed sequential estimators remain unbiased, and time-uniform confidence sequences provide coverage simultaneously over all sample counts under stated assumptions. But optional stopping cannot be ignored. The analysis has to match the actual stopping rule, not only the estimator that would have been used at a predetermined sample count.
+
+Sample selection is also present in an adaptive query policy. An active vision system may inspect regions with high current uncertainty more often. A [[Concepts/Bandit exploration and regret|bandit]] may display the apparently better recommendation more frequently. These actions change which outcomes become observable. An offline average over the observed outcomes does not automatically estimate the average outcome under a different policy or over the full population. The missing observations require a model and, often, correction weights.
+
+### Importance weighting corrects selection only with support
+
+Suppose the target distribution over outcomes is $P$, but samples are drawn from a proposal distribution $Q$. If $Q$ assigns positive probability wherever $P$ assigns positive probability and the required expectation exists, then
+
+$$
+E_P[f(X)]=E_Q\left[f(X)\frac{p(X)}{q(X)}\right].
+$$
+
+The ratio $p/q$ is an importance weight. It corrects for how sampling differs from the target. The support condition matters: if $q(x)=0$ where $p(x)f(x)$ contributes nonzero mass, the target contribution is never observed and no finite weight can recover it. Tiny $q(x)$ preserves formal unbiasedness if nonzero, but can create huge weights and huge variance.
+
+Use a two-point example. The target chooses $a$ or $b$ with probability $1/2$ each, and $f(a)=1,f(b)=0$, so the target expectation is $I=1/2$. Choose a proposal with $Q(a)=0.1,Q(b)=0.9$. The weighted sample is $Y=f(X)P(X)/Q(X)$: it equals $5$ with probability $0.1$ when $X=a$, and $0$ with probability $0.9$ when $X=b$. Then $E_Q[Y]=0.1(5)+0.9(0)=0.5$, exactly the target, but $E_Q[Y^2]=2.5$ and $\operatorname{Var}_Q(Y)=2.5-0.25=2.25$. One draw is usually zero and occasionally five. If $Q(a)$ were zero, the estimator would miss the whole nonzero target contribution and be biased.
+
+In a bandit, suppose an arm's reward $r\in[0,1]$ is observed only when it is selected with conditional probability $q>0$. The importance-weighted observation $\hat r=\mathbf 1\{A=a\}r/q$ has conditional expectation $r$ when the reward is fixed for that round and the action is randomized according to $q$. Its second moment is $r^2/q$ and its variance is $r^2(1-q)/q$. Thus reducing the probability of an arm increases the variance of its counterfactual reward estimate. If $q=0$, there is no information about that arm from that round. Exploration probability is therefore not a cosmetic add-on: it controls the amount of information and the stability of weighted estimates.
+
+For bounded logged rewards, inverse propensity weighting can give an unbiased estimate of a target policy's value when the logging probability is known, the target policy has support under the logging policy, and the relevant conditional model is correct. Large or misspecified propensity weights can make the estimate unusably noisy. Clipping weights may reduce variance but generally introduces bias. “We reweighted it” is not enough; report overlap, maximum weights, effective sample size, and the estimator's assumptions.
+
+### Confidence bounds drive exploration under explicit assumptions
+
+A stochastic $k$-armed bandit has $k$ actions, or arms. Each arm $i$ has a stationary reward distribution with mean $\mu_i$. At round $t$, the policy chooses $A_t$ using past observations, receives a reward $X_t$ from the selected arm, and does not observe the rewards that unselected arms would have produced. The optimal mean is $\mu^*=\max_i\mu_i$ and the gap of arm $i$ is $\Delta_i=\mu^*-\mu_i$. The expected cumulative regret through $n$ rounds is
+
+$$
+R_n=n\mu^*-E\left[\sum_{t=1}^n X_t\right]
+=\sum_i\Delta_i E[T_i(n)],
+$$
+
+where $T_i(n)$ counts how often arm $i$ was selected. Regret is a measure of reward forgone while learning and acting; it is not the same as the probability of naming the best arm at the end.
+
+For an arm with $T_i$ observations and empirical mean $\hat\mu_i$, a simple upper confidence index has the form
+
+$$
+U_i=\hat\mu_i+\sqrt{\frac{2\sigma^2\log(1/\delta)}{T_i}},
+$$
+
+when the centered reward noise is $\sigma$-subgaussian and the confidence event has been made valid for the relevant comparisons. If an arm has not been tried, its index is set to $+\infty$ or the policy explicitly samples each arm once. UCB chooses the arm with the largest index. A high index can come from a high observed mean or from a wide uncertainty bonus due to few samples.
+
+A subgaussian variable is one whose moment-generating function has Gaussian-like upper growth: for centered $X$, $E[e^{\lambda X}]\le e^{\lambda^2\sigma^2/2}$ for all real $\lambda$. Independent subgaussian observations give an exponential tail bound for their sample mean. Bounded rewards are subgaussian with a scale related to their range, but finite variance alone does not imply the same tail behavior. Heavy-tailed observations need different robust estimators or concentration assumptions. A confidence formula used outside its distributional assumptions can be overconfident.
+
+Here is a two-arm index calculation. Let $\delta=0.05$ and use the simple radius above with $\sigma=1$. Arm A has observations $1,1,0,1$, so $T_A=4$ and $\hat\mu_A=0.75$. Its bonus is $\sqrt{2\log(20)/4}\approx1.225$ and its index is about $1.975$. Arm B has one observation $0$, so $T_B=1$, $\hat\mu_B=0$, bonus $\sqrt{2\log(20)}\approx2.448$, and index $2.448$. Even though A's observed mean is higher, the policy selects B because its uncertainty is larger. After additional samples from B, the bonus shrinks and the evidence can favor A. The numerical radius is deliberately conservative and the two-arm example does not prove a full UCB guarantee.
+
+There is a technical wrinkle: the number $T_i(t)$ of samples from an arm is random and chosen using past rewards. A fixed-sample concentration inequality cannot simply be applied once and assumed valid at every random time. Standard bandit analyses handle this by reasoning about the pre-generated reward sequence for each arm and taking a union bound over possible sample counts, or by using a time-uniform confidence sequence. The confidence level must also account for repeated decisions and arms. A single-look 95% interval does not automatically remain a 95% guarantee after hundreds of adaptive looks.
+
+UCB-style analysis often proves that a suboptimal arm is played only while either its own empirical mean is unusually high or the optimal arm's index is unusually low. Once enough observations reduce the suboptimal arm's bonus, it should stop beating the optimal arm's index except on a low-probability event. The regret decomposition then converts expected suboptimal pulls into reward loss. The assumptions include a fixed reward distribution per arm, an appropriate tail bound, and a defined horizon or a valid horizon-free variant. When those assumptions change, the bound must change too.
+
+For Bernoulli rewards, the variance depends on the mean. If rewards are near zero or one, a variance-aware confidence bound can be much tighter than a generic range-based bound. KL-UCB uses the Bernoulli relative entropy
+
+$$
+d(p,q)=p\log\frac pq+(1-p)\log\frac{1-p}{1-q}
+$$
+
+to define an upper confidence endpoint by solving $T_i\,d(\hat\mu_i,q)\le\log f(t)$ for the largest plausible $q$. Because this divergence is asymmetric, the interval width can differ above and below the observed mean. Such an improvement is earned by the Bernoulli model; it should not be applied to continuous HDR pixel values or arbitrary engine rewards without the corresponding likelihood model.
+
+### Cumulative regret and best-arm identification are different goals
+
+Suppose a diagnostic system can spend a fixed budget of 100 measurements deciding which of two sensors is more accurate. A cumulative-reward objective would reward it for repeatedly using the sensor with better expected performance while it learns. A best-arm identification objective instead rewards correctly naming the better sensor after exploration. The second may rationally sample both arms even near the end; the first may exploit one arm to harvest reward. The optimal allocation need not be the same.
+
+Best-arm identification can be fixed confidence: stop at a data-dependent time and return an arm with error probability at most $\delta$, while trying to minimize the expected number of samples. Or it can be fixed budget: after $n$ samples, minimize the probability that the selected arm is suboptimal. Fixed-confidence algorithms such as track-and-stop combine an allocation rule with a stopping statistic that accumulates evidence against alternatives. Fixed-budget algorithms such as sequential halving repeatedly sample active arms and eliminate the lower half. These are pure-exploration tasks: there is no reward for early exploitation except insofar as it yields information.
+
+The confidence level $\delta$ controls a probability of error under the specified environment class, not the probability that an arbitrary answer is correct in every possible world. A guarantee for Gaussian unit-variance arms does not automatically apply to skewed, drifting rewards or dependent observations. The stopping rule and allocation jointly determine the guarantee. If several arms are exactly tied, some formulations cannot stop with finite expected samples while retaining a uniform soundness guarantee over a rich class, because an arbitrarily small change could make another arm uniquely best.
+
+Choosing among rendering strategies can be a pure-exploration task if the final output is a decision, such as which of two sampling distributions has lower estimated variance for a target class. But optimizing the decision criterion is not the same as estimating the final image without bias. A policy can correctly learn which strategy usually reduces a chosen loss while its output estimator remains biased due to incorrect weights, missing support, clamping, or data-dependent termination. The decision's utility and the image estimator's mathematical target must be specified separately.
+
+### Stationarity and reproducibility are part of the experiment
+
+A stationary bandit assumes that arm $i$ keeps the same reward distribution over time. A renderer that changes scene lighting mid-run, a sensor whose calibration drifts, or a vision stream with seasonal domain shifts violates stationarity. A standard UCB algorithm may then retain old observations that no longer predict current rewards. A useful alternative may be a sliding window, discounting, change detection, or a comparator that is allowed to switch arms. Each addresses a different drift model and adds its own assumptions.
+
+For an environment with at most $m-1$ change points, tracking regret compares the learner to the best arm sequence with at most that many switches. Restarting UCB at known change points is conceptually simple; unknown change points require detecting change or forgetting old evidence. In a nonstationary world, “the best arm” is time-indexed and the comparator must be explicit. No-regret relative to one fixed arm can be a meaningless target if the optimal action changes halfway through the data.
+
+Reproducibility requires more than a random seed. Record the scene and sensor version, data ordering, random-number generator and stream assignment, policy version, candidate set, stopping criterion, reward definition, and any rejected or missing observations. In adaptive experiments, also retain selection probabilities and decision history so weighted estimates can be audited. A fixed seed makes one run repeatable; it does not make a dependent sample sequence IID or prove that uncertainty intervals are calibrated.
+
+### A compute budget needs a reward that matches the real goal
+
+A bandit can allocate an engine's limited query budget among actions, but “reward” must have a defined operational meaning. Possible choices include reduction in mean squared image error, reduction in a task-specific detection loss, information gain about a parameter, improvement in expected frame time, or a utility that balances image quality against latency. These objectives can rank actions differently. A perceptual quality metric may reward edge detail differently from radiometric accuracy. A query that helps a collision classification may have no value to the final rendered image.
+
+To use a bandit model, specify the actions, context, observable reward, horizon, and whether action rewards are stationary and conditionally independent. If the same query is evaluated by re-rendering with a fresh random seed, one can estimate its expected utility; if action choice changes the future data or cache state, the environment is structured and history-dependent. If context changes with the pixel, object, or time step, a contextual bandit may be more appropriate than a single global arm mean. If the metric is observed only for the selected action, counterfactual reward estimation needs support and propensity correction.
+
+Most importantly, adaptive compute allocation does not automatically preserve an unbiased image estimate. Suppose pixels are divided into regions and a controller samples high-variance regions more often. At a predetermined sample count, if each correctly weighted contribution has conditional expectation equal to the target given the past, averaging those contributions is unbiased by iterated expectation. A random per-pixel stopping count requires an additional argument; the conditional-mean property alone does not make the stopped sample average unbiased. If the controller instead oversamples bright regions and pools all raw values as though they came from the target distribution, it estimates the proposal-weighted image, not the target image. If it stops each pixel when a noisy confidence interval looks narrow, fixed-budget error formulas may no longer apply. If it clamps rare high contributions, it trades bias for variance reduction.
+
+A safer architecture separates two contracts. The estimator contract states the quantity being estimated, sampling distribution, weights, support conditions, stopping rule, and uncertainty calculation. The controller contract states how compute is allocated according to observed information and which utility it tries to improve. The controller can be adaptive while the estimator remains unbiased, but that requires a proof or a valid sequential estimator—not an assumption that “more samples where needed” is harmless. Online optimization and statistical correctness are connected, yet they are not identical problems.
+
+### An experiment design checklist in the language of science
+
+Before running an adaptive rendering, vision, or engine experiment, write down the target quantity $\theta$ and the population or scene distribution over which it is defined. State which variables are random and which are fixed unknown parameters. Describe how one observation is sampled, whether observations are independent, and what data are missing when an action is not chosen. Decide whether the goal is estimating a mean, reducing a variance, making a one-time choice, or repeatedly earning reward.
+
+Then name the estimator and its finite-sample expectation. List the assumptions used for its variance and confidence interval. If there is a confidence interval, say whether it is exact, asymptotic, or a concentration bound, and whether the coverage is pointwise or uniform over parameters. If the policy adaptively changes samples or stops, use an analysis that covers those decisions. If importance weights are used, check support and weight tails. If the environment drifts, define a nonstationary comparator or a change model. Finally, log enough information to replay and audit the choices.
+
+These steps are not paperwork around the algorithm. They define the result. “The estimate is unbiased” means its expected value equals the specified target under the specified law. “The interval is 95%” means a named coverage or posterior probability statement under a named model. “The policy learns the best action” means a particular regret or identification result under assumptions about reward distributions and observations. When those sentences are made precise, uncertainty becomes a usable engineering quantity: it tells us what evidence we have, what remains unknown, and what an additional query can legitimately improve.
+
+### References for deeper source checks
+
+- Larry Wasserman, *All of Statistics*, Chapters 1–8 and 11, for probability foundations, estimation, concentration, convergence, intervals, bootstrap, and Bayesian interpretation.
+- Tor Lattimore and Csaba Szepesvári, *Bandit Algorithms*, Chapters 4–7, 10–11, 31, and 33, for stochastic bandit assumptions, confidence-based exploration, importance weighting, nonstationarity, and pure exploration.
+- Eric Veach, *Robust Monte Carlo Methods for Light Transport Simulation* (1997 dissertation), especially the Monte Carlo integration chapter, for unbiasedness, importance sampling, adaptive sample placement, and rendering estimators: [Stanford dissertation](https://graphics.stanford.edu/papers/veach_thesis/).
+- Peter Auer, Nicolò Cesa-Bianchi, and Paul Fischer, “Finite-time Analysis of the Multiarmed Bandit Problem” (2002), for a foundational finite-time UCB analysis: [publication record](https://www2.compute.dtu.dk/pubdb/pubs/2088-full.html).
+- William R. Thompson, “On the Likelihood That One Unknown Probability Exceeds Another in View of the Evidence of Two Samples” (1933), an early sequential allocation treatment: [Biometrika record](https://academic.oup.com/biomet/article-abstract/25/3-4/285/200862).
+
+### A worked image-budget example: allocate samples without changing the target
+
+Imagine an image simplified to two equally important regions, A and B. Their true mean radiances are $0.2$ and $0.8$, so the target whole-image mean is $(0.2+0.8)/2=0.5$. A compute controller estimates that B is more interesting and samples region A with probability $q_A=0.1$ and region B with $q_B=0.9$. If it simply averages observed radiances, its expected output is $0.1(0.2)+0.9(0.8)=0.74$. This is not noisy around the target $0.5$; it converges to the wrong target because the sampling policy changed the region mixture.
+
+The desired region distribution is $p_A=p_B=0.5$. An importance weight for an observation in region $j$ is $p_j/q_j$. Thus, an A observation is weighted by $0.5/0.1=5$, and a B observation by $0.5/0.9\approx0.556$. The one-sample weighted random variable is $Y=1.0$ with probability $0.1$ and $Y\approx0.444$ with probability $0.9$. Its expectation is $0.1(1.0)+0.9(0.444)\approx0.5$. The estimator recovers the original whole-image mean despite allocating most samples to B. This example assumes each region's value is fixed and observed without additional noise; a real renderer has within-region path variance as well, which contributes extra variance.
+
+A stratified design can avoid some of the weight instability by reserving samples in each region and combining regional estimates with the known pixel-area weights: $\hat I=0.5\bar X_A+0.5\bar X_B$. With at least one correctly sampled observation from each region and unbiased regional sample means, the combined estimate is unbiased regardless of the unequal sample counts. Its variance is $0.25\operatorname{Var}(\bar X_A)+0.25\operatorname{Var}(\bar X_B)$ if the region samples are independent. Spending more samples in a region with larger variance can reduce the total variance efficiently, but the sample allocation itself must be included if it depends on observed values. Keeping a small exploration floor also prevents the controller from permanently abandoning a region whose early samples happened to look quiet.
+
+This makes the roles clear. The estimator decides how observations represent the target image. The controller decides where another observation is worth its cost. A controller may use a bandit to learn which region tends to yield more error reduction per unit time, while the final pixel estimate still uses area-correct weights. If reward is defined as immediate reduction in a perceptual loss, however, that reward may be noisy, nonstationary, and dependent on prior denoising state. UCB's guarantee is about maximizing cumulative expected reward under its bandit model; it does not imply a radiometrically unbiased image, a calibrated pixelwise interval, or a globally optimal perceptual image.
+
+The same separation applies in vision. If a system selects uncertain image patches for labeling, it can use the resulting data to improve a classifier, but naïvely averaging only the selected labels estimates the selected-patch distribution. Population-level metrics require either representative sampling, known inclusion probabilities with valid weights, or a justified model-based adjustment. If an engine prioritizes collision checks near suspected contacts, the hit rate among queried pairs is not the scene-wide collision rate. Active computation can improve decisions while making naïve descriptive summaries less representative.
+
+A final nuance is that a reward itself can be estimated. Suppose action A costs 1 ms and reduces estimated error by $0.02$ with high variance, while action B costs 3 ms and reduces it by $0.05$ with low variance. “Maximize error reduction” selects B by mean reward; “maximize reduction per millisecond” may select A; “minimize error subject to a frame-time cap” is a constrained objective. If actions alter caches or future variance, their reward depends on history and may not be stationary. Naming the utility and horizon is part of the scientific model, not a presentation detail.
+
+For reproducibility, preserve at least a replayable trace of chosen actions, conditional selection probabilities, reward observations, sample counts, stopping times, and estimator weights. With this trace, one can separately check the controller's decisions and recompute the estimator. A seed alone cannot reveal whether support was missing, whether confidence was repeatedly checked, or whether a renderer's next sample distribution depended on a previous noisy estimate.
+
 ## 8. Monte Carlo estimates trade computation for uncertainty
 
 ### Monte Carlo estimation
@@ -31160,6 +31944,62 @@ Suppressing every large residual can hide a genuine modeling failure.
 <!-- end V10.10 -->
 
 <!-- begin V10.11 -->
+### Choose the next measurement using the geometry of what is still unknown
+
+Suppose we are comparing rendering configurations whose expected quality can be approximated by a small linear model. An **action** is a configuration we can choose. Its feature vector $a$ records the quantities used by the model. An unknown parameter vector $\theta$ maps those features to expected reward $a^{\mathsf T}\theta$. A **reward** is the scalar observation we want to improve, such as a chosen quality score under a fixed time budget. This is a modeling example, not a claim that arbitrary rendering quality is exactly linear.
+
+At step $s$, observe $y_s=a_s^{\mathsf T}\theta+\eta_s$, where $\eta_s$ is noise. Only the chosen action's reward is observed; this partial-feedback decision setting is called a **bandit problem**. The observations can inform other actions when they share features. A separate mean for every action would discard that relationship.
+
+Choose an estimate by regularized least squares:
+
+$$
+\widehat\theta=\underset{\vartheta}{\operatorname{argmin}}
+\left[\sum_s(y_s-a_s^{\mathsf T}\vartheta)^2
++\lambda\|\vartheta\|_2^2\right],\qquad\lambda>0.
+$$
+
+The parameter $\lambda$ penalizes large coefficients. Expanding the quadratic and setting its derivative to zero gives
+
+$$
+V\widehat\theta=b,\qquad
+V=\lambda I+\sum_s a_sa_s^{\mathsf T},\qquad
+b=\sum_s a_sy_s.
+$$
+
+For every nonzero $h$, $h^{\mathsf T}Vh=\lambda\|h\|^2+\sum_s(a_s^{\mathsf T}h)^2>0$. Thus the system has a unique solution even before observations span every direction. The regularization also biases the estimate; algebraic uniqueness does not prove statistical accuracy. Solve the positive-definite system rather than repeatedly forming $V^{-1}$.
+
+To represent uncertainty, suppose we have established a set
+
+$$
+\mathcal C=\{\vartheta:
+(\vartheta-\widehat\theta)^{\mathsf T}V
+(\vartheta-\widehat\theta)\le r^2\}.
+$$
+
+This is an ellipsoid. Along an eigenvector of $V$ with eigenvalue $\nu$, its semiaxis length is $r/\sqrt\nu$, not $r/\nu$. That square root follows by substituting a displacement $te$ into the quadratic inequality: $t^2\nu\le r^2$.
+
+For an action $a$, the largest plausible predicted reward is the estimate plus the largest scalar measurement over this ellipsoid. Our dual-norm result therefore gives
+
+$$
+\max_{\vartheta\in\mathcal C}a^{\mathsf T}\vartheta
+=a^{\mathsf T}\widehat\theta
++r\sqrt{a^{\mathsf T}V^{-1}a}.
+$$
+
+The second term is an uncertainty bonus, not a mysterious extra preference. When $a\ne0$, a maximizing displacement is
+
+$$
+\delta=\frac{rV^{-1}a}{\sqrt{a^{\mathsf T}V^{-1}a}}.
+$$
+
+Substitution verifies that it lies on the ellipsoid and attains the claimed bonus. If $a=0$, the predicted reward and bonus are zero without evaluating that denominator.
+
+Take $V=\operatorname{diag}(10,2)$, $\widehat\theta=(0.5,0.3)$, $r=1$ and actions $a_x=(1,0)$ and $a_y=(0,1)$. Greedy prediction favors $a_x$, with scores $0.5$ and $0.3$. Optimistic scores are approximately $0.816228$ and $1.007107$, so the second action is chosen because its direction remains more uncertain. The numerical choice of $r=1$ illustrates the geometry; it is not a calibrated coverage guarantee.
+
+A genuine **confidence set** needs a probability statement about containing the true parameter. Its radius must be justified using assumptions about noise, parameter bounds, regularization and the adaptively chosen observations. For fixed nonadaptive Gaussian designs, covariance can be derived directly; adaptive designs require the appropriate conditional-noise and concentration analysis. Do not reuse a fixed-design interval merely because the normal equations look the same. “Optimism” names the action-selection principle; it does not establish that an uncalibrated ellipse is statistically valid.
+
+This connects vectors, quadratic forms, least squares, dual norms and experimental choice in one calculation. The development uses *Bandit Algorithms*, physical pages 249–251 and 254. It does not claim to reproduce the book's full regret analysis or to supply a production policy for unconstrained renderer tuning.
+
 ## 10. Inference and error metrics need explicit assumptions
 
 ### Confidence intervals
@@ -52205,7 +53045,7 @@ Then deliberately break one promise: exchange storage layout without changing ac
 
 The missing 635–650 lesson texts remain visible in the coverage ledger. The reconstructed bridge keeps this teaching narrative usable now and can be deepened when those sources arrive. Later numerical linear algebra can extend pivoting, conditioning, orthogonal factorizations, eigenstructure and decomposition without changing the representation contracts established here.
 
-[[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Compact linked recall]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Exact coverage]] · [[Supplementary/Derivations#Phase 7 - Transform reconstruction proofs|Extended reconstruction]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Extended traces]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]] · [[Keyword Index]] · [[Dependency Map]]
+[[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Compact linked recall]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Exact coverage]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 7 - Transform reconstruction proofs|Extended reconstruction]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Extended traces]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]] · [[Keyword Index]] · [[Dependency Map]]
 
 ### Where transforms lead next
 
@@ -53208,7 +54048,7 @@ When reading a paper, record the input assumptions, measured outcome, adversaria
 
 This phase's achievement is a connected model: numbers provide scalars; vector laws provide movement; bases provide descriptions; inner products provide measurement; exterior products provide orientation; affine weights provide locations; projective representatives support perspective; and types preserve the distinctions at computational boundaries. The implementation is valuable because we can now explain both what it computes and why it sometimes must refuse to compute it.
 
-[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Supplementary/Derivations#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]] · [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Visual-recall board]]
+[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]] · [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Visual-recall board]]
 
 ### Where measurement geometry leads next
 
@@ -53296,7 +54136,7 @@ All seven supplied Phase 8 excerpts are integrated: Parts 701–736, 737–769, 
 
 The chapter explains the mathematics and algorithm choices but does not implement a complete dense or sparse solver library. It does not claim a GPU run, production performance, a universal rank threshold, certification of every residual, or proof of personal mastery. Those claims require separate implementation, target, and workload evidence.
 
-[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Supplementary/Derivations#Phase 8 - Linear systems and decompositions|Extended derivations]] · [[Supplementary/Worked Traces#Phase 8 - From constraints to a stable SVD contract|Worked trace]] · [[Visual Recall/08 - Linear Algebra - Visual Recall|Visual recall]]
+[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 8 - Linear systems and decompositions|Extended derivations]] · [[Supplementary/Worked Traces#Phase 8 - From constraints to a stable SVD contract|Worked trace]] · [[Visual Recall/08 - Linear Algebra - Visual Recall|Visual recall]]
 
 <!-- end V08.85 -->
 
@@ -53316,7 +54156,7 @@ The story proceeds from a model of uncertainty, through random quantities and th
 - For overflow-safe norms, uncertainty in geometric directions, and surface frames, see [[#A direction can exist even when the naive length overflows|A direction can exist even when the naive length overflows]] and [[#Surface movement becomes a local frame|Surface movement becomes a local frame]].
 - For covariance under coordinate changes and inverse sensitivity, see [[#Coordinates can change while the geometric object stays still|Coordinates can change while the geometric object stays still]] and [[#An inverse can exist and still amplify uncertainty|An inverse can exist and still amplify uncertainty]].
 - For covariance eigenvectors, PSD structure, and stable matrix calculations, see [[#Eigenvectors reveal the directions a square map does not turn|Eigenvectors reveal the directions a square map does not turn]] and [[#Diagonalization leads to the stronger symmetric spectral theorem|Diagonalization leads to the stronger symmetric spectral theorem]].
-- For the C++ state-lifetime context around PRNGs, see [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A name does not decide how long storage lasts]].
+- For the C++ state-lifetime context around PRNGs, see [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A name does not decide how long storage lasts]].
 - For the rendering equation and Monte Carlo estimator connection, see [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Numerical integration and Monte Carlo estimation]].
 
 
@@ -54217,3 +55057,220 @@ The resource IDs V01/V02 in this research-reference table identify the two initi
 ## Concept graph connections
 
 [[Concepts/A posteriori error bounds for contractive iteration|A posteriori error bounds for contractive iteration]] · [[Concepts/Algorithmic stability|Algorithmic stability]] · [[Concepts/Axial depth and Euclidean range|Axial depth and Euclidean range]] · [[Concepts/Barycentric coordinates and interpolation|Barycentric coordinates and interpolation]] · [[Concepts/Basis coordinates and dimension|Basis coordinates and dimension]] · [[Concepts/Binary32|Binary32]] · [[Concepts/Bracketed and open root solvers|Bracketed and open root solvers]] · [[Concepts/Bézier curves and De Casteljau evaluation|Bézier curves and De Casteljau evaluation]] · [[Concepts/Camera gauge freedoms and observability|Camera gauge freedoms and observability]] · [[Concepts/Camera view and clip-space pipeline|Camera view and clip-space pipeline]] · [[Concepts/Color encoding and linear-light operations|Color encoding and linear-light operations]] · [[Concepts/Common probability distributions and their assumptions|Common probability distributions and their assumptions]] · [[Concepts/Complex numbers and planar rotations|Complex numbers and planar rotations]] · [[Concepts/Conditional Gaussians and Schur complements|Conditional Gaussians and Schur complements]] · [[Concepts/Conditioning and singularity|Conditioning and singularity]] · [[Concepts/Confidence intervals and sequential evidence|Confidence intervals and sequential evidence]] · [[Concepts/Convergence order and Richardson extrapolation|Convergence order and Richardson extrapolation]] · [[Concepts/Convex combinations and convex hulls|Convex combinations and convex hulls]] · [[Concepts/Coordinate frames and change of basis|Coordinate frames and change of basis]] · [[Concepts/Coordinate handedness and orientation|Coordinate handedness and orientation]] · [[Concepts/Coordinate-space types and validated invariants|Coordinate-space types and validated invariants]] · [[Concepts/Covectors linear functionals and normal transforms|Covectors linear functionals and normal transforms]] · [[Concepts/Cross products and oriented area|Cross products and oriented area]] · [[Concepts/Cubic Hermite interpolation|Cubic Hermite interpolation]] · [[Concepts/Definite integrals and the fundamental theorem|Definite integrals and the fundamental theorem]] · [[Concepts/Derivative as a local linear map|Derivative as a local linear map]] · [[Concepts/Determinants orientation and volume|Determinants orientation and volume]] · [[Concepts/Differentiation rules and chain rule|Differentiation rules and chain rule]] · [[Concepts/Directional and total derivatives|Directional and total derivatives]] · [[Concepts/Discretization, truncation, and roundoff|Discretization, truncation, and roundoff]] · [[Concepts/Dot and cross-product rounding|Dot and cross-product rounding]] · [[Concepts/Dot products and orthogonality|Dot products and orthogonality]] · [[Concepts/Dual quaternions and rigid motion|Dual quaternions and rigid motion]] · [[Concepts/Eigenvalues and eigenspaces|Eigenvalues and eigenspaces]] · [[Concepts/Euler angles and gimbal singularity|Euler angles and gimbal singularity]] · [[Concepts/Expectation, covariance, and dependence|Expectation, covariance, and dependence]] · [[Concepts/Exterior products and geometric algebra|Exterior products and geometric algebra]] · [[Concepts/Finite differences and step-size balance|Finite differences and step-size balance]] · [[Concepts/Floating-point reassociation|Floating-point reassociation]] · [[Concepts/Flush-to-zero and denormals-are-zero|Flush-to-zero and denormals-are-zero]] · [[Concepts/Function contracts: domains, codomains, and images|Function contracts: domains, codomains, and images]] · [[Concepts/Gaussian elimination and pivoting|Gaussian elimination and pivoting]] · [[Concepts/Gram matrices and coordinate metrics|Gram matrices and coordinate metrics]] · [[Concepts/Hardware depth-buffer linearization|Hardware depth-buffer linearization]] · [[Concepts/Hessians and local curvature|Hessians and local curvature]] · [[Concepts/Homogeneous coordinates and perspective division|Homogeneous coordinates and perspective division]] · [[Concepts/Implicit differentiation and parameter sensitivities|Implicit differentiation and parameter sensitivities]] · [[Concepts/Interpolation versus approximation|Interpolation versus approximation]] · [[Concepts/Interpretation contract|Interpretation contract]] · [[Concepts/Jacobians, pushforwards, and pullbacks|Jacobians, pushforwards, and pullbacks]] · [[Concepts/LU factorization and reusable solves|LU factorization and reusable solves]] · [[Concepts/Latin-hypercube sampling|Latin-hypercube sampling]] · [[Concepts/Limits and continuity|Limits and continuity]] · [[Concepts/Linear affine and projective transformations|Linear affine and projective transformations]] · [[Concepts/Linear systems and fundamental subspaces|Linear systems and fundamental subspaces]] · [[Concepts/Matrices as linear maps and basis images|Matrices as linear maps and basis images]] · [[Concepts/Matrix SIMD tiling and cache reuse|Matrix SIMD tiling and cache reuse]] · [[Concepts/Matrix factorization choices|Matrix factorization choices]] · [[Concepts/Matrix functions|Matrix functions]] · [[Concepts/Matrix inversion pivoting and residuals|Matrix inversion pivoting and residuals]] · [[Concepts/Matrix multiplication and composition order|Matrix multiplication and composition order]] · [[Concepts/Matrix norms and numerical error|Matrix norms and numerical error]] · [[Concepts/Matrix storage indexing and strides|Matrix storage indexing and strides]] · [[Concepts/Matrix transpose symmetry and trace|Matrix transpose symmetry and trace]] · [[Concepts/Minkowski sums and support mappings|Minkowski sums and support mappings]] · [[Concepts/Moore-Penrose pseudoinverse|Moore-Penrose pseudoinverse]] · [[Concepts/Multivariate Gaussian distributions and whitening|Multivariate Gaussian distributions and whitening]] · [[Concepts/Newton and quasi-Newton optimization|Newton and quasi-Newton optimization]] · [[Concepts/Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt|Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] · [[Concepts/Norms lengths and induced distances|Norms lengths and induced distances]] · [[Concepts/Numerical error budgets|Numerical error budgets]] · [[Concepts/Numerical quadrature and error|Numerical quadrature and error]] · [[Concepts/ODE initial-value problems and stiffness|ODE initial-value problems and stiffness]] · [[Concepts/Off-axis stereo projection and disparity|Off-axis stereo projection and disparity]] · [[Concepts/Omnidirectional camera projections|Omnidirectional camera projections]] · [[Concepts/Online moments and Welford accumulation|Online moments and Welford accumulation]] · [[Concepts/Orthonormal frames and Gram-Schmidt|Orthonormal frames and Gram-Schmidt]] · [[Concepts/PCA and covariance eigensystems|PCA and covariance eigensystems]] · [[Concepts/Partial derivatives and gradients|Partial derivatives and gradients]] · [[Concepts/Polar decomposition|Polar decomposition]] · [[Concepts/Position reconstruction from depth|Position reconstruction from depth]] · [[Concepts/Probability spaces, events, and conditioning|Probability spaces, events, and conditioning]] · [[Concepts/Projection rejection and scalar components|Projection rejection and scalar components]] · [[Concepts/QR factorization and least squares|QR factorization and least squares]] · [[Concepts/Quaternion algebra and Hamilton product|Quaternion algebra and Hamilton product]] · [[Concepts/Quaternion interpolation and shortest paths|Quaternion interpolation and shortest paths]] · [[Concepts/Quaternion matrix and axis-angle conversion|Quaternion matrix and axis-angle conversion]] · [[Concepts/Quaternion rotation and double cover|Quaternion rotation and double cover]] · [[Concepts/Random variables and probability laws|Random variables and probability laws]] · [[Concepts/Ray differentials and camera sampling measures|Ray differentials and camera sampling measures]] · [[Concepts/Reflection refraction and shading directions|Reflection refraction and shading directions]] · [[Concepts/Reproducible numerical benchmarking|Reproducible numerical benchmarking]] · [[Concepts/Robust geometric predicates|Robust geometric predicates]] · [[Concepts/Robust norm and intermediate range|Robust norm and intermediate range]] · [[Concepts/Robust summaries and error metrics|Robust summaries and error metrics]] · [[Concepts/Robust vector angles|Robust vector angles]] · [[Concepts/SIMD and GPU data layouts|SIMD and GPU data layouts]] · [[Concepts/Sampling quality: stratification, quasi-Monte Carlo, and blue noise|Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] · [[Concepts/Scalars fields and real-number models|Scalars fields and real-number models]] · [[Concepts/Screen-space ray generation and mouse picking|Screen-space ray generation and mouse picking]] · [[Concepts/Singular value decomposition|Singular value decomposition]] · [[Concepts/Sparse and iterative solvers|Sparse and iterative solvers]] · [[Concepts/Stable probability normalization and log-sum-exp|Stable probability normalization and log-sum-exp]] · [[Concepts/Stable quadratic root evaluation|Stable quadratic root evaluation]] · [[Concepts/Standard-layout and trivial copyability|Standard-layout and trivial copyability]] · [[Concepts/Stateful pseudorandom generators and stream state|Stateful pseudorandom generators and stream state]] · [[Concepts/Stateless keyed sampling and reproducibility|Stateless keyed sampling and reproducibility]] · [[Concepts/Surface tangents normals and bitangents|Surface tangents normals and bitangents]] · [[Concepts/Symmetric positive-definite matrices and Cholesky|Symmetric positive-definite matrices and Cholesky]] · [[Concepts/Taylor models and approximation error|Taylor models and approximation error]] · [[Concepts/Tensor-product interpolation|Tensor-product interpolation]] · [[Concepts/Time integrators and symplectic updates|Time integrators and symplectic updates]] · [[Concepts/Transform hierarchies TRS and shear|Transform hierarchies TRS and shear]] · [[Concepts/Triple products and signed volume|Triple products and signed volume]] · [[Concepts/Uniform shuffling without replacement|Uniform shuffling without replacement]] · [[Concepts/Unit directions and safe normalization|Unit directions and safe normalization]] · [[Concepts/Vector spaces subspaces and span|Vector spaces subspaces and span]] · [[Concepts/Vector storage SIMD and boundary layouts|Vector storage SIMD and boundary layouts]] · [[Concepts/Vector tolerances and finite-state diagnostics|Vector tolerances and finite-state diagnostics]] · [[Concepts/Vector value types and component access|Vector value types and component access]] · [[Concepts/Vectors coordinates and affine points|Vectors coordinates and affine points]]
+
+
+## Recovered cumulative reconstruction proofs
+
+These complete proof sections are recovered from the retained pre-cleanup derivation snapshot. They restore the targets of stale navigation links and supplement the teaching already in this volume.
+
+## Phase 8 - Linear systems and decompositions
+
+These compact reconstructions support [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation|the full Phase 8 narrative]].
+
+### The solution set is one solution plus the null space
+
+If $A\mathbf x_0=\mathbf b$, then $A\mathbf x=\mathbf b$ exactly when $A(\mathbf x-\mathbf x_0)=0$. Hence
+
+$$
+\{\mathbf x:A\mathbf x=\mathbf b\}=\mathbf x_0+\operatorname{Null}(A).
+$$
+
+Rank-nullity follows by choosing a basis of the null space, extending it to a basis of the input space, and observing that the images of the added basis vectors form a basis of the column space. Therefore $\dim\operatorname{Null}(A)+\operatorname{rank}(A)=n$.
+
+### The least-squares residual is perpendicular to the reachable output
+
+Let $\widehat x$ minimize $\|Ax-b\|_2^2$. For any direction $h$, differentiate along $x(t)=\widehat x+th$:
+
+$$
+\frac{d}{dt}\|A(\widehat x+th)-b\|_2^2\bigg|_{t=0}
+=2h^\mathsf T A^\mathsf T(A\widehat x-b)=0.
+$$
+
+Since this holds for every $h$, $A^\mathsf T(A\widehat x-b)=0$. Thus the residual is orthogonal to every column of $A$. With thin QR $A=QR$ and full column rank, $Q^TQ=I$ preserves the norm and reduces the minimizer to $R\widehat x=Q^Tb$.
+
+### Why normal equations square the 2-norm condition number
+
+For full-column-rank $A$, the symmetric eigenvalues of $A^TA$ are the squared singular values of $A$. Therefore
+
+$$
+\kappa_2(A^TA)=\frac{\sigma_{\max}^2}{\sigma_{\min}^2}=\kappa_2(A)^2.
+$$
+
+This is an algebraic identity and a numerical warning: forming the Gram matrix can make small singular directions harder to distinguish.
+
+### The pseudoinverse conditions select least-squares then minimum norm
+
+For $A=U\Sigma V^T$, define the exact $A^+=V\Sigma^+U^T$ by reciprocating every positive singular value. The coordinates of $b$ along left-singular vectors with positive singular values determine $x$; components orthogonal to $\operatorname{Col}(A)$ remain residual. Null-space components of $x$ do not affect $Ax$, and choosing them as zero gives the minimum Euclidean norm.
+
+A numerical threshold instead defines $A_\tau^+$ by discarding directions with $\sigma_i\le\tau$. When the discarded values include positive singular values, this is the pseudoinverse of a truncated matrix $A_\tau$, and its result need not minimize the original residual for $A$. The threshold belongs to a declared problem scale and precision.
+
+### PCA through covariance and through the centered data SVD
+
+For centered sample rows $X\in\mathbb R^{N\times d}$ and $X=U\Sigma V^T$,
+
+$$
+C=\frac{X^TX}{N-1}
+=V\frac{\Sigma^T\Sigma}{N-1}V^T.
+$$
+
+Thus the right singular vectors of $X$ are covariance eigenvectors, and covariance eigenvalues equal $\sigma_i^2/(N-1)$. The identity explains PCA; computing SVD directly can avoid explicitly forming a Gram matrix with squared conditioning.
+
+### Right polar decomposition from the SVD
+
+For nonsingular square $A=U\Sigma V^T$, set $Q=UV^T$ and $H=V\Sigma V^T$. Then $Q$ is orthogonal, $H$ is symmetric positive definite, and
+
+$$
+QH=UV^TV\Sigma V^T=U\Sigma V^T=A.
+$$
+
+Also $H^2=V\Sigma^2V^T=A^TA$, so $H=(A^TA)^{1/2}$. If $A$ is singular, the positive-semidefinite square root still exists but the orthogonal completion may not be unique.
+
+### Scaling and squaring identity
+
+For any square matrix and integer $s\ge0$, the exponential's composition law gives
+
+$$
+e^A=\left(e^{A/2^s}\right)^{2^s}.
+$$
+
+The method chooses $s$ so a rational or polynomial approximation is accurate for the smaller-norm matrix, then squares. In floating point the identity motivates an algorithm; approximation and repeated rounding still need to be bounded and tested.
+
+## Phase 7 - Transform reconstruction proofs
+
+Essential proofs are in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
+
+### A change of basis changes a map on both sides
+
+Let $A$ represent one endomorphism in a reference basis, and let the columns of invertible $P$ be a new basis expressed in that reference. A new-coordinate input $x'$ represents $x=Px'$. Applying the map gives $y=APx'$, and expressing its output in the new basis gives $y'=P^{-1}APx'$. Thus its new matrix is $A'=P^{-1}AP$. This is a similarity transform, not a spatial motion of the object.
+
+The determinant is invariant under this change because
+
+$$
+\det(P^{-1}AP)=\det(P)^{-1}\det(A)\det(P)=\det(A).
+$$
+
+The trace is invariant because cyclically moving the first factor gives $\operatorname{tr}(P^{-1}AP)=\operatorname{tr}(APP^{-1})=\operatorname{tr}(A)$. These invariants do not identify the entire map: many distinct maps share trace and determinant. A row-major/column-major storage conversion is not a similarity transform; it changes address mapping, not the chosen basis.
+
+### A scaled quaternion separates the three rotation formulas
+
+For nonzero $q=m\widehat q$ with $\|\widehat q\|=1$ and $m>0$, the true-inverse sandwich is
+
+$$
+q(0,v)q^{-1}=\widehat q(0,v)\widehat q^*.
+$$
+
+Its scale cancels. The conjugate sandwich instead equals $m^2\widehat q(0,v)\widehat q^*$. For $q=2q_Z$, where $q_Z$ is the positive-Z quarter turn, the actions on X are respectively $(0,1,0)$ and $(0,4,0)$. The optimized unit-only expression $v+w(2u\times v)+u\times(2u\times v)$ gives $(-3,4,0)$ on that same invalid input. This demonstrates why describing every nonunit failure as uniform scaling is inaccurate: it depends on the actual formula used.
+
+### Why a restricted TRS representation is not closed
+
+The columns of $RD$ are pairwise perpendicular when $R$ is orthogonal and $D$ diagonal: $(RD)^T(RD)=D^2$ is diagonal. Let $S=\operatorname{diag}(2,1)$ and let $R$ rotate by $45^\circ$. The column dot product of $SR$ is $-3/2$, which is nonzero. Therefore no orthogonal $R'$ and diagonal $D'$ can satisfy $SR=R'D'$. Embedding this example in three dimensions proves the same limitation for general nonuniform-scale transform hierarchies. The affine matrix still exists; only the restricted storage promise fails.
+
+### Coupled normalization of a rigid dual quaternion
+
+Let a finite blended pair be $(r,d)$ with $a=\|r\|>0$. Define $r'=r/a$, $d_0=d/a$ and $d'=d_0-r'(r'\cdot d_0)$. Then
+
+$$
+\|r'\|=1,\qquad r'\cdot d'=r'\cdot d_0-(r'\cdot r')(r'\cdot d_0)=0.
+$$
+
+The recovered $2d'r'^*$ has zero scalar part, as a translation pure quaternion requires. This is projection onto the rigid constraints, not a claim that every weighted blend has the desired animation path. Sign-align both halves together before blending, handle cancellation of the real part, and keep scale/shear outside the rigid representation.
+
+## Phase 6 - Geometry reconstruction proofs
+
+These extensions belong to [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
+
+### Why projection is an orthogonal decomposition
+
+For a nonzero target vector $\mathbf b$, define $\alpha=(\mathbf a\cdot\mathbf b)/(\mathbf b\cdot\mathbf b)$ and $\mathbf r=\mathbf a-\alpha\mathbf b$. Then
+
+$$
+\mathbf r\cdot\mathbf b=\mathbf a\cdot\mathbf b-
+\frac{\mathbf a\cdot\mathbf b}{\mathbf b\cdot\mathbf b}(\mathbf b\cdot\mathbf b)=0.
+$$
+
+For any candidate coefficient $t$, the difference is $\mathbf r+(\alpha-t)\mathbf b$. Its squared length is
+
+$$
+\|\mathbf r\|^2+(\alpha-t)^2\|\mathbf b\|^2,
+$$
+
+since its cross term vanishes. The minimum occurs uniquely at $t=\alpha$. Thus perpendicular residual, least-squares projection, and closest line point are one result.
+
+For a unit axis $\mathbf u$, define the projection matrix $P=\mathbf u\mathbf u^\mathsf T$. Matrix multiplication reconstructs $(\mathbf a\cdot\mathbf u)\mathbf u$. Since $\mathbf u^\mathsf T\mathbf u=1$, we obtain $P^2=P$. The complementary rejection matrix $I-P$ is also idempotent. The plane reflection matrix is $I-2P$ and squares to identity:
+
+$$
+(I-2P)^2=I-4P+4P^2=I.
+$$
+
+This explains why reflecting twice restores a vector in exact arithmetic.
+
+### Gram determinants connect length and area
+
+For two generators, their Gram matrix is
+
+$$
+G=\begin{pmatrix}\mathbf a\cdot\mathbf a&\mathbf a\cdot\mathbf b\\
+\mathbf a\cdot\mathbf b&\mathbf b\cdot\mathbf b\end{pmatrix}.
+$$
+
+Its determinant is $\|\mathbf a\|^2\|\mathbf b\|^2-(\mathbf a\cdot\mathbf b)^2$, the squared parallelogram area. For a basis matrix $B$ with three columns, $G=B^\mathsf TB$. Therefore
+
+$$
+\det(G)=\det(B^\mathsf T)\det(B)=\det(B)^2.
+$$
+
+This is why the Gram determinant loses the sign of orientation. Reflecting the complete frame changes $\det(B)$ but not its square. A zero determinant signals dependence; a small dimensional value by itself is not a complete conditioning estimate.
+
+### Affine weights and translation
+
+For points with coordinates $p_i$ and weights $w_i$, move every contributor by $t$. Their weighted result becomes
+
+$$
+\sum_iw_i(p_i+t)=\sum_iw_ip_i+\left(\sum_iw_i\right)t.
+$$
+
+Weights summing to one produce the translation of a point. Weights summing to zero produce an origin-independent displacement. Other sums do not transform as either canonical role without further interpretation. Nonnegative weights summing to one produce convex combinations. The sum condition and sign condition solve different problems.
+
+### The normal transformation preserves a scalar pairing
+
+Let a vector transform actively as $v'=Av$, and represent a linear measurement by column coefficients $n$, so it returns $n^\mathsf Tv$. Preserving every measured result requires $n'^\mathsf TAv=n^\mathsf Tv$ for every $v$, hence $n'=A^{-\mathsf T}n$ when $A$ is invertible.
+
+For a passive basis description $v=Bc$, the same fixed measurement has coordinate coefficients $\omega_B=B^\mathsf Tn$. Notice that this is a different question from actively deforming a surface. Both formulas follow from the same pairing rather than contradictory transformation rules.
+
+In nonorthonormal coordinates, a vector's coordinate column $c$ determines its metric measurement row $c^\mathsf TG$. Componentwise dotting assumes $G=I$. This connects basis changes, dual measurements and normals.
+
+### Why perspective interpolation uses reciprocal weights
+
+Let affine surface weights be $\mu_i$, with sum one, and homogeneous vertex values $H_i$. Before division, the combined representative is $H=\sum_i\mu_iH_i$. Its final coordinate is $W=\sum_i\mu_iw_i$. After division, the screen weights satisfy
+
+$$
+\lambda_i=\frac{\mu_iw_i}{W}.
+$$
+
+Thus $\mu_i=\lambda_iW/w_i$. Impose $\sum_i\mu_i=1$ to get $W=1/(\sum_i\lambda_i/w_i)$, then
+
+$$
+\mu_i=\frac{\lambda_i/w_i}{\sum_j\lambda_j/w_j}.
+$$
+
+Applying these weights to an affine attribute gives the perspective-correct formula in the volume. The derivation assumes a valid projected configuration with appropriate nonzero denominators and clipping; it is not an instruction to divide primitives crossing a projective boundary.
+
+### Support queries commute with set addition in a specific way
+
+For nonempty compact sets $A,B$, expand the dot product in the support definition:
+
+$$
+h_{A\oplus B}(d)=\max_{a\in A,b\in B}(d\cdot a+d\cdot b)
+=h_A(d)+h_B(d).
+$$
+
+The maxima separate because the choices of $a$ and $b$ are independent. Reflecting $B$ gives $h_{-B}(d)=h_B(-d)$; a maximizing point is the negative of a maximizer for $B$ in direction $-d$. Thus one valid support point of the collision difference is $s_A(d)-s_B(-d)$. Maximizers need not be unique, so repeatable tie selection is part of an implementation contract.
+
+### Proof, numerical algorithm and application policy
+
+A mathematical identity can be correct while its direct arithmetic evaluation overflows or cancels. A numerically stable calculation can still solve an ill-conditioned problem. A certified sign for stored coordinates can still misrepresent a physically uncertain measurement. Teach these three boundaries separately; neither a tolerance nor a proof replaces all of them.
+
+
+## Direct textbook expansion and continuing source audit
+
+The seven-book source pages, new vector/metric/field teaching, original numerical reconstructions and ongoing corpus-review limits are recorded in [[Supplementary/Math Book Expansion - Teaching and Verification]]. The earlier caption and book corpus remains required work in [[Supplementary/Manual Integration - Pending Source Queue]].

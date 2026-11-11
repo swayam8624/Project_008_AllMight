@@ -13,7 +13,7 @@ The complete implementations remain beside their explanations; this page adds na
 
 The attachment reports KairoRenderer/Texture.cppm TextureHandle as a uint64_t identifier and TextureSampler as two enum fields, and KairoMath/Vector.cppm Vector2 with ordinary constructors but no custom copy/move/destruction operations. These are **To verify** in a live checkout. They motivate different semantic categories—cheap identifier/configuration values versus actual resource owners—without proving current layouts, traits or performance.
 
-No production class was changed. Independent TexturePayload, sink, raw-byte-owner and event-recorder examples remain in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Complete runnable value-transfer laboratory|the continuous laboratory]]. A later project audit should check whether copied handles retain non-owning semantics, whether domain invariants survive generated moves, and whether any user-declared special member suppresses an intended move. Do not add boilerplate merely to make a Rule-of-Five checklist look complete.
+No production class was changed. Independent TexturePayload, sink, raw-byte-owner and event-recorder examples remain in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Complete runnable value-transfer laboratory|the continuous laboratory]]. A later project audit should check whether copied handles retain non-owning semantics, whether domain invariants survive generated moves, and whether any user-declared special member suppresses an intended move. Do not add boilerplate merely to make a Rule-of-Five checklist look complete.
 
 ### Borrow-contract anchors added by M008
 
@@ -26,9 +26,9 @@ These are attachment-reported audit targets, not live findings. No production so
 | KairoECS Entity versus KairoEngineCore Entity | The attachment reports differing handle representations; check the actual definitions and validation policy rather than equating their names. |
 | KairoMath Vector Data/operator[] | Named members are not an array even if adjacent. Use actual array storage or explicit member selection under the API's contract. |
 
-An independently written, standard-library-only witness for growth and logical slot repurposing is inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Complete runnable borrow laboratory|the borrow laboratory]]. It is not a patch to Registry. A proposed pool-epoch wrapper would require an owner-lifetime contract, mutation coverage, synchronization and counter-wrap policy before implementation; none is silently supplied here.
+An independently written, standard-library-only witness for growth and logical slot repurposing is inline in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Complete runnable borrow laboratory|the borrow laboratory]]. It is not a patch to Registry. A proposed pool-epoch wrapper would require an owner-lifetime contract, mutation coverage, synchronization and counter-wrap policy before implementation; none is silently supplied here.
 
-These fragments came from M007, not from a live checkout. Reported names, ranges and APIs are **To verify**. They are separate here because they belong to projects with their own module/build dependencies. This merge does not authorize production edits. All independent C++ examples and the complete object laboratory are in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+These fragments came from M007, not from a live checkout. Reported names, ranges and APIs are **To verify**. They are separate here because they belong to projects with their own module/build dependencies. This merge does not authorize production edits. All independent C++ examples and the complete object laboratory are in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Volume 02]].
 
 Reported KairoMath/Vector.cppm module opening (source range 1–14):
 
@@ -69,7 +69,7 @@ Record language/version, inputs, outputs, preconditions, ownership and lifetime 
 ## M001 - Width-safe fields and LSB-first bit packing
 
 **Kind:** Canonical
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 / M001]]
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 / M001]]
 **Language:** C++23
 
 ### Contract
@@ -150,7 +150,7 @@ Compiled with Homebrew Clang in C++23 mode using warnings as errors. Assertions 
 ## M002 - Exhaustive 8-bit addition oracle and saturation
 
 **Kind:** Canonical
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 / M002]]
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 / M002]]
 **Language:** C++23
 
 ### Contract
@@ -275,7 +275,7 @@ For subtraction, reusing add8 on the complemented operand also produces the corr
 
 ## M003 - Explicit byte codecs and checked alignment
 
-**Kind:** Canonical · **Language:** C++23 · **Source:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|C003 / M003]].
+**Kind:** Canonical · **Language:** C++23 · **Source:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 / M003]].
 
 **Contract:** octets are eight bits; exact uint32/uint64 types must exist. Encode an unsigned 32-bit value in declared order; decode four bytes at a checked offset without typed unaligned dereferences. The input span is borrowed for the call only. Insufficient input or invalid power-of-two alignment/page shift throws invalid_argument; numeric rounding/translation overflow throws overflow_error. These functions manipulate bytes and numeric offsets; they neither allocate aligned objects nor query real page tables. Complexity is O(4) per codec and O(1) per numeric helper.
 

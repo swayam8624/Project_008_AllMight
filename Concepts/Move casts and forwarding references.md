@@ -31,4 +31,4 @@ Deduce both calls to relay and contrast unconditional move. Pending: deeper forw
 
 [[Supplementary/Foundations#M009 - Parts 127-147|C009 development]]
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Move permission is not resource transfer|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Move permission is not resource transfer|Teaching explanation and examples]] · [[Supplementary/Foundations#M008 - Parts 113-126|Exact coverage]] · [[Dependency Map]]

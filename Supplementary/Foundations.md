@@ -269,7 +269,7 @@ The supplied source has exactly twelve parts, 101–112. The revised M007 was in
 | 111 | [[Class access and invariants]] — struct defaults members and bases public; class defaults them private. Both are class types. Record/invariant intent is convention, not a syntactic capability limit. |
 | 112 | [[Standard-layout and trivial copyability]] — Alignment creates internal/tail padding. Traits do not imply array traversal, packing, serialization or GPU compatibility. Named x/y/z require explicit indexing or actual array storage. |
 
-Read [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|the C++ narrative]] from buildable text through entities, storage, occupants, domains and layout. Source numbers belong in this ledger, not in teaching chapters. Independent code and essential traces remain inline in that volume.
+Read [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|the C++ narrative]] from buildable text through entities, storage, occupants, domains and layout. Source numbers belong in this ledger, not in teaching chapters. Independent code and essential traces remain inline in that volume.
 
 This cumulative supplement retains the per-part definition and coverage ledger. The connected teaching volumes now explain the essential foundations, unfamiliar terms and worked steps directly; readers should not need this ledger to reconstruct a lesson. Concept links provide optional navigation. Examples and clarifications are explanatory material; repository claims retain their evidence status in [[Supplementary/Sources and Code Anchors]].
 
@@ -298,10 +298,10 @@ All fourteen supplied parts are accepted. Source numbering audits coverage; it d
 
 | Mechanism | Teaching position |
 |---|---|
-| Alias, type/category, conversion and deduction | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Giving another name to a live object\|Binding story]] |
-| Temporary lifetime, moves and forwarding | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A temporary needs an explicit lifetime story\|Lifetime story]] |
-| Pointer validity, container mutation and pool identity | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing\|Borrow story]] |
-| Const paths, getters, cache invariants | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Read-only is a path, not an ownership or synchronization promise\|Access story]] |
+| Alias, type/category, conversion and deduction | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Giving another name to a live object\|Binding story]] |
+| Temporary lifetime, moves and forwarding | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A temporary needs an explicit lifetime story\|Lifetime story]] |
+| Pointer validity, container mutation and pool identity | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When a valid borrow stops naming the intended thing\|Borrow story]] |
+| Const paths, getters, cache invariants | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Read-only is a path, not an ownership or synchronization promise\|Access story]] |
 
 ## M009 - Parts 127-147
 
@@ -333,7 +333,7 @@ The supplied source contains exactly twenty-one parts. At acceptance, it extende
 
 ## M010 - Parts 148-160
 
-M010 continues the same Volume 02 story from Rule-of-Zero composition into the concrete ownership and lifetime protocols underneath it. The source specifies Parts 148–160. Repository paths named in the pasted lesson are source-provided examples and remain **To verify** until their repositories/revisions are inspected. These entries identify coverage; the expanded teaching narrative is in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From a live object to responsible resource ownership|Volume 02]].
+M010 continues the same Volume 02 story from Rule-of-Zero composition into the concrete ownership and lifetime protocols underneath it. The source specifies Parts 148–160. Repository paths named in the pasted lesson are source-provided examples and remain **To verify** until their repositories/revisions are inspected. These entries identify coverage; the expanded teaching narrative is in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a live object to responsible resource ownership|Volume 02]].
 
 | Part | Definition, mechanism, and concrete reconstruction cue |
 |---|---|
@@ -353,17 +353,17 @@ M010 continues the same Volume 02 story from Rule-of-Zero composition into the c
 
 The source discusses resource owners, smart pointers, manual allocation, placement construction, array ownership and lifetime restart. Its repository examples (`KairoRenderer/VulkanBuffer.cppm`, `Maveb/.../MetalPtr.hpp`) are **not** represented as live-inspected code findings here.
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From a live object to responsible resource ownership|Continuous teaching narrative]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Active-recall visual board]] · [[Keyword Index]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a live object to responsible resource ownership|Continuous teaching narrative]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Active-recall visual board]] · [[Keyword Index]] · [[Dependency Map]]
 
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
 |---|---|
-| What crosses a call, and what can the callee retain? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#A value crosses the function boundary\|Parameter and sink contracts]] |
-| How can a result become an owning object without a hidden copy? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Return a result without handing out a lifetime problem\|Result construction]] |
-| How does initial state become valid, then get cleaned up? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Construction establishes a usable state\|Construction-to-cleanup story]] |
-| What does copying or moving this value mean? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Copy a meaning rather than just its bytes\|Copy, assignment and transfer story]] |
-| Which boilerplate should exist at all? | [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#From three repairs to five decisions to zero boilerplate\|Composition and ownership]] |
+| What crosses a call, and what can the callee retain? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A value crosses the function boundary\|Parameter and sink contracts]] |
+| How can a result become an owning object without a hidden copy? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Return a result without handing out a lifetime problem\|Result construction]] |
+| How does initial state become valid, then get cleaned up? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Construction establishes a usable state\|Construction-to-cleanup story]] |
+| What does copying or moving this value mean? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Copy a meaning rather than just its bytes\|Copy, assignment and transfer story]] |
+| Which boilerplate should exist at all? | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From three repairs to five decisions to zero boilerplate\|Composition and ownership]] |
 
 ## M001 - Parts 1-20
 
@@ -525,14 +525,14 @@ Source numbering is an audit ledger, not lesson segmentation. The complete teach
 
 | Source material | Teaching position |
 |---|---|
-| Binary states, bases, unsigned/signed encodings | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation\|Interpretation]] |
-| Boolean rules, masks, shifts and packed fields | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields\|Decisions and fields]] |
-| Adders, integer algorithms, range policies and language conversions | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy\|Finite arithmetic]] |
-| IEEE fields, special classes and representable spacing | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities\|Floating representation]] |
-| Rounding paths, cancellation, error and reproducibility | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty\|Arithmetic uncertainty]] |
-| Fixed point, FP16/BF16, quantizers and normalized formats | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep\|Representation choices]] |
-| Addresses, layout, page translation and storage lifetime | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live\|Placement]] |
-| Bit transfer, schemas, checked parsing, integrity and dumps | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement\|External bytes]] |
+| Binary states, bases, unsigned/signed encodings | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation\|Interpretation]] |
+| Boolean rules, masks, shifts and packed fields | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bits become decisions and compact fields\|Decisions and fields]] |
+| Adders, integer algorithms, range policies and language conversions | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy\|Finite arithmetic]] |
+| IEEE fields, special classes and representable spacing | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A stretching ruler for real-valued quantities\|Floating representation]] |
+| Rounding paths, cancellation, error and reproducibility | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty\|Arithmetic uncertainty]] |
+| Fixed point, FP16/BF16, quantizers and normalized formats | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choosing what information to keep\|Representation choices]] |
+| Addresses, layout, page translation and storage lifetime | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live\|Placement]] |
+| Bit transfer, schemas, checked parsing, integrity and dumps | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bytes become a durable agreement\|External bytes]] |
 
 
 ## Phase 8 - Parts 701-800

@@ -1671,4 +1671,166 @@ As the sources arrive, we will extend this same independent file. Later material
 
 The 3,000-part curriculum's numbering remains unchanged.
 
-[[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent source coverage]] · [[Supplementary/Derivations#XR - Sampling, contrast transfer and temporal evidence|Deeper reconstructions]] · [[Supplementary/Worked Traces#XR - From geometry to sample loss and evidence|Extended traces]] · [[Supplementary/Sources and Code Anchors#XR01 - Seeing and representing reality|Evidence, corrections and verification]] · [[Dependency Map]] · [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Visual-recall board]]
+[[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent source coverage]] · [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#XR - Sampling, contrast transfer and temporal evidence|Deeper reconstructions]] · [[Supplementary/Worked Traces#XR - From geometry to sample loss and evidence|Extended traces]] · [[Supplementary/Sources and Code Anchors#XR01 - Seeing and representing reality|Evidence, corrections and verification]] · [[Dependency Map]] · [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Visual-recall board]]
+
+
+## Recovered cumulative reconstruction proofs
+
+These complete proof sections are recovered from the retained pre-cleanup derivation snapshot. They restore the targets of stale navigation links and supplement the teaching already in this volume.
+
+## XR - Sampling, contrast transfer and temporal evidence
+
+### Why local pixels per degree is not the average
+
+Start with a flat screen. Let its width be $W$, its viewing distance $D$, and its number of pixel columns $N$. The viewer looks at the center.
+
+Pixel pitch is $p=W/N$. For a point at angle $\theta$:
+
+$$
+x=D\tan\theta.
+$$
+
+The angle is in radians. Differentiating gives the amount of screen distance per angular change:
+
+$$
+\frac{dx}{d\theta}=D\sec^2\theta.
+$$
+
+Divide by pixel pitch to get pixels per radian. Then multiply by $\pi/180$ to get pixels per degree.
+
+At the center:
+
+$$
+\mathrm{PPD}_0=\frac{DN}{W}\frac{\pi}{180}.
+$$
+
+The average density uses the entire field of view instead:
+
+$$
+\mathrm{PPD}_{\mathrm{average}}
+=\frac{N}{(360/\pi)\tan^{-1}(W/(2D))}.
+$$
+
+With $W=0.53\,\mathrm{m}$, $D=0.60\,\mathrm{m}$, and $N=1920$, the center has about 37.9362 PPD. The average is about 40.2863 PPD.
+
+These numbers answer different questions. They are not conflicting measurements. A different projection or lens distortion requires its own mapping. See [[Visual angle and calibrated rays]].
+
+### Sampling creates ambiguity before reconstruction begins
+
+Take sample index $n$ and change the original frequency from $f_0$ to $f_0+mf_s$, where $m$ is an integer.
+
+The extra phase is $2\pi mn$. At integer sample positions it is a whole number of cycles, so the samples do not change. For a real cosine, negative-frequency equivalence also matters.
+
+In frequency coordinates, sampling repeats the original spectrum every $f_s$. If that spectrum occupies $[-B,B]$, the copies stay separate when:
+
+$$
+f_s>2B.
+$$
+
+This is the strict band-limited form used here.
+
+Sinc reconstruction can select the original copy under the ideal assumptions. Once copies overlap, later smoothing cannot generally identify which part came from which original frequency.
+
+The boundary case also matters. At $f_s/2$, a sine can give:
+
+$$
+\sin(\pi n)=0
+$$
+
+for every integer $n$. The continuous signal is nonzero between those observations.
+
+### A normalized filter preserves constants, not arbitrary details
+
+For convolution:
+
+$$
+y[n]=\sum_k h[k]x[n-k],
+$$
+
+a constant input $x[n]=a$ gives:
+
+$$
+y[n]=a\sum_k h[k].
+$$
+
+The filter preserves the constant when its weights sum to one and its boundary rule also preserves constants.
+
+The weights $1/4$, $1/2$, and $1/4$ have frequency response:
+
+$$
+H(\omega)=\frac{1+\cos\omega}{2}.
+$$
+
+The gain is one at $\omega=0$ and zero at $\omega=\pi$.
+
+A balanced difference of two normalized Gaussians instead has zero DC response. Unequal gains do not necessarily cancel.
+
+For the stated continuous Gaussian blur model:
+
+$$
+\mathrm{MTF}(f)=e^{-2\pi^2\sigma^2f^2}.
+$$
+
+Use matching units for blur width $\sigma$ and frequency $f$. A finite discrete kernel need not have exactly this response.
+
+### Temporal variance and age are conditional results
+
+Assume a constant blend factor $\alpha$, a stationary target, correct alignment, and independent observations with equal noise variance.
+
+The weight given to an observation $j$ frames old is:
+
+$$
+w_j=\alpha(1-\alpha)^j.
+$$
+
+The weights sum to one. For independent noise, variance uses the sum of squared weights:
+
+$$
+\frac{\operatorname{Var}(H)}{\operatorname{Var}(C)}
+=\frac{\alpha^2}{1-(1-\alpha)^2}
+=\frac{\alpha}{2-\alpha}.
+$$
+
+The mean age is:
+
+$$
+\operatorname{meanAge}=\frac{1-\alpha}{\alpha}
+\quad\text{frames}.
+$$
+
+These formulas explain noise reduction and delayed response. They do not prove valid history after disocclusion or a changing target. Correlated errors add covariance terms, and reducing variance does not remove bias. See [[Temporal reprojection and history validation]].
+
+### Psychometric scale is not itself the chosen threshold
+
+Use the illustrative curve:
+
+$$
+F(x)=1-\frac12e^{-(x/\lambda)^k},
+\qquad \lambda>0,\quad k>0.
+$$
+
+Define the threshold $T$ as the stimulus level giving 75% correct:
+
+$$
+F(T)=0.75.
+$$
+
+Rearrange:
+
+$$
+e^{-(T/\lambda)^k}=\frac12.
+$$
+
+Taking logarithms gives:
+
+$$
+\left(\frac{T}{\lambda}\right)^k=\ln2.
+$$
+
+Therefore:
+
+$$
+T=\lambda(\ln2)^{1/k}.
+$$
+
+The numerical lab verifies $F(T)=0.75$ for illustrative parameters. It does not fit participant responses or validate a paper's fitted coefficients.

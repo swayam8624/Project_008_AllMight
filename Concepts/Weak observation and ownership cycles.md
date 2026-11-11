@@ -29,4 +29,4 @@ Draw a parent/child graph with one weak edge and prove that destruction can proc
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Weak observation breaks cycles without pretending an object is alive|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Weak observation breaks cycles without pretending an object is alive|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]

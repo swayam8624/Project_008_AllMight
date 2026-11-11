@@ -158,3 +158,48 @@ flowchart LR
 
 This rendering/inference loop joins the original image-formation chapters to learned 3D methods. The reverse arrow indicates an inference problem; it does not imply a unique reconstruction.
 
+
+
+## Rendering, materials, transport — retrieve the reasons
+
+![[Visual Recall/Integrated Geometry and Engine/rendering-representation-witnesses.png]]
+
+The left panel explains projective interpolation; the middle separates encoded storage from linear light; the right proves that a missing sampling region can create bias. These are numerical witnesses, not rendered screenshots from a working engine.
+
+| Recall prompt | Short answer | Full teaching / figure explanation |
+|---|---|---|
+| Why clip before dividing? | A primitive can cross the camera plane; division near zero creates unbounded coordinates. Clip the homogeneous primitive first. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Decide which samples a triangle owns|Coverage and interpolation]] |
+| Which barycentrics recover a texture coordinate? | Screen weights need reciprocal-$w$ correction. Already-divided depth instead interpolates affinely on screen. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Decide which samples a triangle owns|Projected quantities]] |
+| Why does reversed depth help? | Reciprocal distance pairs well with floating-point spacing near zero; every depth consumer must agree on ordering. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Give depth an explicit meaning|Depth contract]] |
+| Why is encoded midpoint $0.5$ too dark? | It decodes to about $0.214$ linear light. Average linear values first. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Make every color number carry a meaning|Color witness]] |
+| What do $D,F,G$ mean? | Facet distribution, interface reflection, and geometric visibility. The NDF normalizes with projected area. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Ask a surface where incoming energy can go|Material reasoning]] |
+| Why can a PDF exceed one? | It is density per unit measure. Its integral is one; its pointwise value need not be bounded by one. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability|Sampling measures]] |
+| What must area-light sampling include? | Light-choice probability, area density, and the area-to-solid-angle Jacobian. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability|Light estimator]] |
+| What makes MIS complete? | Correctly weighted contributions from the participating sampling techniques, in the same measure, with delta events handled separately. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability|MIS and throughput]] |
+| Does more sampling remove every error? | It reduces stochastic error under the estimator's assumptions. Missing-domain and transport-model bias can remain. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A missing region cannot be repaired by taking more samples there|Five-cell counterexample and figure]] |
+
+Reconstruct without looking: show why the screen midpoint gives $u=0.2$ for $w=(1,4)$; derive the cosine hemisphere integral $\pi$; convert a selected area-light density into solid angle; explain why roulette survivors divide by survival probability. Then point to where each assumption appears in the implementation.
+
+
+## Explicit rendering, captured kernels and animated surfaces - retrieval briefs
+
+![[Visual Recall/Explicit Rendering/footprint-order-lifetime.png]]
+
+- **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#Local projection turns an ellipsoid into a screen ellipse|Covariance to pixels]]** — A Jacobian is a local linear prediction. Transform covariance as $J\Sigma J^T$, then invert the 2D covariance for the conic. Near-plane rejection and a finite footprint policy are prerequisites. Why is this only a local perspective approximation?
+
+- **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#From ellipses to bounded tile work|Allocate tile work]]** — Count references, exclusive-scan counts, scatter to disjoint slices, sort by tile/depth, then composite. Counts $[4,2,5,1]$ give offsets $[0,4,6,11]$. Why must an unstable final tile sort not destroy depth order?
+
+- **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#Figure ER1 - Footprint, compositing order and storage lifetime|Composite in order]]** — Contribution is $T\alpha c$ and new transmittance is $T(1-\alpha)$. Two half-opaque layers leave $T=0.25$. A transmittance threshold is an approximation budget, not a universal reference constant.
+
+- **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#Validation should isolate representations before images|Validate separate outputs]]** — Compare color in a declared space, depth with units, and IDs as discrete values. Average error, peak error and changed-pixel fraction answer different questions. CPU/GPU agreement does not establish antialiasing quality.
+
+- **[[Computing Foundations - From Bits to C++ and Systems APIs#Follow a frame slot and a presentation image separately|Reuse the right object]]** — A slot fence proves slot work completed. It does not prove a presentation wait consumed its semaphore. Frame-slot and acquired-image indices are separate domains. What resolves an acquisition followed by recording failure?
+
+- **[[Computing Foundations - From Bits to C++ and Systems APIs#Retire a resource after every user, not after one convenient clock|Retire across queues]]** — Every required queue counter must be reached. $(10,4,100)$ does not cover required $(9,5,3)$. Ownership preserves the payload; completion permits destruction.
+
+- **[[Game Engine - From First Frame to Living Worlds#2. Compile a render graph before executing it|Compile the graph]]** — Versions identify values, dependencies order producers/consumers, and lifetimes constrain storage aliasing. A list position does not prove that independent queues have stopped using memory.
+
+- **[[Game Engine - From First Frame to Living Worlds#Rendering identity becomes world identity only through an explicit bridge|Turn capture into editable world]]** — Persistent identity survives sorting; physical support supplies deformation. For affine motion, $\mu'=F\mu+t$ and $\Sigma'=F\Sigma F^T$. Appearance kernels alone supply neither mass nor colliders.
+
+- **[[University - Worlds, Images and Inference - Graphics, Vision and Photography#5. Build a pose first, then deform the surface|Animate in a declared space]]** — Sample pose, resolve the hierarchy, morph before skinning, and build matching current/previous transforms. A global-joint palette already outputs world space. Why does adding the mesh world transform again break it?
+

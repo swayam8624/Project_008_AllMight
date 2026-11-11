@@ -55,7 +55,7 @@ flowchart LR
 
 **Teaching check:** explain every coefficient, space and failure result before running [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A complete scalar laboratory makes the contracts observable|the standalone C++ laboratory]]. Written coverage and successful tests do not measure personal mastery.
 
-[[Supplementary/Foundations#Phase 7 - Parts 601-700|Source ledger and gap]] · [[Supplementary/Derivations#Phase 7 - Transform reconstruction proofs|Derivations]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Tracebook]] · [[Dependency Map]]
+[[Supplementary/Foundations#Phase 7 - Parts 601-700|Source ledger and gap]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 7 - Transform reconstruction proofs|Derivations]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Tracebook]] · [[Dependency Map]]
 
 ## Added retrieval prompt
 

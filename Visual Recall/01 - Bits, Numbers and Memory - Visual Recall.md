@@ -8,7 +8,7 @@ companion: "Volume 01"
 
 # Bits, Numbers and Memory - Visual Recall
 
-**Scope:** Parts 1–100 only, M001–M006. Companion to [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory|From Signals to Meaning]]. No C++ Volume 02 material is included. This is a retrieval desk, not another textbook.
+**Scope:** Parts 1–100 only, M001–M006. Companion to [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|From Signals to Meaning]]. No C++ Volume 02 material is included. This is a retrieval desk, not another textbook.
 
 ## How to use this desk
 
@@ -33,16 +33,16 @@ flowchart LR
     M --> D["External format"]
 ```
 
-**Caption:** Follow one value from physical signal to stored bytes and back. At every transition ask: *Which bits? What meaning? What range/error policy? Where and during which lifetime? What format contract?* For the end-to-end laboratory, see [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|the complete journey]].
+**Caption:** Follow one value from physical signal to stored bytes and back. At every transition ask: *Which bits? What meaning? What range/error policy? Where and during which lifetime? What format contract?* For the end-to-end laboratory, see [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The complete journey - Encode, compute, store, and investigate|the complete journey]].
 
 > [!abstract] Compact teaching notes
-> **Represent:** bits are patterns; interpretation supplies meaning. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#One bit, several bits, and an interpretation|Bit-pattern example]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Why invert-and-add-one works|Two's-complement derivation]]
+> **Represent:** bits are patterns; interpretation supplies meaning. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One bit, several bits, and an interpretation|Bit-pattern example]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Why invert-and-add-one works|Two's-complement derivation]]
 >
-> **Select and compute:** mask = select; shift = reposition; pack = preserve neighbors plus insert validated fields. Arithmetic needs an explicit overflow policy. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Fields: select, normalize, replace|Field figure/formulas]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Test the packed meaning|Packing lab]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the overflow policy before calculating|Overflow choices]]
+> **Select and compute:** mask = select; shift = reposition; pack = preserve neighbors plus insert validated fields. Arithmetic needs an explicit overflow policy. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Fields: select, normalize, replace|Field figure/formulas]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Test the packed meaning|Packing lab]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose the overflow policy before calculating|Overflow choices]]
 >
-> **Approximate:** floating point has nonuniform spacing; fixed point has a chosen scale. Rounding is part of each operation; tolerance is a domain rule, not a universal epsilon. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Encode 10.625, then decode −13.25|Worked encoding]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Cancellation can expose errors made earlier|Cancellation figure]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A fixed ruler for fractional values|Fixed-point example]]
+> **Approximate:** floating point has nonuniform spacing; fixed point has a chosen scale. Rounding is part of each operation; tolerance is a domain rule, not a universal epsilon. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Encode 10.625, then decode −13.25|Worked encoding]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Cancellation can expose errors made earlier|Cancellation figure]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A fixed ruler for fractional values|Fixed-point example]]
 >
-> **Store and exchange:** address alone does not prove valid access; alignment, lifetime, ownership, and permissions are separate. A file needs an explicit schema and checked lengths. [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Virtual memory translates page identity|Address translation]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Storage, lifetime, ownership, and placement are different axes|Memory model]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Validate lengths before performing the arithmetic they request|Parser safety lab]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Read a dump by reversing the contract|Hex-dump lab]]
+> **Store and exchange:** address alone does not prove valid access; alignment, lifetime, ownership, and permissions are separate. A file needs an explicit schema and checked lengths. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Virtual memory translates page identity|Address translation]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage, lifetime, ownership, and placement are different axes|Memory model]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Validate lengths before performing the arithmetic they request|Parser safety lab]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Read a dump by reversing the contract|Hex-dump lab]]
 
 ## Figure-linked pocket notes
 
@@ -50,16 +50,16 @@ Read one row, reconstruct its example, then follow the **figure** for the diagra
 
 | Topic | Smallest useful note | Return to the teaching chapter |
 |---|---|---|
-| Interpretation | Same bits, different weights: `AD` is unsigned 173 or signed −83. State width and encoding first. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B1 - One pattern, two integer readings\|Figure B1]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The same bits can mean different integers\|Explanation]] |
-| Field replacement | Validate → clear → position → OR. `AD→9D` changes quality 2→1; outside-mask bits remain `8D`. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B2 - Replace a field without damaging its neighbors\|Figure B2]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Fields: select, normalize, replace\|Formulas and trace]] |
-| Finite arithmetic | Exact $250+20=270$: eight-bit wrap gives 14, saturation 255, rejection no value. Widen before evaluating. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the overflow policy before calculating\|Policy table]] |
-| Floating fields | Classify exponent/fraction first; normal binary32 has 24 precision bits, including its implicit leading one. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The two formats and their interpretation\|Field table]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Encode 10.625, then decode −13.25\|Encoding trace]] |
-| Rounding graph | FMA rounds once; separate multiply/add rounds twice. For the stated example: $2^{-46}$ versus zero. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B3 - Rounding points change the answer\|Figure B3]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#One rounding rather than two\|Explanation]] |
-| Error | Cancellation can expose previous input errors even when subtraction of stored operands is exact. Tolerance needs units and a policy. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Cancellation can expose errors made earlier\|Worked trace]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Epsilon is one spacing, not a tolerance\|Spacing table]] |
-| Representation choice | Fixed point chooses a constant step; floats choose a changing step; quantization chooses a finite codebook. Packing valid codes loses no further information. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choose the contract before choosing the type\|Comparison]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#An INT4 group, from numbers to nibbles and back\|Nibble trace]] |
-| Translation | Mapping changes page identity and preserves offset: `12345ABC→987ABC` under the example 4-KiB mapping. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Figure B4 - Translation preserves the offset\|Figure B4]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Virtual memory translates page identity\|Explanation]] |
-| Valid access | Bounds, alignment, lifetime, permitted access and mapping are separate obligations; old bytes prove none alone. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Storage, lifetime, ownership, and placement are different axes\|Lifetime/ownership table]] |
-| External bytes | Specify schema → validate arithmetic/limits → decode. Integrity, authenticity and durability require their own contracts. | [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Validate lengths before performing the arithmetic they request\|Bounds rules]] · [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Read a dump by reversing the contract\|Full dump]] |
+| Interpretation | Same bits, different weights: `AD` is unsigned 173 or signed −83. State width and encoding first. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure B1 - One pattern, two integer readings\|Figure B1]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The same bits can mean different integers\|Explanation]] |
+| Field replacement | Validate → clear → position → OR. `AD→9D` changes quality 2→1; outside-mask bits remain `8D`. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure B2 - Replace a field without damaging its neighbors\|Figure B2]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Fields: select, normalize, replace\|Formulas and trace]] |
+| Finite arithmetic | Exact $250+20=270$: eight-bit wrap gives 14, saturation 255, rejection no value. Widen before evaluating. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose the overflow policy before calculating\|Policy table]] |
+| Floating fields | Classify exponent/fraction first; normal binary32 has 24 precision bits, including its implicit leading one. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The two formats and their interpretation\|Field table]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Encode 10.625, then decode −13.25\|Encoding trace]] |
+| Rounding graph | FMA rounds once; separate multiply/add rounds twice. For the stated example: $2^{-46}$ versus zero. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure B3 - Rounding points change the answer\|Figure B3]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One rounding rather than two\|Explanation]] |
+| Error | Cancellation can expose previous input errors even when subtraction of stored operands is exact. Tolerance needs units and a policy. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Cancellation can expose errors made earlier\|Worked trace]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Epsilon is one spacing, not a tolerance\|Spacing table]] |
+| Representation choice | Fixed point chooses a constant step; floats choose a changing step; quantization chooses a finite codebook. Packing valid codes loses no further information. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose the contract before choosing the type\|Comparison]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An INT4 group, from numbers to nibbles and back\|Nibble trace]] |
+| Translation | Mapping changes page identity and preserves offset: `12345ABC→987ABC` under the example 4-KiB mapping. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure B4 - Translation preserves the offset\|Figure B4]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Virtual memory translates page identity\|Explanation]] |
+| Valid access | Bounds, alignment, lifetime, permitted access and mapping are separate obligations; old bytes prove none alone. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage, lifetime, ownership, and placement are different axes\|Lifetime/ownership table]] |
+| External bytes | Specify schema → validate arithmetic/limits → decode. Integrity, authenticity and durability require their own contracts. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Validate lengths before performing the arithmetic they request\|Bounds rules]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Read a dump by reversing the contract\|Full dump]] |
 
 **Recall checkpoint:** draw B1–B4 without looking. Label one assumption and one failure in each. For example: decoding `AD` as a float is the wrong contract; OR-only insertion cannot clear a field; contraction can erase the intended two-rounding path; a valid address translation does not establish a live C++ object.
 
@@ -87,7 +87,7 @@ flowchart TD
 
 ## 1 - A pattern does not announce its meaning
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|Repair this foundation]] · [[Interpretation contract]] · [[Two's complement]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|Repair this foundation]] · [[Interpretation contract]] · [[Two's complement]]
 
 ```text
 bit index       7    6    5    4    3    2    1    0
@@ -124,7 +124,7 @@ For $N$ independent bits: $2^N$ patterns. Unsigned maximum is $2^N-1$, not $2^N$
 
 ## 2 - Select, move, replace
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bits become decisions and compact fields|Repair decisions and fields]] · [[Bit mask]] · [[Bit packing]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bits become decisions and compact fields|Repair decisions and fields]] · [[Bit mask]] · [[Bit packing]]
 
 ```mermaid
 flowchart LR
@@ -163,7 +163,7 @@ For width $w$, offset $s$, carrier $N$: require $0<w$, $s+w\le N$, valid shift c
 
 ## 3 - The adder is simple; the policy is not
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|Repair finite arithmetic]] · [[Full adder]] · [[Arithmetic policies]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|Repair finite arithmetic]] · [[Full adder]] · [[Arithmetic policies]]
 
 ```mermaid
 flowchart LR
@@ -208,7 +208,7 @@ signed overflow    must be prevented BEFORE evaluating the expression
 
 ## 4 - A stretching ruler with special regions
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#A stretching ruler for real-valued quantities|Repair floating representation]] · [[IEEE-754 floating point]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A stretching ruler for real-valued quantities|Repair floating representation]] · [[IEEE-754 floating point]]
 
 ```text
 binary32: [ sign:1 ][ stored exponent:8 ][ fraction:23 ]  normal precision24
@@ -259,7 +259,7 @@ Here S is sign0/1, E stored exponent, F the unsigned23-bit fraction. Subnormal v
 
 ## 5 - Follow the rounding points, not algebra alone
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#When arithmetic meets uncertainty|Repair numerical reasoning]] · [[Cancellation and loss of significance]] · [[Numerical reproducibility]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty|Repair numerical reasoning]] · [[Cancellation and loss of significance]] · [[Numerical reproducibility]]
 
 ```mermaid
 flowchart LR
@@ -295,7 +295,7 @@ flowchart LR
 
 ## 6 - Choose what information to keep
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Choosing what information to keep|Repair representation choices]] · [[Fixed-point representation]] · [[Affine quantization and zero point]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choosing what information to keep|Repair representation choices]] · [[Fixed-point representation]] · [[Affine quantization and zero point]]
 
 | Format | What it buys | What remains |
 |---|---|---|
@@ -332,7 +332,7 @@ quantization loses information; packing valid codes does not.
 
 ## 7 - Placement, translation and lifetime are separate
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Where the bytes live|Repair memory reasoning]] · [[Endianness]] · [[Alignment and padding]] · [[Page tables and MMU]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|Repair memory reasoning]] · [[Endianness]] · [[Alignment and padding]] · [[Page tables and MMU]]
 
 ```text
 value 12345678 hex     increasing byte addresses →
@@ -389,7 +389,7 @@ stateDiagram-v2
 
 ## 8 - External bytes need a complete agreement
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Bytes become a durable agreement|Repair external bytes]] · [[Checked binary parsing]] · [[Integrity and authenticity]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bytes become a durable agreement|Repair external bytes]] · [[Checked binary parsing]] · [[Integrity and authenticity]]
 
 ```mermaid
 sequenceDiagram
@@ -468,4 +468,4 @@ This map is navigation, not partwise lesson segmentation. Overlapping examples m
 | 41–60 | [[#7 - Placement, translation and lifetime are separate]] |
 | 97–100 | [[#8 - External bytes need a complete agreement]] |
 
-Repair exact definitions in [[Supplementary/Foundations]]; longer proofs in [[Supplementary/Derivations]]; extended experiments in [[Supplementary/Code Snippets]] and [[Supplementary/Worked Traces]]. The full teaching explanations remain in Volume01. Future recall companions should reuse this one-per-volume structure; none is created for C++ in this request.
+Repair exact definitions in [[Supplementary/Foundations]]; longer proofs in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstruct the representation and lifetime proofs]]; extended experiments in [[Supplementary/Code Snippets]] and [[Supplementary/Worked Traces]]. The full teaching explanations remain in Volume01. Future recall companions should reuse this one-per-volume structure; none is created for C++ in this request.

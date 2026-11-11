@@ -38,4 +38,4 @@ Give an example, explain why the rule exists, and identify which guarantee would
 
 [[Supplementary/Foundations#M009 - Parts 127-147|C009 development]]
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Storage is a place; an object is its occupant|C007 teaching chapter]] · [[Supplementary/Foundations#M007 - Parts 101-112|Source coverage]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Storage is a place; an object is its occupant|C007 teaching chapter]] · [[Supplementary/Foundations#M007 - Parts 101-112|Source coverage]] · [[Dependency Map]]

@@ -8,8 +8,8 @@ The requested exhaustive video pass remains in progress. A retrieved caption fil
 
 | Channel | Selected unique video candidates | YouTube captions retrieved | Full caption reads | Full generated-ASR reads | Partial caption reviews | Not reviewed |
 |---|---:|---:|---:|---:|---:|---:|
-| Travis Vroman | 426 | 156 | 156 | 3 | 0 | 267 |
-| Total | 746 | 448 | 448 | 5 | 0 | 293 |
+| Travis Vroman | 426 | 156 | 156 | 6 | 0 | 264 |
+| Total | 746 | 448 | 448 | 8 | 0 | 290 |
 | The Cherno | 320 | 292 | 292 | 2 | 0 | 26 |
 
 Kohi's core playlist was enumerated at 395 positions. Travis's channel inventory captured 573 unique metadata IDs across the inspected feeds; 426 were selected as engine candidates, including the TypeScript Engine series. Cherno's six listed series total 234 positions; another 86 channel-video candidates expand its selected set to 320. Title-based discovery is an inclusion aid, not content analysis. Feed enumeration can omit private, removed, unlisted, or otherwise inaccessible material. These are captured scope counts, not a claim to know every unpublished source.
@@ -83,7 +83,7 @@ Each selected ID appears once. Playlist memberships are retained in the raw inve
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [4M1hKSFxhWw — Kohi #018: Vulkan Renderpass (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=4M1hKSFxhWw) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [nPzNYN0kwqA — Kohi #019: Vulkan Command Pools and Buffers (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=nPzNYN0kwqA) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [Is6CwlsaCFE — Kohi #020: Vulkan Framebuffers and Sync Objects (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=Is6CwlsaCFE) | English VTT retrieved | full caption read |
-| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [hRL71D1f3pU — Kohi #021: BIG Milestone! (Clearing the Screen) (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=hRL71D1f3pU) | attempt failed; caption unavailable or rate limited | not reviewed |
+| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [hRL71D1f3pU — Kohi #021: BIG Milestone! (Clearing the Screen) (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=hRL71D1f3pU) | YouTube caption not retrieved; local Whisper ASR from public audio | full generated transcript read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [WR0tAQj-og8 — Kohi #022: Build System Update and Math Library Part 1 (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=WR0tAQj-og8) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [nk3KNPrSRqc — Kohi #023: Math Library Part 2: Matrices and Quaternions (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=nk3KNPrSRqc) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [KanKG-vd9GA — Kohi #024: Vulkan Graphics Pipeline (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=KanKG-vd9GA) | English VTT retrieved | full caption read |
@@ -123,13 +123,13 @@ Each selected ID appears once. Playlist memberships are retained in the raw inve
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [kIbW4Kv6p4c — Kohi #055: Meshes Part 2: Loading from OBJ File (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=kIbW4Kv6p4c) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [Uk2p3vKBMXE — Kohi #056: Custom Binary Mesh File Format (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=Uk2p3vKBMXE) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [hGA2veSznn8 — Kohi #057: Enhancing Texture Maps (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=hGA2veSznn8) | English VTT retrieved | full caption read |
-| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [86022SGWaHc — Kohi #058: Writeable textures (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=86022SGWaHc) | attempt failed; caption unavailable or rate limited | not reviewed |
+| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [86022SGWaHc — Kohi #058: Writeable textures (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=86022SGWaHc) | YouTube caption not retrieved; local Whisper ASR from public audio | full generated transcript read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [tZjc_hSaUA4 — Kohi #059: Render Targets and Configurable Renderpasses (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=tZjc_hSaUA4) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [6UMJzh1RdOo — Kohi #060: Camera System (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=6UMJzh1RdOo) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [f8fx0HB6GgY — Kohi #061: View System (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=f8fx0HB6GgY) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [duQSUgdrBk0 — Kohi #062: Transparency (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=duQSUgdrBk0) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [-6yPOAwbjSI — Kohi #063: Cubemaps and Skybox (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=-6yPOAwbjSI) | English VTT retrieved | full caption read |
-| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [cCEmwjfHIkY — Kohi #064: Toolchain (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=cCEmwjfHIkY) | attempt failed; caption unavailable or rate limited | not reviewed |
+| Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [cCEmwjfHIkY — Kohi #064: Toolchain (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=cCEmwjfHIkY) | YouTube caption not retrieved; local Whisper ASR from public audio | full generated transcript read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [NxtqrN6Jw-4 — Kohi #065: Multithreading Part 1, Linux (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=NxtqrN6Jw-4) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [jmt_BE6ny1g — Kohi #066: Multithreading Part 2, Windows (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=jmt_BE6ny1g) | English VTT retrieved | full caption read |
 | Travis Vroman / {"feed":"core_playlist","reason":"Kohi tutorial series"}; {"feed":"channel videos","reason":"Kohi implementation livestream or devlog identified by title"} | [3JbLqoDubIY — Kohi #067: Job System (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=3JbLqoDubIY) | attempt failed; caption unavailable or rate limited | not reviewed |
@@ -1321,3 +1321,195 @@ Full-reading sources in this batch (each count derives from its receipt, not URL
 
 Full-reading sources in this batch (each count derives from its receipt, not URL presence):
 
+
+## batch-013 — expanded reading and integration
+
+0 saved caption tracks were read in full (0 canonical spoken words); no new ASR reading is claimed in this batch. No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.
+
+48 selected PDF pages were read; 17 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch's receipts. This is not a whole-book coverage claim.
+
+## Bounded media acquisition outcomes
+
+# Batch 013 media acquisition attempts
+
+These are failed acquisition attempts, not transcript reviews. Keep each video ID and result separate from the completed caption ledger. No review count or source-audit promotion follows from these attempts.
+
+- `BxcQ80wljuA` — one unauthenticated English caption probe on 2026-11-06 20:56 UTC. yt-dlp reached the video page but reported age restriction and ended with “Sign in to confirm your age.” No subtitle file was saved. This says nothing about whether captions exist. See `caption-acquisition.json` and `caption-attempt.log`. No further media access was attempted for this ID.
+- `hRL71D1f3pU` — one additional unauthenticated English subtitle probe on 2026-11-06 20:58 UTC. yt-dlp reached player metadata and listed English subtitles, then the subtitle retrieval returned HTTP 429. No track was saved. This is evidence that the request was rate-limited, not that captions are absent. See `kohi-caption-acquisition.json` and `kohi-caption-attempt.log`. No audio fallback or further media access was attempted in this turn. The previous separate attempt and generated-ASR review in batch-010 remain separate artifacts and are not overwritten here.
+
+Neither source was read or promoted. These are acquisition outcomes, not proof that captions are absent. No additional media requests followed the timed-subtitle HTTP429.
+
+| Teaching source | Section | Book destination |
+|---|---|---|
+| pdf-additions.md | Let object schemas bridge editor choices and runtime creation | Let the editor describe authored state without dictating runtime representation |
+| pdf-additions.md | Stream world data while protecting both memory and visibility | Separate a world chunk’s authored description from its live objects |
+| pdf-additions.md | Save the state the player needs to resume | Stable identity matters for saving |
+| pdf-additions.md | Turn aerodynamic controls and buoyancy into forces at useful points | Approximate aerodynamic forces with a body-space tensor |
+| pdf-additions.md | Separate likely collision pairs from exact contact data | Broad phase, narrow phase, and contact data |
+| pdf-additions.md | Reading boundary | Evidence, scope, and how to use this chapter |
+| pdf-additions.md | A design document describes a game that is meant to exist | A design document can specify a playable contract without pretending a game exists |
+| pdf-additions.md | Teach a control when the player needs it | Let one input produce one intended change |
+| pdf-additions.md | Treat camera and movement as related modes | A first input-driven camera |
+| pdf-additions.md | Conflict comes from the rules players can use | Use game theory as a narrow lens on choices and conflict |
+| pdf-additions.md | Choose goals and endings as part of the mechanic | Design a mechanic as a state transition, not just a button label |
+| pdf-additions.md | Fairness is both structure and player trust | Design decisions as authored experiments |
+
+| Book | PDF pages read | PDF pages visually inspected |
+|---|---|---|
+| Game Engine Architecture | 760-771 inclusive (12 pages) | 764, 765, 766 |
+| Game Physics Engine Development | 244-255 inclusive (12 pages) | 244, 245, 246, 247, 248, 249, 250 |
+| Game Design Theory and Practice | [609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620] | 614, 616, 619 |
+| Game Design Fundamentals Rules of Play | [253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264] | 259, 261, 262, 264 |
+
+Full-reading sources in this batch (each count derives from its receipt, not URL presence):
+
+
+## batch-014 — expanded reading and integration
+
+0 saved caption tracks were read in full (0 canonical spoken words), plus one separate local Whisper base.en transcript (8,745 words). No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.
+
+48 selected PDF pages were read; 20 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch's receipts. This is not a whole-book coverage claim.
+
+| Teaching source | Section | Book destination |
+|---|---|---|
+| pdf-additions.md | Give references a way to survive object deletion and relocation | Keep identity, storage, and ownership in agreement |
+| pdf-additions.md | Make common searches cheap by choosing them deliberately | Make a world that can be authored, saved, and run |
+| pdf-additions.md | Update gameplay state, then let subsystems batch their work | Let one input produce one intended change |
+| pdf-additions.md | Use a hierarchy to avoid testing every collision pair | Let motion and contact answer the same world rules |
+| pdf-additions.md | A weapon spec is a set of decisions the player can feel | Specify both allowed actions and boundaries |
+| pdf-additions.md | A resource meter can reward style and create a deadline | Design a mechanic as a state transition, not just a button label |
+| pdf-additions.md | Exploiting a rule is different from breaking it | Rules, emergence, and meaningful outcomes |
+| additions-asr.md | A resize becomes pending work | Keep a window milestone small enough to verify |
+| additions-asr.md | Follow one frame through recording and presentation | A frame can be drawn only after the presentation image is acquired |
+| additions-asr.md | Current Vulkan concepts that make the narration easier to follow | Understand Vulkan setup as a chain of explicit dependencies |
+| additions-asr.md | Two indexes answer two different questions | Understand Vulkan setup as a chain of explicit dependencies |
+| additions-asr.md | What the recorded commands describe | Understand Vulkan setup as a chain of explicit dependencies |
+| additions-asr.md | Fence and semaphore jobs | Keep submitted render resources alive until their users finish |
+| additions-asr.md | The episode's viewport choice | Understand Vulkan setup as a chain of explicit dependencies |
+| additions-asr.md | Evidence boundary | Know which story each source can tell |
+
+| Book | PDF pages read | PDF pages visually inspected |
+|---|---|---|
+| Game Engine Architecture | 772-783 inclusive (12 pages) | 775 |
+| Game Physics Engine Development | 256-267 inclusive (12 pages) | 257, 258, 259, 264 |
+| Game Design Theory and Practice | [621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632] | 621, 622, 625, 626, 627, 630, 632 |
+| Game Design Fundamentals Rules of Play | [265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276] | 268, 269, 271, 272, 273, 274, 275, 276 |
+
+Full-reading sources in this batch (each count derives from its receipt, not URL presence):
+
+- [Kohi#021: BIG Milestone! Clearing the Screen](https://www.youtube.com/watch?v=hRL71D1f3pU) — separate local ASR; technical tokens unverified against audio.
+
+## batch-015 — expanded reading and integration
+
+0 saved caption tracks were read in full (0 canonical spoken words), plus one separate local Whisper base.en transcript (13,090 words). No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.
+
+48 selected PDF pages were read; 19 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch's receipts. This is not a whole-book coverage claim.
+
+# Batch 015 — technical source-to-teaching coverage
+
+This ledger covers the bounded 24-page assignment only. The reading drafts keep conceptual explanations separate from the author’s historical examples and from cautions about apparent code defects.
+
+| Source pages (PDF / printed) | Distinct source ideas and mechanisms | Teaching destination in `pdf-additions-a.md` |
+|---|---|---|
+| *Game Engine Architecture* 784–785 / 762–763 | A subsystem-oriented frame loop; cache-friendly contiguous subsystem data; once-per-batch global work; reusable frame resources; pipelined processing; coupled multi-body collision resolution as group work | “Let dependencies set the update order” |
+| GEA 785–788 / 763–766 | Parent/held-object ordering; animation-to-ragdoll and ragdoll-to-animation data flow; subsystem phases; pre/post hooks; multiple per-frame object hooks; per-phase membership lists to avoid useless iteration | “Let dependencies set the update order” |
+| GEA 788–790 / 766–768 | Dependency forest and tiers; root-first buckets; full phased subsystem passes per bucket; shallow-depth examples; external systems may not accept bucketed calls; the author’s historical *Uncharted* account | “Let dependencies set the update order” |
+| GEA 790–793 / 768–771 | Sequential partial updates; consistent states only before/after a loop; wrong-time reads and one-frame lag; old/new state caching and interpolation; memory cost and residual inconsistency; time stamps and same-bucket query guards | “Make mixed-time reads visible” |
+| GEA 793–795 / 771–773 | Object dependency makes parallel updates hard; direct state peeking vs message passing; serial high-level model and parallel low-level systems as the author’s account; blocking vs non-blocking requests; issue as early as possible and consume as late as possible; tolerable stale results; batch ray requests; page 795 introduces events and notification/response duties | “Make mixed-time reads visible” |
+| *Game Physics Engine Development* 268–272 / 245–249 | Insertion descends by child `getGrowth`; leaf split into existing/new child; ancestor-bound refresh; enclosing but nonminimal sphere; reason for runtime approximation; deletion replaces parent with sibling data, detaches adopted children, and recalculates upward; apparent double-delete typo preserved as a warning | “Update the hierarchy without rebuilding all of it” |
+| Physics 273–274 / 250–251 | Multiple bounds for awkward sub-objects; level decomposition; box bounds for boxlike spaces; transition from object-dependent hierarchy to world-space partition | “Grow a spatial hierarchy around the world’s shape”; “Update the hierarchy without rebuilding all of it” |
+| Physics 274–278 / 251–255 | Spatial structure is fixed to the world while a BVH follows its objects; hybrid combinations; BSP plane representation and signed dot-product side test; normalized direction and sphere crossing; nodes/leaves can contain sets; duplicate cross-plane object policy and candidate pairs; optional BVH per leaf; static-level collision leaves; preprocessing cost | “Grow a spatial hierarchy around the world’s shape” |
+| Physics 278–279 / 255–256 | Quad-tree four-way ground/2D split; oct-tree eight-way 3D split; fixed world axes; coordinate-to-child selection with the source’s example; memory reason for choosing quad-tree in ground-focused 3D; apparent uninitialized child index in printed excerpt | “Grow a spatial hierarchy around the world’s shape” |
+
+The merged `pdf-additions.md` additionally contains the separately authored scaled sphere-gap visual and recall prompt. It illustrates the already derived parent/child bound example and makes no claim about new book content. Grids are named as a common spatial structure on PDF p. 274 but their mechanics are outside the assigned range; the teaching text labels that limit. Event dispatch is introduced only at the end of GEA p. 795, so the draft records notification and response responsibilities without inventing a queue design.
+
+Read receipts are in `pdf-assignment-a.json` and `pdf-reviews-a.json` for the technical pages, with combined four-book receipts in `pdf-assignment.json` and `pdf-reviews.json`. The C pages and scaled visual have separate source drafts. This ledger does not establish whole-book coverage, code correctness, runtime behavior, or comparative performance.
+
+# Batch 015 C source coverage
+
+This checklist maps the assigned Rouse pages 633–644 and *Rules of Play* pages 277–288 to `pdf-additions-c.md`. Page references below are PDF pages unless labeled printed. Rouse’s Appendix B is a proposed design for *Unspeakable*, not proof about released *The Suffering*. *Ironclad* is a commissioned rules text with diagrams, not a playtest report.
+
+## Game Design Theory and Practice, PDF pp. 633–644
+
+| Source content | Teaching coverage | Status |
+|---|---|---|
+| p633 unresolved question about randomizing ammo quantities, weapons, puzzle parts, and health packs, with possible overrides | First paragraph under “A useful object…” | Covered in current C draft; addendum still needs to be re-merged into `pdf-additions.md`. |
+| pp. 633–634 flashlight toggle and battery drain; brightness/range fade; automatic battery insertion; monster deterrence weakens with charge; flashlight can be broken and lost; contextual charge/battery HUD | First paragraph under “A useful object…” | Covered. |
+| pp. 633–634 current/future/past maps; some areas have none; island overview; pause, zoom, scroll, select maps, player position/facing, quest-item listing | First paragraph under “A useful object…” | Covered in current C draft. |
+| pp. 634–635 Use selection (nearby, facing cone, closest target); reposition/animation; doors, locks, keys and key retention/consumption; chests; one-use/reset/toggle switches | Second paragraph under “A useful object…” | Covered at teaching level; not a complete per-object acceptance table. |
+| p635 ladders, mounted weapons, quest items, and Insanity Mode are cross-references to earlier proposal sections | Prior batch014 C addition covers ladder/mounted-weapon behavior and Insanity Mode; current addition explains quest-item auto-use/removal | Covered across adjacent source batches; p635 contains references rather than new subsystem detail. |
+| p636 security monitors and remote cameras; ordinary input disabled except exit; multiple-monitor stations; camera/monitor fragility; camera pan is not player-controlled | Second paragraph under “A useful object…” | Covered in current C draft. |
+| pp. 636–637 push/pull input constraints and grid movement; damageable objects, per-type vulnerabilities, contents, explosions and chain reactions; open question about shooting ammunition storage; breakable glass and footprints | Second paragraph under “A useful object…” and first paragraph under “Environmental effects…” | Covered in current C draft. |
+| pp. 637–639 lighting, fire, fluid, and weather interactions: light-averse creatures, switches/timers/breakers, destruction of lights, fire sources/spread/damage/spawning/NPC response, fluid pools/footprints/spawning, water interactions, rain/storm | Second paragraph under “Environmental effects…” | Covered in summarized examples; not every listed weather or creature variant is enumerated. |
+| pp. 639–640 blood, amputation, projectile tracers/material marks; conditional final flashback; in-world event triggers, protected scenes, abort/recovery behavior | Third paragraph under “Environmental effects…” | Covered in current C draft. |
+| pp. 640–641 vibration cases and two PS2 control layouts | Third and fourth paragraphs under “Environmental effects…” | Covered by feedback categories and mapped action families; exact button-by-button layouts are intentionally summarized, not transcribed. |
+| pp. 642–644 weapon-specific examples: Shiv, Fire Axe, Stun Stick, Pistol, Shotgun, machine gun, flamethrower, TNT, Molotov, Concussion and Shrapnel grenades | Fourth paragraph under “Environmental effects…” gives Shiv, Stun Stick, Pistol, Shotgun, TNT, Molotov | Partial by design: PDF pp. 642–644 visibly print ellipses (`[...]`) for Fire Axe, machine gun, flamethrower, Concussion Grenade, and Shrapnel Grenade descriptions; no missing specifications are inferred. |
+
+## *Rules of Play*, PDF pp. 277–288
+
+| Source content | Teaching coverage | Status |
+|---|---|---|
+| pp. 277–278 sports violations: close physical margins, in-game penalties/referees, governing-body sanctions, economic stakes/fairness | “Rule-bending…” first paragraph | Covered in summary. |
+| pp. 277–279 *Illuminati* cheating variant: permitted deceptions, hard limits, undo-on-caught rule, social framing and power satire | “Rule-bending…” second paragraph | Covered in summary. |
+| pp. 279–281 Easter eggs, cheat codes, guides/walkthroughs, workarounds, multiplayer cheating, hacks, spoil-sport attacks, and why digital games invite these behaviors | “Rule-bending…” third paragraph | Covered in summary; examples are representative, not exhaustive. |
+| pp. 281–284 design practice: assume varied player behavior, modify rules iteratively, and empower communities to change games | “Rule-bending…” third paragraph | Covered. |
+| p285 *Ironclad* setup: two players, 6-by-8 board with narrow ends facing players, six stacks per color (two each of heights three, two, one), four home-row stacks and two centered single stacks forward, 32 stones per color and one die | “*Ironclad*…” opening paragraph | Covered in current C draft; high-resolution setup figure visually inspected. |
+| p286 structure: choose one sub-game and move; opponent then chooses and makes a legal move FOR that active player in the other sub-game; a win in either sub-game immediately wins overall | “*Ironclad*…” opening and Mermaid sequence | Corrected in current C draft. The opponent controls the active player’s second action; this must replace the older ambiguous wording in the current merged `pdf-additions.md`. |
+| pp. 286–287 robot rules: six-square goal row, single-square movement, occupied-square exclusion, two-square firing lines, movement-or-fire choice, shots pass through stacks, per-attacker damage, stack removal | “*Ironclad*…” robot-combat paragraph | Covered. |
+| pp. 287–288 terrain: each corner stone adds defense; the attacking player rolls once per attacking robot and damages only on a value above the terrain bonus; illustrated bonus 3 means rolls 4–6 | “*Ironclad*…” robot-combat paragraph | Corrected and covered in current C draft. |
+| p288 scholarly sub-game: connect opposite sides; place a stone each turn; if no placement is possible, move a stone of either color | “*Ironclad*…” final paragraph | Covered. |
+
+**Visual evidence:** Rouse pages 633, 634, 637, 641, 642, 643, and 644 were viewed in batch015. *Rules of Play* pages 278, 283, 285, 286, 287, and 288 were viewed; page285 was additionally rendered at larger scale to inspect setup. The setup/combat/terrain diagrams on pp. 285–288 support the written geometry and rules. The ellipses in the weapon entries on pp. 642–644 are printed in the PDF itself.
+
+**Integration note:** The current `pdf-additions.md` hash `781db6954de8dfcc880e4c2499208a18564d956a438480e22589f523955c324b` was merged before the latest C corrections. Re-merge from current `pdf-additions-c.md` before treating the combined file as final.
+
+| Teaching source | Section | Book destination |
+|---|---|---|
+| pdf-additions.md | Let dependencies set the update order | Let one input produce one intended change |
+| pdf-additions.md | Make mixed-time reads visible | Let one input produce one intended change |
+| pdf-additions.md | Grow a spatial hierarchy around the world’s shape | Let motion and contact answer the same world rules |
+| pdf-additions.md | Update the hierarchy without rebuilding all of it | Let motion and contact answer the same world rules |
+| pdf-additions.md | A useful object needs rules for being noticed, reached, and used | Make a world that can be authored, saved, and run |
+| pdf-additions.md | Environmental effects can change both play and interpretation | Design systems that produce readable outcomes |
+| pdf-additions.md | Rule-bending can be part of the rules when its boundaries are clear | Rules, emergence, and meaningful outcomes |
+| pdf-additions.md | *Ironclad* puts two win conditions on one board | Rules, emergence, and meaningful outcomes |
+| pdf-additions.md | See the empty space inside a parent bound | Let motion and contact answer the same world rules |
+| additions-asr.md | From a named texture to a writable image | Give the renderer a clear job, then meet the graphics API |
+| additions-asr.md | Creating and filling the image | Give the renderer a clear job, then meet the graphics API |
+| additions-asr.md | Wrapping images and deciding who owns them | Prepare and publish content before promising it is ready |
+| additions-asr.md | What the ending establishes | Know which story each source can tell |
+| additions-asr.md | Evidence boundary | Know which story each source can tell |
+
+| Book | PDF pages read | PDF pages visually inspected |
+|---|---|---|
+| Game Engine Architecture | 784-795 inclusive (12 pages) | 788, 791 |
+| Game Physics Engine Development | 268-279 inclusive (12 pages) | 270, 272, 273, 278, 279 |
+| Game Design Theory and Practice | [633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644] | 633, 634, 637, 641, 643, 644 |
+| Game Design Fundamentals Rules of Play | [277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288] | 278, 283, 285, 286, 287, 288 |
+
+Full-reading sources in this batch (each count derives from its receipt, not URL presence):
+
+- [Kohi #058: Writeable textures (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=86022SGWaHc) — separate local ASR; technical tokens unverified against audio.
+
+## batch-017 — expanded reading and integration
+
+0 saved caption tracks were read in full (0 canonical spoken words), plus one separate local Whisper base.en transcript (5,049 words). No new YouTube caption track is claimed. Full transcript reading is distinct from checking video frames, source code or runtime behavior.
+
+0 selected PDF pages were read; 0 source pages were visually inspected. Exact source hashes, page locators, reading findings and visual limits remain in this batch's receipts. This is not a whole-book coverage claim.
+
+## Local-pipeline Toolchain coverage
+
+Video cCEmwjfHIkY: all33 derived spans /415 original ASR cues,48 locally extracted points,5049 fully read generated words in the original source-review receipt. This is generated ASR, not a YouTube caption or on-screen-code review. Instructional points002–045 are covered in the command-line contract lesson, with duplicate statements consolidated and uncertain mode spelling retained as unresolved. Points001 and046–048 are greetings, camera/promotion and sign-off, retained in the source cache but excluded from teaching.
+
+Original C17 classifier source and verification: /Users/swayamsingal/.codex/source-cache/engine-corpus-2026-11-07/quality/toolchain-lab/verification.json
+
+| Teaching source | Section | Book destination |
+|---|---|---|
+| Local corpus Toolchain extraction + supervisor corrections | Give asset tools a precise command-line contract | Start a tool project from the build recipe |
+
+| Book | PDF pages read | PDF pages visually inspected |
+|---|---|---|
+
+Full-reading sources in this batch (each count derives from its receipt, not URL presence):
+
+- [Kohi #064: Toolchain (Vulkan Game Engine Series)](https://www.youtube.com/watch?v=cCEmwjfHIkY) — separate local ASR; technical tokens unverified against audio.

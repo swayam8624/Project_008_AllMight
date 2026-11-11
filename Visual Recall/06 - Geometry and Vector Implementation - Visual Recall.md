@@ -105,7 +105,7 @@ boundary promise   ──> GPU format, shader layout, serialization
 > [!answer]- Compact key
 > Affine points have no intrinsic origin, while displacements do. Coordinates depend on the chosen basis; the geometric vector does not. Cross product is antisymmetric and encodes orientation. A direction needs finite, nonzero input and range-safe length computation. Perspective division is nonlinear, so interpolation must account for reciprocal depth. The inverse transpose preserves tangent-normal orthogonality under a general linear transform. A tested expression is evidence over those cases; a robust/certified claim requires stated assumptions and a procedure that guarantees the decision.
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|Teach the full Phase 6 story]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Part coverage]] · [[Supplementary/Derivations#Phase 6 - Geometry reconstruction proofs|Derivations]]
+[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|Teach the full Phase 6 story]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Part coverage]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 6 - Geometry reconstruction proofs|Derivations]]
 
 ## One-page active-recall mini-atlas
 
@@ -179,3 +179,23 @@ Camera framing uses a point angle atan2(y,z); double the largest half-angle for 
 ![[Visual Recall/Math Foundations/M06-1_vector-reflection.png]]
 
 **M06-1. Reflection across the horizontal mirror normal.** The shown incident vector has v dot n=-1 and reflected vector r=(2,1); both squared norms are 5.
+
+
+## Vectors as measurements — retrieve the missing steps
+
+![[Visual Recall/Integrated Mathematics/metrics-and-measurements.png]]
+
+| Prompt | Short answer | Explain immediately |
+|---|---|---|
+| Why do dot measurements differ from coordinates? | A slanted reconstruction basis needs reciprocal measuring directions. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Recover a component with the right measuring rule|Reciprocal-basis trace]] |
+| Is every norm an ordinary dot-product length? | No. The taxicab norm fails the parallelogram identity. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Choose what a length is meant to measure|Norms and metrics]] |
+| What does a dual norm measure? | Worst scalar response over an allowed vector-error ball. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Bound a measurement using a dual norm|Error-budget example]] |
+| Is the Euclidean nearest point always the right constrained answer? | Only for that distance rule; a weighted ruler changes the correction direction. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A rail, a wall, and a feasible region use the same nearest-point question|Projection proof and worked points]] |
+| Differential or gradient? | A differential measures change; a metric turns it into a gradient vector. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A derivative measures change; a gradient needs a ruler|Slanted-coordinate example]] |
+| Can a mesh boundary be a vector? | Yes: coefficients weight elements; boundary is linear. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The same vector rules can describe a triangle's boundary|Real and modulo-two chains]] |
+| Are angle rates angular-velocity components? | Only in special configurations/conventions; instantaneous axes form a state-dependent map. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Angle rates are not three components of angular velocity|Axes, cross term and singularity]] |
+| Why is covariance directional? | A scalar measurement has variance $a^{\mathsf T}\Sigma a$. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Measure uncertainty along an actual direction|Diagonal-direction trace]] |
+| Is a unit uncertainty ellipse a 68% region? | Not generally. The stated two-dimensional Gaussian unit ellipse contains about 39.35%. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Whiten residuals without pretending every ellipse has the same probability|Whitening and probability content]] |
+| How do vertex samples become a derivative? | Barycentric gradients reconstruct a constant field gradient per flat triangle. | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A triangle turns a differential into a concrete field calculation|Gradient and energy trace]] |
+
+The figure's four panels use the exact examples in those sections: norm balls, reciprocal directions, two constrained projections, and the covariance ellipse. Cover the answers and reconstruct one calculation from each panel. The book contains the assumptions and full derivations.

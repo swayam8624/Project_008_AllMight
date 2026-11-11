@@ -154,7 +154,7 @@ XR01 is outside the3,000-part progression. Physical interpretation, angular geom
 
 ## C++ - From buildable text to live objects
 
-The C++ volume accepts Parts 101–160. Construction/value transfer and M010 resource ownership develop the object-and-borrow foundation without conflating lifetime, identity, category, storage, external use or disposal. Code examples and runtime/build traces live directly in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs|Volume 02]].
+The C++ volume accepts Parts 101–160. Construction/value transfer and M010 resource ownership develop the object-and-borrow foundation without conflating lifetime, identity, category, storage, external use or disposal. Code examples and runtime/build traces live directly in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Volume 02]].
 
 | Prerequisite | Dependent | Reason |
 |---|---|---|
@@ -295,7 +295,7 @@ Future connections already have definitions: [[IEEE-754 floating point]], [[Cach
 
 ## Navigation
 
-[[Keyword Index]] · [[Graphics Engine Mastery - Continuous Notes]] · [[Supplementary/Foundations]] · [[Supplementary/Derivations]] · [[Supplementary/Code Snippets]] · [[Supplementary/Worked Traces]]
+[[Keyword Index]] · [[Graphics Engine Mastery - Continuous Notes]] · [[Supplementary/Foundations]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstruct the representation and lifetime proofs]] · [[Supplementary/Code Snippets]] · [[Supplementary/Worked Traces]]
 
 ## Updating the graph
 

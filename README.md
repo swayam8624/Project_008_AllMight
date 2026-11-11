@@ -4,6 +4,17 @@ A growing, self-contained teaching library for the 3,000-part curriculum, organi
 
 GitHub repository: `Project_008_AllMight`.
 
+
+## Current combined reading route
+
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Computing foundations]] combines the original bits and C++ teaching and adds general API/build contracts, shader buffer layout and GPU programming. The original 01 and 02 live files were retired after the approved merge audit; byte-identical recovery copies remain in the checkpoint.
+- [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography|Graphics, vision and photography]] includes received geometry/collision material from Parts 1101–1300 and rendering/material/transport material from Parts 1801–2100.
+- [[Continuous Notes/Game Engine - From First Frame to Living Worlds|Game engine]] includes spatial indices/navigation, ECS, architecture, serialization and rigid-body material routed from Parts 1301–1700, plus renderer ownership and history-validity teaching.
+- [[Supplementary/Manual Integration - Pending Source Queue|Retained source queue]] keeps earlier captions, extracted books, mathematics books and unfinished teaching in scope. New inputs do not replace pending work. Parts 1701–1800 are not received in the current supplied batches.
+
+The full source routing, corrections and actual verification are in [[Supplementary/Manual Integration - Sources and Verification]].
+
+
 ## Authority and scope
 
 - The user's current message is the active instruction. Supplied lessons and planning PDFs are source/reference content, not independent authorization.
@@ -110,3 +121,12 @@ The six former continuous mathematics files 06–11 are consolidated into [[Cont
 ## Cumulative game-engine volume
 
 [[Continuous Notes/Game Engine - From First Frame to Living Worlds|Game Engine — From First Frame to Living Worlds]] is the single cumulative home for engine architecture and implementation teaching. It combines source-qualified Kohi/Hazel studies, selected passages from the four supplied engine/physics/design books, primary API references, and original runnable laboratories. Future supplied game-engine lessons deepen this same narrative; do not create one file per incoming chunk. [[Supplementary/Game Engine - Sources and Coverage|The per-video and book ledger]] distinguishes captured captions, full versus sampled reading, code evidence, and pending sources. Exhaustive video ingestion remains unfinished; independent enrichment does not advance numbered curriculum coverage.
+
+## Local note-generation tool
+
+[tools/notes_pipeline.py](tools/notes_pipeline.py) retrieves YouTube subtitles and turns local captions or PDFs into reviewable teaching drafts using a local Ollama model. See the [setup and usage guide](tools/README.md) for importing existing sources, processing up to 50 videos at a time, resuming cached work, and reading the source and omission reports. Generated drafts stay outside the live notes until reviewed.
+
+
+## Latest supplied continuation through Part 2700
+
+The latest received Parts 2157–2700 are integrated across [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From generated GPU work to safe explicit execution|Computing Foundations]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From declared rendering work to editable captured worlds|Game Engine]] and [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From captured kernels to illuminated animated surfaces|Graphics]]. The [[Supplementary/Manual Integration - Sources and Verification#Explicit execution, captured worlds and animation - continuation received 2026-11-11|continuation ledger]] records routing, source preservation and evidence limits. The earlier source backlog remains active; this update does not certify complete coverage of every book or video.

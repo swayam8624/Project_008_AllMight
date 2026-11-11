@@ -424,3 +424,24 @@ This source series develops the graph without advancing numbered curriculum cove
 
 - [[Concepts/Camera gauge freedoms and observability|Camera gauge freedoms and observability]] — Developed; full mechanism in the Phase 11 research chapters.
 - [[Concepts/Ray differentials and camera sampling measures|Ray differentials and camera sampling measures]] — Developed; full mechanism in the Phase 11 research chapters.
+
+
+## Rendering and GPU integration concepts
+
+- [[Concepts/Perspective-correct interpolation]]
+- [[Concepts/Reversed-Z depth contracts]]
+- [[Concepts/Microfacet normal distributions]]
+- [[Concepts/Multiple importance sampling]]
+- [[Concepts/Russian roulette path termination]]
+- [[Concepts/Sampling support and missing strata]]
+- [[Concepts/Shader buffer ABI]]
+- [[Concepts/GPU workgroups and synchronization]]
+- [[Concepts/Prefix scan and stream compaction]]
+- [[Concepts/Rendering history validity]]
+
+
+## Direct mathematics measurement additions
+
+- [[Concepts/Reciprocal bases and coordinate measurements]]
+- [[Concepts/Norms, dual norms and error budgets]]
+- [[Concepts/Metric gradients and differential measurements]]

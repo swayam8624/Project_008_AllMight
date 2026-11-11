@@ -166,7 +166,7 @@ A post-filtered full reference does not establish that any original shading work
 
 ## C++ - Value-transfer and cleanup board traces
 
-Essential code and traces remain inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Trace one payload from decode to cache|the payload journey]] and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Observe construction, failure and reverse cleanup|the event laboratory]].
+Essential code and traces remain inline in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Trace one payload from decode to cache|the payload journey]] and [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Observe construction, failure and reverse cleanup|the event laboratory]].
 
 | Scenario | Recorded events | Interpretation |
 |---|---|---|
@@ -190,7 +190,7 @@ On the recorded Clang C++23 build, the named Probe return observed zero moves or
 
 ## C++ - Borrow deadlines and dense-pool identity
 
-The essential explanation remains inline in [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#When a valid borrow stops naming the intended thing|the borrow story]]. This deeper board exercise separates the targets of three paths. Assume a vector with three live Slot objects, enough capacity, and assignments that do not end the destination Slot lifetime.
+The essential explanation remains inline in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When a valid borrow stops naming the intended thing|the borrow story]]. This deeper board exercise separates the targets of three paths. Assume a vector with three live Slot objects, enough capacity, and assignments that do not end the destination Slot lifetime.
 
 | Event | First-slot borrow | Last-slot borrow | Entity-11 handle |
 |---|---|---|---|
@@ -216,7 +216,7 @@ Source3/cache-empty → Get holds mutex, computes9, copies9, unlocks → Set hol
 
 ## C++ - Build and occupant trace navigation
 
-Essential traces stay inside [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following one call through the build|the build story]] and [[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Following an escaped address through time|the escaped-address story]]. The complete inline laboratory supplies observable constructions/destructions without executing stale access.
+Essential traces stay inside [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Following one call through the build|the build story]] and [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Following an escaped address through time|the escaped-address story]]. The complete inline laboratory supplies observable constructions/destructions without executing stale access.
 
 | Event | Storage | Object or logical occupant | Valid access |
 |---|---|---|---|
@@ -235,7 +235,7 @@ A trace should include a concrete input, every state transition that matters, th
 
 ## M001 - The 0xAD control byte
 
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#From a signal to an interpretation|C001 / M001]]
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 / M001]]
 
 ### Input and conventions
 
@@ -287,7 +287,7 @@ OR-only replacement fails when a new value needs to clear an old 1. For example,
 
 ## M002 - Carry and overflow are different questions
 
-**Introduced by:** [[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#Arithmetic becomes a policy|C002 / M002]]
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 / M002]]
 
 ### Input and conventions
 
@@ -480,7 +480,7 @@ Two mappings share frame F read-only. For a permitted private COW write, OS allo
 
 **Diagnosis:** absurd decoded value→byte order; second array element misaligned→stride/tail padding; released vector span→lifetime; first-touch latency→fault/commitment; allocation fails amid holes→fragmentation; published file lost after crash→publication versus durability.
 
-[[Supplementary/Derivations#M003 - Byte order, layout, and translation]] · [[Ownership and non-owning views]] · [[Atomic publication and durability]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M003 - Byte order, layout, and translation]] · [[Ownership and non-owning views]] · [[Atomic publication and durability]]
 
 ## M004 - From fields to values and failure paths
 
@@ -546,7 +546,7 @@ The supplied matrix inversion excerpt asserts determinant magnitude > epsilon be
 
 Canonicalization at the raw-word level maps either zero to `00000000` and any NaN to chosen `7FC00000`; all other words remain unchanged. This avoids consuming a signaling NaN as a float but deliberately discards its payload/class distinction. No existing asset format was changed.
 
-[[Supplementary/Derivations#M004 - Floating-point fields, spacing, and rounding]] · [[Supplementary/Code Snippets#M004 - Binary interchange inspection and strict rounding laboratory]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M004 - Floating-point fields, spacing, and rounding]] · [[Supplementary/Code Snippets#M004 - Binary interchange inspection and strict rounding laboratory]]
 
 ## M005 - Rounding paths and update history
 
@@ -608,7 +608,7 @@ nextafter(2.5,−infinity) rounds to pixel 2 via llround; nextafter(2.5,+infinit
 
 A scalar field value changing sign near zero can change a surface-extraction case. Scalar RMS error, sign-change count, vertex displacement and topology measure different consequences; none was measured on real reconstruction data in this merge.
 
-[[Supplementary/Code Snippets#M005 - Strict arithmetic and state-update laboratory]] · [[Supplementary/Derivations#M005 - Representation error, cancellation, and rounding graphs]]
+[[Supplementary/Code Snippets#M005 - Strict arithmetic and state-update laboratory]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#M005 - Representation error, cancellation, and rounding graphs]]
 
 ## Representation choice - One quantity through several contracts
 
@@ -648,7 +648,7 @@ Raw image words80000000,7F800000,7FC00001,7F800001 round-trip through the word c
 - A huge claimed shape fails checked size arithmetic/resource policy before allocation.
 - A same-size changed payload can pass structure checks while failing an independent integrity comparison.
 
-[[Continuous Notes/01 - From Signals to Meaning - Bits, Numbers and Memory#The complete journey - Encode, compute, store, and investigate|Teach the complete journey]] · [[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Run the regressions]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The complete journey - Encode, compute, store, and investigate|Teach the complete journey]] · [[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Run the regressions]]
 
 ## Received completion through Part 1100
 

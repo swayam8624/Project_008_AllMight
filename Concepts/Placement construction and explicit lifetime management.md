@@ -28,4 +28,4 @@ Sketch Empty → Live(A) → Empty → Live(B) → Released. State the operation
 
 ## Source and navigation
 
-[[Continuous Notes/02 - C++ - From Objects to Reliable Programs#Placement construction reuses storage; it does not allocate it|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Placement construction reuses storage; it does not allocate it|M010 teaching narrative]] · [[Supplementary/Foundations#M010 - Parts 148-160|Source coverage]]
