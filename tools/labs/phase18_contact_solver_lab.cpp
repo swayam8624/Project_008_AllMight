@@ -4,6 +4,8 @@
 // Contracts and limitations are explained in the continuous physics chapter.
 #include <algorithm>
 #include <cmath>
+#include <compare>
+#include <iterator>
 #include <cstdint>
 #include <iostream>
 #include <limits>
