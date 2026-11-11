@@ -250,6 +250,39 @@ From that setup, implement a stateless policy and a stateful budget policy with 
 A complete blank-screen test recreates the accepted 64-byte RGBA plan, rejected 96-byte budget attempt, rejected empty verified payload, accepted 48-byte metadata-only RGB plan, and rejected overflowing extent. The recorder receives exactly two plans in the demonstrated sequence; failed requests do not reach it. Then state why this is **not** a real GPU resource, performance benchmark, atomic transaction for arbitrary throwing recorders, or proof of thread safety. The evidence ledger preserves the exact compiled commands and original fourteen-part mapping: [[Supplementary/Foundations#M014 — Parts 217–230: one tile planner and its compile-time policy decisions|M014 traceability]] · [[Supplementary/Sources and Code Anchors#Phase 4 additive reconstruction — M014 / Parts 217–230|verification record]].
 
 
+## A growing asset store must preserve its promises — M015 retrieval
+
+A previously working fixed-capacity asset depot now grows, removes assets, accepts work in different scheduling orders, and lets the editor find items by name. **Do not use the following as a replacement for the derivations** in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An asset registry grows while its handles must not change|the complete M015 chapter]]. Start with this diagram and explain why its arrows and lifetime boundaries exist:
+
+```mermaid
+flowchart LR
+    A["Editor requests rocks.mesh"] --> B["Prepare owning name + byte vector"]
+    B --> C["vector of optional slots"]
+    C --> D["Publish name in unordered_map"]
+    D --> E["AssetHandle: slot + generation"]
+    E --> F["Resolve current live occupant"]
+    F --> G["Borrow span for synchronous checksum"]
+    F --> H["Erase: destroy occupant + advance generation"]
+    H --> I["Reuse slot under new generation"]
+    I --> J["Stale old handle must fail"]
+```
+
+First distinguish `size` from `capacity`, and prove why `reserve(2)` creates **zero** live elements whereas `resize(5)` creates five. With a geometric capacity sequence `1,g,g²,...`, derive the sum of relocation work and explain why an individual append can still have linear latency while amortized append cost remains constant. State the operations that invalidate vector pointers and the difference between an append with spare capacity, one requiring reallocation, a middle erase and `reserve` that does or does not change capacity. A pointer does not move itself when the vector relocates.
+
+Then reconstruct the identity protocol. Slot zero holds generation one; a handle `{0,1}` reaches it. After erase, that occupant is destroyed, its generation advances, and a new asset occupies slot zero at generation two. Draw why `{0,1}` no longer resolves. Explain what happens if generation wraps, if a raw `Asset*` or span was retained across reallocation, or if the renderer still has an asynchronous GPU read in flight. Distinguish a CPU identity check from the device-completion requirement.
+
+Show the two injected publication failures: one before any slot change, another after a new slot has been populated but before the name index becomes discoverable. Prove why the rollback resets the candidate and removes a newly appended unpublished slot; explain why the test's successful outcome is not an unrestricted claim about arbitrary throwing user callbacks or all allocator behaviors.
+
+Now change the workload. A fixed-size channel array needs `std::array`, not vector growth. A front/back event stream makes `deque` attractive, but its iterator stability differs from that of its existing element references. A `list` can transfer a node with `splice` while keeping an iterator to an unaffected node; a `forward_list` needs the predecessor for `erase_after`. Explain what those guarantees cost in nodes, pointer chasing and cache locality compared with a contiguous vector scan.
+
+Next give two lookup problems. For ordered traversal and range queries, consider `std::map` / `std::set`, with logarithmic comparison-based behavior. For name-to-handle lookup or membership, use `std::unordered_map` / `std::unordered_set` and explain expected versus worst-case complexity. Write a hash that returns zero for every string; twenty-four distinct names now collide in the same bucket without becoming equal. Derive `load_factor = size/bucket_count`, explain what `max_load_factor(0.5)` and `reserve(96)` request, and state why rehash invalidates unordered iterators but does not generally invalidate references to surviving elements.
+
+Finally build the scheduling choices from user needs: a FIFO `queue`, LIFO `stack`, and a `priority_queue` whose comparator orders priority 3 before priority 1 and earlier sequence numbers before later ones within equal priority. Explain why priority_queue does not promise tie stability unless the comparator defines it.
+
+Finish by distinguishing **borrow** from **ownership**. A `span<const uint8_t>` carries a range while its byte vector remains alive and stable; it does not own the bytes. A `string_view` may point into only the middle of a stored string and need not be NUL-terminated at its end. Copy `"stone"` into `std::string` before destroying or modifying the source. Describe why the local observed short-string capacity of 15 cannot be advertised as a portable SSO specification.
+
+**Actual reconstruction witness:** [[tools/labs/asset_container_lab.cpp|M015 C++20 lab]], compiled and run with GCC sanitizers, Clang, and a GCC release-style build. A learner should be able to recreate the sequence of checks without the reference and explain every failure. [[Supplementary/Foundations#M015 — Parts 231–250: growing the asset registry without losing identities|Original 20-part mapping]] · [[Supplementary/Sources and Code Anchors#Phase 5 additive reconstruction — M015 / Parts 231–250|Exact test and provenance ledger]]. Do not claim personal mastery or real Kairo/GPU verification merely because this standalone model passes.
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
