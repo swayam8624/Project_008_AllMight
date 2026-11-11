@@ -22,7 +22,7 @@ The Hessian collects second partial derivatives of a scalar objective. It descri
 ## Used by
 
 - [[Newton and quasi-Newton optimization]]
-- [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]]
+- [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt]]
 - [[Taylor models and approximation error]]
 
 ## Full teaching explanation
