@@ -9013,6 +9013,230 @@ Finally, in a fresh build directory, compile a named module partition, the prima
 
 The original source map [[Supplementary/Foundations#M017 — Parts 271–290: lazy asset queries, allocation lifetimes and compiled API boundaries|M017 Parts 271–290]] records every title. [[Supplementary/Sources and Code Anchors#Phase 7 additive reconstruction — M017 Parts 271–290|The evidence ledger]] distinguishes native compiled results from language references and open audits. [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#From borrowed reports to module boundaries — M017 reconstruction|The recall companion]] requires independent derivation and reimplementation. **This is an authored reconstruction of the canonical curriculum**, not a newly received M017 transcript, a claim of tested native graphics modules in external Kairo sources, or certification of learner mastery. External targets `KairoGameEngine/CMakeLists.txt` and `KairoMath/KairoMath.cppm` are still project-specific audit targets; our tested module graph is a self-contained reference, not an invented report about those files.
 
+## A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost
+
+The previous asset-query service was deliberately constructed across several translation units. A query could be imported through a C++20 module, allocated through a declared memory resource, expressed as a lazy range and made available to a separately compiled consumer. That was useful, but it leaves one particularly dangerous design pressure unresolved. The editor must keep a mesh selected while other assets are loaded and destroyed; graphics code must not mistake a texture ID for a mesh ID or a world-space displacement for a camera-space displacement; plugin clients should not be rebuilt whenever an internal pool representation changes. At the same time, every abstraction placed on the rendering hot path has a cost that we must **observe**, not merely describe as zero.
+
+Follow the concrete operation. A user selects a teapot mesh. The editor holds a handle. The asset catalog replaces its internal vector storage, deletes the original mesh and reuses its slot for terrain. Meanwhile, a separately built rendering component calls a public catalog function, and the transform library calculates a world-space vector. Which values preserve identity? Which operations compile? Which references become invalid? What does a client binary know about internal layout? What will the compiler actually execute?
+
+This is M018, the final Phase 3 mastery chunk and the exact original **Parts 291–300**. It develops a single connected architecture: PIMPL (291); strong typedefs and handles (292); phantom types for units/spaces (293); scalar-constrained generic mathematics (294); compile-time and dynamic dimensions (295); expression-template evaluation and its temporary-lifetime hazards (296); intrusive versus non-intrusive storage (297); measurable, rather than asserted, zero-overhead behavior (298); generated assembly (299); and a reusable container contract that states ownership and invalidation precisely (300). The runnable witness is [[tools/m018/m018_lab.cpp|the standalone lab]], linked through a genuinely separate implementation file in [[tools/m018/asset_catalog.cpp|the asset catalog]] and its stable public [[tools/m018/asset_catalog.hpp|interface]]. The reproducible build and assembly commands are in [[tools/m018/build_m018_lab.sh|the build script]]. These files demonstrate selected semantics; they are not the current Kairo engine.
+
+### Hide representation only after deciding what clients are entitled to know
+
+A client that includes an ordinary class declaration sees the layout of every member, even the private ones. Private access control prevents source-level member access; it does **not** hide the existence, size or alignment contribution of a private vector or hash table. Suppose the editor's public catalog contains a vector of mesh slots. A change to the slot representation can alter the catalog's size or force client translation units to recompile. A public member function may depend on private helper types as well. This is a compilation-dependency problem first, and sometimes a binary-layout problem.
+
+A pointer-to-implementation, or PIMPL, separates the public class layout from its private representation. Our public header contains only the incomplete declaration **struct Impl;** and **std::unique_ptr<Impl> impl_;**. A pointer has a known representation even while the pointed-to class is incomplete. The actual Impl, containing the vector of slots, free list, catalog identity and live count, appears in the separately compiled source file. Changing Impl's vector into a sparse-set-like layout does not, by itself, require changing the public class's data-member layout.
+
+The public declarations deliberately say:
+
+~~~cpp
+class AssetCatalog {
+public:
+    AssetCatalog();
+    ~AssetCatalog();
+    AssetCatalog(const AssetCatalog&) = delete;
+    AssetCatalog& operator=(const AssetCatalog&) = delete;
+    AssetCatalog(AssetCatalog&&) noexcept;
+    AssetCatalog& operator=(AssetCatalog&&) noexcept;
+
+    MeshHandle insert(MeshInfo mesh);
+    bool erase(MeshHandle handle);
+    std::optional<MeshInfo> lookup(MeshHandle handle) const;
+
+private:
+    struct Impl;                 // Incomplete here.
+    std::unique_ptr<Impl> impl_; // Pointer ownership known here.
+};
+~~~
+
+The destructor is *declared* in the header but *defined* after Impl in the source file. Why? The default deleter used by std::unique_ptr must see a complete implementation type at the point where it deletes that type. The same concern applies to move assignment when an old owned implementation is replaced. The default constructor allocates an Impl. The defaulted move operations transfer pointer ownership. Copying is deleted because duplicating a catalog would otherwise create an ambiguous logical-identity policy: is the new catalog a new owner, or does it share the same handles? A deliberate clone operation would have to specify and implement that policy explicitly.
+
+A subtle point: the catalog's C++ **const** member function does not automatically make everything behind the unique_ptr transitively const. If an implementation receives an ordinary non-const pointer through a const owning wrapper, it may still mutate the pointee. The public contract, not the syntax of the pointer alone, must prohibit mutation where required. A propagated-const wrapper or an explicitly const-correct internal access path is needed when deep constness matters. In this lab the exposed lookup returns an owned copy and the implementation's **find** is const.
+
+PIMPL has a nonzero cost in this design: construction allocates the implementation, method calls follow an additional indirection, and methods implemented out-of-line may not be inlined across a normal independently compiled boundary. Some compilers and link-time optimizers may remove selected costs in closed programs; that does not make the public ABI universally free. ABI stability is also conditional: compiler and standard-library ABI agreements, exported symbol signatures, exception boundaries, object layout, platform data models and the definition of public value types still matter. **PIMPL isolates one particular representation dependency; it does not turn an arbitrary C++ API into a universally stable plugin ABI.** The C ABI bridge introduced in M017 has different, more explicit compatibility requirements and also needs versioning, pointer lifetime and allocation ownership rules.
+
+The natural decision is therefore selective. Put PIMPL at an expensive-to-recompile, relatively infrequently called service boundary. Do not put an individually heap-allocated PIMPL inside each of millions of particles or vertices merely because hiding implementation sounds architecturally clean. The latter would introduce allocation and pointer chasing into a workload whose performance depends on contiguous data and predictable locality.
+
+### A handle is not an address: distinguish kind, slot, generation and owner
+
+The editor now stores **MeshHandle**, not a pointer to a std::vector element. This is a distinct logical-identity promise. A vector reallocation may move every Slot object to a different address, and a deletion may destroy the slot's MeshInfo, but the handle remains a small value whose validity is checked against the current catalog.
+
+The public definition is intentionally simple:
+
+~~~cpp
+struct MeshTag {};
+struct TextureTag {};
+
+template<class Kind>
+struct Handle {
+    std::uint64_t catalog_id{};
+    std::uint32_t slot{};
+    std::uint64_t generation{};
+
+    friend constexpr bool operator==(Handle, Handle) = default;
+};
+
+using MeshHandle = Handle<MeshTag>;
+using TextureHandle = Handle<TextureTag>;
+static_assert(!std::is_same_v<MeshHandle, TextureHandle>);
+~~~
+
+A **strong type** prevents accidental mixing of semantically different values that happen to share a machine representation. The tag parameter Kind has no data member in Handle. MeshTag and TextureTag are *phantom types*: they influence type checking without adding a tag object to every handle. The runtime fields that do exist are catalog ID, slot number and generation. Their actual size can include padding; we do not claim a particular packed ABI from the declaration alone.
+
+Why three fields? The type separates resource kinds. The **slot** identifies an index in a particular pool. The **generation** distinguishes different occupants of the same slot through time. The **catalog_id** distinguishes two otherwise separate catalogs that may both contain slot zero at generation one. A typed handle from a different catalog must fail lookup even if its slot and generation accidentally match.
+
+Trace the concrete state transition:
+
+~~~text
+Catalog A, slot 0, generation 1: MeshInfo("teapot", 128)
+    old = MeshHandle{A, 0, 1}  -> VALID
+
+Erase old:
+    MeshInfo destroyed; free-list entry prepared;
+    generation becomes 2; live count decreases
+
+Catalog A, slot 0, generation 2: MeshInfo("terrain", 4096)
+    replacement = MeshHandle{A, 0, 2} -> VALID
+    old         = MeshHandle{A, 0, 1} -> INVALID
+
+Catalog B, slot 0, generation 1: MeshInfo("other", 7)
+    MeshHandle{B, 0, 1} supplied to A -> INVALID
+~~~
+
+This requires a precise invariant: a live handle resolves if and only if the catalog identity, slot bounds, slot's generation and slot's engaged value all agree. The lab checks every part of that conjunction. Free-list reuse does not resuscitate old handles. When the generation reaches its maximum represented value, the slot is retired rather than wrapping into an old generation. Because generation retirement is a correctness policy, it is not appropriate to silently use unsigned wraparound simply because integer arithmetic makes that convenient.
+
+Now connect this to exception safety. Inserting into a previously freed slot first constructs the new MeshInfo and only afterward removes the slot index from the free list. A failed construction must not leave a slot simultaneously free and live. During erasure, the implementation calls **free_slots.reserve** before destroying the live value, so an allocation failure cannot strand a destroyed slot that was meant to be reusable. Only after preparation succeeds does it reset the value, advance the generation and append the free index. For this particular MeshInfo, the move operations have the non-throwing behavior needed by the demonstrated path. A generic container accepting arbitrarily throwing destructors and moves would need a stronger, separately stated contract.
+
+An owned lookup returns **std::optional<MeshInfo>**, not a reference into the vector. When the editor calls lookup and stores that result, it receives a copy of the mesh name and vertex count. It can retain the copy after the original asset is erased. That safety has a price: copying a long std::string may allocate, and an owned snapshot can become *out of date* without becoming *dangling*. These are different failure modes. The renderer that needs the current live resource must validate a handle at the time of use, rather than treating a cached description as proof that the live resource still exists.
+
+A complete engine may also need an asset epoch across application restarts, device identity, serialization policies and atomic reader/writer publication. The catalog's monotonically allocated process-local ID makes collisions across distinct in-process instances less likely, but it is not a durable cross-process or network identity. Moving a catalog transfers its implementation and preserves its handles; methods on the resulting moved-from catalog deliberately reject use until it is reassigned. A copy operation is not offered. These are explicit API decisions, not implicit guarantees of every PIMPL design.
+
+### Strong mathematical types do not perform mathematical conversions for us
+
+The same distinction between accidental representation equality and semantic identity appears in engine mathematics. A world-space displacement and a view-space displacement may both consist of three floats, but they inhabit different coordinate systems. Adding them directly is not meaningful without a conversion. In the laboratory:
+
+~~~cpp
+struct WorldSpace {};
+struct ViewSpace {};
+
+template<class T>
+concept RealScalar = std::floating_point<T>;
+
+template<RealScalar T, std::size_t N, class Space>
+struct Vector {
+    std::array<T, N> coordinates{};
+    constexpr T& operator[](std::size_t i) { return coordinates[i]; }
+    constexpr T operator[](std::size_t i) const { return coordinates[i]; }
+};
+
+using W3 = Vector<float, 3, WorldSpace>;
+using V3 = Vector<float, 3, ViewSpace>;
+static_assert(!std::same_as<W3, V3>);
+~~~
+
+The scalar type T, dimension N and space marker are independent template parameters. T controls element representation and permitted operations. N is a **non-type template parameter** selecting the compile-time extent. Space makes the coordinate frame part of the type. A Vector<float,3,WorldSpace> stores the three floats directly in an array rather than allocating them through an abstract base class. The observed representation assertion in the lab checks that this simple specific type contains exactly three float-sized bytes of elements under the tested standard-library/ABI configuration; it does not establish the size of all possible generic vector classes.
+
+A phantom **unit** tag can similarly distinguish meters from seconds. Yet it is essential not to confuse tagging with dimensional analysis. A meaningful unit system should define how multiplication, division, powers and conversions transform dimensions: distance divided by time is velocity; a position minus a position yields a displacement, not another position; degrees and radians may both describe angle but require a declared conversion; a point under an affine transform receives translation, while a direction does not.
+
+Coordinate transformation is also not a tag reinterpretation. Under a linear coordinate change with matrix A, a vector transforms according to the declared map, for example **v_view = A v_world**. A point typically needs homogeneous or affine translation as well. Covectors and surface normals do not generally transform by the same matrix as displacement vectors. If coordinates transform by A, dual quantities require the inverse-transpose relationship under the corresponding conventions. These facts were developed in the mathematics volume; putting them into C++ types makes illegal combinations harder to express, but does not replace the derivation or the transformation implementation.
+
+The scalar constraint deserves equal scrutiny. The lab's **std::floating_point** concept intentionally admits built-in float, double and long double, and rejects int. A constraint is more useful than a vague generic promise because it states what operations the code is written for. But it also excludes many useful user-defined scalar systems. Automatic-differentiation dual numbers, fixed-point numbers, intervals and arbitrary-precision types may not satisfy std::floating_point. A more powerful engine mathematics library may define a separate field-like concept containing precisely the operations, identities and numerical policies it requires. Merely permitting an **operator+** in a concept is not proof of a mathematical field, floating-point stability, total ordering or differentiability.
+
+The distinction between static and dynamic dimensions appears when the same math library must operate on a 3D transform and on a runtime-sized optimization problem. For N = 3, the compiler knows the element count and can instantiate fixed-size loops or unroll them when profitable. A dynamic dot product accepts spans whose lengths are only known at runtime; it must compare those lengths before indexing. If the two spans differ, the laboratory throws **std::invalid_argument** rather than silently truncating to the shorter extent. A span is a *borrowed view* and does not extend its storage's lifetime; choosing a dynamic extent does not automatically choose ownership.
+
+For a dot product of size n, the straightforward algorithm is
+
+\[
+s=\sum_{i=0}^{n-1}a_i b_i.
+\]
+
+It performs n multiplications and n additions in a single pass (counting the first accumulation into zero), with O(n) time and O(1) auxiliary scalar storage. Floating-point addition, however, is not associative, so a compiler's SIMD reduction or reassociation may change rounding. The mathematical formula and the machine's numerical contract must not be casually equated. For large n, error analysis, compensated summation and reduction order may matter more than whether the vector's dimension was a template parameter.
+
+### Expression templates: delaying evaluation can remove an intermediate and create a lifetime bug
+
+Our editor also wants to evaluate a mathematical expression with several operands. An eager implementation of **a + b + c** commonly describes two vector additions: compute a+b, then add c. At the abstract source level, an intermediate vector exists. A capable optimizing compiler may elide it, inline both operations or fuse the loops; the language source alone does not tell us the final memory traffic.
+
+An expression template postpones element evaluation by constructing a small type describing the addition:
+
+~~~cpp
+template<class L, class R>
+struct SumExpr {
+    const L& left;
+    const R& right;
+    constexpr auto operator[](std::size_t i) const {
+        return left[i] + right[i];
+    }
+};
+
+template<class L, class R>
+constexpr SumExpr<L, R> lazy_add(const L& left, const R& right) {
+    return {left, right};
+}
+~~~
+
+**lazy_add(a,b)** does not traverse a or b. Its result stores two references. Calling **operator[](i)** computes the corresponding sum on demand. Materialization traverses i = 0,...,N−1 once and writes the final array. This demonstrates an opportunity to avoid explicit intermediate storage, not a guaranteed speedup.
+
+We need to prove two different things: **the expression produces the same intended values** and **all referenced operands are still alive**. A seemingly elegant expression
+
+~~~cpp
+auto doomed = lazy_add(lazy_add(a, b), c);
+~~~
+
+contains a temporary *inner* SumExpr bound to the outer function's reference parameter. The temporary does not live for the lifetime of **doomed**. If we later evaluate doomed, its saved reference to the inner expression is dangling; the code has undefined behavior. No amount of benchmarking makes undefined behavior into an optimization.
+
+The tested example deliberately gives the inner node a name:
+
+~~~cpp
+constexpr auto inner = lazy_add(a, b);
+constexpr auto lazy = materialize<float, 3, WorldSpace>(
+    lazy_add(inner, c));
+~~~
+
+Here a, b, c and inner remain alive throughout materialization. The resulting three components are 12, 15 and 18, matching eager addition. A mature expression-template library needs an operand-storage policy that distinguishes borrowed lvalues from owned rvalue expression nodes. It also needs rules for aliasing: for a pure componentwise addition, writing output[i] may be safe with exact operand/output aliasing, but shifted spans, matrix products and stencil operations can read locations already overwritten by earlier iterations. A general promise that 'lazy expressions remove all temporaries' is wrong without those constraints.
+
+This design decision connects to numeric reproducibility and SIMD. Fusing loops changes when intermediate values are rounded; using fused multiply-add, vector reductions or fast-math transformations can also change results. Measure both correctness and cost. The compiler may outperform a manually built expression tree on a tiny three-float vector; for a large dynamic vector, a single materialization pass may reduce memory bandwidth. Neither outcome is automatic.
+
+### Intrusive storage exposes a different ownership contract
+
+The catalog's vector is non-intrusive in the sense that its free-list links are stored in the catalog's bookkeeping rather than embedded in an independent mesh object. Contrast that with a per-frame task stack in which each Task contains its own **next** pointer and linked flag. The intrusive stack points directly to caller-owned Task objects. Pushing a Task changes its link, and popping it resets the link. No separate list node is allocated by this simple stack.
+
+The advantage is a clear and often low-allocation representation. But the stack does **not** own the Task objects. Destroying or moving a Task while its address remains linked causes the container to retain an invalid pointer. Linking the same node twice can create cycles or corrupt ordering. The laboratory rejects a duplicate link and clears membership on pop, but it cannot automatically prevent an external owner from prematurely destroying a linked Task. An intrusive production container should define unlinking, hook membership, multiple-list participation, move restrictions and object-destruction policy. Thread-safe linkage would add synchronization requirements not represented in the sample.
+
+A non-intrusive **std::forward_list<std::string>** instead owns its string elements inside separately managed nodes. This makes the container's ownership obligations explicit, although it can allocate nodes and add pointer indirection. The comparison is not simply 'intrusive fast, non-intrusive slow': data density, iteration order, size, allocator strategy, mutation frequency, object lifetime and locality determine the actual outcome. An array-based queue may outperform both for sequential workloads.
+
+### The zero-overhead principle becomes a falsifiable experiment
+
+We now have three different cost categories in one API. Typed handles and phantom types aim to enforce semantic distinctions at compile time while storing ordinary scalar fields at runtime. An inline generic addition can often compile to ordinary arithmetic without virtual dispatch. PIMPL intentionally allocates and dereferences an implementation pointer. An intrusive collection may avoid node allocations but requires strict external lifetime discipline.
+
+Calling all of these 'zero-cost abstractions' would obscure the difference. A useful performance claim has a baseline, workload, compiler, target architecture, compiled object and measured outcome.
+
+For the smallest case, the separately compiled [[tools/m018/assembly_probe.cpp|assembly probe]] defines a templated generic sum of three floating-point numbers and an externally visible C-named wrapper. Build its assembly through the script or with:
+
+~~~bash
+g++ -std=c++20 -O2 -S tools/m018/assembly_probe.cpp -o /tmp/m018-gcc.s
+clang++ -std=c++20 -O2 -S tools/m018/assembly_probe.cpp -o /tmp/m018-clang.s
+~~~
+
+Locate **allmight_m018_sum3** in each output. Ask whether the instantiated template was inlined, whether any call remains, whether the expected arithmetic appears in registers, and whether additional stack traffic or allocations are present. An x86-64 compiler may use scalar floating-point instructions, while an AArch64 compiler will have different mnemonics. It would be incorrect to demand one exact instruction sequence on every machine or infer a cycle count from the number of assembly lines alone. Floating-point associativity rules, inlining visibility and optimization flags also matter. The code must be compared to an equivalently compiled handwritten baseline to support a meaningful zero-cost claim.
+
+For a real asset-catalog workload, count PIMPL allocations, name-copy allocations, lookups, cache misses and time per operation for several asset counts and lookup distributions. Compare an appropriately optimized flat vector, a sparse-set-like design and a hash lookup under equivalent semantics. Record cold versus warm cache, compiler version, flags, CPU type, allocator, thread count and variance. Profilers and disassemblers are instruments, not substitutes for a workload hypothesis. These requirements are explained **here**, rather than postponed to a future performance chapter; the next CPU phase can apply the same method to increasingly realistic machine behavior.
+
+The provided lab's size assertions, generated assembly and standalone build checks are evidence for limited claims. It is not a broad benchmark, a stable cross-toolchain ABI demonstration or a proof that every language abstraction vanishes in machine code.
+
+### The finished container contract is a set of explicit promises
+
+The outward service is a reusable API only when its caller can answer the following questions without reading Impl: What object owns a resource? Can it be copied or moved? Which handles become invalid on erase, reuse, relocation or catalog destruction? Do query results borrow or own their data? Is failure atomic? Are lookups thread-safe? Does the catalog identify CPU metadata or actual GPU residency? What is allowed after the catalog moves?
+
+For this teaching implementation, ownership is concentrated in AssetCatalog::Impl; catalog copying is forbidden and moving transfers its implementation identity. A handle is a value containing type, catalog identity, slot and generation. Erasing a valid resource destroys that slot's MeshInfo and advances its generation before reuse. A foreign, stale or out-of-range handle returns no result. Lookup returns an owned optional MeshInfo. Failed allocation during free-list preparation leaves the original record intact. The public class's private representation stays outside the header. Every callable on a moved-from catalog throws a documented logic error instead of dereferencing a null impl.
+
+The lab checks these invariants using **check** functions that throw on failure, not the standard **assert** macro, because **-DNDEBUG** removes ordinary assert evaluations. That detail matters for the release-mode CI job. Additional compile-time assertions establish that mesh and texture handles are distinct, world and view vectors are distinct, meters and seconds are distinct, and built-in integers are excluded by this particular floating-scalar concept. The dynamic dot-product test verifies both a known result and mismatched-length rejection. The intrusive example checks duplicate insertion, LIFO order and unlinking. Sanitizers detect many memory errors on executed paths but are not exhaustive lifetime proofs.
+
+There are still explicit limits. No concurrent catalog reader/writer execution is demonstrated. No GPU in-flight resource retirement is implemented. A GPU submission referencing a mesh buffer does **not** become safe merely because the catalog's CPU MeshInfo is generation-checked; the buffer must remain valid until the relevant GPU work has completed, and device destruction or reset introduces additional epochs. No allocator fault-injection matrix proves every possible exception transition. No serialized handle is guaranteed meaningful after restart. The sample does not implement a full dimensional algebra or an alias-safe expression-template library. Those are separate engineering requirements, not omissions to disguise as established features.
+
+The practical result is one reconstructed design rather than ten detached terms. A selected mesh begins as a value with a stable logical identity; its live data is privately owned, its public service remains compilable independently, its mathematical operations carry stronger types, its temporary computations have stated lifetimes, and its performance claims require evidence. This closes the C++ design bridge to the CPU, data-structure and engine-implementation work without claiming that one small teaching lab is a production engine.
+
+**Source and scope.** This is original authored reconstruction aligned with the exact M018/291–300 contract in the integrated curriculum, not a newly received original source transcript. Primary contracts checked for this chapter include [cppreference's incomplete-type/unique_ptr rules](https://en.cppreference.com/w/cpp/memory/unique_ptr), [the PIMPL explanation](https://en.cppreference.com/w/cpp/language/pimpl), and the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines). The supplied *Professional C++* and *Effective Modern C++* books supply broader object/lifetime and modern API design context; their older examples should not be misrepresented as post-C++20 ABI guarantees. Current KairoMath/Transform and KairoRenderer/RendererTypes were **not** audited by this reconstruction. The executed lab/CI and the source-to-part evidence are tracked separately below.
+
 ## An API is a promise about an operation
 
 A programmer encounters an unfamiliar function:
