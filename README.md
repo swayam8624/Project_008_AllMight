@@ -89,15 +89,16 @@ Explain separately whether code is a full standalone laboratory, a compilable fr
 
 Use direct links to independent sources and references where they deepen the explanation, but keep enough material locally that the chapter is self-contained. The reader should finish an explanation able to reconstruct the mechanism, not merely able to follow a link.
 
-## Rigid-contact laboratory: an executable solver contract
+## Rigid-contact laboratories and reconstruction
 
-The [C++20 rigid-contact witness](tools/labs/rigid_contact_lab.cpp) is an independent CPU implementation of the velocity-level contact equations used in the engine's collision-response narrative. It connects a contact normal, center-of-mass offset, point velocity, inverse effective mass, accumulated unilateral normal impulse, and Coulomb tangent limit to observable before/after body velocities. Build and run it with:
+The [basic C++20 contact witness](tools/labs/rigid_contact_lab.cpp) covers normal impulses, planar angular response, Coulomb friction and unresponsive contact pairs. The complementary [persistent-contact and two-point manifold witness](tools/labs/persistent_contact_lab.cpp) adds an explicit frozen restitution target, sequential projected impulses, accumulated unilateral and tangential multipliers, single-use warm start and malformed-input tests. The coherent [contact reconstruction chapter](Supplementary/Rigid%20Contact%20-%20Persistent%20Manifolds%20and%20Solver%20Reconstruction.md) derives the contact Jacobian, explains the scalar tangent sign with a numerical example, and separates velocity-level constraints from penetration repair and CCD.
 
 ```sh
 c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact && /tmp/rigid_contact
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/persistent_contact_lab.cpp -o /tmp/persistent_contact && /tmp/persistent_contact
 ```
 
-The five numerical cases witness equal-mass elastic impact, static-body friction, off-centre angular response, separating pairs and static/static degeneracy. This **does not** certify broad-phase or narrow-phase contact generation, penetrating-body stabilization, full persistent-manifold warm-starting, time-of-impact/CCD, GPU behavior, cross-platform performance or Kairo's production solver. The normal is defined from A to B, the point is world-space, the code uses doubles, and an absent finite effective mass produces no impulse. A production iterative solver must freeze the restitution target once when a collision begins instead of recomputing bounce from each changing iterate.
+The separate [GitHub Actions regression workflow](.github/workflows/rigid-contact-lab.yml) runs strict builds and UndefinedBehaviorSanitizer for both witnesses; its remote status must be checked rather than inferred from the workflow file. These independently authored 2D CPU checks do not certify production broadphase, narrowphase manifold generation, Kairo runtime physics, CCD, 3D friction, stable stacking over long simulations or platform-specific GPU behavior.
 
 ## Per-source workflow
 
