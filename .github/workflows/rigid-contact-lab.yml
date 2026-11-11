@@ -1,0 +1,26 @@
+name: Rigid contact numerical witness
+on:
+  push:
+    paths:
+      - 'tools/labs/rigid_contact_lab.cpp'
+      - '.github/workflows/rigid-contact-lab.yml'
+  pull_request:
+    paths:
+      - 'tools/labs/rigid_contact_lab.cpp'
+      - '.github/workflows/rigid-contact-lab.yml'
+  workflow_dispatch:
+
+jobs:
+  strict-and-ubsan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and execute strict C++20 witness
+        run: |
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_strict
+          /tmp/rigid_contact_strict
+      - name: Compile and execute undefined-behavior sanitizer witness
+        run: |
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_ubsan
+          /tmp/rigid_contact_ubsan
