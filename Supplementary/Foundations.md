@@ -355,6 +355,38 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a live object to responsible resource ownership|Continuous teaching narrative]] · [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall|Active-recall visual board]] · [[Keyword Index]] · [[Dependency Map]]
 
+## M011 — Parts 161–180: a request changes shape and a backend changes implementation
+
+**Source status:** authored reconstruction from the canonical integrated 180-chunk / original 3,000-part curriculum contract, **not** a received M011 teaching transcript. **Teaching placement:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From one owned resource to many requests and a replaceable backend|the continuous C++ narrative]], immediately after the M010 ownership chapter and before the API-publication chapter. The concrete example follows a typed renderer request through a polymorphic backend; it does not substitute a dictionary entry for each numbered part.
+
+| Part | Reason the concept appears in the request-to-backend narrative | Reconstruction and evidence |
+|---|---|---|
+| 161 | A command record can hold overlapping alternatives but not several simultaneously active objects. | Raw union active-member and lifetime rules; trivial union assignment in tested C++20 lab. |
+| 162 | A request must carry its active alternative rather than guess an interpretation from bytes. | `std::variant`, `get_if`, `holds_alternative` and `visit`, replacement and exceptional empty state; executable request-state checks. |
+| 163 | An editor should depend on the backend's promised operations, not the native implementation. | Base/derived interface contract contrasted with composition and closed alternatives. |
+| 164 | A derived object contains a base subobject with its own identity and layout constraints. | Static versus dynamic object view; no invented vptr byte layout. |
+| 165 | A base reference must call the selected backend's implementation. | Virtual dispatch with observable CountingBackend result in the lab. |
+| 166 | Indirection has implementation and performance consequences, but no mandated vtable layout. | Implementation-model explanation, devirtualization caveat and proposed measurement controls. |
+| 167 | A backend contract needs operations without constructing the incomplete base. | Pure virtual operation and abstract interface; concrete derived override. |
+| 168 | An owner typed as base must destroy the concrete derived object correctly. | Virtual destructor through `std::unique_ptr<Backend>`; derived-destruction assertion. |
+| 169 | Copying a derived object into a base value can erase its specialized identity. | `MeshObject` / `NamedObject` slicing contrasted with a base reference; tested. |
+| 170 | A backend can implement multiple independent interfaces, creating distinct base views. | Multiple inheritance, ambiguity and subobject-adjustment explanation. |
+| 171 | A diamond may duplicate a common base unless virtual inheritance shares it. | `Diamond` with two paths through a virtual `Root`; identical subobject address test. |
+| 172 | Upcasting to a public base is different from a downcast that assumes an actual derived object. | `static_cast` guarantees and the conditions it does not dynamically test. |
+| 173 | A diagnostic needs to ask whether the runtime backend really has a concrete type. | `dynamic_cast` success and failed pointer cast tested; RTTI and design cautions. |
+| 174 | Byte reinterpretation must not masquerade as object construction or safe aliasing. | `reinterpret_cast` limitations; byte views and `bit_cast` alternatives. |
+| 175 | Removing const qualification is not the same as making a const object writable. | `const_cast` and genuine-const/ownership rules. |
+| 176 | Operators should communicate a domain operation and preserve invariants. | Resource handles versus durations and inappropriate hidden side effects. |
+| 177 | A handle's equality includes its generation, not merely a reused slot. | Defaulted `operator==` derived from `<=>` and two identity assertions. |
+| 178 | Identifiers need meaningful ordering; NaN can make floating comparison unordered. | Strong integer ordering, partial floating ordering and strict-weak-order concerns. |
+| 179 | Overload selection is a compile-time decision based on arguments and conversions. | Integer/double overload calls tested; ambiguity and conversion cautions. |
+| 180 | Virtual implementation selection and default-argument binding happen at different times. | Base default 2 with derived body produces 20; derived default 7 produces 70; tested. |
+
+**Executed reference, scope and limits.** `tools/labs/backend_choice_lab.cpp` was compiled with GCC 14.2.0 on Linux as C++20 using `-Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer` and executed with all assertions passing. The committed source was independently compared byte-for-byte to that locally executed source by FNV-1a checksum (both `0x22332ec3`, length 6,431 bytes). This checksum comparison establishes identical bytes for the compared artifact; the compiler run remains a single compiler/platform witness, not every possible C++ implementation. The example intentionally simulates renderer behavior and contains no native graphics API execution. Current Kairo and AI-provider repositories were **not** re-inspected here; the listed original code-lab paths are curriculum *targets*, not verified implementation claims.
+
+**Completion classification:** 20 canonical part titles mapped to a developed narrative and one tested representative laboratory; not marked as 20 individually demonstrated learner mastery gates or a fully verified Kairo code audit. Additional compiler/platform checks, user reconstruction, project-specific anchors, and production performance comparisons remain explicit.
+
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
