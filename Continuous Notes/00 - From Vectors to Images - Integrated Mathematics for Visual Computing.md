@@ -30,53 +30,7 @@ Phase 6 asks one large question: **how do we turn a physical relationship into a
 
 We will answer it by building a small robot workcell. A robot must inspect a triangular metal panel, move a sensor over it, illuminate it, and avoid nearby obstacles. The same panel gives us a reason to learn numbers, vectors, lengths, projections, orientations, surface frames, interpolation, collision geometry, and reliable C++.
 
-### Immediate footing — field
-
-A field is a number system in which addition, subtraction, and multiplication follow the familiar algebraic rules, and every nonzero number has a reciprocal. The real numbers form a field: $3/2$ is defined, while division by zero is not. Vector spaces use field elements as scalars. In graphics, calculations are modeled over the real numbers, while code stores rounded finite-precision approximations. The identity $a(b+c)=ab+ac$ holds exactly in the model, though floating-point evaluation can round.
-
-[[#Numbers become a system of permitted operations|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — matrix
-
-A matrix is a rectangular table that defines an input-output rule formed from weighted sums after input and output coordinates are chosen. With column vectors, its columns are the images of the input coordinate directions. For example, $A=\begin{bmatrix}2&1\\1&3\end{bmatrix}$ maps $\begin{bmatrix}1\\2\end{bmatrix}$ to $\begin{bmatrix}4\\7\end{bmatrix}$ because $A\begin{bmatrix}1\\2\end{bmatrix}=\begin{bmatrix}2+2\\1+6\end{bmatrix}$. The matrix shape determines which inputs it accepts. Row-major and column-major describe memory layout, not a different mathematical map.
-
-[[#A linear rule is determined by its basis images|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — determinant
-
-The determinant of a square matrix is its signed volume scale. For two columns $u=(a,b)$ and $v=(c,d)$ in 2D, $\det\begin{bmatrix}a&c\\b&d\end{bmatrix}=ad-bc$ is their signed parallelogram area. The identity matrix has determinant $1$; swapping its columns gives $-1$, indicating reversed orientation. A zero determinant means the columns are dependent and the map is not invertible. Determinants explain orientation, area scaling, and invertibility, but determinant formulas are usually a numerically fragile way to compute an inverse.
-
-[[#Determinant measures oriented volume and exposes lost dimensions|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — inner product
-
-An inner product pairs two vectors to produce a scalar and defines lengths and angles. In ordinary real orthonormal coordinates, $\langle u,v\rangle=\sum_i u_i v_i$. For $u=(1,0)$ and $v=(3,4)$, the value is $3$, the component of $v$ along the unit direction $u$. The induced length is $\|u\|=\sqrt{\langle u,u\rangle}$, and perpendicular vectors have inner product zero. In a slanted basis, include the metric or Gram matrix; the plain coordinate dot product may not represent geometric measurement.
-
-[[#The dot product turns two movements into a measurement|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — linear map
-
-A linear map $T$ preserves vector addition and scalar multiplication: $T(u+v)=T(u)+T(v)$ and $T(cu)=cT(u)$. Scaling and rotation about the origin are linear; translation by a nonzero offset is not, because it moves the zero vector. A map is determined by its action on a basis. If $T(e_1)=(2,1)$ and $T(e_2)=(1,3)$, then $T(3e_1+2e_2)=3(2,1)+2(1,3)=(8,5)$. Once bases are selected, the basis images form the columns of its matrix.
-
-[[#The robot needs a rule for moving every direction|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — covector and dual space
-
-A covector is a linear measurement that takes a vector to a scalar; in coordinates it can be written as a row $n^T$ acting on displacement $t$ by $n^Tt$. The dual space contains all such linear measurements. A normal to a surface can be defined as a covector that returns zero on every tangent displacement: $n^Tt=0$. Under a basis change, vector and covector coordinates transform differently so their pairing stays the same. In an orthonormal Euclidean frame a covector is often identified with a normal column vector, but that identification depends on the metric.
-
-[[#A normal is a measuring rule before it is an arrow|Full explanation and worked examples in this book]]
-
-
-### Immediate footing — transpose and adjoint
-
-The transpose $A^T$ swaps matrix rows and columns and obeys $(AB)^T=B^TA^T$. For real Euclidean inner products it is the adjoint: $\langle Ax,y\rangle=\langle x,A^Ty\rangle$. For complex vectors with the standard Hermitian inner product, the adjoint is the conjugate transpose $A^H=\overline{A}^T$. With coordinate Gram matrices $G_X$ and $G_Y$ on the input and output spaces, the adjoint matrix is $A^*=G_X^{-1}A^HG_Y$ (for real spaces, replace $A^H$ by $A^T$). State the scalar field and metrics before using the identity.
-
-[[#Transpose lets us compare measurements and structure|Full explanation and worked examples in this book]]
+The robot's inspection task is the organizing principle of this chapter. Rather than meeting the definitions of fields, matrices, determinants, inner products, covectors and adjoints as an entrance examination, we will derive each of them when a concrete calculation first demands it. The original compact definitions have been preserved as an optional [reference recap](#reference-recap--definitions-after-the-workcell) after this physical investigation; they are not prerequisites to memorize before starting.
 
 ## The panel gives us a reason to learn
 
@@ -1703,6 +1657,59 @@ This volume develops the machinery needed to answer those questions. We begin wi
 A quaternion has one scalar and three vector components, written $q=(w,\mathbf v)$. Unit quaternions can represent three-dimensional rotations. For unit axis $\mathbf a$ and angle $\theta$, use $q=(\cos(\theta/2),\mathbf a\sin(\theta/2))$. Applying the corresponding rotation to a vector uses the quaternion product $q(0,\mathbf x)q^{-1}$. The multiplication law makes composition possible and noncommutative. The values $q$ and $-q$ represent the same rotation; arbitrary component-wise interpolation therefore needs care. State the multiplication order, frame convention and normalization contract.
 
 [[#Orientation needs a state that can be composed|Full explanation and worked examples in this book]]
+## Reference recap — definitions after the workcell
+
+The following compact definitions are retained verbatim from the earlier opening. They serve as review after the causal demonstrations, **not** as a substitute for the full first-use explanations above.
+
+### Immediate footing — field
+
+A field is a number system in which addition, subtraction, and multiplication follow the familiar algebraic rules, and every nonzero number has a reciprocal. The real numbers form a field: $3/2$ is defined, while division by zero is not. Vector spaces use field elements as scalars. In graphics, calculations are modeled over the real numbers, while code stores rounded finite-precision approximations. The identity $a(b+c)=ab+ac$ holds exactly in the model, though floating-point evaluation can round.
+
+[[#Numbers become a system of permitted operations|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — matrix
+
+A matrix is a rectangular table that defines an input-output rule formed from weighted sums after input and output coordinates are chosen. With column vectors, its columns are the images of the input coordinate directions. For example, $A=\begin{bmatrix}2&1\\1&3\end{bmatrix}$ maps $\begin{bmatrix}1\\2\end{bmatrix}$ to $\begin{bmatrix}4\\7\end{bmatrix}$ because $A\begin{bmatrix}1\\2\end{bmatrix}=\begin{bmatrix}2+2\\1+6\end{bmatrix}$. The matrix shape determines which inputs it accepts. Row-major and column-major describe memory layout, not a different mathematical map.
+
+[[#A linear rule is determined by its basis images|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — determinant
+
+The determinant of a square matrix is its signed volume scale. For two columns $u=(a,b)$ and $v=(c,d)$ in 2D, $\det\begin{bmatrix}a&c\\b&d\end{bmatrix}=ad-bc$ is their signed parallelogram area. The identity matrix has determinant $1$; swapping its columns gives $-1$, indicating reversed orientation. A zero determinant means the columns are dependent and the map is not invertible. Determinants explain orientation, area scaling, and invertibility, but determinant formulas are usually a numerically fragile way to compute an inverse.
+
+[[#Determinant measures oriented volume and exposes lost dimensions|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — inner product
+
+An inner product pairs two vectors to produce a scalar and defines lengths and angles. In ordinary real orthonormal coordinates, $\langle u,v\rangle=\sum_i u_i v_i$. For $u=(1,0)$ and $v=(3,4)$, the value is $3$, the component of $v$ along the unit direction $u$. The induced length is $\|u\|=\sqrt{\langle u,u\rangle}$, and perpendicular vectors have inner product zero. In a slanted basis, include the metric or Gram matrix; the plain coordinate dot product may not represent geometric measurement.
+
+[[#The dot product turns two movements into a measurement|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — linear map
+
+A linear map $T$ preserves vector addition and scalar multiplication: $T(u+v)=T(u)+T(v)$ and $T(cu)=cT(u)$. Scaling and rotation about the origin are linear; translation by a nonzero offset is not, because it moves the zero vector. A map is determined by its action on a basis. If $T(e_1)=(2,1)$ and $T(e_2)=(1,3)$, then $T(3e_1+2e_2)=3(2,1)+2(1,3)=(8,5)$. Once bases are selected, the basis images form the columns of its matrix.
+
+[[#The robot needs a rule for moving every direction|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — covector and dual space
+
+A covector is a linear measurement that takes a vector to a scalar; in coordinates it can be written as a row $n^T$ acting on displacement $t$ by $n^Tt$. The dual space contains all such linear measurements. A normal to a surface can be defined as a covector that returns zero on every tangent displacement: $n^Tt=0$. Under a basis change, vector and covector coordinates transform differently so their pairing stays the same. In an orthonormal Euclidean frame a covector is often identified with a normal column vector, but that identification depends on the metric.
+
+[[#A normal is a measuring rule before it is an arrow|Full explanation and worked examples in this book]]
+
+
+### Immediate footing — transpose and adjoint
+
+The transpose $A^T$ swaps matrix rows and columns and obeys $(AB)^T=B^TA^T$. For real Euclidean inner products it is the adjoint: $\langle Ax,y\rangle=\langle x,A^Ty\rangle$. For complex vectors with the standard Hermitian inner product, the adjoint is the conjugate transpose $A^H=\overline{A}^T$. With coordinate Gram matrices $G_X$ and $G_Y$ on the input and output spaces, the adjoint matrix is $A^*=G_X^{-1}A^HG_Y$ (for real spaces, replace $A^H$ by $A^T$). State the scalar field and metrics before using the identity.
+
+[[#Transpose lets us compare measurements and structure|Full explanation and worked examples in this book]]
+
+
 ## Keep the promises visible while moving between representations
 
 | Question                                 | Vocabulary and promise                                                                                                                                                                                                                                  |
