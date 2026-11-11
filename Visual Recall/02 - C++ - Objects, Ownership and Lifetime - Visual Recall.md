@@ -323,6 +323,37 @@ Starting with the five records `brick.mesh` (48 bytes, priority 2), `sky.tex` (6
 
 **Audit:** [[Supplementary/Foundations#M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline|the original 20-part mapping]] and [[Supplementary/Sources and Code Anchors#Phase 6 additive reconstruction — M016 / Parts 251–270|the source and verification ledger]]. The registry's *live* concurrency, the separately named Kairo implementations and the learner's independent reconstruction remain unverified here.
 
+## From borrowed reports to module boundaries — M017 reconstruction
+
+The Phase 6 report used an owned snapshot so that sorting and erasing metadata did not mutate live engine state. The next problem is making that report *composable* without accidentally copying intermediates, choosing where its scratch allocations live, and sharing its API with separately compiled consumers. The full explanation is [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From copying every asset report to a lazy, allocatable, separately compiled query service|the M017 continuous chapter]]. Reconstruct the mechanism below **from the problem**, not by reciting the names of its twenty C++ features.
+
+```mermaid
+flowchart LR
+    A["Owned snapshot: five live + one retired"] --> B["Custom forward iterator skips tombstone"]
+    B --> C["Lazy filter | transform view"]
+    C --> D["Borrowed or owning view?"]
+    D --> E["Ranges algorithms with projections"]
+    E --> F["Owned output: custom allocator / PMR"]
+    F --> G["Monotonic arena lifetime and overflow"]
+    G --> H["Named C++ module interface and partition"]
+    H --> I["Separate implementation and importers"]
+    I --> J["Versioned C ABI wrapper for C11 caller"]
+```
+
+**First reconstruct what the loop means.** Draw the hidden range variable, begin iterator, end sentinel and increment/compare/dereference sequence behind a range-for. Define a cursor that holds a borrowed pointer to the snapshot vector and a numeric index, and makes `operator++` skip retired slots. State the invariants for normal, end and default-created iterators; do not dereference the end. Explain why your cursor models `std::forward_iterator` and why it does not model random access or contiguity. With one 512-byte retired texture and live byte counts 48,64,16,128,48, predict exactly five visits and total 304.
+
+**Next reconstruct laziness and lifetime.** Compose `views::all(rows) | views::filter(...) | views::transform(...)` to obtain four names from those live rows with at least 48 bytes. Explain why merely forming the pipeline does not copy all four names into a vector and why iterating it later can call the predicate again. Predict why it is wrong to rely on a precise predicate invocation count for arbitrary repeat traversals. Compare `views::all(lvalue_vector)` with `views::all(rvalue_vector)` and explain how a `ref_view` can satisfy `borrowed_range` without keeping the vector itself alive. Conversely, explain why an owning view storing the vector need not qualify as a borrowed range when the view's own destruction destroys the data.
+
+**Use a projection only when the search needs one property.** Without constructing a separate names vector, use `std::ranges::find(rows, "sky.tex", &Row::name)` and predict the record's byte count. Sort an *owned copy* by `&Row::bytes` and state why the 512-byte retired row will still appear at the end unless you filtered it first. Discuss why the source vector's contiguity does not make a filter view a writable random-access container. Compare `AtLeastBytes{48}` against an equivalent threshold-capturing lambda, giving a plan for benchmarking actual instruction and allocation costs instead of asserting one form is always faster.
+
+**Now choose who owns allocation.** Build a typed `TrackingAllocator<T>` that shares statistics across copies and rebindings, uses proper alignment and pairs successful storage acquisitions with deallocation. Explain why allocation is not the same as constructing a `T` object, and why allocator equality/propagation matter when a container moves or swaps. Then replace the compile-time allocator type with a `std::pmr::vector` and a `std::pmr::unordered_map`, both pointing to a counting `memory_resource`. Explain how unordered buckets/nodes and nested PMR strings may require allocator propagation, and why the resource must outlive both containers.
+
+**Derive the arena lifetime, not just its common-case speed.** Give a 128-byte aligned scratch buffer to a monotonic resource, then allocate 2,048 64-bit values. Explain why the initial buffer cannot contain the entire request; the resource must obtain upstream blocks. Predict why destroying the vector does not immediately free those blocks and why destroying/releasing the arena later can. Repeat with a 64-byte buffer and `null_memory_resource` upstream and predict `std::bad_alloc`. State the difference between a frame scratch lifetime and staging memory still held by an asynchronous GPU operation; neither the presence of PMR nor a move-only vector resolves the missing completion fence.
+
+**Finally build an actual module graph.** In separate files, put a `:rules` partition containing an exported 1,024-byte preview budget, a primary `export module allmight.asset_query` interface that re-exports that partition, and a `module allmight.asset_query;` implementation unit defining `make_preview`. Compile in dependency order. Write two *separate importing translation units* that use an exported inline function, link them with the implementation, and explain which declarations are exported and why that is distinct from C++ namespace naming or C language linkage. Build `asset_query_interop.hpp` as a header unit before using `import "asset_query_interop.hpp";`; compare this with an ordinary `#include` and explain macro/toolchain implications. Then expose a small versioned C header declaring `int allmight_asset_approved_v1(uint64_t)`; build a C11 consumer using `gcc` and link it with the C++ wrapper and module objects. Explain exactly what this test establishes about the chosen GCC14 toolchain, and why it does not certify ABI stability across unrelated compilers or plugin versions.
+
+The real sources are [[tools/labs/asset_ranges_pmr_lab.cpp|the tested C++20 CPU lab]] and [[tools/modules/build_module_lab.sh|the executable module graph script]]. The local runtime lab passed GCC14 ASan/UBSan, Clang17 and GCC14 release; the module graph passed GCC14's ordered module/header-unit build with three linked consumers. The original [[Supplementary/Foundations#M017 — Parts 271–290: lazy asset queries, allocation lifetimes and compiled API boundaries|twenty-title coverage map]] and [[Supplementary/Sources and Code Anchors#Phase 7 additive reconstruction — M017 Parts 271–290|verification ledger]] distinguish that evidence from external Kairo audits and unmeasured performance. Personal mastery is earned only after independent explanation, tests and failure-case reconstruction; the authored lesson and one passing lab cannot grant it automatically.
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
