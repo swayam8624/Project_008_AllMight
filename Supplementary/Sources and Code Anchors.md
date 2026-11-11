@@ -978,6 +978,43 @@ GCC 14.2.0 and Clang 17.0.0 were the local compilers. Each final executable prin
 
 **No-loss integration check:** all older text is retained verbatim. The new lesson sits at the M014→existing API chapter transition, supported by one executable lab and appended mapping, recall, references and navigation. The next coherent need is M016 / Parts 251–270, where queries and transformations over the now-growing asset registry require optional results, variants, iterator categories, sorting, searching, transformations, reductions and safe erasure.
 
+## Phase 6 additive reconstruction — M016 / Parts 251–270
+
+**Authority, placement, and provenance.** The original integrated 180-chunk curriculum assigns M016 to Parts 251–270, exactly: optional; variant; any; expected-style results; pair/tuple; structured bindings; iterator categories/contiguity/invalidation; sort/stable_sort/partition; lower_bound/upper_bound/equal_range/find; transform; accumulate/reduce; remove–erase and erase_if. The new [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a living asset registry to reliable queries and transformations|continuous query narrative]] follows directly from the M015 growing asset registry without modifying any existing prose. [[Supplementary/Foundations#M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline|The exact twenty-part mapping]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#Query the registry without confusing identity and a snapshot — M016 reconstruction|the reconstruction exercise]] preserve traceability. **This is authored reconstruction, not an original M016 transcript newly received from the user.**
+
+**Reproducible CPU witness:** `tools/labs/asset_query_algorithm_lab.cpp`, 316 lines / 15,306 bytes, Git blob `0fa0a888b2aa0c348a52307a049bbf38527fcde1`, SHA-256 `c479bd493444d093f6c34898d4ecdf43938cdbd82de8986a7b1906a5bc374f9c`. The source was locally compiled and executed, then compared byte-for-byte with the committed blob, not merely described as testable. Exact successful commands on the local Linux toolchains:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/asset_query_algorithm_lab.cpp -o /tmp/allmight_m016_gcc_san
+/tmp/allmight_m016_gcc_san
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_query_algorithm_lab.cpp -o /tmp/allmight_m016_clang
+/tmp/allmight_m016_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_query_algorithm_lab.cpp -o /tmp/allmight_m016_release
+/tmp/allmight_m016_release
+```
+
+All three printed `asset_query_algorithm_lab: all checks passed`. GCC 14.2.0 and Clang 17.0.0 were used; no AddressSanitizer/UndefinedBehaviorSanitizer diagnostic was reported during the witnessed run. Checks remain active in `-DNDEBUG` builds because the laboratory uses a `check` helper rather than C `assert`.
+
+**Verified narrow behavior:** an owned snapshot yields optional success/absence and expected-like typed failure; a closed three-alternative command variant visits each case; std::any accepts an owned string and rejects int extraction; pair/tuple/structured-binding copy versus alias semantics are observed; iterator concepts are statically checked for vector/deque/list/forward_list/istream_iterator; ordinary sort uses explicit byte/name tie-breaking; stable_sort preserves priority ties; partition and partition_point agree; sorted byte keys `[16,48,48,64,128]` give lower/upper/equal-range interval `[1,3)` for 48; linear find tests names; transform yields byte counts; accumulate and reduce both yield 304 for small integer data, while explicit floating-point groupings produce 3 and 4; remove_if plus erase actually shrinks a vector, and erase_if removes matching vector and unordered-map records.
+
+**Crucial nonclaims:** no concurrent registry snapshot creation, actual `AssetRegistry` mutation, live handle revalidation after eviction, native graphics work, renderer integration, code-generation inspection, numeric error bound for real datasets, sorting benchmark or independently verified learner reconstruction. `ExpectedLike` is a narrow educational wrapper, not fully equivalent to C++23 `std::expected`. No assumption that standard `std::sort` must specifically use introsort, `std::reduce` chooses a fixed grouping, or a nonrandom-access binary-search iterator jumps in constant time. `std::erase_if` on a report does not evict an owning live asset. Original project-code anchors `KairoSpatial/BVH.cppm` and `KairoRayTracer/Scene.cppm` remain **to inspect against current source**.
+
+**External standards-library references, checked for these points:**
+- [`std::reduce`](https://en.cppreference.com/cpp/algorithm/reduce) explicitly permits reordering/regrouping; [`std::accumulate`](https://en.cppreference.com/w/cpp/algorithm/accumulate) supplies the sequential left fold.
+- [`std::erase_if(std::unordered_map)`](https://en.cppreference.com/cpp/container/unordered_map/erase_if) is available since C++20 and removes matching entries; [`std::erase_if(std::vector)`](https://en.cppreference.com/cpp/container/vector/erase2) corresponds to erase–remove behavior on vector.
+- [`std::remove_if`](https://en.cppreference.com/w/cpp/algorithm/remove) rearranges the retained range and requires container erasure to shrink it.
+- [`std::lower_bound`](https://en.cppreference.com/w/cpp/algorithm/lower_bound), [`std::upper_bound`](https://en.cppreference.com/w/cpp/algorithm/upper_bound), and [`std::equal_range`](https://en.cppreference.com/w/cpp/algorithm/equal_range) require correctly partitioned ranges under their comparisons.
+- [`std::expected`](https://en.cppreference.com/w/cpp/utility/expected) is standardized in C++23, not a C++20 implementation guarantee.
+
+**No-loss integration invariant:** the original continuous prose is preserved byte-for-byte in its original relative order. The new section is inserted only at the growing-registry-to-API boundary, with one new source file and additive ledger/recall/README records. Prior received-source counts, existing links, earlier texts and user-supplied corpus are not rewritten, reclassified or silently declared mastered. Next M017 / Parts 271–290 follows from the need to express query pipelines as composable ranges and manage allocator, module, linkage and ABI boundaries.
+
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
