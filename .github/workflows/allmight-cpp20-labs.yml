@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "tools/labs/**"
+      - "tools/modules/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   pull_request:
     paths:
       - "tools/labs/**"
+      - "tools/modules/**"
       - ".github/workflows/allmight-cpp20-labs.yml"
   workflow_dispatch:
 
@@ -58,3 +60,13 @@ jobs:
             "$RUNNER_TEMP/allmight-labs/$name"
             echo "::endgroup::"
           done
+
+  module-boundary:
+    name: GCC modules, header unit, and C ABI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C++20 module graph and execute C/C++ consumers
+        shell: bash
+        run: bash tools/modules/build_module_lab.sh
