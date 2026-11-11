@@ -21,7 +21,7 @@ Stateless sampling derives an output from explicit coordinates such as a master 
 
 ## Used by
 
-- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+- [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]]
 
 - [[Uniform shuffling without replacement]]
 ## Full teaching explanation
