@@ -1,3 +1,9 @@
+// TEST HARNESS: never silently discard semantic checks in -DNDEBUG builds.
+// This must precede <cassert>; all original assertions remain active under -O2.
+#if defined(NDEBUG)
+#undef NDEBUG
+#endif
+
 // Phase 1 of AllMight: one engine request, two forms of runtime choice.
 // Build with C++20, warnings-as-errors, and ASan/UBSan when available.
 #include <cassert>
