@@ -121,6 +121,27 @@ class ProductionContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             image_mse([math.nan], [0])
 
+    def test_untrusted_size_and_device_name_bounds(self):
+        with self.assertRaises(ValueError):
+            make_plan(self.root, [], "take-v001", first=1, last=100001)
+        with self.assertRaises(ValueError):
+            make_plan(self.root, [], "CON", first=1, last=3)
+        self.assertIsNone(parse_frame("panel." + "0" * 100000 + ".png"))
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "no symlink API")
+    def test_published_symlink_cannot_escape_integrity_check(self):
+        target = publish(self.plan())
+        with tempfile.TemporaryDirectory() as foreign:
+            secret = pathlib.Path(foreign) / "secret.png"
+            secret.write_bytes(b"external")
+            (target / "panel.0001.png").unlink()
+            try:
+                os.symlink(secret, target / "panel.0001.png")
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink permission unavailable")
+            errors = verify_published(target)
+            self.assertIn("PATH_ESCAPE", {x.code for x in errors})
+
     def test_benchmark_statistics_and_monotonic_span(self):
         result = benchmark_summary([40, 10, 20, 30, 50])
         self.assertEqual(result["median_ns"], 30)
