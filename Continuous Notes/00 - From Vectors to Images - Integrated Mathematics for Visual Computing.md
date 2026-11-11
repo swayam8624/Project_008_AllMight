@@ -34943,6 +34943,58 @@ The textbook quadratic root $(-b-\sqrt D)/(2a)$ is not always a numerically safe
 
 A worked collision is a stationary radius-1 disk at $(0,0)$ and a radius-1 disk starting at $(10,0)$ with velocity $(-100,0)$ m/s. We obtain $a=10000$, $b=-2000$, $c=96$, and $D=4{,}000{,}000-3{,}840{,}000=160{,}000$. The entry time is $(2000-400)/20000=0.08$ seconds. A frame of length $h=0.10$ seconds must be split into 0.08 seconds before impact and 0.02 seconds after the response; otherwise even a correct impulse equation is applied at the wrong time.
 
+
+#### Executable first-contact quadratic
+
+The derivation can become a complete C++20 program without inventing missing algorithmic decisions. The following stand-alone driver checks the input domain, identifies the approaching branch, uses the numerically safer quadratic root and tests the 0.08-second impact. It deliberately rejects pre-existing overlaps; the event solver needs a separate policy for those.
+
+```cpp
+#include <cmath>
+#include <iostream>
+#include <optional>
+#include <stdexcept>
+struct Vec2 { double x{}, y{}; };
+struct Disk2 { Vec2 centre{}, velocity{}; double radius{}; };
+double dot(Vec2 a, Vec2 b) { return a.x*b.x+a.y*b.y; }
+
+std::optional<double> firstTouch(Disk2 a, Disk2 b, double h) {
+    const auto valid = [](Disk2 d) {
+        return std::isfinite(d.centre.x)&&std::isfinite(d.centre.y)&&
+               std::isfinite(d.velocity.x)&&std::isfinite(d.velocity.y)&&
+               std::isfinite(d.radius)&&d.radius>0;
+    };
+    if (!valid(a)||!valid(b)||!std::isfinite(h)||h<0)
+        throw std::invalid_argument("invalid disk or horizon");
+    Vec2 p{b.centre.x-a.centre.x,b.centre.y-a.centre.y};
+    Vec2 v{b.velocity.x-a.velocity.x,b.velocity.y-a.velocity.y};
+    const double R=a.radius+b.radius;
+    const double aa=dot(v,v),bb=2*dot(p,v),cc=dot(p,p)-R*R;
+    if (!std::isfinite(aa)||!std::isfinite(bb)||!std::isfinite(cc))
+        throw std::overflow_error("nonfinite collision coefficients");
+    if (cc<0) throw std::domain_error("existing overlap");
+    if (cc==0) return 0.0; // Touching, not automatically a new impact.
+    if (aa==0||bb>=0) return std::nullopt;
+    const double discriminant=std::fma(bb,bb,-4*aa*cc);
+    if (!std::isfinite(discriminant))
+        throw std::overflow_error("discriminant overflow");
+    if (discriminant<0) return std::nullopt;
+    const double q=-0.5*(bb-std::sqrt(discriminant));
+    if (!(q>0)) return std::nullopt;
+    const double t=cc/q;
+    if (!std::isfinite(t)||t<0||t>h) return std::nullopt;
+    return t;
+}
+int main() {
+    const auto t=firstTouch({{0,0},{0,0},1},
+                            {{10,0},{-100,0},1},0.1);
+    if (!t||std::abs(*t-0.08)>1e-12)
+        throw std::runtime_error("time of impact regression failed");
+    std::cout<<"first contact "<<*t<<" seconds\n";
+}
+```
+
+Reconstruct the coefficient trace, then alter the test for no motion, a near miss, grazing contact, an initially overlapping pair, and an invalid timestep. The zero-separation branch is a stated laboratory policy, not a sufficient general resting-contact solver. This small program does not certify every floating-point exponent range; the full event laboratory adds a scale-sensitive post-event contact policy.
+
 A contact normal at a non-coincident surface point is the gradient direction of the distance function with respect to the relative centre:
 
 $
