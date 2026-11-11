@@ -126,6 +126,16 @@ c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_proper
 
 This is a **self-contained disk-only CPU oracle**, not Kairo production physics. It has an O(n²) pair scan on every event, assumes piecewise constant velocity and instantaneous frictionless impulses, and does not handle acceleration, angular motion, persistent resting manifolds, deep penetration correction, general convex CCD or engine integration. Exceeding the event budget raises an exception, potentially after partial in-place state updates. GitHub-hosted Actions success remains separately unverified.
 
+### Conservative swept broadphase and exact candidate coverage
+
+The [C++20 swept-AABB broadphase lab](tools/labs/swept_broadphase_lab.cpp) computes outward-rounded motion bounds for constant-velocity disks, sorts by minimum x, filters active intervals by x and y overlap, and returns deterministic unique candidate pairs. It does **not** claim that every candidate truly collides; the narrow phase is still responsible for time-of-impact. The independent analytic disk collision oracle verifies that **no true collision pair is lost**, across deterministic scenarios and **200 seeded 35-disk scenes** (119,000 independently evaluated unordered pairs). GCC, Clang, and combined address/undefined-behavior sanitizer runs passed locally; the committed source matches the exact locally compiled Git blob. The [physics derivation chapter](Supplementary/Rigid%20Contact%20-%20Persistent%20Manifolds%20and%20Solver%20Reconstruction.md) explains why the bounds are conservative, why false positives are acceptable, and why the simple active-set implementation still has O(n²) worst-case behavior.
+
+```sh
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/swept_broadphase_lab.cpp -o /tmp/swept_broadphase && /tmp/swept_broadphase
+```
+
+This is a separate verified candidate-generation oracle. It is **not yet used by the independent disk event stepper** or any Kairo production collision path, so no broadphase performance improvement is claimed for the engine. The workflow includes this laboratory, but GitHub-hosted CI completion remains separately unverified.
+
 ## Per-source workflow
 
 1. Check supplied headings and exact part range; identify the correct volume.
