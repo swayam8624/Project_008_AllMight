@@ -3,12 +3,17 @@
 //        tools/labs/first_use_contract_lab.cpp -o /tmp/first_use && /tmp/first_use
 #include <array>
 #include <algorithm>
-#include <cassert>
+#include <stdexcept>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <utility>
+
+// Keep validation enabled when NDEBUG removes ordinary assert() checks.
+void require(bool condition) {
+    if (!condition) throw std::runtime_error("first-use contract violated");
+}
 
 struct Vec2 { double x, y; };
 struct Coordinates { double first, second, residual; };
@@ -112,20 +117,20 @@ double expected_mis_integral() {
 
 int main() {
     const auto c = recover_coordinates({1, 0}, {1, 1}, {3, 2});
-    assert(c && std::abs(c->first - 1) < 1e-12 &&
+    require(c && std::abs(c->first - 1) < 1e-12 &&
            std::abs(c->second - 2) < 1e-12 && c->residual < 1e-12);
-    assert(!recover_coordinates({1, 0}, {1, 0}, {3, 2}));
+    require(!recover_coordinates({1, 0}, {1, 0}, {3, 2}));
 
     auto sorted = stable_two_bit_radix<5>({{{3, 0}, {1, 1}, {2, 2}, {0, 3}, {2, 4}}});
     const std::array<std::uint32_t, 5> expected_keys{0, 1, 2, 2, 3};
-    for (std::size_t i = 0; i < sorted.size(); ++i) assert(sorted[i].key == expected_keys[i]);
-    assert(sorted[2].identity == 2 && sorted[3].identity == 4); // Stability.
+    for (std::size_t i = 0; i < sorted.size(); ++i) require(sorted[i].key == expected_keys[i]);
+    require(sorted[2].identity == 2 && sorted[3].identity == 4); // Stability.
 
     const std::array<Splat, 2> front_to_back{{{0, 0.6, {1, 0, 0}},
                                               {0, 0.5, {0, 0, 1}}}};
     const auto composed = composite_splats(front_to_back.data(), front_to_back.size());
-    assert(composed && std::abs(composed->color[0] - 0.6) < 1e-12 &&
+    require(composed && std::abs(composed->color[0] - 0.6) < 1e-12 &&
            std::abs(composed->color[2] - 0.2) < 1e-12 &&
            std::abs(composed->transmittance - 0.2) < 1e-12);
-    assert(std::abs(expected_mis_integral() - 1.0 / 3.0) < 1e-8);
+    require(std::abs(expected_mis_integral() - 1.0 / 3.0) < 1e-8);
 }
