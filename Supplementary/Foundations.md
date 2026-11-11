@@ -518,6 +518,42 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 
 **Completion classification:** all 20 titles connected to one engineered narrative and one compile-tested illustrative registry, not 20 individually completed mastery gates or a newly received source batch. The next canonical M016 / Parts 251–270 introduces optional/variant/any/expected-like results, algorithms and iterator categories only when the registry's queries, transforms and failure return paths actually need them.
 
+## M016 — Parts 251–270: the asset registry becomes a query and transformation pipeline
+
+**Provenance:** authored reconstruction from the canonical integrated 180-chunk / original 3,000-part contract, not a received M016 lesson transcript. The continuous [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a living asset registry to reliable queries and transformations|M016 narrative]] begins when the Phase 5 generation-checked registry needs an isolated, owned report, typed lookup failures, sorting, searching, aggregation and removal. Its twenty source identifiers remain an audit contract, not twenty separate main chapters.
+
+| Original part / exact title | First-use problem and inspectable evidence |
+|---|---|
+| 251 · std::optional presence-or-absence semantics | `find_optional` returns a value-copied logical handle for `rock.mesh` and `nullopt` for an absent name; it cannot explain an invalid input. |
+| 252 · std::variant visitation | Inspect, Upload and Evict are closed, distinct request shapes; `std::visit` and an overload set count each command. |
+| 253 · std::any runtime type erasure | Open-ended diagnostics hold a copied string, reject `any_cast<int>` with `bad_any_cast` and release the value at reset. |
+| 254 · std::expected-style error/value modeling | A deliberately limited C++20 `ExpectedLike<T,E>` distinguishes valid handle, empty name and nonexistent name; it is not a complete C++23 `std::expected` substitute. |
+| 255 · std::pair and tuple product types | Pair carries count/error fields together; tuple carries report name/count/version; both are product types, not variant alternatives. |
+| 256 · Structured bindings | `auto [..]` copies the pair; `auto& [..]` aliases the original and updates its error count. |
+| 257 · Iterators and iterator categories | C++20 static assertions distinguish input, forward, bidirectional and random-access capabilities across stream, forward_list, list and deque. |
+| 258 · Contiguous iterators and pointer-like optimization | Vector iterators are contiguous; deque iterators are random-access but not contiguous; both facts statically checked. |
+| 259 · Iterator invalidation as an API contract | Owned snapshots avoid live-registry relocation; sort changes positional meanings, erase invalidates affected vector iterators, and no invalidated pointer is deliberately accessed. |
+| 260 · std::sort introsort concept | A byte/name comparator gives a deterministic sorted snapshot; common introsort-like implementations are explained without claiming the standard mandates one. |
+| 261 · std::stable_sort stability guarantee | A descending-priority sort preserves sky.tex before ui.tex and brick.mesh before rock.mesh within equal-priority groups. |
+| 262 · std::partition and partition-based algorithms | Partition mesh vs nonmesh, validate both sides and recover the boundary with `partition_point`; no false sorting/stability claim. |
+| 263 · std::lower_bound binary search contract | Sort by the byte key and find first non-less-than-48 position, index one; note forward-iterator increment cost. |
+| 264 · std::upper_bound and equal ranges | Upper bound for 48 gives index three, `equal_range` returns the matching [1,3) interval; a bidirectional heterogeneous comparator is supplied. |
+| 265 · std::find and linear search cost | One-off name lookup scans an owned name vector without rebuilding an index; compare with the live registry's maintained hash index. |
+| 266 · std::transform data-parallel expression | Convert owned asset records into byte counts with a `back_inserter` to a separate destination; no automatic SIMD/threading claim. |
+| 267 · std::accumulate and reduction order | Ordered left fold with `std::size_t{0}` yields the exact small payload total 304; explain why accumulator type matters. |
+| 268 · std::reduce and relaxed ordering implications | Integer test also yields 304; a binary64 regrouping demonstration produces 3 vs 4, without pretending this library must select one grouping. |
+| 269 · std::remove erase idiom | `remove_if` produces a retained logical prefix but leaves vector size six until `erase` destroys the removed suffix; final IDs are 1,3,5. |
+| 270 · std::erase_if modern container erasure | C++20 `erase_if` removes two texture rows from the **report copy** and separately removes one matching unordered diagnostic entry, without evicting the live registry. |
+
+**Executable witness:** [[tools/labs/asset_query_algorithm_lab.cpp|C++20 reference laboratory]], 316 lines / 15,306 ASCII bytes, Git blob `0fa0a888b2aa0c348a52307a049bbf38527fcde1`, SHA-256 `c479bd493444d093f6c34898d4ecdf43938cdbd82de8986a7b1906a5bc374f9c`, compared byte-for-byte to the locally executed file. The following actual local executions all reported `asset_query_algorithm_lab: all checks passed`: GCC 14.2.0 C++20 with `-O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`; Clang 17.0.0 C++20 with `-O1 -Wall -Wextra -Wpedantic -Werror`; and GCC 14.2.0 C++20 with `-O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. No ASan/UBSan diagnostic was reported in the witnessed sanitizer run.
+
+**Important limitations:** the laboratory uses a stand-alone **owned query snapshot**; it does not read the live Phase 5 registry concurrently, validate that a saved handle is still current, serialize `std::any` objects, benchmark sorting/binary search/hash tradeoffs, measure parallel execution or guarantee bitwise reproducible floating-point reductions. It does not run Vulkan/Metal or inspect current project-specific `KairoSpatial/BVH.cppm` or `KairoRayTracer/Scene.cppm` implementations. Runtime `std::reduce` grouping is unspecified, and the two explicit floating-point grouping expressions are a reproducibility warning—not a demand that one particular standard-library implementation differ on that input.
+
+**Source anchors:** original integrated master curriculum for part ownership and titles; [cppreference `std::optional`](https://en.cppreference.com/w/cpp/utility/optional), [`std::variant`](https://en.cppreference.com/w/cpp/utility/variant), [`std::any`](https://en.cppreference.com/w/cpp/utility/any), [`std::expected` (C++23)](https://en.cppreference.com/w/cpp/utility/expected), [C++20 iterator concepts](https://en.cppreference.com/w/cpp/iterator), [`lower_bound`](https://en.cppreference.com/w/cpp/algorithm/lower_bound), [`std::reduce`](https://en.cppreference.com/cpp/algorithm/reduce), and [C++20 `erase_if`](https://en.cppreference.com/cpp/container/unordered_map/erase_if).
+
+**Completion classification:** all 20 exact titles integrated in a continuous authored chapter with one independently compiled representative lab; not twenty separately certified learner mastery gates, a newly received transcript, exhaustive tests, or a current external engine-code audit. Next canonical M017 / Parts 271–290 naturally extends this query pipeline with lazy ranges, allocators/PMR, modules and stable linkage/ABI boundaries.
+
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
