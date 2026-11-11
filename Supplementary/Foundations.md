@@ -483,6 +483,41 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 **Completion classification:** fourteen original titles mapped to one connected, implementable authored chapter and a representative three-toolchain test. It is *not* fourteen separately certified mastery gates or a received-source integration. Next canonical M015, Parts 231–250, should arise as the in-memory asset store moves beyond its fixed-capacity demonstration into standard container growth, invalidation, storage and lookup choices.
 
 
+## M015 — Parts 231–250: growing the asset registry without losing identities
+
+**Source status:** authored reconstruction from the original integrated 180-chunk / 3,000-part curriculum contract. **No received M015 teaching transcript** is claimed. The single coherent explanation is [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An asset registry grows while its handles must not change|the growing asset registry narrative]], directly after M014 and before the existing general API-contract chapter. The numbered rows below preserve exact titles and indicate what mechanism required each concept; they are not the main teaching body.
+
+| Original part — exact authoritative title | Where the problem forces its use; evidence |
+|---|---|
+| 231 · std::vector internal size/capacity/storage model | A bounded asset depot begins growing; the lab distinguishes live elements from reserved storage and checks contiguous values. |
+| 232 · std::vector geometric growth | Derive the geometric relocation sum and amortized append cost; the lab observes capacity 2→4 on its local implementation, not a standard-prescribed factor. |
+| 233 · std::vector iterator and pointer invalidation | Growth invalidates old element pointers/iterators; the lab checks the growth event without accessing stale addresses. |
+| 234 · std::vector reserve versus resize | `reserve(2)` does not create elements; `resize(5)` constructs new ones with the tested default `int` values. |
+| 235 · std::array fixed contiguous storage | Compile-time fixed channel/counter sequences keep their own element storage and do not use vector growth semantics; array indexing tested. |
+| 236 · std::deque segmented storage | Editor arrival/consumption needs front/back operations without pretending an entire deque is a single contiguous allocation; front/back/index test. |
+| 237 · std::list node-based storage | Editing work transfers nodes while retaining iterators to unaffected nodes; `splice` tested. |
+| 238 · std::forward_list singly linked storage | A singly linked worklist removes a successor using `erase_after`, needing the predecessor iterator; tested. |
+| 239 · std::map balanced-tree semantics | Ordered asset names with logarithmic comparison-based operations and ordered iteration; tree shape remains an implementation detail. |
+| 240 · std::set ordered unique-key semantics | A set of IDs removes duplicates and preserves comparison order; 8,3,8,5 yields three unique values. |
+| 241 · std::unordered_map hash-table semantics | Persistent name-to-generation-handle index uses owned `std::string` keys; its hash lookup and rehash rules are explained. |
+| 242 · std::unordered_set hash-table semantics | Pending-name membership without mapped values; duplicate insertion and `contains` tested. |
+| 243 · Hash function quality and collision behavior | A deliberately constant hash places all 24 distinct names in one bucket without corrupting key equality; lookup correctness is tested. |
+| 244 · Load factor and hash-table rehashing | `load_factor=n/b`, `max_load_factor(0.5)` and `reserve(96)` illustrate the bucket policy; old rehash-invalidated iterators are never dereferenced. |
+| 245 · std::priority_queue heap-backed abstraction | Uploads require priority selection, plus explicit sequence-number tie-breaking because the adapter alone does not guarantee stability. |
+| 246 · std::stack adapter semantics | Editor undo/traversal needs LIFO; push 7,8 then pop yields 8 before 7. |
+| 247 · std::queue adapter semantics | Incoming jobs need FIFO; push 7,8 then pop yields 7 before 8. |
+| 248 · std::span as a non-owning contiguous view | A checksum consumes byte data synchronously without copying it, with owner lifetime and reallocation constraints explicit. |
+| 249 · std::string storage and small-string optimization concept | Asset names own characters; locally observed short/long capacities 15/1000 are not portable SSO or allocation guarantees. |
+| 250 · std::string_view lifetime rules | Borrowed path substring `"stone"` is copied into an owning string before the source is changed; substring may lack a terminating NUL. |
+
+**Tested implementation:** [[tools/labs/asset_container_lab.cpp|C++20 reference laboratory]], 292 lines / 13,525 bytes; Git blob `c9a323bcf4a3f2e41df13db9d10d381bdd71468f`, SHA-256 `e829cf731b17419e282775cf0b8224c210819ed3d81da36fce45014a04e4afae`. The committed bytes are identical to the local file compiled and executed with GCC 14.2.0 using `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`, Clang 17.0.0 using `-std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror`, and GCC 14.2.0 using `-std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. All three executions reported `asset_container_lab: all checks passed`. The implementation tests two distinct rollback injections (before preparation, after candidate slot creation), stale-handle rejection after slot recycling, list/deque/forward_list behaviors, pathological hash collisions, load-factor checks, scheduling semantics and safe ownership boundaries.
+
+**Precisely bounded claims:** `AssetRegistry` is a single-threaded teaching model. It does not prove correct concurrent deletion, GPU fence retirement, persistent identity across sessions, byte-for-byte stable ABI, all custom allocator/hash exception behaviors, uniformly fast worst-case hashing, or measured performance of competing containers. The example is stronger than an append-only depot—it supports removal and generational reuse—but intentionally lacks the full production allocator/threading/hot-reload model. Project-specific `KairoECS/SparseSet.cppm` and `KairoRenderer/RenderGraph.cppm` remain targets **to verify** from current independent repository source; nothing here is attributed to those implementations.
+
+**Conceptual references consulted:** [cppreference vector](https://en.cppreference.com/w/cpp/container/vector), [vector reserve](https://en.cppreference.com/cpp/container/vector/reserve), [vector resize](https://en.cppreference.com/cpp/container/vector/resize), [deque](https://en.cppreference.com/w/cpp/container/deque), [unordered_map](https://en.cppreference.com/cpp/container/unordered_map), [span](https://en.cppreference.com/w/cpp/container/span), [string_view](https://en.cppreference.com/w/cpp/string/basic_string_view). These are supporting language-library sources; the original supplied curriculum remains the title/coverage authority.
+
+**Completion classification:** all 20 titles connected to one engineered narrative and one compile-tested illustrative registry, not 20 individually completed mastery gates or a newly received source batch. The next canonical M016 / Parts 251–270 introduces optional/variant/any/expected-like results, algorithms and iterator categories only when the registry's queries, transforms and failure return paths actually need them.
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |
