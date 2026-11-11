@@ -24,7 +24,7 @@ Antialiasing combines a sampling pattern with a reconstruction or integration fo
 - [[Sampling aliasing and reconstruction]] — Allocation/filtering must respect what reduced samples can distinguish.
 - [[Multiscale texture filtering]] — Coarse samples need appropriate prefilter/footprint representations.
 - [[Monte Carlo rendering estimators and variance]]
-- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+- [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]]
 
 ## Used by
 

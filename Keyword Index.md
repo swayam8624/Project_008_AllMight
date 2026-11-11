@@ -14,7 +14,7 @@ Received Parts 901-1000 in T01/T06/T07; Phase 11 Parts 1001-1100 are also integr
 | [[Conditional Gaussians and Schur complements]] | Developed | Phase10 | Phase10 |
 | [[Stateful pseudorandom generators and stream state]] | Developed | Phase10 | Phase10 |
 | [[Stateless keyed sampling and reproducibility]] | Developed | Phase10 | Phase10 |
-| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]] | Developed | Phase10 | Phase10 |
+| [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]] | Developed | Phase10 | Phase10 |
 | [[Inverse, rejection, and importance sampling]] | Developed | Phase10 | Phase10 |
 | [[Online moments and Welford accumulation]] | Developed | Phase10 | Phase10 |
 | [[Confidence intervals and sequential evidence]] | Developed | Phase10 | Phase10 |
@@ -41,7 +41,7 @@ Supplied Parts 801-900 in T04/T03/T02.
 
 | Concept | Depth | First seen | Updated |
 |---|---|---|---|
-| [[Function contracts: domains, codomains, and images]] | Developed | Phase9 | Phase9 |
+| [[Function contracts - domains, codomains, and images]] | Developed | Phase9 | Phase9 |
 | [[Limits and continuity]] | Developed | Phase9 | Phase9 |
 | [[Derivative as a local linear map]] | Developed | Phase9 | Phase9 |
 | [[Differentiation rules and chain rule]] | Developed | Phase9 | Phase9 |
@@ -56,7 +56,7 @@ Supplied Parts 801-900 in T04/T03/T02.
 | [[ODE initial-value problems and stiffness]] | Developed | Phase9 | Phase9 |
 | [[Time integrators and symplectic updates]] | Developed | Phase9 | Phase9 |
 | [[Newton and quasi-Newton optimization]] | Developed | Phase9 | Phase9 |
-| [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt]] | Developed | Phase9 | Phase9 |
+| [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt]] | Developed | Phase9 | Phase9 |
 | [[Implicit differentiation and parameter sensitivities]] | Developed | Phase9 | Phase9 |
 
 ## Phase 8 - Linear systems, decompositions, and matrix functions

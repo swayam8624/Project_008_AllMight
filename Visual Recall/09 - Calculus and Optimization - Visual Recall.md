@@ -65,7 +65,7 @@ Use each keyword for the concept note and the adjacent section link for the full
 
 | Concept keyword | Full teaching section |
 |---|---|
-| [[Function contracts: domains, codomains, and images|domain and codomain]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
+| [[Function contracts - domains, codomains, and images|domain and codomain]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
 | [[Limits and continuity|epsilon-delta limit]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
 | [[Derivative as a local linear map|differential]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
 | [[Differentiation rules and chain rule|product rule]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
@@ -80,6 +80,6 @@ Use each keyword for the concept note and the adjacent section link for the full
 | [[ODE initial-value problems and stiffness|initial-value problem]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation\|Phase 9 section]] |
 | [[Time integrators and symplectic updates|symplectic integrator]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation\|Phase 9 section]] |
 | [[Newton and quasi-Newton optimization|Newton method]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems\|Phase 9 section]] |
-| [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt|Gauss-Newton]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems\|Phase 9 section]] |
+| [[Nonlinear least squares - Gauss-Newton and Levenberg-Marquardt|Gauss-Newton]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems\|Phase 9 section]] |
 | [[Implicit differentiation and parameter sensitivities|implicit differentiation]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation\|Phase 9 section]] |
 
