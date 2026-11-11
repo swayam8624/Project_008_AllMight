@@ -1015,6 +1015,10 @@ All three printed `asset_query_algorithm_lab: all checks passed`. GCC 14.2.0 and
 **No-loss integration invariant:** the original continuous prose is preserved byte-for-byte in its original relative order. The new section is inserted only at the growing-registry-to-API boundary, with one new source file and additive ledger/recall/README records. Prior received-source counts, existing links, earlier texts and user-supplied corpus are not rewritten, reclassified or silently declared mastered. Next M017 / Parts 271–290 follows from the need to express query pipelines as composable ranges and manage allocator, module, linkage and ABI boundaries.
 
 
+### M016 regression workflow configuration — unverified hosted execution
+
+An additional new file, [[.github/workflows/allmight-cpp20-labs.yml|the C++20 lab regression workflow]], selects every `tools/labs/*_lab.cpp` rather than hard-coding just M016. It runs three Linux configurations when relevant source changes: GCC with `-fsanitize=address,undefined`, Clang with warnings treated as errors, and GCC with `-O2 -DNDEBUG`. The workflow is also manually dispatchable. GitHub's committed workflow content was checked for its three matrix entries, `find` selection, compile flags, shell quoting and original file hash. This describes the **configured automation**, not a confirmed successful hosted run; hosted CI status must be inspected separately, and prior single-machine passes are not a substitute for that evidence. Permissions are limited to read-only repository contents.
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
