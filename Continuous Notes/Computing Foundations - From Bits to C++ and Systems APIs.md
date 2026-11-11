@@ -9237,6 +9237,299 @@ The practical result is one reconstructed design rather than ten detached terms.
 
 **Source and scope.** This is original authored reconstruction aligned with the exact M018/291–300 contract in the integrated curriculum, not a newly received original source transcript. Primary contracts checked for this chapter include [cppreference's incomplete-type/unique_ptr rules](https://en.cppreference.com/w/cpp/memory/unique_ptr), [the PIMPL explanation](https://en.cppreference.com/w/cpp/language/pimpl), and the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines). The supplied *Professional C++* and *Effective Modern C++* books supply broader object/lifetime and modern API design context; their older examples should not be misrepresented as post-C++20 ABI guarantees. Current KairoMath/Transform and KairoRenderer/RendererTypes were **not** audited by this reconstruction. The executed lab/CI and the source-to-part evidence are tracked separately below.
 
+## From a correct C++ asset service to the instructions a CPU can execute — Phase 4, M019–M021, Parts 301–346
+
+Our M018 catalog solved a language-level problem: an editor can carry a typed mesh handle across vector reallocations, deletions and slot reuse without accidentally treating a texture as a mesh. The catalog's ownership and invalidation rules are explicit. Nothing in that proof tells us how fast a render-world update will run. The CPU does not execute the words "handle," "range," or "PIMPL"; it fetches machine instructions, obtains data from a hierarchy of memories, tracks dependencies and eventually retires instructions. We now need to reconstruct the behavior of the same asset and scene-workflow at that level.
+
+Imagine that the editor has loaded 4,096 particle-like scene records. Every frame, a simulation step needs only position and mass, but an editor-facing representation also stores debug flags, names, authoring data and auxiliary attributes. The update is mathematically trivial: sum each record's x-coordinate multiplied by its mass, then move active particles. Yet the result can be limited by instruction dependencies, data layout, cache traffic, virtual-memory translation, branch behavior or parallel coordination. The apparent simplicity of the mathematical function is why it is a useful experiment: if the cost is high, we must discover *which machine resource is actually constraining the work* rather than decorating the code with optimization vocabulary.
+
+The original Phase 4 curriculum assigns **M019 = Parts 301–310**, **M020 = Parts 311–324** and **M021 = Parts 325–346** to this first CPU journey. The original titles remain preserved in the [[Supplementary/Foundations#Phase 4 CPU architecture and measured execution — Parts 301–400|phase coverage contract]]. The connected [[tools/labs/phase4_cpu_systems_lab.cpp|CPU systems laboratory]] provides representative, executable invariants; not every machine feature is testable by a portable C++ value assertion. Primary outside bridges are [MIT 6.172](https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/video_galleries/lecture-videos/), especially assembly, compiler limitations, caching and multicore lectures; [Agner Fog's optimization manuals](https://www.agner.org/optimize/), whose per-instruction tables are architecture-specific rather than ISO C++ rules; and the supplied *Game Engine Architecture* chapters on memory management and profiling. These are comparison sources, not claims that every video was watched or every book page was audited during this pass.
+
+### Why a five-stage pipeline is an explanation, not a prediction of modern silicon
+
+Start with the familiar teaching model: an instruction is fetched from instruction memory, decoded into an operation, executed by some functional unit, accesses data memory where necessary, and eventually commits or retires its architectural result. An elementary five-stage processor makes this sequence visible because each stage can be occupied by a different instruction. Suppose five independent instructions each require one stage per cycle. Without overlapping execution, they need roughly twenty-five stage-cycles; with an ideally filled pipeline, the first result still incurs pipeline startup latency, but later results may retire every cycle. This distinction between **latency** (delay from a particular input to its result) and **throughput** (amount of work completed per unit time) will recur throughout graphics computing. Pipeline depth is not automatically a speedup: longer pipelines increase latency and can amplify recovery after a wrong branch prediction.
+
+Real out-of-order superscalar CPUs do not generally pass every instruction through exactly these five physical boxes. They may decode instructions into micro-operations, rename registers, issue several instructions per cycle to multiple execution units, execute out of order when their data operands are ready, and retire architectural effects in a constrained order. The five-stage drawing is a conceptual scaffold, not a substitute for a processor-specific execution model. If a professor asks why a CPU could complete a later arithmetic instruction before an earlier cache-missing load, the answer is not that source order has stopped mattering: the CPU can make speculative progress on independent operations while preserving the ISA's required architectural behavior and exception/retirement rules.
+
+Trace a hot asset loop. One instruction loads the record's mass, another loads x, a third multiplies them and a fourth adds the product to an accumulator. The multiplication cannot begin before its required load values are available: this is a **read-after-write (RAW)** true dependency. But loading the next record's x or mass may be independent, enabling overlap. **Write-after-read (WAR)** and **write-after-write (WAW)** name other kinds of apparent register or storage ordering pressure; register renaming can remove *false name dependencies* when the ISA and microarchitecture permit it. Genuine memory aliasing is harder: the compiler and CPU cannot assume arbitrary stores and loads are unrelated without a justified alias and ordering analysis.
+
+A simple recurrence makes this precise. For a scalar reduction
+
+\[
+s_{i+1}=s_i+x_i m_i,
+\]
+
+every new value of s depends on the previous sum. Even if loads and multiplications overlap, the accumulation itself forms a dependency chain. Multiple independent partial accumulators can shorten that chain, but changing the grouping changes floating-point rounding. A compiler using permitted vector or fast-math transformations can choose a different evaluation tree; strict language and compiler options limit which transformations are legal. Therefore a proposed faster reduction must state **both its numerical tolerance and its reassociation policy**.
+
+Instruction-level parallelism (ILP) is the independence available among operations within one instruction stream. Superscalar issue width is a hardware upper bound on how many appropriate operations can be issued in a cycle, not a guarantee that every instruction sequence reaches that width. Execution-port conflicts, dependent chains, branch recovery, cache misses, front-end bandwidth and register pressure reduce the realized rate. A useful first model is
+
+\[
+T_{\text{CPU}}\approx \frac{I\,\mathrm{CPI}}{f},
+\]
+
+where I is the number of executed instructions, CPI the *measured average* cycles per instruction and f the frequency. CPI is an aggregate result of a workload and machine, not an intrinsic constant for one C++ expression. Instructions that retire several per cycle can produce CPI below one; stalls can make it much larger. Frequency scaling and heterogeneous core placement further invalidate naive cycle-to-wall-time assumptions.
+
+Registers hold immediate operands and intermediates close to execution units. They are finite. If an optimization creates too many simultaneously live values, some may be **spilled** into stack memory, adding loads and stores. This is *register pressure*. Inlining an enormous templated function or unrolling a loop aggressively may increase pressure enough to hurt performance even when instruction count is reduced. We should inspect compiler assembly and profiling counters before pronouncing more unrolling better.
+
+Now consider branches. The loop can skip retired assets by checking an active flag. A modern predictor uses history and patterns to guess the next instruction address before the condition is resolved. A correct prediction keeps the pipeline supplied with useful instructions; a misprediction discards work along the wrong control path and restarts at the correct path. A rough branch-cost contribution is **mispredictions × average recovery cost**, but the actual penalty depends on the processor and the surrounding code's ability to overlap other work. A branch that is almost always taken may cost far less than an unpredictable branch on scattered flags, yet replacing every branch with conditional masking is not always faster. Masking may evaluate operations for inactive elements and increase memory traffic or instructions.
+
+Speculative execution is the hardware's attempt to execute predicted future work before all earlier control conditions have retired. Its transient effects are not equivalent to C++-observable committed results; security considerations show why speculation cannot be thought of as completely invisible at the microarchitectural level. Do not build a correctness argument on an assumed predictor state or on speculative instructions "never touching memory." Use the language memory model for program correctness and architecture-specific documentation for speculative-performance or side-channel reasoning.
+
+Our first reconstruction task therefore has a concrete output: disassemble an optimized scalar traversal, identify which loads depend on which addresses, which arithmetic operations depend on previous results, which conditions can mispredict, and whether additional unrolling increased or reduced live-register pressure. It is legitimate for two optimized builds to use different instruction sequences; their differences must be explained with compilation flags, target ISA and program semantics. This is the exact role of Parts 301–310, not ten disconnected definitions.
+
+### When memory traffic becomes more expensive than arithmetic
+
+The asset loop reaches into main memory through multiple levels of storage. A core typically has small, comparatively fast L1 caches, larger/slower L2 caches and some form of shared or distributed last-level cache, backed by DRAM. Exact sizes, associativity, inclusivity and latency vary by CPU, platform and topology. A **cache hit** finds the requested data in the addressed level; a miss causes a request to another level. One source-level load may interact with line-fill buffers, prefetchers, store queues and other mechanisms, so counting source loads does not directly count DRAM transactions.
+
+A cache does not normally fetch a single isolated four-byte float. It obtains a **cache line**, commonly 64 bytes on many current general-purpose CPUs but not universally. If we need one float from a large 64-byte record and never touch the rest, the line brings mostly irrelevant data. If we instead traverse a contiguous array of four-byte x values, each 64-byte line can contain sixteen useful floats, subject to alignment, line size and actual cache implementation. The useful fraction of transferred bytes therefore depends on how the algorithm walks storage, not on how many arithmetic operations appear in its source.
+
+**Spatial locality** means nearby addresses are likely to be used close together; **temporal locality** means a recently used address will be accessed again soon enough that retaining its line is useful. A sequential scan of densely packed elements often benefits from spatial locality and hardware prefetching. Pointer chasing through an unpredictable linked structure can create a dependency chain in which the next address is unknown until the current node is loaded. Even if a linked list has the same O(n) traversal complexity as a vector, it can have radically different stalls due to line utilization, prefetchability and allocation locality. Big-O does not model those constant factors or data distribution.
+
+Caches are not fully associative infinite dictionaries. A conventional set-associative cache maps addresses to sets, and each set has a limited number of ways. After the line offset bits, some address bits participate in set selection; remaining address information forms the tag (with actual indexing and physical-address constraints depending on the cache). If many simultaneously needed lines map to the same set, they may repeatedly evict each other despite free capacity in other sets. This is a **conflict miss**; an initially unseen line can produce a compulsory miss; a working set too large for effective cache capacity can produce capacity misses. We should test layouts that produce set conflicts rather than assume every performance drop is an L3 miss.
+
+An elementary cache address exercise makes the logic reconstructible. Suppose a hypothetical 32 KiB, eight-way, 64-byte-line cache. It holds 32,768/64 = 512 lines, distributed across 512/8 = 64 sets. A byte-addressed line has six offset bits, and this simple model needs six bits to choose one of 64 sets. Sequential addresses separated by 64 bytes step through lines, while addresses separated by 64 × 64 = 4,096 bytes can map to the same set in this simplified indexing model. Nine distinct such lines competing for eight ways can cause repeated eviction if all are needed and mapping/physical-tag assumptions hold. Real processors can use more complicated hashing, virtual indexes and policies, so the arithmetic is an architectural reasoning exercise, not a claim about an Apple or Intel cache's exact mapping.
+
+Prefetchers may recognize predictable sequential or strided streams and begin loading future cache lines before an explicit load demands them. A pointer graph with random next links is less predictable. Prefetching can help hide latency but also consumes bandwidth and cache capacity; an ineffective prefetch may evict useful data. It is helpful to separate **latency**—the time for an access dependency to complete—from **bandwidth**—the sustained volume transferred per second. Many independent outstanding loads can saturate bandwidth despite high individual latency. A serialized pointer chase may be latency-bound despite using little total bandwidth.
+
+We can estimate a bandwidth lower bound when the memory-bound conditions really apply:
+
+\[
+T \;\geq\; \frac{\text{bytes that must cross the limiting interface}}
+                    {\text{sustainable bytes per second}}.
+\]
+
+For a purely illustrative machine capable of sustaining 20 GB/s on the relevant transfer path, moving 2 GB of indispensable data takes at least 0.1 s on that path. The estimate is only useful if the bytes and the interface are correctly identified. Cache reuse can reduce DRAM traffic; write allocation, coherence, other threads and prefetching can increase it. We should never take the structure's size and automatically equate it to memory-bus traffic.
+
+Virtual addresses introduce another layer. The program operates with virtual addresses that hardware and the OS translate to physical memory using page-table structures, with a **Translation Lookaside Buffer (TLB)** caching recent translations. A TLB miss may require walking page tables, sometimes generating extra memory accesses. Traversing many widely separated pages can exert TLB pressure even if each access touches only a few bytes. Larger pages can reduce the number of translations needed for the same contiguous region, but huge-page availability, fragmentation, OS policy, permissions and portability are real constraints. Huge pages are not a universal "speed" flag. The lab does not allocate huge pages, and no improvement is claimed from merely mentioning them.
+
+On multiprocessor systems with non-uniform memory access (NUMA), the cost of DRAM may depend on the physical node holding a page and the node where the executing core is scheduled. First-touch placement, thread pinning, affinity, allocator behavior and cross-node interconnect traffic become relevant. Machines with a unified memory architecture or heterogeneous CPU clusters still have topology-dependent performance characteristics, but the appropriate model must be learned from their own memory system rather than imposing a conventional multisocket NUMA diagram. The current Phase 4 laboratory does not enumerate or pin NUMA nodes.
+
+The difference between a cache-line miss and a TLB miss is especially important when debugging: one concerns the location of data within the memory hierarchy; the other concerns translating the address. A source-level "slow load" can have both costs, neither, or be stalled on another dependency. Use performance counters and controlled experiments to tell them apart.
+
+### Rewrite the representation around access patterns, not names
+
+Return to the 4,096 records. A conventional **array of structures (AoS)** stores one complete Particle object after another. It is convenient for editing one object at a time. Our demonstrative AoS contains four hot floats (x, y, z, mass) and twelve cold floats used by editor/debug features: sixty-four bytes of float fields in total before any additional layout effects. A hot pass reading only x and mass may transfer more unused data than necessary if it scans large cold-rich objects. A **structure of arrays (SoA)** instead keeps all x values contiguous, all mass values contiguous, and so on. Two hot streams can be loaded efficiently, and the compiler may more easily vectorize them.
+
+An **array of structures of arrays (AoSoA)** divides records into small blocks, with arrays of each field inside each block. This can combine block-local entity operations with SIMD-friendly lanes. The right block width depends on target vector widths, cache behavior, alignment and the algorithm's actual accesses; it is not universally 4, 8 or 16. Hot/cold splitting is another independent choice: store rarely used metadata elsewhere so a per-frame update does not repeatedly pull it through the cache.
+
+Compare the *logical* bytes touched by an illustrative x-and-mass operation. Each ParticleAoS in our lab has 64 bytes of float data; an SoA pass may traverse only two four-byte arrays, or 8 useful bytes per entity. That suggests an eightfold difference in sequential stream volume **in this declared representation**, before cache reuse, line fills, compiler loads, write traffic and alignment. The actual speedup need not be eightfold. If the working set already fits in L1, or the math dominates, or the compiler's vectorization differs, or the AoS is reused for many other attributes in the same pass, the results change. This is a hypothesis to benchmark, not a numeric benchmark result.
+
+The [[tools/labs/phase4_cpu_systems_lab.cpp|Phase 4 CPU lab]] constructs the same exactly representable values in both layouts, sums their x × mass values, and verifies equality against 30,720. It also compacts active indices into a dense vector. **Compaction** converts a sparse set of survivors into a contiguous traversal-friendly representation, often using filter/scan/scatter on a GPU or a serial conditional append on a CPU. It has an upfront cost, so it is justified when the saved downstream work outweighs that cost. Existing stable logical handles must not be confused with new dense physical positions: a separate index map or generation checked reference maintains identity.
+
+~~~cpp
+float sum_aos = 0.0f;
+for (const ParticleAoS& p : aos)
+    sum_aos += p.x * p.mass;
+
+float sum_soa = 0.0f;
+for (std::size_t i = 0; i < count; ++i)
+    sum_soa += soa.x[i] * soa.mass[i];
+
+// In the lab, both arrays hold deliberately exactly representable values.
+// This tests equivalence on the chosen data, not universal bitwise equality
+// for arbitrary floating-point inputs or differing reduction trees.
+~~~
+
+An ECS can use archetype chunks or sparse sets for related reasons. But the same "put data in contiguous arrays" slogan cannot settle an engine's overall design. Component addition and removal, stable entity identity, hierarchy, event delivery, editor metadata, script references and render snapshots all contribute. We must optimize the operations actually repeated in the hot path while stating which operations become more expensive. The performance result is workload-relative.
+
+### Sharing a cache is not the same as safely sharing a value
+
+Now parallelize scene updates. Suppose two threads increment independent counters in adjacent locations. If both counters occupy a single cache line, each core's writes can force coherence activity even though the values are distinct and the C++ program has no data race. This is **false sharing**. A data race is a language-level failure when conflicting non-atomic accesses lack required happens-before ordering; false sharing is a *performance* cost from coherence operating at a granularity larger than the variables.
+
+A cache-coherence protocol such as a MESI-style model tracks line states that can be summarized as Modified, Exclusive, Shared and Invalid. Actual protocols include many additional states and variations. A core cannot simply write any shared copy while other cores simultaneously assume it is unchanged; the protocol arranges ownership, invalidation or other legal transitions. A pair of adjacent counters repeatedly written by different cores may cause the line to migrate. Conversely, two counters in separately aligned regions can reduce that particular interference, but padding increases memory footprint and may harm other access patterns.
+
+The lab models a common mitigation:
+
+~~~cpp
+struct alignas(64) PaddedCounter {
+    std::atomic<std::uint64_t> value{0};
+};
+
+// Two threads increment different counters using relaxed atomic operations.
+// 64-byte alignment is a declared hypothesis, not a guarantee that every
+// target machine has 64-byte destructive interference granularity.
+~~~
+
+The test verifies the final counts. It does **not** prove improved throughput, because it does not compare padded and unpadded variants under a controlled noisy multicore workload. It also does not prove that alignas(64) always separates every target's actual cache-coherence units. The important reconstruction is *why* a line-based ownership protocol can impose an extra cost even when distinct variables are individually race-free.
+
+Hardware memory fences and the C++ memory model must not be conflated. A CPU may reorder or buffer accesses internally subject to its ISA rules; a compiler may also reorder operations subject to C++ observable-behavior rules. A source-level std::atomic operation with release or acquire semantics constrains which operations can be published and observed between threads when the synchronization conditions actually hold. The final CPU instructions implementing those semantics vary by architecture. A fence instruction is neither a magic cache flush nor a universal cure for incorrect ownership and lifetime.
+
+### SIMD: one instruction, several elements, but only under a valid contract
+
+A Single Instruction Multiple Data (SIMD) operation performs the same kind of calculation on multiple lanes of a vector register. A simple vector-addition instruction might add four floats or eight floats at once on one ISA, while another ISA uses different vector lengths or instructions. SIMD improves *potential* arithmetic throughput and can reduce instruction overhead, but it still needs data, registers, issue bandwidth and stores. It does not guarantee faster wall-clock time when memory traffic dominates.
+
+For a loop processing N elements in packets of W lanes, the main body executes roughly floor(N/W) packets, with a **tail** of N mod W elements. A portable implementation can process the tail with a scalar loop; an architecture-specific implementation may use masked loads/stores. Reading or writing beyond the valid buffer merely because the register contains unused lanes is not allowed. Masked instructions also require checking what the ISA promises about inactive-lane address validity and exceptions. A safe tail strategy is part of correctness, not a tuning detail.
+
+Alignment means that an address is a multiple of a required boundary. Some SIMD loads benefit from or require alignment; others accept unaligned addresses with possible architectural or workload-dependent costs. ISO C++ object alignment, allocator guarantees and an ISA's memory-operation requirements are related but distinct. A programmer cannot assume a vector's data pointer is aligned to a particular extended SIMD width merely because the element is a float. If using aligned instructions, establish or check alignment through the correct allocator and type contracts.
+
+Horizontal reduction combines multiple lanes into one result. It can create a tree of additions rather than a left-to-right scalar chain. For floating-point input, that tree may round differently. Likewise, a branchless SIMD mask can avoid branch divergence while still doing unused operations; gather and scatter can access noncontiguous addresses but often lose the advantage of contiguous streams. Gather/scatter should be chosen from actual address patterns, not because the instructions sound more advanced.
+
+Auto-vectorization depends on the compiler proving enough about loop independence, aliasing, trip counts, alignment and target instruction support. Conditional code, indirect indexing, potential exceptions and unclear alias relationships may block profitable transformations. The practical evidence chain is: compile with explicit optimization and target options, request the compiler's vectorization report, inspect the relevant machine code, check numerical correctness, then benchmark a realistic workload. The absence of a vectorization message does not alone prove poor performance; the presence of one does not prove speedup.
+
+The portable source in the Phase 4 lab leaves SIMD selection to the compiler and does not use architecture-specific intrinsics. This is intentional: it exercises *what can be checked portably*. A later x86 AVX or ARM NEON specialization must declare feature detection, instruction availability, alignment, tails, numerical rounding, fallback behavior, benchmark methodology and CI hardware constraints. Before doing that, compare it to the compiler's optimized scalar/SoA implementation. The result may show that the compiler already produces a better instruction sequence.
+
+The compiler's fast-math options can allow transformations that violate strict IEEE-style assumptions including signed zero, NaN/infinity behavior or reassociation, depending on the precise options. Such flags are a semantic change, not a universally safe rendering optimization. For physics constraints, geometric predicates, randomized reproducibility and research experiments, numerical assumptions may outweigh a small throughput advantage. Do not apply permissive floating-point flags globally without testing the algorithms that depend on stable numerical behavior.
+
+### One measurement chain for the first half of Phase 4
+
+We now have an inspectable causal chain: C++ source defines a sequence of hot accesses; the compiler emits instructions constrained by aliasing and floating-point semantics; the CPU fetches and schedules those instructions; cache and TLB behavior determine data availability; layout determines how many bytes are useful; and parallel writing can trigger line-level coherence costs. Each layer supports a different kind of evidence. A passing source test can establish that the AoS and SoA loops compute equal selected results. Compiler reports and disassembly can establish an observed vectorization strategy for one target. Hardware counters and careful timing can support claims about stalls or bandwidth. None automatically proves the others.
+
+To make the experiment repeatable, record exact input count, data generation, compiler/version, optimization and target flags, CPU model, thread count, warm-up, repetitions and summary statistic. The optional benchmark in the lab reports median timings for seven executions of each layout but intentionally has **no pass/fail speed threshold**. The result must be replicated on target hardware and interpreted as a comparison for one access pattern. If the speedup changes after accessing more fields, that is useful evidence about workload dependence rather than an embarrassment to hide.
+
+The lab and this narrative complete the *authored explanation* for M019–M021, Parts 301–346. They do not claim to have independently profiled KairoECS/SparseSet, KairoSIMD or Maveb's actual JobSystem. Those repository anchors remain to be inspected with exact source/function revisions before any statements about their current layout or optimizations.
+
+## From temporary memory to finished parallel frames — Phase 4, M022–M024, Parts 347–400
+
+Our CPU-side scene pass is now intelligible at the instruction, cache and data-layout levels. But an engine does not only update values that already exist. It allocates temporary arrays, loads and retires mesh data, creates or schedules worker tasks, publishes results to readers, waits for dependencies and eventually submits work to a GPU that can still be reading resources after the CPU returns. The performance and correctness problems now form one connected question: **who owns each byte, which execution may access it, how is that access ordered, and what is actually limiting the frame?**
+
+This is the natural home for M022 (Parts 347–360: allocator strategies and deferred destruction), M023 (361–384: threads, atomics, memory ordering and synchronization) and M024 (385–400: job systems, measured parallelism and profiler-based decisions). The code witness is the same [[tools/labs/phase4_cpu_systems_lab.cpp|CPU systems laboratory]], where frame arenas, a counted allocator, an owned retirement queue, acquire/release message publication and an actual persistent worker pool are checked. Work stealing and GPU-completion integration are explained as distinct, still-unimplemented algorithms rather than implied by a generic thread-pool test.
+
+### Each allocation makes two promises: suitable storage and controlled lifetime
+
+The general-purpose heap allocator answers requests for dynamically sized storage with a suitable alignment and a lifetime that can extend past the current function. Its goals can include efficient small allocations, acceptable fragmentation, low tail latency, safe multithreaded use and bounded metadata overhead. These goals conflict: a general allocator that handles arbitrary sizes and lifetimes cannot assume every object disappears at the end of a frame.
+
+An allocation does **not** construct every desired C++ object by itself. Storage acquisition reserves appropriately sized and aligned bytes; object construction starts a typed lifetime in valid storage. Using **std::construct_at** or placement new on suitably aligned raw storage is a distinct operation from obtaining the bytes. Destruction ends the object's lifetime and may need to run its destructor before storage is returned or reused. This matters for resources holding strings, file descriptors, mutexes or GPU handles: simply resetting a bump pointer does not automatically call all their destructors.
+
+Different ownership patterns suggest different allocation strategies. A free-list allocator maintains reusable blocks and can coalesce adjacent free blocks when its representation and policy support it. A stack allocator can roll back only in last-in-first-out order, often with markers rather than individual frees. A linear or arena allocator advances a cursor and releases storage in bulk, making allocation cheap when all objects share a lifetime boundary. A pool allocator serves fixed-size objects from slots; a slab allocator commonly groups objects of one size class into larger backing slabs. A buddy allocator partitions power-of-two blocks and can merge matched buddies when both become free. A size-class allocator chooses bins for ranges of request sizes and trades memory waste for speed and predictable reuse. None is best independent of the size/lifetime distribution.
+
+**Internal fragmentation** is allocated space not used by the requested object, such as padding or rounding a 100-byte request up to a 128-byte size class. **External fragmentation** describes free storage split into blocks that cannot satisfy a needed larger contiguous allocation despite sufficient total free bytes. A simple aggregate percentage of wasted bytes cannot identify all causes of allocation latency. Metadata cost, thread-local caches, lock contention, page retention, NUMA placement and over-alignment should also be measured. A pool can reduce allocation cost for repeated small objects but may waste memory when its capacity remains unused or when object lifetimes vary widely.
+
+Alignment constrains the addresses at which objects may reside. If a type needs alignment a, its address must be divisible by a under the relevant C++/ABI definition. Over-aligned allocations may require an allocation mechanism that honors the greater alignment. For a linear arena with current cursor p and power-of-two a, a familiar alignment expression is
+
+\[
+p_{\mathrm{aligned}}=(p+a-1)\mathbin{\&}\sim(a-1),
+\]
+
+but a correct implementation must ensure that p+a−1 does not overflow, that a is valid, that the aligned extent fits the backing allocation, and that the returned pointer meets the type's actual alignment. A robust arena should reason about byte spans and capacity *before* pointer arithmetic. The formulas are not license to write past a buffer.
+
+A **frame arena** is appropriate for scratch arrays that unquestionably die together after a well-defined frame or job epoch. Our lab gives a std::pmr::monotonic_buffer_resource a small aligned local byte array and null upstream. A std::pmr::vector stores one hundred integers in that region; an intentionally unreasonable reserve request exhausts it and throws std::bad_alloc rather than invisibly allocating a second backing region. This makes the capacity boundary observable. Destruction of the vector runs its element destructors, but a monotonic resource normally retains its backing blocks until it is itself released or destroyed. Treating a monotonic buffer like an ordinary per-object free list is conceptually wrong.
+
+The same test uses a counting std::pmr::memory_resource upstream of an ordinary PMR vector. It counts successful acquisitions and matching deallocations in a controlled scope; that proves those calls occurred for this tested vector. It does not prove zero heap fragmentation or allocator scalability under concurrency. The arena and its users have a lifetime dependency: a container or string allocated from that resource must not outlive the resource, even if the container itself is a valid C++ object.
+
+These ideas also explain why a per-frame allocator can make an engine *incorrect* if used carelessly. The CPU's notion of "frame complete" is not the GPU's. A command buffer might reference a buffer and return control to the CPU before the GPU has executed it. If a frame arena backs data that a GPU copy has not yet consumed, resetting the arena can overwrite in-flight bytes. Double- or triple-buffering of transient resources may help but does not alone prove safety: completion tokens, queue dependencies, device-loss handling and reuse of each specific allocation must be correct.
+
+### Deferred destruction is ownership plus a completion relation
+
+M018 defined logical asset lifetime using a generation-checked handle. A mesh can become invalid to new CPU lookups immediately after deletion. Yet a previously submitted GPU draw may still legally reference the underlying GPU buffer. It is therefore necessary to distinguish **logical retirement** from **physical destruction**.
+
+The owner marks a resource logically unavailable, records the last GPU submission that can use it, and defers actual destruction until a trustworthy completion signal proves that submission—and any relevant dependent uses—has finished. A monotonic completion timeline is a useful model, provided all relevant uses belong to or are correctly joined into that timeline. The stored resource owner remains alive in the retirement queue.
+
+Our CPU simulation uses integer tickets. We enqueue resources at tickets 2, 5 and 5. After reporting completion of ticket 2, exactly one owned object may be released. After ticket 5, the other two can be destroyed. A completion value going backwards is rejected. This proves the queue's *integer-order and ownership mechanics* on those test cases, not that an actual Vulkan semaphore or Metal command buffer was observed.
+
+A real graphics implementation needs actual API synchronization. For multiple GPU queues, a single scalar ticket may be insufficient unless submission dependencies explicitly establish a common ordering. Queue-family ownership transfers, device-loss paths, wait failures, timeline wrap, external resources and non-GPU users need their own contracts. Vulkan's host-visible signaling and resource lifetime must be interpreted under the current specification; Metal completion callbacks and command buffer status similarly need accurate ownership and callback-lifetime rules. Releasing GPU handles just because the CPU emitted commands is a use-after-free hazard even when every C++ pointer in the catalog is valid.
+
+One subtle failure mode is the opposite: a retirement queue can retain too many resources and exhaust memory if the oldest GPU work never completes or the application stops processing completion events. It needs diagnostics for queue depth, oldest pending ticket, bytes retained, device progress and shutdown policy. A correct engine cannot silently free live resources during a timeout; it must choose a defined error and teardown path.
+
+### Threads share a process address space, not a common execution order
+
+The editor wants to prepare visibility and mesh reports while the main thread continues handling input. A std::thread starts independent execution within the process address space; objects can therefore be accessed by multiple threads. Creating and destroying threads is not free: it can involve kernel scheduling resources, stack setup, runtime initialization and later joining. A context switch can change the running thread and incur scheduling and cache effects. The actual cost depends on the OS and workload, but repeatedly creating one thread for every tiny mesh task is normally an unexamined overhead risk. Persistent worker pools amortize it.
+
+Sharing memory is not the same as safely sharing memory. In the C++ memory model, conflicting accesses to the same non-atomic location by different threads without the required happens-before relation can cause a **data race**, whose behavior is undefined. A counter that sometimes "looks correct" in a release test is not proof of a race-free program. A volatile qualifier is not a C++ thread-synchronization primitive.
+
+Atomic operations provide indivisible operations on their own objects, but their **memory-order semantics** determine how they relate to other memory accesses. A relaxed fetch_add on an atomic statistic can count events without establishing ordering for unrelated payload data. It does not safely publish the contents of a separate ordinary object to another thread by itself. Release and acquire are used when one thread must make preceding writes visible to another that observes the publication.
+
+In the Phase 4 lab, the producer writes an ordinary integer payload and then stores ready=true with **memory_order_release**. The consumer repeatedly loads ready with **memory_order_acquire**. When the acquire load observes the value written by the release store, the release synchronizes with that acquire, establishing the required happens-before relation for the earlier payload write. The consumer may then safely read the payload, provided no other unsynchronized thread concurrently mutates it. Merely having acquire on one atomic and release on an unrelated atomic is not enough.
+
+~~~cpp
+// Producer: ordinary payload write is sequenced before release publication.
+message.payload = 42;
+message.ready.store(true, std::memory_order_release);
+
+// Consumer: only after it observes the published value may it read payload.
+while (!message.ready.load(std::memory_order_acquire))
+    std::this_thread::yield();
+const int published_value = message.payload;
+~~~
+
+**Acquire-release** on a read-modify-write operation combines acquiring information from preceding releases with publishing this operation's earlier writes under the relevant conditions. **Sequential consistency** adds a strong single-total-order model for sequentially consistent atomic operations, but it does not automatically protect arbitrarily accessed non-atomic objects or eliminate all ordering questions. The weakest correct ordering must be derived from a specific protocol and verified on the target architectures; starting with simple locks or stronger atomics is often preferable to premature relaxed-atomic cleverness.
+
+**Compare-and-exchange (CAS)** attempts to replace an atomic value only if it equals an expected value. It is indispensable in many lock-free algorithms but not sufficient for safe memory reclamation. An **ABA** problem occurs when a location changes from value A to B and back to A between observations; a CAS testing only the current bits may incorrectly conclude that nothing relevant changed. Generational identities, tagged pointers or other versioning can distinguish some ABA cases, but the lifetime of objects behind atomic pointers still needs safe reclamation such as hazard pointers, epochs, reference counting or a carefully designed ownership protocol. A generation-checked MeshHandle does not make a lock-free queue safe by itself.
+
+Locks remain useful. A mutex protects an invariant by making critical sections mutually exclusive. Its unlock/lock synchronization also orders accesses to protected state. A reader-writer lock may allow concurrent readers when contention patterns justify it, but writers can starve under some policies; reader-heavy is not synonymous with faster. A spinlock repeatedly tries ownership and can waste CPU under preemption or long critical sections; it is generally unsuitable when sleeping, blocking I/O or expensive work happens inside the protected region. Lock choice must follow measured wait times, critical-section duration, fairness and scheduler behavior.
+
+A condition variable solves a different problem: a worker needs to sleep until work appears. The queue state remains protected by a mutex, and the wait must use a **predicate**. Spurious wakeups can occur, and a notification does not store an event forever like a queue message. A worker that wakes must recheck the shared condition while holding the lock. The laboratory's worker checks whether stopping is requested or tasks are nonempty before taking a job. It executes the job *outside* the queue lock so other producers and workers can make progress.
+
+~~~cpp
+std::unique_lock lock(mutex_);
+changed_.wait(lock, [&] {
+    return stopping_ || !tasks_.empty();
+});
+if (stopping_ && tasks_.empty())
+    return; // Shutdown only after queued work has drained.
+auto job = std::move(tasks_.front());
+tasks_.pop_front();
+lock.unlock();
+job(); // User work never runs while the queue mutex is held.
+~~~
+
+Counting semaphores represent available permits and can coordinate bounded queues or resources without the exact same predicate structure as a condition variable. Latches wait for a count of arrivals; barriers coordinate repeated phases and may have completion actions. They are not interchangeable: a worker waiting for queue work has different semantics from a set of threads that must all finish one simulation phase before any begin the next.
+
+**Deadlock** occurs when a set of waits cannot progress, often through circular acquisition of resources. A lock ordering discipline eliminates a class of cycles: if code always acquires mutex A before mutex B, it cannot also acquire B and then wait for A through a reversed order. std::scoped_lock can acquire multiple mutexes using a deadlock-avoiding mechanism. But blocking on a future while holding a lock needed by the future's producer can still deadlock; so can tasks waiting on tasks from a fixed-size pool with no free worker. **Livelock** is continued activity without useful progress; **starvation** is failure of a participant to receive needed service despite system progress. A lock can be race-free and still cause unacceptable tail latency or starvation under contention.
+
+### A job system is a scheduling graph, not merely a vector of threads
+
+A persistent **thread pool** keeps a bounded set of workers alive and reuses them across tasks. A **job system** must also answer how tasks are represented, how work becomes ready, how dependencies are enforced, how failures propagate, how shutdown happens and how work is distributed across workers. Different engines choose different solutions depending on task granularity, frame determinism and runtime targets.
+
+The Phase 4 lab constructs a real small worker pool with a shared mutex-protected deque, a condition variable and packaged_task-backed futures. Callers submit jobs; each worker removes a job under the lock and executes it outside the lock. Exceptions thrown by a user job are stored in the packaged task and can be rethrown by future.get() in the caller. Shutdown changes a protected stop flag, wakes the workers, permits queued work to drain and joins all worker threads. These choices are correct for the exercised protocol; they are **not** work stealing or a complete dependency-aware production scheduler.
+
+The test first partitions a 10,000-element array into fixed chunks, submits independent reductions and combines the returned subtotals in a fixed order. It uses values exactly representable as double, so the oracle is an exact integer-valued total of 15,000. It tests grain sizes 1, 127 and 4,096. That demonstrates correctness over different task partitions. It does not demonstrate that creating 10,000 tiny tasks is efficient. The cost of packaging, queueing, waking and collecting those tasks may dominate the few arithmetic operations each job performs.
+
+A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
+
+\[
+T_{\mathrm{overhead}}\approx n h,
+\]
+
+before accounting for contention, cache effects and critical path dependencies. Smaller tasks improve load balancing in irregular workloads but increase overhead. Coarser tasks reduce overhead but may create idle workers and poor balance. There is no universal ideal grain size expressed solely in bytes or number of particles.
+
+**Work stealing** addresses load imbalance by letting idle workers take work from other workers' queues, commonly using per-worker deques with local and stolen ends. The owner and thief must obey carefully designed synchronization and reclamation rules. A work-stealing deque is significantly more difficult than one mutex-protected queue: empty/single-element races, index wraparound, false sharing, memory ordering and capacity growth all become correctness concerns. The current lab deliberately does not claim to implement it. MIT 6.172's parallelism and Cilk runtime material provides a path to deeper implementations and work/span analysis.
+
+A **task dependency graph** makes execution constraints explicit. If animation must complete before skinning, and skinning before a visibility-dependent render preparation, scheduling unrelated work earlier is legal but crossing those edges is not. A directed acyclic graph permits topological readiness processing; a cycle in required dependencies represents a scheduling impossibility absent a separately designed feedback or iterative protocol. Dependencies should be represented as data and tested, not hidden in accidental submission order.
+
+For a workload with total work W and critical-path length S, the work/span model gives a conceptual lower bound
+
+\[
+T_P\;\geq\;\max\!\left(\frac{W}{P},\, S\right)
+\]
+
+for P equal-speed processors under the model. W/P expresses total work capacity; S expresses serial dependency limitations. Real systems add scheduler cost, synchronization, memory effects and heterogeneous execution. A job system with a hundred workers cannot beat a single long dependency chain.
+
+### Determinism is a property of the complete update contract
+
+Parallel reductions expose an immediate determinism problem. Floating-point addition is generally not associative:
+
+\[
+(a+b)+c\neq a+(b+c)
+\]
+
+for some representable a, b, c under finite-precision rounding. If task completion order determines reduction order, two valid executions may obtain slightly different results even without a data race. For deterministic physics, reproducible experiments and binary comparison tests, the update must define its accumulation and iteration ordering (or tolerate and quantify numerical differences).
+
+One strategy partitions work into fixed chunks independent of worker scheduling and combines each chunk's result in a fixed order. The Phase 4 lab demonstrates that approach on exact integer-valued doubles. However, changing the chunk size still changes the addition tree. Fixed partitioning by itself cannot promise bit-identical floating-point results across different CPU ISAs, compilers, FMA decisions or math flags. A stronger guarantee requires fixed arithmetic semantics, stable ordering and carefully bounded execution-environment differences; even then transcendental library implementations may differ.
+
+Determinism also concerns *state changes*. If two tasks write overlapping transforms or update the same collision manifold, a fixed final reduction does not repair a data race. Use exclusive component ownership, explicit barriers, deferred command buffers with deterministic merge order, or partitioning rules that make write sets disjoint. The solver phase later applies these same principles to contact islands and constraint batching.
+
+### Profile first: one plausible optimization can hide the real bottleneck
+
+A performance discussion should end by making a falsifiable decision, not by naming CPU features. Suppose an engine frame takes 16 ms, and a profile suggests 6 ms of scene update, 4 ms of physics, 3 ms of rendering submission and 3 ms of other work. Even this breakdown is only a starting measurement: did we include GPU wait time? Does the profiler report inclusive or exclusive costs? Are the categories concurrent or truly additive? Did instrumentation change scheduling? Are these median frames or tail outliers? An apparently slow CPU function can be blocked on another resource, and optimizing its arithmetic may not shorten the frame's critical path.
+
+A **sampling profiler** periodically observes execution stacks with relatively low overhead, yielding statistical evidence of where CPU time is spent. An **instrumentation profiler** records explicitly marked events or functions and can produce precise phase durations and counts but alters the workload through instrumentation cost. **Flame graphs** aggregate stack samples: their horizontal extent represents sampled frequency/weight under the collection method, not source execution chronology or necessarily actual wall-clock span. The tool should be chosen according to the question: instruction stalls need hardware-aware profiling; lock contention needs wait analysis; transient GPU latency needs CPU/GPU timeline correlation; memory ownership needs allocation traces.
+
+A proper microbenchmark includes warm-up and repeated runs, measures enough work to exceed timer quantization, checks that computations were not optimized away, and reports distributions rather than one favorable number. Cache warmth, CPU frequency, thermal state, background processes, address-space layout and data alignment can all influence results. Statistical noise should be quantified through repeated independent runs, medians and appropriate uncertainty estimates. Comparing two implementations only after a code cleanup, different compiler option or different input is confounded.
+
+A useful speedup model is **Amdahl's law**. If fraction s of the baseline execution is inherently serial and the remainder is accelerated by a factor P, then the idealized overall speedup is
+
+\[
+S(P)=\frac{1}{s+(1-s)/P}.
+\]
+
+With s=0.2 and P=4, the ideal speedup is 1/(0.2+0.8/4)=2.5, *not* four. As P grows without limit, the maximum under this fixed-fraction model approaches 1/s=5. The model assumes the work fractions and costs are meaningful and ignores many real overheads; it does not predict actual hardware utilization. It teaches us why profiling the serial fraction and the critical path matters before growing the pool.
+
+A well-grounded optimization report should state: the original frame/workload and measurement setup; a hypothesis tied to one observed bottleneck; a code change that preserves required semantics; the new profile and end-to-end measurement under the same conditions; variance and failure cases; and whether the change improved the actual user-visible workload. If the profiler indicated expensive cache misses in an AoS pass, a SoA conversion should be evaluated in the complete engine with its cost for insertion, deletion, serialization and editor interaction. If the profiler showed job-queue contention, simply increasing worker count may make it worse. If GPU completion is the limiter, CPU arithmetic changes may not affect frame time at all.
+
+**This closes the Phase 4 authored narrative for Parts 301–400** through actual causal dependencies: C++ objects become machine instructions; hot data induces cache and TLB behavior; allocator choice controls memory lifetime; ownership crosses CPU/GPU completion; threads require a memory-model proof; jobs require dependency and scheduling contracts; and any optimization must be justified by measurement. The accompanying laboratory tests only those portable properties it actually executes. It does not turn a toy thread pool into Kairo's real scheduler, claim GPU retirement tests, or prove speedups on hardware it did not profile.
+
+**Repository/research bridge:** the canonical code anchors include KairoECS/SparseSet, KairoSIMD, KairoScheduler and Maveb's JobSystem/Profiler, but this vault-only development did not inspect their current source revisions or run their actual workloads. *Game Engine Architecture*, Part II, Chapter 5 motivates allocation policies, while its profiling chapter distinguishes statistical and instrumentation techniques; exact implementation examples in the 2009 edition remain historical. [MIT 6.172](https://ocw.mit.edu/courses/6-172-performance-engineering-of-software-systems-fall-2018/video_galleries/lecture-videos/) supplies primary teaching links for C to assembly, multicore, caching, storage allocation, profiling and graph optimizations. [cppreference's memory ordering](https://en.cppreference.com/w/cpp/atomic/memory_order) supports the release/acquire distinction. [Amdahl's 1967 paper](https://doi.org/10.1145/1465482.1465560) is the historical research source for the fixed-serial-fraction argument. None of these sources establishes that the user's existing engine has a particular bottleneck without direct evidence.
+
 ## An API is a promise about an operation
 
 A programmer encounters an unfamiliar function:
