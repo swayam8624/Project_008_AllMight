@@ -453,6 +453,36 @@ The source discusses resource owners, smart pointers, manual allocation, placeme
 **Completion classification:** all 16 original titles mapped to continuous authored teaching and one representative, executable, standards-conscious laboratory. This does not certify 16 independent programs, learner recall, received-source equivalence, cross-platform ABI equivalence, or a current Kairo implementation audit. The next canonical source range is M014, Parts 217–230.
 
 
+## M014 — Parts 217–230: one tile planner and its compile-time policy decisions
+
+**Status and provenance:** authored reconstruction grounded in the original integrated curriculum and confirmed language references. **Not a received M014 lesson transcript.** The complete [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A texture tile that chooses its work before the frame begins|narrative]] continues the same generic asset-pipeline problem from M011–M013: a pixel format and policy may be fixed during compilation while tile dimensions, payload length, failure state, and budget limits still demand runtime validation. Original numbered parts are retained **only as coverage traceability**, not as a string of disconnected teaching sections.
+
+| Original part and authoritative title | First-use requirement and inspectable witness |
+|---|---|
+| 217 · Compile-time type traits | An internal pixel format and empty validation policy need compile-time properties; `std::is_empty_v` and `std::is_base_of_v` are checked in the lab and semantic limitations are explained. |
+| 218 · std::integral_constant and type-level values | `PixelTraits<Format>` inherits `std::integral_constant<std::size_t,Channels>`, giving static channel counts for supported formats. |
+| 219 · if constexpr and compile-time branching | Known RGBA versus RGB format selects whether a prepared plan has alpha; both variants are tested. |
+| 220 · constexpr functions | `checked_product` performs safe size multiplication both in `static_assert` and using runtime inputs; overflow is rejected before multiplication. |
+| 221 · constexpr objects | `inline constexpr` tile definition and precomputed Morton table are constant-expression objects, distinct from mutable diagnostics. |
+| 222 · consteval immediate functions | `make_tile_definition` requires a valid compile-time tile configuration, and `make_morton_table` builds the lookup table during constant evaluation. |
+| 223 · constinit static initialization guarantees | `constinit std::uint32_t g_plans_recorded=0` guarantees suitable static initialization but remains mutable and not thread-safe; the single-threaded count is checked. |
+| 224 · Compile-time lookup tables | A sixteen-entry table spreads four coordinate bits; `morton4(3,5)=39` is derived and compile-time/runtime tested. |
+| 225 · Type erasure versus templates | A concrete CRTP recorder and a `std::function<void(const TilePlan&)>` target each receive the same plan under different static/runtime contracts; neither is benchmarked. |
+| 226 · CRTP static polymorphism | `RecorderBase<CountingRecorder>::record` calls `record_impl` via a derived cast; the derived-object precondition and nonvirtual semantics are explained and tested. |
+| 227 · Policy-based design | `TilePlanner<Format,BudgetPolicy,Recorder>` composes budget validation and recording; both 64-byte bounded and stateless no-budget variants are exercised. |
+| 228 · Tag dispatch | `VerifyPayloadTag` and `MetadataOnlyTag` select overloads that verify real bytes or deliberately produce only a manifest; invalid length is rejected in verified mode. |
+| 229 · Empty-base optimization | A holder deriving from an empty policy is measured beside an ordinary empty-policy member; observed sizes are toolchain-specific, not promised. |
+| 230 · [[no_unique_address]] and zero-size policy storage | A policy member eligible for overlap is used in `TilePlanner` and an isolated holder; local `sizeof` results and MSVC portability differences are documented. |
+
+**Executable witness:** [[tools/labs/compile_time_asset_policy_lab.cpp|C++20 reference laboratory]], 258 lines and 10,788 bytes, SHA-256 `f5eb017280bb6b2ae6b1475dfb014694235f805a6948df36548b17145d889951`, Git blob `f4379dbce70c261f2832f8311a628e346f7471f7`, byte-identical to the locally executed source. Compiled and executed successfully with GCC 14.2.0 using `-std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-omit-frame-pointer`; Clang 17.0.0 with `-std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror`; and GCC 14.2.0 release-style `-std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror`. Each execution printed `compile_time_asset_policy_lab: all checks passed`; local layout observations were `PlainPolicyHolder=16`, `EboPolicyHolder=8` and `CompactPolicyHolder=8` bytes on that Linux target.
+
+**Evidence limits:** the code plans tiles and checks an optional CPU byte span. It does **not** allocate native graphics memory, enqueue a GPU transfer, validate a device format, establish a real asynchronous transaction, measure speed, or certify a portable ABI layout. Its `MetadataOnlyTag` deliberately does not check that a payload exists, so the result cannot be represented as a verified upload. `constinit` supplies no synchronization, CRTP supplies no runtime plugin selection, and local object-size observations cannot be treated as standard-required sizes. No live Kairo/Maveb repository sources were re-inspected. Research and project-code gates remain open.
+
+**Language-source anchors:** [cppreference `if constexpr`](https://en.cppreference.com/w/cpp/language/if), [`constexpr`](https://en.cppreference.com/w/cpp/language/constexpr), [`consteval`](https://en.cppreference.com/w/cpp/language/consteval), [`constinit`](https://en.cppreference.com/w/cpp/language/constinit), [empty base optimization](https://en.cppreference.com/w/cpp/language/ebo), [`[[no_unique_address]]`, including implementation notes](https://en.cppreference.com/w/cpp/language/attributes/no_unique_address), and [class-template type traits](https://en.cppreference.com/w/cpp/types). These clarify specific language rules; they do not stand in for a real cross-compiler benchmark.
+
+**Completion classification:** fourteen original titles mapped to one connected, implementable authored chapter and a representative three-toolchain test. It is *not* fourteen separately certified mastery gates or a received-source integration. Next canonical M015, Parts 231–250, should arise as the in-memory asset store moves beyond its fixed-capacity demonstration into standard container growth, invalidation, storage and lookup choices.
+
+
 ### Value-transfer source-to-story navigation
 
 | Teaching question | Narrative location |

@@ -219,6 +219,37 @@ Finally prove publication. If the published count is `c`, slots `[0,c)` are live
 **Evidence and full explanation:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#One asset pipeline, many asset types — generic code without accidental promises|the M013 narrative]], [[tools/labs/generic_asset_pipeline_lab.cpp|the tested C++20 laboratory]] and [[Supplementary/Foundations#M013 — Parts 201–216: generic asset preparation with constrained APIs|the 16-part coverage map]]. The test checks representative semantics, not the learner's independent ability to reconstruct these decisions or current Kairo implementation details.
 
 
+## The tile planner makes a choice — M014 reconstruction
+
+This recall path belongs after [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A texture tile that chooses its work before the frame begins|the full M014 narrative]] and the [[tools/labs/compile_time_asset_policy_lab.cpp|C++20 lab]]. Its purpose is to rebuild the decision chain from memory, not to duplicate an encyclopedia of template keywords.
+
+Picture one 8×2 RGBA texture tile, a budget of 64 bytes, a 64-byte CPU buffer, and a counting recorder. Before the renderer tries to use it, the planning layer must establish what is known from the type and what still depends on the incoming data. Draw this path, then explain each transition and its failure condition:
+
+```mermaid
+flowchart LR
+    A["PixelFormat chosen in type"] --> B["PixelTraits: channels as compile-time value"]
+    B --> C["checked width × height × channels"]
+    C --> D{"Policy budget allows bytes?"}
+    D -->|no| R["Reject; recorder unchanged"]
+    D -->|yes| E{"Payload tag"}
+    E -->|Verify| F["Require exact source span length"]
+    E -->|Metadata only| G["Mark plan, not ready resource"]
+    F --> H["Alpha branch + Morton table"]
+    G --> H
+    H --> I["CRTP recorder accepts plan"]
+```
+
+A correct reconstruction should derive \(8\times2\times4=64\) bytes from the uncompressed source representation, then explain why \(8\times3\times4=96\) fails the budget. It should show why a 4×4 RGBA request with no buffer fails **only when the verification tag demands a real payload**. The metadata-only 4×4 RGB path may report 48 planned bytes, but it has not proved any upload complete. Show how overflow is rejected by checking \(x > \mathrm{max}/y\) *before multiplication*, not by multiplying and inspecting the wrapped result.
+
+Rebuild `PixelTraits<Format>` using `std::integral_constant` and distinguish the fact that a type is empty from an assertion that it costs zero bytes in every containing object. Demonstrate an `if constexpr` RGBA branch and contrast it with a normal runtime `if`. Write a `constexpr` function that accepts either compile-time or runtime arguments; then change the problem so that a `consteval` function demands a valid compile-time tile definition. Explain why `constinit` permits a mutable, single-threaded diagnostic counter but does not make it `const` or atomic.
+
+Derive the four-bit Morton lookup without memorizing its answer. Spread \(x=3\) to binary `00000101` and \(y=5\) to `00010001`. Shift the second pattern and OR the results to recover decimal 39. Construct the sixteen-entry table during constant evaluation. Then explain when a small lookup table might lose to shift/mask arithmetic because memory traffic and locality matter.
+
+From that setup, implement a stateless policy and a stateful budget policy with the same `validate` operation. Use `TilePlanner<Format,Policy,Recorder>` to compose the behavior without a runtime backend switch. Show why `RecorderBase<Derived>` may call `Derived::record_impl` only when it is genuinely part of an appropriately derived object; compare this static dispatch with a runtime-selected `std::function` target. Construct `VerifyPayloadTag` and `MetadataOnlyTag` and explain exactly how overload resolution chooses a validation path from the caller's tag type. Finally compare normal empty-policy membership, private empty-base inheritance, and `[[no_unique_address]]` membership. On the tested Linux compilers their respective sizes were 16, 8 and 8 bytes; the rule is **a permitted optimization**, not a universal numeric contract, and compilers can treat the attribute differently.
+
+A complete blank-screen test recreates the accepted 64-byte RGBA plan, rejected 96-byte budget attempt, rejected empty verified payload, accepted 48-byte metadata-only RGB plan, and rejected overflowing extent. The recorder receives exactly two plans in the demonstrated sequence; failed requests do not reach it. Then state why this is **not** a real GPU resource, performance benchmark, atomic transaction for arbitrary throwing recorders, or proof of thread safety. The evidence ledger preserves the exact compiled commands and original fourteen-part mapping: [[Supplementary/Foundations#M014 — Parts 217–230: one tile planner and its compile-time policy decisions|M014 traceability]] · [[Supplementary/Sources and Code Anchors#Phase 4 additive reconstruction — M014 / Parts 217–230|verification record]].
+
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
