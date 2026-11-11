@@ -149,9 +149,11 @@ void test_generic_math_and_lifetimes() {
 
     constexpr W3 a{{1, 2, 3}}, b{{4, 5, 6}}, c{{7, 8, 9}};
     constexpr auto eager = a + b + c;
-    constexpr auto inner = lazy_add(a, b);
-    constexpr auto lazy = materialize<float, 3, WorldSpace>(lazy_add(inner, c));
-    static_assert(eager.coordinates == lazy.coordinates);
+    // Reference-bearing expression objects point to automatic locals;
+    // do not require their addresses to be core constant expressions.
+    const auto inner = lazy_add(a, b);
+    const auto lazy = materialize<float, 3, WorldSpace>(lazy_add(inner, c));
+    check(eager.coordinates == lazy.coordinates, "lazy and eager agree");
     static_assert(eager.coordinates == std::array<float, 3>{12, 15, 18});
 
     const std::array<double, 3> left{1, 2, 3}, right{4, 5, 6};
