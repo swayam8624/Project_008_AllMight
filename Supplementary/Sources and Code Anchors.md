@@ -912,6 +912,41 @@ The observed output of each was `generic_asset_pipeline_lab: all checks passed`.
 **No-loss policy:** the original prose remains unchanged. Only the new narrative section, executable lab, source-to-concept coverage rows, recall exercise and README routing are added. Do not reclassify historical M007–M010 or M011/M012 received-source snapshots as received M013 lessons. The next original target is **M014 Parts 217–230**, where compile-time calculation, traits, policies and layout consequences are introduced through the limitations of this generic asset system.
 
 
+## Phase 4 additive reconstruction — M014 / Parts 217–230
+
+**Curriculum identity:** original M014 owns Parts 217–230, exactly fourteen atomic titles: compile-time traits; `std::integral_constant` and type-level values; `if constexpr`; `constexpr` functions/objects; `consteval`; `constinit`; compile-time lookup tables; type erasure versus templates; CRTP; policy-based design; tag dispatch; empty-base optimization; and `[[no_unique_address]]`. The integrated [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A texture tile that chooses its work before the frame begins|tile-planning narrative]] follows directly from the M013 generic asset store. [[Supplementary/Foundations#M014 — Parts 217–230: one tile planner and its compile-time policy decisions|The mapped fourteen titles]] and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#The tile planner makes a choice — M014 reconstruction|the recall route]] provide auditability without fragmenting the main narrative. **Authored reconstruction, not a received M014 source transcript.**
+
+**Committed source and executed witness:** `tools/labs/compile_time_asset_policy_lab.cpp`, 258 lines and 10,788 UTF-8/ASCII bytes; SHA-256 `f5eb017280bb6b2ae6b1475dfb014694235f805a6948df36548b17145d889951`; Git blob `f4379dbce70c261f2832f8311a628e346f7471f7`, byte-for-byte identical to the executed local source. The following exact commands completed successfully using GCC 14.2.0 and Clang 17.0.0:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_asan
+/tmp/allmight_m014_asan
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_clang
+/tmp/allmight_m014_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/compile_time_asset_policy_lab.cpp -o /tmp/allmight_m014_release
+/tmp/allmight_m014_release
+```
+
+Each printed `compile_time_asset_policy_lab: all checks passed` and the local layout line `Layout bytes (plain/EBO/member): 16/8/8`. None reported an address/undefined-behavior sanitizer diagnostic in that witnessed execution. The test asserts the static format traits and generated 16-element Morton table, checks both runtime and compile-time arithmetic, validates two different policies and two tag paths, verifies rejected budget/empty-payload/overflow inputs do not reach a recorder, verifies a static CRTP call, and separately invokes a runtime-erased callback. The compiled test is **not** a GPU backend, a measured comparison of runtime overhead or a general portable layout certificate.
+
+**Source and language verification** (external references are used to support language-level distinctions, not to claim implementation-dependent sizes):
+
+- [C++ `constexpr` and the `if constexpr` statement](https://en.cppreference.com/w/cpp/language/constexpr) / [if statement](https://en.cppreference.com/w/cpp/language/if), for conditional instantiation and constant-evaluation eligibility.
+- [C++20 `consteval` immediate functions](https://en.cppreference.com/w/cpp/language/consteval) and [`constinit`](https://en.cppreference.com/w/cpp/language/constinit), which enforce different kinds of compile-time/static-initialization contracts.
+- [`std::integral_constant`](https://en.cppreference.com/w/cpp/types/integral_constant) and [`std::is_empty`](https://en.cppreference.com/w/cpp/types/is_empty), for type-level values and empty-type checks.
+- [Empty base optimization](https://en.cppreference.com/w/cpp/language/ebo) and [`[[no_unique_address]]`](https://en.cppreference.com/w/cpp/language/attributes/no_unique_address). The latter documents compiler differences, including MSVC's historically distinct extension; do not assume observed 16/8/8 sizes are normative.
+- [`std::function`](https://en.cppreference.com/w/cpp/utility/functional/function) for runtime type-erased callable storage and copyability; it is compared conceptually with CRTP, not benchmarked.
+
+**Limits and future verification:** `TilePlanner` constructs a `TilePlan` and checks a possible CPU byte span; it does not allocate device memory, upload textures, submit or synchronize native GPU work, inspect any current Kairo/Maveb source, or guarantee that a metadata-only plan denotes a ready resource. The mutable `constinit` counter is single-threaded and not thread-safe. An arbitrary `Recorder::record_impl` can have side effects or throw; the lab only witnesses pre-recording failure paths with the included `CountingRecorder`. No controlled dispatch microbenchmark or compiler-disassembly comparison was performed. The original user-supplied books and prior extraction backlogs remain pending exactly as before; this addition does not mark source claims or learner reconstruction complete.
+
+**No-loss integration invariant:** previous teaching, sources, indexes and original numbered source material remain verbatim. This pass adds one continuous first-use chapter, one tested lab, fourteen traced source titles, one recall reconstruction and README navigation. The next original chunk is **M015 / Parts 231–250**, whose container growth, invalidation, ownership and lookup tradeoffs arise from the currently bounded tile/asset storage model.
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
