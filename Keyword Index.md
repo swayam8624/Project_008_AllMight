@@ -445,3 +445,18 @@ This source series develops the graph without advancing numbered curriculum cove
 - [[Concepts/Reciprocal bases and coordinate measurements]]
 - [[Concepts/Norms, dual norms and error budgets]]
 - [[Concepts/Metric gradients and differential measurements]]
+
+
+## Phase 30 — Production and evidence contracts
+
+These terms link directly to first-use explanations in the continuous production story; they are not substitute micro-lessons.
+
+| Concept | Full explanation |
+|---|---|
+| Content fingerprint versus path identity; SHA-256 and cache keys | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A cache key is content identity plus the algorithm that interprets it]] |
+| Workspace containment, normalization/canonicalization and symlink limits | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A path is a proposed location, not an authorization to read or write there]] |
+| Dry-run plan, staging, atomic publication and crash/concurrency limits | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A safe publication is planned first, then committed at one deliberate boundary]] |
+| DCC adapter, source geometry and engine-side semantic verification | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#The hosts change; the data contract should not]] |
+| GPU versus CPU time, benchmark uncertainty, MSE/PSNR/SSIM | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#Performance results are not screenshots of the profiler]] |
+| Ablations, provenance, baselines and experimental controls | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#A benchmark only becomes research when it can falsify a claim]] |
+| Whiteboard reconstruction and oral defense | [[Continuous Notes/Production - From Source Files to Evidence and Defensible Systems#The oral capstone: reconstruct one unknown system, not a glossary]] |
