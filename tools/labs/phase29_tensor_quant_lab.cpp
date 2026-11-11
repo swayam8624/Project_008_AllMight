@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <initializer_list>
 #include <limits>
 #include <numeric>
 #include <span>
@@ -51,7 +52,7 @@ struct Tensor {
         : shape(std::move(dims)),
           strides(contiguous_strides(shape)),
           values(checked_product(shape),0) {}
-    std::size_t offset(std::span<const std::size_t> ix) const {
+    std::size_t offset(std::initializer_list<std::size_t> ix) const {
         require(ix.size()==shape.size(),"tensor rank mismatch");
         std::size_t at=0;
         for(std::size_t d=0;d<ix.size();++d) {
