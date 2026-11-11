@@ -11625,23 +11625,23 @@ If one of several lights is first chosen with probability $q_\ell$, multiply by 
 #### First-use completion — construct the two estimators and prove what MIS preserves
 
 At this hit point the desired reflected direct-light integral is
-$
+$$
 I=\int_{\Omega}F(\omega)\,d\omega,\qquad
 F(\omega)=L_i(\omega)\,f_s(\omega_o,\omega)\,
   |n\cdot\omega|\,V(\omega).
-$
+$$
 Here $\omega$ is the incoming solid-angle direction, $L_i$ is incoming radiance in that direction, $f_s$ is the scattering function evaluated between the outgoing and incoming directions, $n$ is the surface normal, and $V$ is the visibility indicator (one if the sampled light path is unobstructed, zero otherwise). The absolute cosine is appropriate for a declared scattering domain that includes transmission; reflective-only code may instead use the positive hemisphere. Every probability density in the following formula is **per unit solid angle** at this same shading point. A light's area density cannot be compared numerically to a BSDF's directional density until the area-to-direction Jacobian has been applied.
 
 Two algorithms can sample this integral. A **light sampler** chooses an emitter, a point on it, and the direction $\omega_L$; it must account for the discrete probability of selecting the emitter, area density on the chosen surface, and the change of measure from area to solid angle. A **BSDF sampler** chooses a direction $\omega_B$ based on the material's scattering distribution, and then traces that direction to discover whether it reaches a light. Their directional probability densities are $p_L(\omega)$ and $p_B(\omega)$. Neither technique needs to be uniformly good: light sampling helps with small visible emitters, while BSDF sampling helps with narrow glossy lobes.
 
 With one independently generated sample from each technique, define complementary weights $w_L(\omega)$ and $w_B(\omega)$ such that $w_L+w_B=1$ wherever the integrand can contribute. The combined estimate is
-$
+$$
 \widehat I=
  \frac{w_L(\omega_L)F(\omega_L)}{p_L(\omega_L)}
  +\frac{w_B(\omega_B)F(\omega_B)}{p_B(\omega_B)}.
-$
+$$
 The essential derivation is an expectation, not an appeal to intuition:
-$
+$$
 \begin{aligned}
 \mathbb E[\widehat I]
 &=\int p_L(\omega)\frac{w_L(\omega)F(\omega)}{p_L(\omega)}d\omega+
@@ -11649,14 +11649,14 @@ $
 &=\int [w_L(\omega)+w_B(\omega)]F(\omega)d\omega
 =I.
 \end{aligned}
-$
+$$
 This cancellation assumes every nonzero contribution has support from at least one technique, densities are evaluated in a compatible measure, the chosen weights sum to one on supported paths, and the samples belong to the distributions claimed. A missing BSDF estimator breaks the second integral, so it is not enough to copy only the MIS weight into the light estimator. When the implementation uses one next-event-estimation sample and a BSDF-sampled continuation instead of explicitly drawing two samples in one function, the emitter-hit logic must still account for the *complementary* contribution at the correct path vertex.
 
 A common **power heuristic** for one sample from each technique is
-$
+$$
 w_L=\frac{p_L^2}{p_L^2+p_B^2},\qquad
 w_B=\frac{p_B^2}{p_L^2+p_B^2}.
-$
+$$
 The exponent 2 is a heuristic choice to suppress large weights from poorly matched samplers; it is not required by the unbiasedness proof. If the two techniques take $n_L$ and $n_B$ samples, the weights must account for their sample counts (for example by comparing $n_Lp_L$ and $n_Bp_B$), and each group is averaged with its corresponding sample count. The zero-density cases require an explicit policy: where $p_L=0$ but $p_B>0$, assign all weight to B. Where *both* densities are zero and $F\ne0$, neither estimator can represent the contribution and the sampling design is incomplete.
 
 A small numerical check makes the measures and weights visible. On $x\in(0,1)$, let $F(x)=1$, $p_L(x)=2x$, and $p_B(x)=2(1-x)$. Both are normalized densities. At $x=0.25$, the densities are $0.5$ and $1.5$, so $w_L=0.1$ and $w_B=0.9$. A light-technique observation at this point contributes $0.1/0.5=0.2$; a BSDF-technique observation there contributes $0.9/1.5=0.6$. These are *per-sample terms*, not a demand that a single realization sum to one. Their expected values, integrated under their respective sampling densities, sum to the true $I=1$. The [first-use C++ witness](../tools/labs/first_use_contract_lab.cpp) checks the same decomposition for $F(x)=x^2$, whose true integral is $1/3$, by independent quadrature of both expected contributions.
@@ -72420,20 +72420,20 @@ So it evaluates only the 3σ ellipse inside its conservative square raster bound
 #### First-use completion — from one Gaussian's footprint to the final pixel
 
 The ellipse test $q\leq9$ only determines whether a projected Gaussian is a *candidate contributor*. It does not yet calculate the final pixel, because several Gaussians can overlap the same sample and obscure each other. For a projected Gaussian $i$, let $q_i=(x-\mu_i)^T\Sigma_{2D,i}^{-1}(x-\mu_i)$ be its squared elliptical distance at pixel sample $x$; $\mu_i$ is its projected center and $\Sigma_{2D,i}$ is the screen covariance, assumed positive definite. The unnormalized weight is $g_i(x)=e^{-q_i/2}$. If its stored opacity is $o_i\in[0,1]$, a common splatting convention defines the effective sample opacity as
-$
+$$
 \alpha_i(x)=\min(\alpha_{\max},\,o_i e^{-q_i/2}),
-$
+$$
 where $\alpha_{\max}<1$ may be a deliberate numerical clamp. The cutoff and clamp are separate approximations: $q_i>9$ skips the contribution, whereas the clamp caps the contribution of a retained Gaussian. Neither operation turns the Gaussian into an opaque mesh surface.
 
 With overlapping splats, order them from **near to far using one declared camera-depth convention**. Reversed-Z may encode near objects with a larger stored depth, so blindly sorting an API depth value ascending is not universally front-to-back. For the sorted contributors, let $T_0=1$ be the fraction of light not yet blocked, and let $C_0=(0,0,0)$ be accumulated *linear* RGB. For the next Gaussian:
-$
+$$
 C_{i+1}=C_i+T_i\alpha_i c_i,\qquad
 T_{i+1}=T_i(1-\alpha_i).
-$
+$$
 Here $c_i$ is its view-dependent RGB contribution in the declared linear working space. A background $C_{bg}$ enters *after* the last contributor as $C=C_n+T_n C_{bg}$. This is front-to-back premultiplied-alpha compositing written without pretending that stored Gaussian colors were already premultiplied. The product form
-$
+$$
 T_i=\prod_{j<i}(1-\alpha_j)
-$
+$$
 explains the recurrence: a farther Gaussian contributes only through the surviving transmittance from every nearer one.
 
 For two overlapping center samples, take a near **red** splat with $\alpha_0=0.6$, and a far **blue** splat with $\alpha_1=0.5$. Start with $T=1,C=(0,0,0)$. Red contributes $(0.6,0,0)$ and leaves $T=0.4$. Blue contributes only $0.4(0.5)(0,0,1)=(0,0,0.2)$, leaving $T=0.2$. The result before background is $C=(0.6,0,0.2)$. Reverse the order and you obtain $C=(0.3,0,0.5)$, still with $T=0.2$. Thus sorting is a **visible mathematical requirement**, not an optional optimization. Overlapping equal-depth or intersecting splats require a declared approximation/tie policy; one global center-depth ordering cannot reproduce all possible volumetric occlusion.
@@ -73335,7 +73335,60 @@ struct ProjectedGaussian
 };
 ```
 
-That projected representation is what Pass 16 will schedule into tiles.
+#### First-use completion — schedule the projected ellipse into actual tile work
+
+We already know the screen-space center, conic, bounding radius, depth, color and source identity. A projected Gaussian is now a *bounded screen-space workload*. The remaining questions are concrete: which pixels might it affect, how do GPU threads find the Gaussians relevant to their tile without testing every Gaussian in the scene, and how do those contributors reach the pixel in an order suitable for transmittance compositing? We can answer them here, without deferring tiling and sorting to another numbered pass.
+
+Let a render target have width $W$, height $H$, and square tile width $T$ pixels. Give tiles integer coordinates $(t_x,t_y)$, with $0\le t_x<\lceil W/T\rceil$ and $0\le t_y<\lceil H/T\rceil$. The conservative circular bound derived from the screen covariance is a circle of radius $r=3\sqrt{\lambda_{\max}}$ around projected center $(u,v)$. The actual Gaussian ellipse may cover much less area; the circle is useful because it allows cheap rejection without missing the entire three-sigma ellipse. Clip its screen rectangle to the viewport. If the rectangle is empty, the Gaussian contributes no tile references.
+
+For a nonempty clipped rectangle, conservatively map the minimum and maximum screen coordinates to tile indices by dividing by $T$ and taking the floor, clamped to valid tile coordinates. The exact upper-bound formula depends on whether the rectangle uses inclusive or exclusive pixel bounds. Never mix conventions: using an exclusive upper bound with an inclusive floor can either generate an unnecessary extra tile or, worse, omit a boundary sample after a mismatched clamp. Conservative overcount only wastes work; undercount removes contributions.
+
+For example, let $W=H=64$, $T=16$, the center be $(20,20)$ and radius be $10$ pixels. Its bound runs from coordinate $10$ through $30$ on each axis, so it intersects tile columns 0 and 1 and tile rows 0 and 1. It emits four references, one each for tiles $(0,0),(1,0),(0,1),(1,1)$. Those references do *not* copy the full Gaussian record: they name the Gaussian (by a stable index or validated handle) and the tile that may need it.
+
+A scalable implementation is a count–scan–scatter pipeline. In the **count** stage each visible Gaussian reports how many tile references it requires. Suppose three Gaussians request counts $[2,0,1]$. An **exclusive scan** constructs offsets $[0,2,2,3]$. The first Gaussian owns output slots 0 and 1, the second owns an empty range beginning and ending at 2, and the third owns slot 2. The last offset is the required capacity $K=3$. This is a memory-allocation proof: before scattering, the producer knows how many references exist and which nonoverlapping range belongs to each Gaussian. A parallel GPU scan must establish that these offsets are ready before the scatter dispatch reads them. A workgroup barrier alone does not complete a cross-workgroup scan.
+
+```text
+# Read-only projected records, already validated and viewport-clipped.
+for each gaussian i:
+    tile_rectangle[i] = conservative_tile_range(center[i], radius[i])
+    count[i] = number_of_tiles(tile_rectangle[i])
+
+offset[0] = 0
+for i in [0, gaussian_count):
+    offset[i+1] = checked_add(offset[i], count[i])
+
+K = offset[gaussian_count]          # Reject overflow or resource-budget excess.
+references = allocate(K)            # No kernel may write past K.
+
+for each gaussian i:
+    output = offset[i]
+    for each tile in tile_rectangle[i]:
+        references[output++] = (tile_id(tile), depth_key(i), source_id(i))
+    assert(output == offset[i+1])   # A CPU witness; GPU uses validation counters.
+
+stable_sort(references, by tile_id then near_to_far_depth then tie_policy)
+for each tile:
+    for each pixel sample in tile:
+        C = (0,0,0); transmittance = 1
+        for each reference of this tile in the established depth order:
+            compute conic distance q for this pixel and referenced Gaussian
+            if q > cutoff: continue
+            alpha = opacity * exp(-q/2), with declared clamping
+            C += transmittance * alpha * linear_color
+            transmittance *= (1-alpha)
+            if transmittance < cutoff_T: break
+        C += transmittance * linear_background
+```
+
+This pseudocode makes each intermediate state explicit. **Count** is one integer per input Gaussian. **Scan** owns a prefix array of $N+1$ entries. **Scatter** writes exactly $K=\sum_i count_i$ references. **Sort** groups those references by tile and establishes the compositing order. **Raster** evaluates the actual conic at individual pixel samples, eliminating false positives left by the conservative tile bound. The tile list is therefore an acceleration structure for contributors, not a final visibility answer.
+
+A naive renderer considers all $N$ splats for each of the $M$ tiles, producing $O(NM)$ potential pair tests. A tiled pipeline instead emits $K$ actual overlap references and sorts or bins them. A small compact Gaussian can touch very few tiles; a giant close-up Gaussian can touch nearly all of them. This changes both the asymptotic work and the memory budget. Use a counter width that can represent the total $K$, check multiplication/addition overflow, and set a deliberate policy for unreasonably large footprints. Prefix-sum and sorting are not free, so on small workloads the simplest CPU or GPU path may still be faster. Measure count, scan, scatter, sort and raster time separately.
+
+**Depth ordering is not implied by the GPU's stored depth convention.** Choose a monotone near-to-far key in the declared camera space, then encode or compare it consistently. A reversed-Z depth buffer, a positive-Z computer-vision camera and a negative-Z graphics camera may all represent the same physical scene with different numeric depth order. At equal depths use a deterministic tie policy if reproducibility matters, while recognizing that per-Gaussian center-depth sorting is only an approximation when spatially extended kernels intersect.
+
+Finally, the dependency graph is executable, not decorative: projected records must be ready before count; scan must finish before scatter; references must be complete and sorted before raster; and output attachments must survive until the final consumer. The source Gaussian buffer must remain allocated while references still contain its indices. A resize invalidates tile geometry and may require reallocation. An edit that changes Gaussian count, covariance, opacity or camera pose requires rebuilding the affected candidate ranges; reusing old ranges without a proof of conservativeness can silently remove pixels.
+
+The immediate reconstruction test is now possible: for the 64-by-64 target, independently enumerate the four tile coordinates of the $(20,20)$ radius-10 Gaussian, verify the count–scan–scatter ranges on $[2,0,1]$, and compare the final two-Gaussian pixel against the earlier front-to-back CPU oracle. This proves separate facts about indexing, memory safety, order and color rather than accepting one plausible-looking screenshot as evidence for every stage.
 
 ---
 

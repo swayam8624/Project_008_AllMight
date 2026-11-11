@@ -315,21 +315,21 @@ A **covector** is a linear scalar measurement: a rule $\ell$ satisfying $\ell(au
 #### First-use completion — how coordinate measurements become normals, gradients, and reliable code
 
 We can now derive rather than memorize the inverse-transpose rule. Write the physical displacement as $v=Bc$, with the two columns of $B$ holding the basis directions and $c$ holding their coefficients. A coordinate measurement is a *row* $\ell$ acting on $v$. If we want the number it reports to remain unchanged, then
-$
+$$
 \ell(v)=\ell(Bc)=(\ell B)c.
-$
+$$
 Thus the same measurement is represented by the row $\ell B$ in the new coordinate system; conversely, a row specified on $c$ becomes $\ell_c B^{-1}$ when we express it in the world coordinates $v$. This is not a special normal-vector trick: it follows from demanding that measuring the same displacement gives the same scalar. A vector's coordinates and the coordinates of a linear measurement cannot generally obey the same conversion rule.
 
 In the slanted example, the world-to-rail matrix is
-$
+$$
 B^{-1}=\begin{bmatrix}1&-1\\0&1\end{bmatrix}.
-$
+$$
 Its rows are exactly the coordinate measurements $b^1=(1,-1)$ and $b^2=(0,1)$ introduced above. Their dot products with $v=(3,2)$ are $1$ and $2$. Equivalently the **reciprocal vectors**, written as *columns*, form $B^{-T}$. They are dual to the original basis, not new directions of robot motion. A different Gram matrix would change which arrows represent these measurements, but not what the measurements mean.
 
 A normal makes the distinction unavoidable. Consider the line $x+y=1$ in a world plane; a tangent displacement is $t=(1,-1)$ and the normal covector is $n^T=(1,1)$, so $n^Tt=0$. Apply the nonuniform geometric transformation $x'=2x,\ y'=y$, whose matrix is $A=\operatorname{diag}(2,1)$. The transformed tangent is $At=(2,-1)$. The transformed line is $x'/2+y'=1$, so its measuring row is $n'^T=(1/2,1)=n^TA^{-1}$. Verify the required invariant:
-$
+$$
 n'^T(At)=\tfrac12(2)+1(-1)=0.
-$
+$$
 If we incorrectly transform the normal as an ordinary direction $An=(2,1)$, its dot product with $At$ becomes $3$, so it no longer annihilates the surface tangent. In Euclidean column-vector notation the correct normal transform is therefore $n'=A^{-T}n$; normalize its *direction* after transformation if the consumer needs a unit normal. The inverse transpose requires an invertible linear part. When the surface is collapsed by a singular map, the original normal cannot generally be transported this way; reconstruct the normal from the surviving geometry or define a different policy.
 
 The same calculation explains **gradients** at the moment they become necessary. For a scalar field $f(x)$, its differential $df$ is the covector that converts a small displacement $dx$ into a first-order value change $df(dx)$. If $x'=Ax$, then $f'(x')=f(A^{-1}x')$ and the chain rule gives $df'=df\,A^{-1}$. With the standard Euclidean metric, writing that covector as a gradient *arrow* yields $\nabla_{x'}f'=A^{-T}\nabla_x f$. With a general metric matrix $G$, the gradient arrow satisfies $G\,\operatorname{grad}f=(df)^T$, so its coordinates are $G^{-1}(df)^T$. Calling every derivative row a gradient vector would hide this metric choice.

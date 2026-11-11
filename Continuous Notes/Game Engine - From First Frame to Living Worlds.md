@@ -61134,28 +61134,28 @@ Another reason changing physics frequency changes the simulation even if impulse
 #### First-use completion — restitution, penetration correction, and the timestep are different mechanisms
 
 We can calculate the actual timestep dependence here instead of postponing it. Let the contact normal $n$ point from body A toward body B, and let $r_A,r_B$ run from their centers of mass to their contact points. Their contact-point velocities are
-$
+$$
 u_A=v_A+\omega_A\times r_A,\qquad
 u_B=v_B+\omega_B\times r_B.
-$
+$$
 The relative normal speed is $v_n=n\cdot(u_B-u_A)$. A negative result means the two contact points are closing along the chosen normal. A normal impulse magnitude $j\geq0$ applies $-jn$ to A and $+jn$ to B; this increases $v_n$ by $jk$, where
-$
+$$
 k=m_A^{-1}+m_B^{-1}
  +(r_A\times n)^TI_A^{-1}(r_A\times n)
  +(r_B\times n)^TI_B^{-1}(r_B\times n).
-$
+$$
 Here $I_A^{-1},I_B^{-1}$ are the *world-space* inverse inertia tensors; fixed bodies contribute zeros. This effective inverse mass is a scalar because we are resolving one normal direction. It is positive for a movable direction, and zero means the chosen impulse cannot change the normal speed: never divide by such a denominator.
 
 For an isolated impact, restitution $e\in[0,1]$ prescribes a post-impact separating speed $v_n^{target}=-e\,v_n^{pre}$ when the pre-solve speed is below a specified negative impact threshold. Thus an unconstrained one-contact impulse is
-$
+$$
 j=\max\!\left(0,\frac{v_n^{target}-v_n^{current}}{k}\right).
-$
+$$
 When two nonrotating bodies each have mass $1\,\mathrm{kg}$, $k=2\,\mathrm{kg}^{-1}$. If they approach at $-3\,\mathrm{m/s}$ with $e=0.5$, the target is $+1.5\,\mathrm{m/s}$ and $j=(1.5-(-3))/2=2.25\,\mathrm{kg\,m/s}$. No $\Delta t$ appears: this is an instantaneous velocity jump. A physical impulse has units $\mathrm{N\,s}$, not $\mathrm N$; multiplying this impulse by $\Delta t$ a second time would be dimensionally wrong.
 
 Real-time solvers also need to prevent already-overlapping bodies from continuing to sink into each other. This is a *different* goal from restitution. Suppose the measured penetration depth $d$ is positive in metres, the tolerated slop is $s$, and $h$ is the fixed simulation step in seconds. A Baumgarte-style velocity bias can request
-$
+$$
 b(h)=\frac{\beta}{h}\max(d-s,0),
-$
+$$
 where dimensionless $\beta\in[0,1]$ chooses a fraction of the excess penetration to correct each step. For $d=0.020\,\mathrm m,\ s=0.005\,\mathrm m,\ \beta=0.20$ and $h=1/60\,\mathrm s$, this gives $b=0.18\,\mathrm{m/s}$. Halving the step to $1/120\,\mathrm s$ gives $b=0.36\,\mathrm{m/s}$. The bias is a speed target, not an impulse; a solver converts its requested velocity change to an impulse using $k$. At one idealized step the requested corrective displacement $bh=\beta(d-s)=0.003\,\mathrm m$ is the same, but that does **not** make the complete simulation timestep-invariant. Contact detection, repeated iterations, gravity integration, changing geometry, clamping, warm-start history and impact thresholds all change how often and with what state the correction is applied.
 
 ```cpp
