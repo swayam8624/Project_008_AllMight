@@ -16,7 +16,7 @@ For a function of several inputs, a partial derivative varies one coordinate whi
 
 ## Prerequisites
 
-- [[Function contracts: domains, codomains, and images]]
+- [[Function contracts - domains, codomains, and images]]
 - [[Derivative as a local linear map]]
 
 ## Used by
