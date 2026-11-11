@@ -21,7 +21,7 @@ Fisher–Yates generates a uniform permutation by walking from the last array el
 ## Used by
 
 - [[Latin-hypercube sampling]]
-- [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise]]
+- [[Sampling quality - stratification, quasi-Monte Carlo, and blue noise]]
 
 ## Full teaching explanation
 
