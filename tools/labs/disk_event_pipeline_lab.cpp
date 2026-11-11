@@ -147,6 +147,7 @@ double energy(const std::vector<Disk>& ds) {
     for(const auto& d:ds)if(d.inverseMass>0)e+=dot(d.velocity,d.velocity)/(2*d.inverseMass);
     return e;
 }
+#ifndef ALLMIGHT_EVENT_PIPELINE_NO_MAIN
 int main() {
     {
         std::vector<Disk> ds{{1,{0,0},{0,0},1,0},{2,{10,0},{-100,0},1,1}};
@@ -226,3 +227,4 @@ int main() {
     }
     std::cout << "disk event pipeline: 9 scene suites PASS\n";
 }
+#endif // ALLMIGHT_EVENT_PIPELINE_NO_MAIN
