@@ -138,6 +138,26 @@ stateDiagram-v2
 Borrow: T& or const T&. Consume: unique_ptr<T> by value. Retain shared lifetime: shared_ptr<T> by value. Borrow an existing shared handle: const shared_ptr<T>& only for that call. Use a matching deleter for non-memory resources. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Worked API choice: borrow, consume, retain, or copy a value|Rebuild the API lab]].
 
 
+## Requests and replaceable backends — M011 retrieval experiment
+
+A renderer's command is **one of several known shapes**; the runtime backend is **one implementation of a common contract**. These are two different decisions, so redraw the story without looking: command value → active alternative → borrowed submit call → virtual override → checked visitor → logical result → correctly destroyed owner. Then explain what remains separate from the story: the GPU's completion and native-resource release rules.
+
+| From memory, reconstruct the situation | What the answer must account for |
+|---|---|
+| Why can a union's storage not be treated as several simultaneously live objects? | One active member and the correct lifetime transitions; a byte pattern is not a type tag. |
+| How does a request prove its form? | `variant` discriminant, checked `get_if` / `visit`, and possible exceptional valueless state. |
+| Why does a base reference call the derived implementation but a copied base value not preserve it? | Static type, dynamic type, subobjects, virtual dispatch and slicing. |
+| Why is the interface destructor virtual? | Destruction through an owning base pointer must reach the derived destructor; external GPU use has its own completion rule. |
+| What does a diamond with a virtual common base mean? | Two inheritance paths reach one most-derived common-base subobject, not a mandated memory offset. |
+| What can each cast prove? | `static_cast` follows a statically permitted conversion; `dynamic_cast` can runtime-check polymorphic relationships; `reinterpret_cast` does not create objects; `const_cast` does not legalize writing to genuinely const storage. |
+| Why must two handles with the same slot but different generations compare unequal? | Identity includes the occupant generation; equality still does not prove current liveness. |
+| Why does the overridden `reserve` body see 2 through a base view but 7 through a derived view? | Default argument from static type; virtual body from dynamic type. |
+| Can `<=>` always produce a total order? | Integer ID fields can support strong ordering; NaN yields unordered floating comparisons and demands an explicit container key policy. |
+| Can we claim this is the fastest dispatch architecture? | No: compare allocation, memory layout, branch behavior and optimizer effects on the same workload. |
+
+**Blank-file reconstruction:** Recreate `Clear`, `DrawMesh`, `Upload`, `Request`, `Backend` and `CountingBackend` with a single exclusive owner; verify command counts, derived destructor execution, failed runtime cast, slicing, shared virtual base, generation-aware equality, NaN's unordered comparison, overload selection and static default-argument binding. Full code and the checked build command are in [[tools/labs/backend_choice_lab.cpp|the M011 C++20 laboratory]]; complete derivations and failure explanations are in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From one owned resource to many requests and a replaceable backend|the continuous narrative]]. Do not infer Kairo or GPU execution from this standalone test.
+
+
 ## GPU interfaces and cooperation — shortest useful recall
 
 | Prompt | Recall answer | Expand immediately |
