@@ -9,6 +9,7 @@ on:
       - 'tools/labs/disk_event_pipeline_lab.cpp'
       - 'tools/labs/disk_event_property_lab.cpp'
       - 'tools/labs/swept_broadphase_lab.cpp'
+      - 'tools/labs/disk_event_broadphase_equivalence_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   pull_request:
     paths:
@@ -19,6 +20,7 @@ on:
       - 'tools/labs/disk_event_pipeline_lab.cpp'
       - 'tools/labs/disk_event_property_lab.cpp'
       - 'tools/labs/swept_broadphase_lab.cpp'
+      - 'tools/labs/disk_event_broadphase_equivalence_lab.cpp'
       - '.github/workflows/rigid-contact-lab.yml'
   workflow_dispatch:
 
@@ -44,6 +46,8 @@ jobs:
           /tmp/disk_property_strict
           c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/swept_broadphase_lab.cpp -o /tmp/swept_broadphase_strict
           /tmp/swept_broadphase_strict
+          c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_equivalence_lab.cpp -o /tmp/disk_event_differential_strict
+          /tmp/disk_event_differential_strict
       - name: Compile and execute undefined-behavior sanitizer witness
         run: |
           c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/rigid_contact_lab.cpp -o /tmp/rigid_contact_ubsan
@@ -60,3 +64,5 @@ jobs:
           /tmp/disk_property_ubsan
           c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/swept_broadphase_lab.cpp -o /tmp/swept_broadphase_ubsan
           /tmp/swept_broadphase_ubsan
+          c++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=undefined -fno-sanitize-recover=all tools/labs/disk_event_broadphase_equivalence_lab.cpp -o /tmp/disk_event_differential_ubsan
+          /tmp/disk_event_differential_ubsan
