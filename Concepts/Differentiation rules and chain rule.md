@@ -17,7 +17,7 @@ Differentiation rules let us build derivatives from simpler functions. Linearity
 
 ## Prerequisites
 
-- [[Function contracts: domains, codomains, and images]]
+- [[Function contracts - domains, codomains, and images]]
 - [[Limits and continuity]]
 
 ## Used by
