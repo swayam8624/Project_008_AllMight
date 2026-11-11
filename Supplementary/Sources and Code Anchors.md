@@ -1025,6 +1025,49 @@ The first hosted regression run [GitHub Actions #42980923313](https://github.com
 
 **Confirmed hosted regression result:** [GitHub Actions #42981178331](https://github.com/swayam8624/Project_008_AllMight/actions/runs/42981178331), triggered after the additive Phase 1 test-harness correction, completed with **success**. The run's GCC sanitizer, Clang strict and GCC release jobs each completed successfully, including their compile-and-execute-labs steps. This validates the configured workflow and the C++ laboratory set at run head `1698a131a082afe63324f513087fa5998eb0f720`; subsequent changes in this phase are documentation-only and do not alter that tested C++ or workflow content.
 
+## Phase 7 additive reconstruction — M017 Parts 271–290
+
+**Source and placement:** The canonical integrated curriculum's original M017 assigns Parts 271–290 to range-based for translation, C++20 views/ownership/projections/custom iterators, custom allocators/PMR and monotonic lifetimes, hash-table allocators, hot-callable representations, and modules/header units/linkage/ODR/namespace/ABI boundaries. The new 19-section continuous [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From copying every asset report to a lazy, allocatable, separately compiled query service|M017 narrative]] is inserted immediately after M016. [[Supplementary/Foundations#M017 — Parts 271–290: lazy asset queries, allocation lifetimes and compiled API boundaries|Every canonical part title]] is traced to the same engine story and [[Visual Recall/02 - C++ - Objects, Ownership and Lifetime - Visual Recall#From borrowed reports to module boundaries — M017 reconstruction|the independent reconstruction route]]. **Authored reconstruction, not a received original M017 transcript.**
+
+**CPU source with exact provenance.** [[tools/labs/asset_ranges_pmr_lab.cpp|asset_ranges_pmr_lab.cpp]] is 281 lines, 12,243 bytes, SHA-256 `a1c76c44bc377537c732f5c46f771fe0bd2d78fbc7bdbcbd4707573716cdfec7`, Git blob `8b6984bfcc6111dd5743d9e5b416d3e24c22ec5e`; the executed source and committed file have the same Git blob identity. Actual successful commands:
+
+```sh
+g++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/asset_ranges_pmr_lab.cpp -o /tmp/m017_gcc_san
+/tmp/m017_gcc_san
+
+clang++ -std=c++20 -O1 -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_ranges_pmr_lab.cpp -o /tmp/m017_clang
+/tmp/m017_clang
+
+g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+  tools/labs/asset_ranges_pmr_lab.cpp -o /tmp/m017_release
+/tmp/m017_release
+```
+
+The local toolchains were GCC 14.2.0 and Clang 17.0.0. All three printed `asset_ranges_pmr_lab: all checks passed`, with no reported ASan/UBSan diagnostics. Verified: the custom forward iterator skips tombstones and sums five live rows to 304; view adaptor construction is lazy and yields four names; the owner/borrowed-range traits are checked; ranges::find/sort projection semantics are exercised; functor and lambda counts agree; typed allocator calls balance after vector destruction; a counting PMR resource serves both vector and unordered-map storage; monotonic arena upstream blocks are released at arena destruction rather than at vector destruction; a null-upstream bounded arena throws on exhaustion. No throughput, full allocator-law, concurrency, C++ library ABI, GPU or numerical-reproducibility claim follows from these checks.
+
+**Real GCC module test and included files.** The branch contains [[tools/modules/build_module_lab.sh|build_module_lab.sh]] with the following testable graph: `allmight_asset_query_rules.cppm` exported partition → `allmight_asset_query.cppm` primary interface using `export import :rules` → `allmight_asset_query_impl.cpp` non-exported implementation → two importing translation units `asset_query_module_lab.cpp` / `asset_query_secondary.cpp`. The same graph links `asset_query_c_api.cpp` to `asset_query_c_consumer.c` built under C11, and separately compiles `asset_query_interop.hpp` with GCC's `-x c++-user-header` for `asset_query_header_unit_lab.cpp`. The tested local GCC 14.2.0 builds succeeded; the script's final status and all three executable successes were observed. The core GCC version-specific flags and commands are in the executable script, which builds in a clean temporary directory and deletes it on exit:
+
+```sh
+bash tools/modules/build_module_lab.sh
+```
+
+This build actually tests **exported declarations, module partition re-export, non-exported implementation, multiple importing translation units, header-unit CMI preparation, and C linkage**. It is not equivalent to compiling the source with any arbitrary compiler or shipping a binary plugin that must work across future compiler and architecture revisions. The demonstrated C boundary uses a versioned `int allmight_asset_approved_v1(uint64_t)` with a separate C11 caller; exposing structs, allocation pointers, exceptions or GPU resources would require additional ABI and ownership agreements.
+
+**Hosted regression workflow:** [[.github/workflows/allmight-cpp20-labs.yml|the existing C++20 lab regression]] is extended additively to trigger on `tools/modules/**` and to run a separate GCC module/C11/header-unit job. The existing GCC sanitizer, Clang strict and GCC release matrix continues to compile all stand-alone `tools/labs/*_lab.cpp`, including the new ranges/PMR lab. The distinct module job runs the ordered script and is not included as an independently compilable standalone lab. **Do not infer hosted CI success until the exact run has completed successfully.** The previous M016 suite's passing run is historical evidence for its earlier contents, not proof that this new module job passed.
+
+**Primary outside references consulted for technical distinctions:**
+- [GCC C++ modules support and build ordering](https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Modules.html) and [GCC 14 module details](https://gcc.gnu.org/onlinedocs/gcc-14.3.0/gcc/C_002b_002b-Modules.html): explicit `-fmodules-ts`, CMIs, import graph, header-unit building and documented incomplete feature support.
+- [Ranges library](https://en.cppreference.com/cpp/ranges), [`std::ranges::owning_view`](https://en.cppreference.com/cpp/ranges/owning_view), and [borrowed_range](https://en.cppreference.com/w/cpp/ranges/borrowed_range): lazy computation, ownership and iterator survival semantics are separate.
+- [std::pmr::monotonic_buffer_resource](https://en.cppreference.com/cpp/memory/monotonic_buffer_resource), [polymorphic_allocator](https://en.cppreference.com/w/cpp/memory/polymorphic_allocator), and [memory_resource](https://en.cppreference.com/w/cpp/memory/memory_resource): upstream allocation, resource lifetime, no individual deallocation from monotonic arenas, and thread-safety bounds.
+- [C++ modules](https://en.cppreference.com/w/cpp/language/modules), [linkage](https://en.cppreference.com/w/cpp/language/storage_duration), and [ODR](https://en.cppreference.com/w/cpp/language/definition): name visibility, module ownership and binary compatibility are not interchangeable.
+
+**Open claims and research bridge:** the curriculum targets the external `KairoGameEngine/CMakeLists.txt` and `KairoMath/KairoMath.cppm` sources, but their current revisions were **not** inspected. The new self-contained module graph is a teaching witness, not their implementation. No compiler-generated-assembly comparison, cycle/latency/alloc-count performance benchmark, cross-GCC/Clang/MSVC module build, native GPU buffer or real plugin ABI test has been performed. The original source extraction backlog and earlier lessons remain unchanged. A relevant next experiment would compare (a) eager vector copies, (b) borrowed lazy views, and (c) materialized PMR results under the same workloads with allocator counts and p50/p95/p99 latency, followed by a controlled incremental build-time comparison for headers versus module interfaces. Until these experiments actually run, performance improvement claims remain hypotheses, not measured facts.
+
+**No-loss invariant:** previous paragraphs are preserved verbatim; only one new continuous chapter, one standalone lab, eleven module/build files, additive original-part mapping, recall and navigation, and an extension to the CI workflow were added. The next M018 Parts 291–300 continues ABI isolation and explicit-cost constraints as pressure from this current design, not as a prerequisite that was artificially omitted.
+
 ## 2026-10-28 — Parts 801–965: calculus, probability, and linked math/C++ enrichment
 
 **Saved result.** Two source-preserving continuous volumes now cover calculus/optimization (801–900) and probability/Monte Carlo (901–965), with two linked recall files. Existing vectors, matrices/transforms, advanced linear algebra, and C++ books and their recall files received additive explanations, examples, and figures. Their original headings remain present. This task did not advance the C++ curriculum numbering beyond M007–M010.
