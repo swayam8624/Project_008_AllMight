@@ -29,6 +29,7 @@ EMBEDDED = {
     ENGINE: (
         "disk_event_pipeline_lab.cpp",
         "persistent_contact_lab.cpp",
+        "two_point_contact_block_lab.cpp",
         "contact_cache_lab.cpp",
         "disk_event_broadphase_differential_lab.cpp",
         "spring_generator_lab.cpp",

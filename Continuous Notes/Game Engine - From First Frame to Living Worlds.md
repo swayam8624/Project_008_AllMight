@@ -98597,7 +98597,399 @@ It is judged by whether you can state **which equations are being solved, which 
 
 For Kairo specifically, the physics foundation is already much stronger than a toy engine: it has proper mass/inertia structures, immediate impulses, fixed-step runtime integration, deterministic snapshot/replay hashing, stable sleeping semantics, exponential damping, CCD support, conservation-friendly equal-and-opposite solver machinery, and renderer-independent debug geometry. The remaining improvements exposed across Passes 16–18 are now sharply defined rather than vague: **fix general non-diagonal inertia inversion, formalize COM-relative runtime geometry, add child orientation to compound mass construction, optionally add full gyroscopic dynamics, move orientation integration to the exponential map, expose first-class kinematic targets, add clamp diagnostics, visualize COM/principal inertia axes, and add quantitative energy/momentum regression suites.**
 
-That closes the **entire 18-pass run**.
+That closes the original rigid-body mechanics reconstruction **through Part 1700**. It does **not** close Parts 1701–1800: the supplied lesson-body provenance for that range is still missing, so the following contact/constraint material is an explicit reconstruction and deepening rather than a claim that the original source text was preserved.
+
+## From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge
+
+A single isolated impact can be solved with one scalar impulse. A resting crate immediately breaks that mental model. Put two contact points under the same rigid body. An impulse at the left point changes the center-of-mass velocity and the angular velocity, so the right point's relative velocity changes too. The two contacts are therefore coupled.
+
+For contact (i), let the world point be (mathbf p_i), let the normal (mathbf n_i) point from body (A) toward body (B), and define the lever arms
+
+$$
+mathbf r_{Ai}=mathbf p_i-mathbf x_A,
+qquad
+mathbf r_{Bi}=mathbf p_i-mathbf x_B.
+$$
+
+The point velocities are
+
+$$
+mathbf v_{Ai}
+=
+mathbf v_A+oldsymbolomega_A	imesmathbf r_{Ai},
+qquad
+mathbf v_{Bi}
+=
+mathbf v_B+oldsymbolomega_B	imesmathbf r_{Bi},
+$$
+
+so the signed normal relative speed is
+
+$$
+v_{n,i}
+=
+mathbf n_i^mathsf T(mathbf v_{Bi}-mathbf v_{Ai}).
+$$
+
+With this convention, (v_{n,i}<0) means the points are closing. A normal impulse magnitude (lambda_ige0) applies (lambda_imathbf n_i) to (B) and the equal-and-opposite impulse to (A). The non-negativity is physical: ordinary contact may push, but it may not attract.
+
+Stack the contact impulses into (oldsymbollambda). After applying all of them, the vector of contact normal speeds has the form
+
+$$
+oxed{
+mathbf w
+=
+mathbf v_n^-+
+Koldsymbollambda
+}
+$$
+
+where (mathbf v_n^-) contains the pre-solve contact speeds and (K) is the contact-space inverse effective-mass matrix. In Jacobian form,
+
+$$
+oxed{
+K=JM^{-1}J^mathsf T.
+}
+$$
+
+This expression is not decorative notation. (J^mathsf Toldsymbollambda) maps contact impulses into generalized body impulses; (M^{-1}) turns those impulses into generalized velocity changes; (J) projects those changed body velocities back into contact-space velocities. The off-diagonal entry (K_{ij}) therefore measures how impulse (j) changes contact speed (i).
+
+For a planar two-body problem with a common normal direction, the matrix entry reduces to
+
+$$
+K_{ij}
+=
+m_A^{-1}+m_B^{-1}
++
+I_A^{-1}
+(mathbf r_{Ai}	imesmathbf n)
+(mathbf r_{Aj}	imesmathbf n)
++
+I_B^{-1}
+(mathbf r_{Bi}	imesmathbf n)
+(mathbf r_{Bj}	imesmathbf n).
+$$
+
+If all off-diagonal entries vanished, the contacts would be independent. A rigid body generally makes them nonzero.
+
+### Contact is a complementarity condition
+
+A resting contact does not mean “always force the normal velocity to zero.” If the bodies are separating, the contact should apply no normal impulse. For the frictionless, zero-restitution velocity problem, the unilateral conditions are
+
+$$
+oxed{
+oldsymbollambdage0,
+qquad
+mathbf wge0,
+qquad
+lambda_i w_i=0.
+}
+$$
+
+The first condition forbids pulling impulses. The second forbids residual closing velocity. The third states that either a contact carries positive impulse and sits on the active boundary (w_i=0), or it is inactive and may separate with (lambda_i=0).
+
+### A symmetric two-point trace
+
+Take a unit-mass planar crate with unit inertia falling at (2,mathrm{m/s}) onto a static floor. Put contacts one metre to the left and right of the center of mass. The matrix is
+
+$$
+K=
+egin{bmatrix}
+2&0\
+0&2
+end{bmatrix},
+qquad
+mathbf v_n^-=
+egin{bmatrix}
+-2\
+-2
+end{bmatrix}.
+$$
+
+Assuming both contacts are active, solve (mathbf w=0):
+
+$$
+0=
+egin{bmatrix}
+-2\
+-2
+end{bmatrix}
++
+egin{bmatrix}
+2&0\
+0&2
+end{bmatrix}
+egin{bmatrix}
+lambda_1\
+lambda_2
+end{bmatrix},
+$$
+
+so
+
+$$
+oxed{lambda_1=lambda_2=1,mathrm{N,s}.}
+$$
+
+Their total upward impulse cancels the crate's downward linear momentum, while their opposite moments cancel angular response.
+
+Now move the right contact to (x=2) while keeping the left at (x=-1). Then
+
+$$
+K=
+egin{bmatrix}
+2&-1\
+-1&5
+end{bmatrix}.
+$$
+
+Solving the coupled system gives
+
+$$
+oxed{
+lambda_1=rac43,
+qquad
+lambda_2=rac23.
+}
+$$
+
+The impulses are unequal because the geometry is asymmetric. Treating the contacts as two isolated collisions would miss this coupling.
+
+### Why “invert the matrix” is not the whole algorithm
+
+A candidate two-contact solution can contain a negative impulse, which means the assumed active set is wrong. A complete 2×2 block solver must therefore test the possible active sets: both active, only the first active, only the second active, or neither active. For each candidate it computes
+
+$$
+mathbf w=mathbf v_n^-+Koldsymbollambda
+$$
+
+and accepts only solutions satisfying the complementarity inequalities within a declared numerical tolerance.
+
+A singular (K) also needs an explicit policy. Duplicate contact rows can make the matrix rank deficient because two rows encode the same physical restriction. Blind inversion is numerically invalid, but unconditional rejection is also too crude because one independent row may still satisfy the contact. The executable witness below therefore tries the full two-contact solve only when its determinant is safely nonzero, then falls back to one-active-contact candidates and finally the no-impulse case.
+
+### Sequential impulses and block solving are two views of the same coupled system
+
+The existing persistent-contact laboratory uses projected sequential impulses. It visits one constraint row, changes the body velocity immediately, then evaluates the next row using the updated state. Repeated sweeps approximate the coupled solution. The block solve below instead solves two normal rows together.
+
+The important invariant is not “always use one solver.” Every constraint row must expose a Jacobian, effective mass, target velocity or bias, admissible impulse set, accumulated impulse semantics and lifetime. Once those contracts are explicit, projected Gauss-Seidel, block solving, Jacobi-like variants, direct small systems and more general optimization methods can be compared honestly.
+
+### Restitution, penetration correction and friction are separate policies
+
+This bridge solves only the clean velocity-level normal problem. Restitution changes the target velocity for a new impact. Penetration is positional error and needs a distinct stabilization choice such as Baumgarte bias, split impulses, compliant constraints or position projection. Friction adds tangential constraints bounded by the normal impulse; in 2-D,
+
+$$
+-mulambda_n
+le
+lambda_t
+le
+mulambda_n.
+$$
+
+None of these should be silently folded into “the normal impulse formula.” Their energy behavior, timestep dependence and persistence rules differ.
+
+### Complete two-contact executable witness
+
+The following C++20 laboratory is intentionally narrower than a production solver. It proves the algebraic bridge from rigid-body impulse response to a two-contact unilateral block solve, including symmetric and asymmetric traces, one-active-contact behavior, already-separating contacts, a rank-deficient duplicate-contact case, immovable closing geometry and hostile normal input. It does **not** prove 3-D manifold solving, persistent friction, restitution caching, joints, island construction, warm starting across frames, CCD, position stabilization or Kairo integration.
+
+```cpp
+// C++20 two-point unilateral contact witness: 2x2 block complementarity, not a complete engine solver.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/two_point_contact_block_lab.cpp -o /tmp/two_point && /tmp/two_point
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+
+struct Vec2 { double x{}, y{}; };
+constexpr Vec2 operator+(Vec2 a, Vec2 b) { return {a.x + b.x, a.y + b.y}; }
+constexpr Vec2 operator-(Vec2 a, Vec2 b) { return {a.x - b.x, a.y - b.y}; }
+constexpr Vec2 operator*(Vec2 a, double k) { return {a.x * k, a.y * k}; }
+constexpr double dot(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
+constexpr double cross(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
+constexpr Vec2 spin(double w, Vec2 r) { return {-w * r.y, w * r.x}; }
+
+void require(bool ok, const char* what) {
+    if (!ok) throw std::runtime_error(what);
+}
+void near(double got, double want, double tolerance = 1e-9) {
+    require(std::isfinite(got) && std::abs(got - want) <= tolerance,
+            "numerical check failed");
+}
+void finite(Vec2 a) { require(std::isfinite(a.x) && std::isfinite(a.y), "nonfinite point"); }
+
+struct Body {
+    Vec2 center{}, velocity{};
+    double omega{}, inverseMass{}, inverseInertia{};
+};
+void validate(const Body& b) {
+    finite(b.center); finite(b.velocity);
+    require(std::isfinite(b.omega) && std::isfinite(b.inverseMass) &&
+            std::isfinite(b.inverseInertia) && b.inverseMass >= 0.0 &&
+            b.inverseInertia >= 0.0, "invalid body");
+}
+struct ContactPair { std::array<Vec2, 2> worldPoints{}; Vec2 normal{0, 1}; };
+struct BlockResult {
+    std::array<double, 2> impulses{}, postSpeeds{};
+    int activeConstraints{};
+};
+
+Vec2 pointVelocity(const Body& b, Vec2 r) {
+    return b.velocity + spin(b.omega, r);
+}
+void apply(Body& a, Body& b, Vec2 ra, Vec2 rb, Vec2 normal, double impulse) {
+    const Vec2 p = normal * impulse;
+    a.velocity = a.velocity - p * a.inverseMass;
+    b.velocity = b.velocity + p * b.inverseMass;
+    a.omega -= a.inverseInertia * cross(ra, p);
+    b.omega += b.inverseInertia * cross(rb, p);
+}
+
+// A contact is unilateral: its impulse can push, but never pull.
+// The two-point matrix captures how an impulse at either point affects BOTH gaps.
+BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
+    validate(a); validate(b); finite(pair.normal);
+    const double normalLength = std::hypot(pair.normal.x, pair.normal.y);
+    require(std::isfinite(normalLength) && normalLength > 0, "invalid normal");
+    const Vec2 n = pair.normal * (1.0 / normalLength);
+    std::array<Vec2, 2> ra{}, rb{};
+    std::array<double, 2> leverA{}, leverB{}, before{};
+    for (int i = 0; i < 2; ++i) {
+        finite(pair.worldPoints[i]);
+        ra[i] = pair.worldPoints[i] - a.center;
+        rb[i] = pair.worldPoints[i] - b.center;
+        leverA[i] = cross(ra[i], n);
+        leverB[i] = cross(rb[i], n);
+        before[i] = dot(pointVelocity(b, rb[i]) - pointVelocity(a, ra[i]), n);
+        require(std::isfinite(before[i]), "nonfinite relative velocity");
+    }
+    double K[2][2]{};
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            K[i][j] = a.inverseMass + b.inverseMass +
+                      a.inverseInertia * leverA[i] * leverA[j] +
+                      b.inverseInertia * leverB[i] * leverB[j];
+    for (auto& row : K)
+        for (double value : row)
+            require(std::isfinite(value), "effective mass overflow");
+
+    // Solve w = before + K*lambda >= 0, lambda >= 0, lambda_i*w_i = 0.
+    // Enumerate both-active, left-only, right-only and none, accepting only
+    // complementarity-feasible cases. Zero determinant means no unique
+    // both-active solution; a one-active solution may still exist.
+    constexpr double eps = 1e-10;
+    const double determinant = K[0][0] * K[1][1] - K[0][1] * K[1][0];
+    const double matrixScale = std::max({1.0, std::abs(K[0][0] * K[1][1]),
+                                          std::abs(K[0][1] * K[1][0])});
+    auto feasible = [&](std::array<double, 2> lambda) {
+        std::array<double, 2> gap{
+            before[0] + K[0][0] * lambda[0] + K[0][1] * lambda[1],
+            before[1] + K[1][0] * lambda[0] + K[1][1] * lambda[1]
+        };
+        const double scale = std::max({1.0, std::abs(before[0]), std::abs(before[1])});
+        const double tolerance = eps * scale;
+        for (int i = 0; i < 2; ++i) {
+            if (!std::isfinite(lambda[i]) || !std::isfinite(gap[i]) ||
+                lambda[i] < -tolerance || gap[i] < -tolerance ||
+                (lambda[i] > tolerance && std::abs(gap[i]) > tolerance))
+                return false;
+        }
+        return true;
+    };
+    std::array<double, 2> answer{};
+    bool found = false;
+    if (std::isfinite(determinant) && determinant > eps * matrixScale) {
+        const std::array<double, 2> both{
+            (-K[1][1] * before[0] + K[0][1] * before[1]) / determinant,
+            ( K[1][0] * before[0] - K[0][0] * before[1]) / determinant
+        };
+        if (feasible(both)) { answer = both; found = true; }
+    }
+    if (!found && K[0][0] > eps) {
+        const std::array<double, 2> left{-before[0] / K[0][0], 0};
+        if (feasible(left)) { answer = left; found = true; }
+    }
+    if (!found && K[1][1] > eps) {
+        const std::array<double, 2> right{0, -before[1] / K[1][1]};
+        if (feasible(right)) { answer = right; found = true; }
+    }
+    if (!found && feasible({0, 0})) found = true;
+    require(found, "no valid contact impulse: degenerate or inconsistent pair");
+
+    for (int i = 0; i < 2; ++i) {
+        // Tiny negative roundoff is projected to zero, not treated as attraction.
+        answer[i] = std::max(0.0, answer[i]);
+        apply(a, b, ra[i], rb[i], n, answer[i]);
+    }
+    validate(a); validate(b);
+    BlockResult result;
+    result.impulses = answer;
+    for (int i = 0; i < 2; ++i) {
+        result.postSpeeds[i] =
+            dot(pointVelocity(b, rb[i]) - pointVelocity(a, ra[i]), n);
+        near(result.postSpeeds[i],
+             before[i] + K[i][0] * answer[0] + K[i][1] * answer[1], 1e-8);
+        require(result.postSpeeds[i] >= -1e-8, "still closing after block solve");
+        if (answer[i] > eps) ++result.activeConstraints;
+    }
+    return result;
+}
+int main() {
+    const Body ground{{0, 0}, {0, 0}, 0, 0, 0};
+    { // Symmetric crate: K = diag(2,2); a -2m/s fall needs 1N*s at each point.
+        Body crate{{0, 1}, {0, -2}, 0, 1, 1};
+        Body fixed = ground;
+        const auto result = solveBlock(fixed, crate,
+                                      ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 1); near(result.impulses[1], 1);
+        near(crate.velocity.y, 0); near(crate.omega, 0);
+        require(result.activeConstraints == 2, "both contacts should act");
+    }
+    { // Asymmetric footprint: K=[[2,-1],[-1,5]], impulses 4/3 and 2/3.
+        Body fixed = ground, crate{{0, 1}, {0, -2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{2, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 4.0 / 3.0);
+        near(result.impulses[1], 2.0 / 3.0);
+        near(crate.velocity.y, 0); near(crate.omega, 0);
+    }
+    { // Single active point: positive separating speed at the second point.
+        Body fixed = ground, crate{{0, 1}, {0, 0}, 1, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 0.5); near(result.impulses[1], 0.0);
+    }
+    { // Already separating: neither contact is allowed to pull the body down.
+        Body fixed = ground, crate{{0, 1}, {0, 2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 0); near(result.impulses[1], 0);
+    }
+    { // Duplicate contact positions make K rank deficient; one point suffices.
+        Body fixed = ground, crate{{0, 1}, {0, -2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{-1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0] + result.impulses[1], 1);
+        near(result.postSpeeds[0], 0); near(result.postSpeeds[1], 0);
+    }
+    { // Two immovable bodies cannot repair closing speed via impulse.
+        Body fixed = ground, immovable{{0, 1}, {0, -1}, 0, 0, 0};
+        bool rejected = false;
+        try { (void)solveBlock(fixed, immovable, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}}); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "immovable closing geometry should be rejected");
+    }
+    { // Hostile inputs must fail before polluting another island.
+        Body fixed = ground, crate{{0, 1}, {0, -1}, 0, 1, 1};
+        bool rejected = false;
+        try { (void)solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 0}}); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "zero normal must be rejected");
+    }
+    std::cout << "two-point contact block: 7 suites PASS\n";
+}
+```
+
+This section therefore raises one Phase-18 subproblem to **S4 reference depth**: the forcing problem is explicit, the matrix is derived, hand traces are reproducible, alternate branches and degeneracy are represented in executable code, and negative cases exist. It does not make Phase 18 globally S4 or S5.
+
+Most importantly, Parts 1701–1800 retain the provenance limitation identified by the Bible audit. Their original supplied lesson-body source was absent from the retained source batches used for this reconstruction. The current material is therefore labelled as reconstructed canonical teaching built from the mechanics already established, inspected physics sources elsewhere in the repository, and executable reference models. No amount of new prose or passing CPU tests can retroactively prove that the missing original lesson body was preserved.
+
+With that distinction made, the narrative can leave rigid-body mechanics honestly: Part 1700 closes the body-state and integration foundation; this bridge establishes why multiple unilateral contacts become a coupled constraint problem; the deeper Phase-18 source/provenance denominator remains open.
 
 ### An animation library is one part of an authoring workflow
 
@@ -101449,7 +101841,7 @@ The lifetime contract changes too. Metal 4 command buffers are created from a de
 
 Before writing Vulkan and Metal emitters, implement a small *symbolic planner* that exposes all decisions in ordinary C++ data. The following complete C++20 code, also stored as \`tools/labs/resource_state_plan_lab.cpp\`, carries independent state for two texture mips. It outputs an initialization transition for the first write, a paired symbolic release/acquire on queue-family change, an overwrite-after-read transition, and a separate initialization for the second mip. It does not invent a needless transition between two identical read-only accesses. Negative tests reject uninitialized mip reads and unsupported same-pass feedback. The output is a reproducible intermediate contract, **not Vulkan-valid \`VkDependencyInfo\` emission, not Metal 4 encoding, and not GPU verification**.
 
-\`\`\`cpp
+```cpp
 // C++20. Symbolic resource hazards: NOT valid Vulkan barrier emission.
 // Run: c++ -std=c++20 -Wall -Wextra -Werror -pedantic -O2 resource_state_plan_lab.cpp -o planner && ./planner
 #include <cstddef>
@@ -101626,7 +102018,7 @@ int main() {
     std::cout<<"planned="<<transitions.size()
              <<" symbolic transitions; ownership pair, mip isolation and negatives PASS\n";
 }
-\`\`\`
+```
 
 The expected example has five symbolic transitions. It is important to explain why there are five rather than simply assert that the test passed: upload mip 0 initializes that mip; graphics sampling after a transfer-queue upload requires a release/acquire pair; a second graphics read does not need an additional read/read transition; a later color write must wait for the earlier readers; and upload of mip 1 initializes that independently. The code records a handoff identifier for the paired queue operations, but does **not** yet submit a semaphore, validate stage-mask legality, handle depth/stencil aspects, buffer intervals, transient aliasing, host visibility, device loss, physical resource retirement, or live Kairo/Maveb integration. Consequently this is reconstruction-level evidence only for the symbolic planner.
 
