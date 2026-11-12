@@ -387,5 +387,18 @@ text = insert_or_refresh_before(
     nerf,
 )
 
+text = insert_or_refresh_before(
+    text,
+    "## Neural shading keeps an explicit renderer and learns a local function",
+    "<!-- Bible-final-pass: score distillation -->",
+    sds,
+)
+text = insert_or_refresh_before(
+    text,
+    "## Spatial audio is a geometry-and-filtering pipeline",
+    "<!-- Bible-final-pass: XR human study design -->",
+    human,
+)
+
 NOTE.write_text(text)
 print("graphics final-pass patch applied")
