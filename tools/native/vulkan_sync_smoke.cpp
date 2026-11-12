@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include <atomic>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
