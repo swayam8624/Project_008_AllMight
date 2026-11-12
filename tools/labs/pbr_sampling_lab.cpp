@@ -10,6 +10,12 @@
 #include <random>
 #include <stdexcept>
 
+#ifdef assert
+#undef assert
+#endif
+#define ALLMIGHT_REQUIRE(expr) do { if (!(expr)) throw std::runtime_error("check failed: " #expr); } while (false)
+#define assert(expr) ALLMIGHT_REQUIRE(expr)
+
 namespace allmight {
 
 constexpr double pi = 3.1415926535897932384626433832795;
