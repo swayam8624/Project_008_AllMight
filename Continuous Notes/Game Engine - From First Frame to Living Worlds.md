@@ -100517,6 +100517,141 @@ Security threat modeling ties the pieces together. Identify attackers, assets, e
 
 Parts 2771–2800 cover SHA-256/HMAC/HKDF, AES/GCM and nonce discipline, public keys, Shamir shares, Merkle proofs, tokenization, FFI, trust policy and a deterministic low-level-systems capstone. **Their present state is fully connected authored explanation, not a tested encryption engine or a security certification.** The CPU-only C++ lab does not claim those operations were executed.
 
+
+---
+
+# XR inside an engine — runtime ownership, frame pacing and hybrid rendering
+
+XR becomes an engine topic when perception acquires object lifetime, GPU queues, platform APIs, asset ownership and testable subsystem boundaries.
+
+## OpenXR belongs in the platform layer
+
+The OpenXR application/runtime boundary maps naturally to an engine module that owns instance/system/session lifetime, reference spaces, action sets, swapchains, extension negotiation and frame submission. Higher layers should consume semantic services such as left-hand grip pose or predicted view set rather than raw vendor handles.
+
+Do not render merely because the game loop wants another frame. Render because the runtime scheduled one. Predicted display time becomes a first-class clock used by view location, simulation interpolation and rendering.
+
+## Build around view families, not two hard-coded eyes
+
+A runtime may request two views, four views or asymmetric view configurations. Varjo quad views are a concrete example.
+
+Represent each view as data:
+
+\[
+V_i=\{\text{pose},\text{projection},\text{viewport},
+\text{color},\text{depth},\text{quality policy}\}.
+\]
+
+The render graph can share view-independent work and instance view-dependent work when the backend supports multiview.
+
+## Late update needs an ownership boundary
+
+Tracking continues while simulation and rendering proceed. Some data can be updated late, such as view constants or head-relative UI, but authoritative gameplay state cannot be rewritten after physics and gameplay already consumed it.
+
+Separate authoritative simulation state, predicted render state and compositor correction.
+
+## Submitted depth is a contract
+
+Depth can support positional reprojection, composition and MR occlusion only if near/far conventions, depth range, projection and pose match. Treat color, depth, pose and projection as one submission record.
+
+## Foveation needs a policy layer above VRS
+
+Compute a desired quality field from gaze, uncertainty, motion and content, then translate it to Vulkan fragment shading rate, Metal rasterization-rate maps, runtime foveation, quad views, dynamic resolution or a software fallback.
+
+Record gaze timestamp, predicted gaze, confidence, angular radii, requested shading rates, safety margin, fallback state and frame ID. Without that provenance an artifact cannot be assigned to gaze prediction, mapping or GPU mechanism.
+
+## Mixed reality needs an explicit composition graph
+
+Distinguish real-world color, real depth, static spatial mesh, dynamic person/object masks, virtual opaque geometry, virtual transparent layers and UI.
+
+A spatial mesh updated slowly must not be treated as live per-pixel depth. Composition rules must say which source owns occlusion and what happens when it is stale.
+
+## Hands and anchors need state machines
+
+A hand skeleton is not an always-valid animation rig. States such as absent, acquired, tracked, low-confidence and lost prevent noisy joints from entering physics blindly.
+
+Anchors need identity and relocalization semantics: existing-but-unlocalized, localized with confidence, refined after loop closure, expired or deleted. Identity should survive pose updates.
+
+## XR audio should share the transform graph
+
+World-stable sound uses the same world/head transform semantics as visual content. A separate inconsistent pose path can make supposedly fixed sound rotate with the head.
+
+## Neural graphics should enter the engine through capability contracts
+
+A captured-scene backend might use triangles, voxels, NeRF-like fields, Gaussian splats or hybrids. Its interface should state whether it can provide depth, normals, relighting, local editing, secondary rays, deformation, stable picking IDs, memory footprint and update/render latency.
+
+This prevents treating a view synthesizer as automatically equivalent to a game-world asset.
+
+A robust interactive architecture often keeps explicit geometry for collision, navigation, anchors and near-field interaction while learned or Gaussian representations supply captured appearance. The hard problem is authority: which representation owns depth, normals, collision and edits.
+
+## Neural shading is a shader-system problem
+
+A neural material needs weight/model versioning, tensor layout and precision, device capability checks, fallback material, LOD behavior, residency policy, profiling hooks and validation against a reference path.
+
+A network executing in a shader is not an external AI service. It is code with memory traffic, register pressure, precision constraints and scheduling cost.
+
+## Python should own offline automation and research tooling
+
+Blender Python, NumPy, pandas, PyTorch and scientific tooling are excellent for asset processing, reconstruction, training, result analysis and plotting. Keep the latency-critical runtime in compiled/native paths unless embedded scripting is explicitly required.
+
+A clean boundary is native runtime plus Python tooling plus stable file/CLI/FFI contracts. Test malformed inputs, version skew, shape mismatch, NaNs and partial outputs at that boundary.
+
+## An XR benchmark harness should replay time
+
+A trace can contain
+
+\[
+(timestamp,\ head\ pose,\ gaze,\ input,\ view\ config,\ scene\ event).
+\]
+
+Replay under a controlled clock should measure predicted-versus-truth pose error, gaze error in degrees, fovea miss rate, CPU/GPU stage durations, frame misses/reprojection mode, image metrics and memory/bandwidth counters when available.
+
+Software replay validates algorithms and repeatability. Physical HMD tests validate optical, sensor and real hardware behavior. Do not collapse those evidence levels.
+
+
+
+
+
+## Remote XR turns frame pacing into a networked control problem
+
+Cloud rendering moves some or all graphics work to a remote GPU, encodes the resulting views, sends them across a network, decodes them on the client and still has to react to current head and input state.
+
+The end-to-end motion-to-photon path becomes roughly
+
+\[
+T =
+T_{sensor}
++T_{uplink}
++T_{server}
++T_{encode}
++T_{network}
++T_{decode}
++T_{client-compose}
++T_{scanout}.
+\]
+
+These terms overlap in real pipelines, so the equation is an accounting model rather than a claim that every stage runs strictly serially. It is still valuable because moving rendering to a server adds latency and jitter sources that a local engine does not have.
+
+NVIDIA CloudXR 6.x is one current example. Its 2026 runtime is OpenXR-facing on the server side and streams head/controller/hand state from clients while returning encoded visual output. Current releases expose network latency and packet-loss reporting, adaptive bitrate/foveated streaming, WebRTC paths, hand input and haptics.
+
+A remote-XR engine therefore needs more than a conventional video streamer:
+
+- pose prediction must account for network delay;
+- bitrate and resolution changes must not destabilize the foveal region;
+- packet loss can create age-of-information spikes rather than merely lower visual quality;
+- input and haptics travel in the opposite direction from video;
+- encoder queues can add hidden latency even when GPU rendering is fast;
+- the client compositor may still need late reprojection using a newer pose than the server saw.
+
+This also changes benchmarking. Report not only server render time but glass-to-glass latency, pose age, encode/decode time, packet loss, bitrate, frame drops, reprojection rate and tail latency. A 10 ms average network delay with 80 ms spikes is a different XR experience from a stable 15 ms path.
+
+## WebXR and platform runtimes are different deployment layers
+
+OpenXR standardizes native application-to-runtime interaction across many XR systems. WebXR exposes immersive devices to web applications through browser security and lifecycle rules. Cloud streaming can place an OpenXR application on the server while a browser/WebXR client acts as the device endpoint.
+
+These layers should not be collapsed into one abstraction. The engine's portable spatial concepts can be shared, but session creation, graphics binding, permission model, input exposure and compositor ownership differ.
+
+
+
 ## The deterministic system capstone and its evidence boundary
 
 The conceptual capstone is a single pipeline: a validated cartridge file enters a deterministic CPU interpreter; a complete versioned state snapshot is constructed; a temporary filesystem object is atomically published with an explicitly chosen crash-durability contract; the state is length-framed for transport; received bytes are authenticated and authorized; a trusted snapshot is restored; and time-stamped input is replayed to reproduce the same program behavior. Any stage can fail, and the complete application must preserve the previous valid state or report a safe, diagnosable error.

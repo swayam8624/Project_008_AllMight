@@ -40053,6 +40053,201 @@ Security threat modeling ties the pieces together. Identify attackers, assets, e
 
 Parts 2771–2800 cover SHA-256/HMAC/HKDF, AES/GCM and nonce discipline, public keys, Shamir shares, Merkle proofs, tokenization, FFI, trust policy and a deterministic low-level-systems capstone. **Their present state is fully connected authored explanation, not a tested encryption engine or a security certification.** The CPU-only C++ lab does not claim those operations were executed.
 
+
+---
+
+# Python, scientific computing and data analysis as graphics-systems infrastructure
+
+Python is a high-productivity control plane around performance-critical systems: experiments, asset tooling, numerical prototypes, dataset analysis, neural training, validation and publication.
+
+## Python abstractions still have machine cost
+
+Fluent Python's data-model perspective matters because sequences, mappings, iterators, generators, protocols and async objects have precise behavior.
+
+A Python list stores references to Python objects. A NumPy array is a dense typed memory view described by data, shape, strides and dtype. For graphics-style numeric work that distinction dominates locality and bandwidth.
+
+For a C-contiguous array of shape \((H,W,C)\) and element size \(s\),
+
+\[
+offset=s(iWC+jC+k).
+\]
+
+A slice may share storage with different strides. A downstream API that requires contiguous storage can silently introduce a copy. Log shape, dtype and strides when debugging data movement.
+
+## Buffer interfaces help only when the entire path stays zero-copy
+
+memoryview and the buffer protocol can expose raw array storage without per-element Python conversion. But zero-copy is end-to-end. If the next library changes dtype/layout or stages through another buffer, the whole path is not zero-copy.
+
+Always ask who owns the bytes, whether they are writable, their dtype/stride, validity lifetime and which thread/process may access them.
+
+## Profile before optimizing
+
+High Performance Python's durable workflow is measure total time, locate hot functions, measure hot lines/kernels, inspect memory, change one hypothesis, rerun correctness tests and compare distributions.
+
+Amdahl's law gives the upper bound when only fraction \(p\) is accelerated by factor \(s\):
+
+\[
+S=\frac{1}{(1-p)+p/s}.
+\]
+
+Speeding up a tiny fraction cannot transform the whole application.
+
+## Vectorization moves loops out of the interpreter
+
+NumPy executes regular typed loops in compiled code. This reduces interpreter overhead, but temporary arrays still cost bandwidth and memory.
+
+For
+
+\[
+C=A+B\cdot D,
+\]
+
+an implementation may allocate an intermediate product. In-place or fused operations can reduce traffic when aliasing allows it. Image buffers, dense grids and point clouds are often bandwidth-limited.
+
+## Broadcasting is shape algebra
+
+For point cloud \(P\in\mathbb R^{N\times3}\) and translation \(t\in\mathbb R^3\),
+
+\[
+P'=P+t.
+\]
+
+The translation is logically expanded across rows. Broadcasting avoids storing repeated \(t\), but later operations can still create large temporaries. Treat ndim, shape, dtype and finite-value checks as runtime contracts.
+
+## The GIL separates concurrency from CPU parallelism
+
+Threads overlap I/O and can benefit when native extensions release the GIL, but ordinary Python bytecode does not become CPU-parallel merely by spawning threads.
+
+Use asyncio for structured I/O, threads for I/O/native libraries that release the GIL, processes for independent CPU-bound Python work, and native/Numba/Cython/GPU kernels for tight numerics.
+
+Process parallelism has serialization and memory cost. Copying a multi-gigabyte point cloud to every worker can erase the benefit.
+
+## Native acceleration is a boundary-design problem
+
+Numba JIT-compiles supported numeric code. Cython adds static/native compilation. CFFI, pybind11, PyO3 and extension APIs connect Python to compiled libraries.
+
+The total cost is
+
+\[
+T_{total}=T_{marshal}+T_{copy}+T_{kernel}+T_{sync}.
+\]
+
+A fast kernel called once on a large array is often better than millions of tiny cross-language calls.
+
+## Scientific computing begins with conditioning and stability
+
+Michael Heath's framework is essential for graphics. Error can come from uncertain input data, an ill-conditioned problem, an unstable algorithm, discretization/truncation, floating-point rounding or a poor stopping rule.
+
+Forward error measures error in the answer. Backward error asks what nearby input would make the computed answer exact. Stable algorithms often solve a nearby problem accurately.
+
+For scalar \(y=f(x)\), a local relative condition number is approximately
+
+\[
+\kappa_f(x)=\left|\frac{x f'(x)}{f(x)}\right|.
+\]
+
+Large \(\kappa\) means small relative input errors can become large output errors even with a stable implementation.
+
+## Floating point changes algebra
+
+Floating-point addition is not associative:
+
+\[
+(a+b)+c\neq a+(b+c)
+\]
+
+in general.
+
+This affects parallel reductions, path-tracing accumulation, covariance estimates and large point-cloud sums. Reproducibility must state whether bitwise identity or tolerance-based agreement is required.
+
+Prefer stable formulations: avoid catastrophic subtraction, scale problems, use structured solvers rather than explicit inverses, and inspect conditioning.
+
+## Linear algebra has structure-specific algorithms
+
+Do not compute \(A^{-1}\) merely to solve \(Ax=b\).
+
+LU is general; Cholesky exploits SPD structure; QR is robust for least squares; SVD exposes rank and singular directions; iterative methods matter for sparse systems.
+
+Graphics uses these in calibration, fitting, PCA, bundle adjustment, FEM and inverse rendering.
+
+## Optimization needs a model, derivatives and a stopping rule
+
+For
+
+\[
+\min_\theta L(\theta),
+\]
+
+gradient descent is
+
+\[
+\theta_{k+1}=\theta_k-\eta_k\nabla L(\theta_k).
+\]
+
+The hard questions are parameterization, scale, local minima, derivative quality and identifiability. Automatic differentiation differentiates the implementation; it does not prove the implementation is the intended physical model.
+
+Neural rendering is especially vulnerable because camera pose, geometry, appearance and exposure can compensate for one another.
+
+## ODE/PDE numerics connect to simulation and reconstruction
+
+For
+
+\[
+\dot y=f(t,y),\qquad y(t_0)=y_0,
+\]
+
+explicit Euler gives
+
+\[
+y_{n+1}=y_n+h f(t_n,y_n).
+\]
+
+It is simple but can be unstable for stiff systems. Higher-order explicit methods improve local accuracy; implicit methods can improve stability at solve cost.
+
+PDE discretization turns continuous models into algebraic systems. Grid spacing and time step control truncation error and stability. A smooth-looking result is not evidence of convergence.
+
+## FFT is an algorithmic change
+
+A direct DFT costs \(O(N^2)\); FFT algorithms reduce common cases to \(O(N\log N)\). This matters in convolution, spectral simulation, filtering and signal analysis. FFT convolution still needs explicit padding and boundary semantics because circular and linear convolution differ.
+
+## pandas is a relational layer for experiments
+
+Python for Data Analysis contributes disciplined loading, cleaning, joining, grouping, reshaping and time-series analysis.
+
+A graphics result table might use keys such as run, scene, device, method, seed and frame. Every join should have an intended cardinality. Duplicate keys can multiply rows and silently bias averages.
+
+For latency, retain raw samples and report distributions, P95/P99 and deadline misses rather than only means.
+
+## Jupyter is exploratory; the repository is authoritative
+
+A notebook is useful for inspecting a cloud or testing an equation, but hidden cell execution state is weak provenance. Move stable logic into modules/CLIs. Record environment versions, random seeds, dataset hashes, config files and output manifests.
+
+## SICP contributes architecture beneath syntax
+
+Structure and Interpretation of Computer Programs is not a Python book, but its durable ideas apply directly: procedural abstraction, data abstraction, higher-order operations, state and identity, streams, metalinguistic abstraction, register-machine models and compilation.
+
+In a graphics engine these ideas become render graphs, ECS queries, shader/material languages, asset pipelines and command buffers. Choose abstractions whose semantics match the domain, then understand their machine cost.
+
+## A reproducible graphics-research stack
+
+A strong project has:
+
+1. immutable/raw input manifests with hashes;
+2. configuration containing every experimental parameter;
+3. explicit seed policy;
+4. locked environment or container description;
+5. preprocessing that writes versioned intermediates;
+6. native/GPU executables behind stable CLI or FFI;
+7. result tables with run IDs and timestamps;
+8. validation scripts that check invariants before plotting;
+9. report generation that consumes result artifacts;
+10. provenance linking commit, hardware, driver/runtime and dataset version.
+
+Python then becomes a trustworthy scientific control plane rather than disposable glue.
+
+
+
+
 ## The deterministic system capstone and its evidence boundary
 
 The conceptual capstone is a single pipeline: a validated cartridge file enters a deterministic CPU interpreter; a complete versioned state snapshot is constructed; a temporary filesystem object is atomically published with an explicitly chosen crash-durability contract; the state is length-framed for transport; received bytes are authenticated and authorized; a trusted snapshot is restored; and time-stamped input is replayed to reproduce the same program behavior. Any stage can fail, and the complete application must preserve the previous valid state or report a safe, diagnosable error.
