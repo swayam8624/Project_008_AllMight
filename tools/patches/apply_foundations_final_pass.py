@@ -7,11 +7,13 @@ NOTE = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and Sys
 def code_block(path, language):
     return "\n\n~~~" + language + "\n" + path.read_text().rstrip() + "\n~~~\n"
 
-def insert_before(text, anchor, marker, body):
-    if marker in text:
-        return text
+def insert_or_refresh_before(text, anchor, marker, body):
     if anchor not in text:
         raise SystemExit("missing anchor: " + anchor)
+    if marker in text:
+        start = text.index(marker)
+        end = text.index(anchor, start)
+        return text[:start] + body.rstrip() + "\n\n" + text[end:]
     return text.replace(anchor, body.rstrip() + "\n\n" + anchor, 1)
 
 text = NOTE.read_text()
@@ -225,19 +227,19 @@ The executable witness below preserves pairing, computes d_z, performs an exact 
 **Evidence boundary:** real studies must additionally account for dependence between frames, repeated measurements on the same participant or scene, hierarchical datasets, missing data, adaptive stopping, and preregistered versus exploratory analyses. Those facts determine the statistical unit and therefore determine which inferential method is defensible.
 """
 
-text = insert_before(
+text = insert_or_refresh_before(
     text,
     "#### Data-oriented design begins with the loop, not with a fashionable container",
     "<!-- Bible-final-pass: C++ temporary lifetime -->",
     life,
 )
-text = insert_before(
+text = insert_or_refresh_before(
     text,
     "## Reliable optimization in practice",
     "<!-- Bible-final-pass: SE3 exp log -->",
     se3,
 )
-text = insert_before(
+text = insert_or_refresh_before(
     text,
     "### Likelihood turns a forward probability model into an inverse estimation rule",
     "<!-- Bible-final-pass: research inference -->",
