@@ -8,6 +8,7 @@ on:
       - allmight/closure-and-narrative-20261112
     paths:
       - 'tools/patches/apply_foundations_final_pass.py'
+      - 'tools/audit_note_readability.py'
       - 'tools/labs/se3_exp_log_lab.cpp'
       - 'tools/labs/research_inference_lab.py'
       - 'tools/labs/temporary_lifetime_lab.cpp'
@@ -27,6 +28,9 @@ jobs:
 
       - name: Apply foundations final-pass patch
         run: python3 tools/patches/apply_foundations_final_pass.py
+
+      - name: Audit readability of the full canonical note
+        run: python3 tools/audit_note_readability.py "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
 
       - name: Compile and run C++ witnesses
         run: |
