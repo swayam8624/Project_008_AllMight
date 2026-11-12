@@ -1,0 +1,67 @@
+name: Bible foundations final pass
+# final-pass verification: canonical foundations only
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - allmight/closure-and-narrative-20261112
+    paths:
+      - 'tools/patches/apply_foundations_final_pass.py'
+      - 'tools/audit_note_readability.py'
+      - 'tools/labs/se3_exp_log_lab.cpp'
+      - 'tools/labs/research_inference_lab.py'
+      - 'tools/labs/temporary_lifetime_lab.cpp'
+      - '.github/workflows/bible-foundations-final-pass.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: allmight/closure-and-narrative-20261112
+          fetch-depth: 0
+
+      - name: Apply foundations final-pass patch
+        run: python3 tools/patches/apply_foundations_final_pass.py
+
+      - name: Audit readability of the full canonical note
+        run: python3 tools/audit_note_readability.py "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+
+      - name: Compile and run C++ witnesses
+        run: |
+          set -euxo pipefail
+          c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror tools/labs/temporary_lifetime_lab.cpp -o /tmp/temporary_lifetime_lab
+          /tmp/temporary_lifetime_lab
+          c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror tools/labs/se3_exp_log_lab.cpp -o /tmp/se3_exp_log_lab
+          /tmp/se3_exp_log_lab
+
+      - name: Run statistical inference witness
+        run: python3 tools/labs/research_inference_lab.py
+
+      - name: Verify canonical embedded-source agreement
+        run: python3 tools/check_continuous_code_sync.py
+
+      - name: Verify patch idempotence
+        run: |
+          sha256sum "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md" > /tmp/before
+          python3 tools/patches/apply_foundations_final_pass.py
+          sha256sum "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md" > /tmp/after
+          diff /tmp/before /tmp/after
+
+      - name: Commit canonical foundations update
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Finalize computing foundations Bible seams"
+            git push origin HEAD:allmight/closure-and-narrative-20261112
+          fi

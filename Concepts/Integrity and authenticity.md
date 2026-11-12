@@ -6,27 +6,51 @@ tags:
 
 # Integrity and authenticity
 
-**Curriculum depth:** Developed · **First seen:** C006 · **Latest development:** C006
+**Curriculum depth:** Derived with executable primitive witnesses · **First seen:** C006 · **Latest development:** Phase 28 repair
 
-## Definition and mechanism
+**Integrity** means detecting unauthorized or accidental modification relative to a trusted reference. **Authenticity** additionally answers who or what was authorized to create the message.
 
-Integrity compares content with a declared reference; authenticity requires a trust mechanism such as a MAC or signature. Replacing both file and untrusted digest defeats a simple hash comparison.
+Hashing a file and storing the digest beside it protects against accidental corruption only when the digest itself is trusted. An attacker able to replace both can recompute the hash.
 
-## Prerequisites
+A message authentication code solves a different problem: parties share a secret key $K$ and compute a tag such as
 
-- [[Checksums CRCs and hashes]] — supplies the representation or validity rule used above.
-- [[Interpretation contract]] — supplies the representation or validity rule used above.
+$$
+\operatorname{HMAC}_K(m).
+$$
 
-## Used by
+Someone without the key should not be able to forge a valid tag for a modified message under the security assumptions of HMAC and the underlying hash.
 
-Connect later dependent concepts here when their explanations use this mechanism.
+A digital signature separates signing and verification keys and supports different trust models. The choice between MAC and signature is therefore architectural, not a matter of which API call is available.
 
-## Recall and next depth
+## HMAC construction
 
-Reconstruct the example and identify the condition that would invalidate it.
+For hash block size $B$, normalize key $K$ to one block, then compute
 
-**Pending:** Protocol design, key management and production security analysis remain future topics.
+$$
+\operatorname{HMAC}_K(m)
+=
+H((K\oplus opad)\,\|\,
+  H((K\oplus ipad)\,\|\,m)).
+$$
 
-## Source and navigation
+The inner and outer domains prevent the construction from being equivalent to a naive hash of key concatenated with message.
 
-[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bytes become a durable agreement|Continuous teaching story]] · [[Supplementary/Foundations#M006 - Parts 89-100|Source coverage ledger]] · [[Dependency Map]]
+tools/labs/crypto_primitives_lab.cpp checks HMAC-SHA256 against an RFC 4231 known-answer vector.
+
+## Key management is part of authenticity
+
+A mathematically correct MAC does not help if:
+
+- the key is embedded publicly in the executable;
+- keys are reused across incompatible protocols without domain separation;
+- a compromised key is never rotated;
+- comparison leaks useful timing information in an adversarial environment;
+- replayed old authenticated messages are accepted without nonce/counter/version policy.
+
+Cryptographic primitives are building blocks, not complete protocols.
+
+## Production boundary
+
+The educational implementations in this repository exist to make the bytes/rounds/contracts reconstructable. Production systems should use vetted cryptographic libraries and platform key-storage facilities rather than treating a teaching SHA/HMAC implementation as hardened security code.
+
+Related: [[Checksums CRCs and hashes]], [[HMAC and HKDF]], [[Merkle trees and authenticated structure]], [[Shamir secret sharing]].

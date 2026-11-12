@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTINUOUS = ROOT / "Continuous Notes"
-MATH = CONTINUOUS / "00 - From Vectors to Images - Integrated Mathematics for Visual Computing.md"
+MATH = CONTINUOUS / "Computing Foundations - From Bits to C++ and Systems APIs.md"
 GRAPHICS = CONTINUOUS / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
 ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
@@ -29,6 +29,7 @@ EMBEDDED = {
     ENGINE: (
         "disk_event_pipeline_lab.cpp",
         "persistent_contact_lab.cpp",
+        "two_point_contact_block_lab.cpp",
         "contact_cache_lab.cpp",
         "disk_event_broadphase_differential_lab.cpp",
         "spring_generator_lab.cpp",
@@ -37,6 +38,7 @@ EMBEDDED = {
         "engine_world_contract_lab.cpp",
         "animation_controller_contract_lab.cpp",
         "threaded_asset_publication_lab.cpp",
+        "resource_state_plan_lab.cpp",
     ),
 }
 
@@ -80,6 +82,54 @@ def verify() -> int:
             failed = True
         else:
             print(f"FORMAT {volume_path.name}: {fences} fenced boundaries, {math} display boundaries")
+        if volume_path == MATH:
+            for filename in ("temporary_lifetime_lab.cpp", "se3_exp_log_lab.cpp"):
+                source_path = ROOT / "tools" / "labs" / filename
+                source = load(source_path).rstrip("\n")
+                exact_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
+                exact_tilde = "~~~cpp\n" + source + "\n~~~"
+                count = text.count(exact_backtick) + text.count(exact_tilde)
+                if count != 1:
+                    print(f"FAIL {filename}: exact full source differs or is duplicated")
+                    failed = True
+                else:
+                    print(f"SYNC {filename}: exact source agreement")
+        if volume_path == ENGINE:
+            for filename in (
+                "rollback_netcode_lab.cpp",
+                "audio_voice_mixer_lab.cpp",
+                "ai_decision_models_lab.cpp",
+            ):
+                source_path = ROOT / "tools" / "labs" / filename
+                source = load(source_path).rstrip("\n")
+                exact_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
+                exact_tilde = "~~~cpp\n" + source + "\n~~~"
+                count = text.count(exact_backtick) + text.count(exact_tilde)
+                if count != 1:
+                    print(f"FAIL {filename}: exact full source differs or is duplicated")
+                    failed = True
+                else:
+                    print(f"SYNC {filename}: exact source agreement")
+        python_witnesses = []
+        if volume_path == GRAPHICS:
+            python_witnesses.extend((
+                "xr_planar_vio_ekf_lab.py",
+                "xr_3d_imu_preintegration_lab.py",
+                "nerf_volume_rendering_lab.py",
+            ))
+        if volume_path == MATH:
+            python_witnesses.append("research_inference_lab.py")
+        for filename in python_witnesses:
+            python_path = ROOT / "tools" / "labs" / filename
+            python_source = load(python_path).rstrip("\n")
+            expected_backtick = chr(96) * 3 + "python\n" + python_source + "\n" + chr(96) * 3
+            expected_tilde = "~~~python\n" + python_source + "\n~~~"
+            count = text.count(expected_backtick) + text.count(expected_tilde)
+            if count != 1:
+                print(f"FAIL {filename}: full Python source differs or is duplicated")
+                failed = True
+            else:
+                print(f"SYNC {filename}: exact source agreement")
         for filename in EMBEDDED.get(volume_path, ()):
             source_path = ROOT / "tools" / "labs" / filename
             source = load(source_path).rstrip("\n")

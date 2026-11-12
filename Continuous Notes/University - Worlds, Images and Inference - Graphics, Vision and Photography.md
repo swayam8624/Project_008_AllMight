@@ -4059,6 +4059,15 @@ Implicit surfaces use a different representation: a scalar function $F(x,y,z)$ a
 
 ## Meshes, connectivity, and geometry processing
 
+### Reconstruction checkpoint — topology before surgery
+
+The surrounding chapter explains half-edges, differential operators, remeshing and simplification; the new executable layer makes the first topology invariants inspectable. `tools/labs/mesh_topology_lab.cpp` builds directed and undirected edge records from triangles, pairs opposite half-edge twins, counts boundary and non-manifold edges, detects orientation conflicts, and checks Euler characteristic on both a two-triangle disk and a closed tetrahedron. A third construction deliberately creates an edge shared by three faces and must be rejected as non-manifold.
+
+That is intentionally earlier than a QEM collapse loop. A simplifier must first prove that it knows what connectivity it is about to mutate. [[Half-edge topology invariants]] develops the representation contract, while [[QEM edge collapse and validity]] derives plane quadrics and explains why a low geometric error score cannot override link/manifold/orientation validity.
+
+Rigid animation now has a separate representation witness as well. `tools/labs/dual_quaternion_skinning_lab.cpp` constructs dual quaternions from rotation plus translation, verifies rigid distance preservation, blends pure translations, and tests the antipodal sign case where physically equivalent dual quaternions would otherwise cancel. It does not yet claim arbitrary multi-joint GPU skinning or scale/shear; [[Dual quaternion skinning]] keeps that boundary explicit.
+
+
 Meshes turn continuous shape into explicit data structures whose neighborhoods support edits, queries, and simulation.
 
 ### Mesh topology and data structures
@@ -7320,6 +7329,13 @@ The render includes indirect illumination, so the ratio can be iterated as the s
 ## Reflectance, BRDFs, and shading
 
 ## Ask a surface where incoming energy can go
+
+### Reconstruction checkpoint — test the microfacet equations, not only the picture
+
+`tools/labs/pbr_reference_lab.cpp` numerically integrates the isotropic GGX normal distribution with the projected-area measure and checks that the result stays near one for several roughness values. It checks Schlick Fresnel at normal and grazing incidence and verifies reciprocity/finiteness of the isotropic GGX + Smith reflection model for paired incoming/outgoing directions.
+
+Those are mathematical oracles, not a complete material renderer. White-furnace energy tests, transmission, anisotropic roughness, texture/color-space decoding and glTF scene parity remain separate. [[Microfacet normal distributions]] now develops why the NDF is a projected-area density rather than a drop-in directional PDF, so later sampling/MIS derivations have the right measure from the start.
+
 
 A BRDF is a bidirectional reflectance distribution function. It relates irradiance arriving from one direction to radiance leaving in another. It is not a color by itself. For a diffuse surface with reflectance $\rho$, the Lambert BRDF is $\rho/\pi$. The factor $\pi$ is the integral of the cosine over a hemisphere, so the reflected fraction remains $\rho$ rather than accidentally becoming $\pi\rho$.
 
@@ -15194,6 +15210,13 @@ For a diffuse Lambertian surface with albedo ρ, the BRDF is f_r=ρ/π. The 1/π
 ## The rendering equation and light transport
 
 ## Follow one path without losing its probability
+
+### Reconstruction checkpoint — isolate estimator invariants before tracing a scene
+
+The path-transport chapter now has a small statistical witness independent of geometry. `tools/labs/monte_carlo_transport_lab.cpp` samples a cosine-weighted hemisphere and checks the analytic mean $E[\cos\theta]=2/3$; evaluates a Lambertian surface under a constant environment where $f\cos\theta/p$ cancels to the exact answer; runs a large deterministic Russian-roulette experiment and verifies survival compensation preserves expectation; and checks the balance-heuristic weight partition for two proposals.
+
+This does not yet claim a complete path tracer, next-event estimator or participating-media renderer. It proves the sampling identities that a complete implementation depends on, so a later image disagreement can be separated into sampling math, scene intersection, BSDF evaluation, light PDFs and visibility. Use [[Multiple importance sampling]], [[Russian roulette path termination]] and [[Sampling support and missing strata]] for the compact failure-oriented derivations.
+
 
 A ray query answers where a line segment or half-line meets geometry. A renderer uses many such queries to evaluate light transport. At a diffuse panel hit, the camera path can sample another direction. At the lamp, it can collect emission. At glass, it must also know which two media meet at the boundary. Reflection, transmission and medium absorption are different terms in that transport calculation.
 
@@ -29512,6 +29535,13 @@ The Instant Field-Aligned Meshes presentation shows the method as two coupled fi
 *The conditional selection probabilities match the displayed candidate weights. The picture explains reservoir selection only; correct lighting estimates also require the method normalization and support assumptions.*
 
 ## Rasterization, coverage, and depth
+
+### Reconstruction checkpoint — make the coverage rule executable
+
+`tools/labs/raster_reference_lab.cpp` is the small independent raster oracle for this chapter. It splits a square into two triangles and places samples exactly on their shared diagonal so the top-left tie rule must give each shared sample to exactly one triangle. It then traces barycentric coordinates, demonstrates that affine interpolation differs from the required reciprocal-w reconstruction when vertices have unequal clip w, and checks a hand-written depth ordering.
+
+The program does not replace the full raster chapter: homogeneous clipping, multisample patterns, derivatives, stencil/blend state, conservative rasterization and GPU parity remain separate. Its purpose is to make the most failure-prone mathematical contracts rebuildable and testable before API state obscures them. See [[Perspective-correct interpolation]] and [[Reversed-Z depth contracts]] for the corresponding reconstruction notes.
+
 
 ## Decide which samples a triangle owns
 
@@ -82798,6 +82828,13 @@ The Parts 1101–1700 source routing, selected textbook pages, caption qualifica
 
 ## From captured kernels to illuminated animated surfaces
 
+### Reconstruction checkpoint — project a Gaussian before optimizing the rasterizer
+
+`tools/labs/gaussian_projection_reference_lab.cpp` now serves as the independent CPU oracle for the most important screen-space transformation. It finite-differences the pinhole camera projection and compares the result with the analytic Jacobian; propagates a positive-semidefinite 3D covariance through $J\Sigma J^{\mathsf T}$; checks projected symmetry and nonnegative eigenvalues; verifies the expected quadratic scaling with focal length; exercises low-order spherical-harmonic directionality; and demonstrates that front-to-back alpha composition has order-independent final opacity but generally order-dependent color.
+
+That is deliberately narrower than “Gaussian renderer complete.” Conic inversion, tile duplication/prefix scan, stable tile-depth sorting, higher-order SH, native GPU rasterization, temporal low-pass behavior and current Maveb/Vulkax parity remain their own milestones. [[Gaussian covariance projection and footprint]], [[Gaussian alpha compositing and order]], and [[Captured-world similarity alignment]] carry the derivations and the Sim(3) covariance scale rule into the editing/reconstruction story.
+
+
 The following extension follows data from GPU work generation through explicit API execution, renderer planning, Gaussian images, lighting, and animated surfaces. Definitions and worked examples precede the retained detailed lessons. Source-project observations about Kairo, Maveb and Vulkax are supplied draft claims; they have not been independently certified against a current repository revision. API examples retained below include fragments and pseudocode. Their presence is not a claim that every snippet was compiled or every device path tested.
 # From an anisotropic kernel to an editable captured world
 
@@ -92064,6 +92101,11 @@ We are doing both in one continuous pass, with no curriculum boundary drift.
 
 ### MANY-LIGHT RENDERING AND CLUSTERED LIGHTING
 
+#### Reconstruction checkpoint — make the cluster coordinate measurable
+
+The new `tools/labs/realtime_rendering_reference_lab.cpp` turns the depth-slice equation into an executable contract. It checks near/far clamping, monotonic slice assignment over a logarithmic depth sweep, and the fact that equal depth decades occupy equal widths in log space. This proves the z partition only; full light-volume/cluster overlap, GPU count/scan/fill and overflow handling remain later implementation evidence. See [[Clustered lighting depth slicing]].
+
+
 The central problem of many-light rendering is not the BRDF anymore. We already know how to evaluate one light:
 
 $$
@@ -94289,6 +94331,13 @@ The resolution allocation follows signal structure.
 ---
 
 ### TEMPORAL RENDERING AND POST
+
+#### Reconstruction checkpoint — history is a hypothesis with rejection tests
+
+The same real-time witness declares one motion-vector sign convention and proves that current UV plus motion reaches the previous UV. Its history predicate rejects out-of-bounds reprojection, history-generation changes such as camera cuts, object-identity mismatch, scale-aware depth disagreement and normal disagreement; invalid history contributes no temporal weight. The lab also evaluates a hand-checkable 3×3 PCF visibility fraction and a variance-shadow upper bound that decreases as the receiver moves farther behind the stored mean.
+
+This is not full TAA or full shadow rendering. Jitter generation, neighborhood/variance clipping, reactive masks, cascade selection, SSR/SSAO, volumetrics, particles and GPU execution remain distinct. [[Temporal history validation and reprojection]] and [[Shadow filtering PCF and variance bounds]] turn those boundaries into explicit next tests rather than hidden omissions.
+
 
 TAA is not simply:
 
@@ -100370,4 +100419,20 @@ T=\lambda(\ln2)^{1/k}.
 $$
 
 The numerical lab verifies $F(T)=0.75$ for illustrative parameters. It does not fit participant responses or validate a paper's fitted coefficients.
+
+---
+
+## Depth-repair checkpoint — raster, transport, splats, and mesh operations as reference programs
+
+The rendering narrative now points to executable oracles for several areas that were previously stronger in prose than in reconstruction.
+
+`tools/labs/raster_reference_lab.cpp` owns top-left edge ownership, barycentrics, perspective-correct interpolation and depth ordering. `tools/labs/raster_pipeline_state_lab.cpp` continues the path through homogeneous clipping, explicit four-sample coverage, stencil state and premultiplied source-over blending. Exact API sample locations, all clip planes, conservative rasterization and GPU parity remain higher layers.
+
+`tools/labs/pbr_reference_lab.cpp` verifies isotropic GGX normalization, Fresnel endpoints and reciprocity; `tools/labs/pbr_extended_reference_lab.cpp` adds anisotropic projected normalization, exact dielectric Fresnel, Snell refraction/total internal reflection and a Lambertian white-furnace integral. Rough transmission, multiple-scattering compensation and measured/material-import parity remain deliberately unclaimed.
+
+`tools/labs/path_transport_scene_lab.cpp` connects camera intersection, Lambertian throughput, uniform-hemisphere and cosine-BSDF proposals, balance MIS and convergence to an analytic constant-environment pixel value. It is a scene-level estimator reference, not yet a complete multibounce emissive-geometry/media renderer.
+
+For captured worlds, `tools/labs/gaussian_projection_reference_lab.cpp` and `tools/labs/gaussian_tile_conic_lab.cpp` now span projection Jacobian/covariance through conic inversion, footprint bounds, tile duplication, depth ordering and front-to-back transmittance. Native GPU radix/binning/rasterization, higher-order SH and current Maveb/Vulkax parity remain separate gates.
+
+For mesh processing, `tools/labs/mesh_topology_lab.cpp`, `tools/labs/qem_edge_collapse_lab.cpp` and `tools/labs/dual_quaternion_skinning_lab.cpp` provide topology, QEM candidate/validity and rigid-blend witnesses. Optimal QEM solve/link-condition remeshing, attributes and production import/GPU skinning still require their own proof.
 

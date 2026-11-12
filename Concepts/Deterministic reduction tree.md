@@ -29,3 +29,14 @@ Reconstruct the definition's example and name the assumptions that make it valid
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty|M005 teaching chapter]] · [[Supplementary/Foundations#M005 - Parts 77-88|Part definitions]] · [[Dependency Map]]
+
+## Reconstruction depth
+
+Floating-point addition is not associative, so a parallel reduction can change low bits when thread count, work partition or scheduling changes. A deterministic reduction tree fixes grouping order independently of which worker finishes first.
+
+For eight values, a balanced tree can always compute $((x_0+x_1)+(x_2+x_3)) + ((x_4+x_5)+(x_6+x_7))$. The balanced tree can also reduce error growth compared with some highly unbalanced orders, although it is not equivalent to exact or compensated summation.
+
+Determinism costs constraints: the implementation may need stable chunk boundaries, temporary partials and an ordered merge. On GPUs, subgroup width and dispatch shape can otherwise change the effective tree.
+
+Tests should permute scheduling while preserving logical indices and require identical result bits for the deterministic path. A separate accuracy test should compare against a higher-precision or compensated reference; repeatability and numerical accuracy are related but distinct properties.
+

@@ -24836,6 +24836,13 @@ The book also describes smart pointers, which wrap pointers with ownership or re
 
 ## Let identity survive changes in storage
 
+### Reconstruction checkpoint — prove identity survives relocation
+
+The long ECS chapter below already derives generations, sparse/dense storage, archetypes, migration, queries and scheduling. The missing layer was an independent executable proof that the central identity invariants actually survive storage movement. `tools/labs/ecs_reconstruction_lab.cpp` now supplies that layer: it destroys and reuses an entity index while proving the stale generation stays dead; removes a middle sparse-set element and verifies the swap-moved entity's reverse map; and migrates a Position-only entity into a Position+Velocity archetype while repairing the source-row location of another entity moved by compaction.
+
+The witness deliberately stops before the hardest production claims. Its destination-first teaching migration is not a universal strong exception guarantee for arbitrary component types; structural changes are not performed concurrently; chunk packing and system-DAG conflict resolution are not yet benchmarked against current KairoECS. Those remain separate evidence levels rather than being inferred from the prose. Use [[Sparse-set storage]] and [[Archetype ECS]] as compact reconstruction maps, and use the full chapter below for the surrounding ownership and scheduling story.
+
+
 Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.
 
 ### Entity Identity, Generational Handles, Type Identity, Sparse-Set ECS, Dense Storage, Queries, Invalidation and Deferred Structural Changes
@@ -40828,6 +40835,13 @@ Finally construct a failure trace deliberately. For a frame-slot overwrite: CPU 
 The reliable mental model is compact: a GPU algorithm produces data; a dependency graph makes that data ready for its consumer; a frame-slot lifetime makes its storage safe to reuse; a command buffer carries the ordered work to a Metal queue; a completion signal retires work that has truly finished; a performance model tells you which measurement to improve. Keep these contracts explicit and API details become easier to place.
 
 ## Give one image an explicit path through the machine
+
+### Native-API evidence is a separate layer from the logical renderer
+
+The renderer chapters distinguish resources, commands, dependencies and render-graph hazards, but a CPU dependency graph cannot prove GPU visibility. This branch now adds a native evidence boundary. `tools/native/vulkan_sync_smoke.cpp` creates a Vulkan 1.3 instance/device, enables synchronization2, records a `VkMemoryBarrier2` through `vkCmdPipelineBarrier2`, submits with `vkQueueSubmit2`, waits for completion and treats validation-layer errors as failures when the layer is available. A separate macOS CI job compiles `tools/native/metal_compile_smoke.metal` into AIR and a metallib.
+
+That raises Vulkan to real API execution and Metal to real shader-toolchain compilation, but the distinction remains important. The Vulkan smoke test uses a general memory barrier; it does not yet prove per-image layouts, queue-family ownership, timeline protocols or transient aliasing. The Metal job does not execute a command buffer on Apple GPU hardware, so it cannot prove heap aliasing, memoryless attachments or tracked/untracked hazard behavior. [[Native GPU evidence protocol]], [[Vulkan synchronization2 and resource transitions]], [[Metal heaps memoryless resources and hazards]], and [[Render graph barrier lowering]] define the ladder from logical graph to production backend.
+
 
 Imagine the workshop scene is ready: meshes, materials, a camera and an editor panel waiting for the next image. The rendering mathematics tells us which values to calculate. An explicit graphics API asks a different set of questions: where will those values live, which operations will read them, and what proves the previous user has finished? Vulkan exposes those contracts through resource objects, recorded commands and dependencies. Its handles are names for parts of this agreement, not a sequence of unrelated incantations.
 
@@ -63566,6 +63580,13 @@ The texture system also consolidates acquire and release bookkeeping (**01:02:41
 Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.
 
 ### BVH Construction, SAH, Morton/LBVH, Traversal, Refit, Wide/Quantized BVHs and SIMD Packets
+
+#### Reconstruction checkpoint — compare the hierarchy with an oracle
+
+A spatial index is only useful if pruning never changes the query answer. `tools/labs/spatial_index_lab.cpp` therefore builds a median-split AABB BVH over a deterministic random workload and compares hundreds of overlap queries with brute-force enumeration. The same witness runs A* with explicit relaxation/reinsertion and uses a zero heuristic as a Dijkstra-equivalent correctness mode. This gives the later SAH/LBVH/refit discussion a concrete baseline: a more sophisticated builder is allowed to change build/traversal cost, but not the set of true query results.
+
+The next proof layer is workload quality rather than basic correctness: binned SAH versus median versus LBVH build time, nodes visited, candidate tests, refit degradation and rebuild policy. [[BVH build traversal and workload selection]] and [[A star search and navigation contracts]] keep those decision boundaries explicit.
+
 
 **CHUNK:** M079 + M080
 **COVERAGE:** Original Parts **1301–1336**, with no intentional omissions. The atomic contract moves from “spatial acceleration as pruning work” through primitive bounds, BVH storage, median/SAH construction, Morton/LBVH, traversal, refit/rebuild, wide/quantized BVHs, node layout and SIMD packet traversal. Graphics_Engine_Mastery_Integra…
@@ -99617,6 +99638,15 @@ A shipped jam build gives another kind of test: does the player understand the o
 
 ## Use tools and evidence to keep the design revisable
 
+### Publication reconstruction — make DCC output pass through one engine contract
+
+Editor and DCC tools should not each invent a private interpretation of “publish this asset.” Blender, Maya, Houdini and Nuke expose different host graphs and scripting APIs, but the engine-facing boundary can remain stable: host adapter → owned normalized asset description → validation → deterministic dry-run plan → staging → publication → engine-side verification.
+
+`tools/labs/production_pipeline_contract_lab.cpp` now exercises the host-neutral middle of that chain. It normalizes a deliberately portable relative-path grammar, rejects parent traversal and absolute paths, validates schema/hash fields, rejects duplicate logical IDs and output collisions, sorts a deterministic publication plan, models idempotent re-publication, rejects an implicit destructive replacement, and validates contiguous frame sequences. This makes the publication chapter executable without pretending that CI launched Blender, Maya, Houdini or Nuke.
+
+The host-specific responsibilities are developed in [[DCC adapters and engine publication]], while [[Production manifests and transactional publication]] separates lexical path checks from real symlink/root checks and separates atomic visibility from crash durability. Current production readiness still requires real host adapters, real SHA-256 calculation in the pipeline, platform filesystem tests and engine import verification.
+
+
 A feature that worked once is a starting point. The next task is to find what happens under failure, content changes, heavy scenes, and actual play, and to preserve enough evidence to improve it.
 
 #### Measure allocation churn with a per-frame delta
@@ -112938,3 +112968,18 @@ For an engine and design team, the useful distinction is between the visible ass
 The chapter also calls for a critical vocabulary shared by designers, developers, and readers. That is practical when a review moves from “it feels bad” to an account of what players can do, what rules constrain them, what state changes, what feedback appears, and whose goals the system serves. Naming the interaction makes disagreement concrete: one reviewer may value strategic control, another spectacle, another accessibility. The vocabulary helps expose those values instead of hiding them behind the word “quality.”
 
 The source's claims that this is the “first serious attempt” at an aesthetic theory of interactive systems and that mainstream games are too conservative are its authors' argument about the field at that time, not neutral field surveys. Preserve the useful design lens while attributing those judgments. The pages introduce a program for critical analysis; they do not establish that one aesthetic standard fits every game. (*Rules of Play*, PDF pp. 13–24, source `src-e893f2660cc9ce34f5d1`.)
+
+---
+
+## Depth-repair checkpoint — runtime systems now have executable boundary witnesses
+
+Several engine mechanisms that previously existed mostly as narrative now have independent reference witnesses.
+
+`tools/labs/ecs_scheduler_hierarchy_lab.cpp` adds component read/write conflict classification, deterministic conflict-free system batches, parent-first world-transform evaluation and subtree-only dirty invalidation to the earlier generational/sparse/archetype reconstruction. This still does not claim lock-free structural mutation or current KairoECS parity.
+
+`tools/labs/bvh_sah_refit_lab.cpp` continues the median-BVH query oracle with surface-area split costs, Morton interleaving and parent-bound refit after motion. A true binned SAH builder, LBVH range construction, dynamic-tree rotations and measured production workload selection remain separate gates.
+
+`tools/labs/constraint_friction_island_lab.cpp` extends contact response through unilateral normal impulses, a Coulomb tangent clamp, repeated sequential sweeps in a tiny stack and union-find contact islands. Rotational Jacobians, warm starting, multidirectional friction, large 3D stack stability and production parity are not silently inferred.
+
+The native backend gate is stronger as well. Vulkan now has both the basic synchronization2 smoke and a resource-specific buffer/timeline witness; Metal has a compiled MSL artifact plus a runtime compute witness that executes when the CI host exposes a Metal device. A host without a Metal device reports a skip, not fabricated native proof. Image layouts, queue-family transfers, heap aliasing, capture-derived hazards and live Kairo/Maveb backend parity remain explicit future evidence.
+

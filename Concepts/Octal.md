@@ -31,3 +31,12 @@ Explain octal without the label, work the example above, then state the assumpti
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+
+## Why octal still matters
+
+Octal groups binary digits in threes. Each octal digit therefore represents exactly three bits, so a binary field such as `111 101 010` maps directly to `752₈` without repeated division. Hexadecimal dominates modern memory dumps because bytes align naturally to two hex digits, but octal survives in domains whose historical or semantic fields are three-bit groups.
+
+POSIX permission notation is the canonical example: read/write/execute are bit values $4,2,1$, so permission `0754` means owner `111`, group `101`, other `100`. The leading zero in C/C++ source historically denotes an octal integer literal, which creates a real parsing hazard: `010` is eight, not ten. Modern code should prefer explicit intent and avoid visually ambiguous numeric literals.
+
+A reconstruction test should convert binary↔octal by bit grouping, explain why each digit is 0–7, decode a permission triple, and identify the literal-syntax hazard. Octal is not a different storage representation in memory; it is a textual interpretation of the same integer bits.
+
