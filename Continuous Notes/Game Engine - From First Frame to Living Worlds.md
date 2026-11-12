@@ -10167,6 +10167,147 @@ Near the end, the narrator reports a clean build after correcting pointer types 
 The section above summarizes the full locally generated ASR transcript for this episode and adds the separately labeled Khronos API context. No YouTube caption was retrieved or retried; the audio was not manually checked; no on-screen code, repository build, runtime, or video frame was inspected. Narrated implementation details and reported results remain attributed to the episode.
 
 
+
+## PROFILING IS A SEARCH FOR THE LIMITING RESOURCE, NOT A RITUAL SCREENSHOT
+
+A renderer can be correct and still miss its frame budget. The profiling workflow should therefore move from broad scheduling evidence toward increasingly local evidence.
+
+### Start with the system timeline
+
+A system profiler answers questions such as:
+
+- Which CPU threads were runnable, sleeping or blocked?
+- When were command buffers recorded and submitted?
+- Is the CPU feeding the GPU continuously?
+- Are graphics, compute and copy queues overlapping or serializing?
+- Is a fence/event wait creating an avoidable bubble?
+- Is asset streaming or shader compilation stealing frame time?
+
+Nsight Systems can correlate Vulkan API calls, command-buffer creation, GPU workloads, debug labels and frame durations. This is useful before optimizing a shader because a slow frame may actually be caused by submission gaps, serialization or CPU-side work.
+
+The first profiling question is therefore:
+
+\[
+\boxed{
+\text{where is time absent from useful work?}
+}
+\]
+
+not “which function looks expensive?”
+
+### Then inspect one graphics workload in detail
+
+A graphics debugger/profiler answers a different class of question.
+
+Nsight Graphics supports Vulkan capture/replay, GPU Trace, shader profiling, shader debugging and ray-tracing inspection. A frame capture can expose:
+
+- exact draw/dispatch sequence,
+- bound resources and pipeline state,
+- attachment contents,
+- barriers and dependencies,
+- shader inputs/outputs,
+- acceleration-structure state,
+- event timing.
+
+GPU Trace is useful when the question becomes:
+
+> Which GPU units are saturated, which are idle, and where are queues or workloads failing to overlap?
+
+Shader profiling becomes useful only after evidence says the workload is shader/SM limited. Then inspect stalls, instruction mix and source-correlated hot regions.
+
+This gives a narrowing funnel:
+
+\[
+\boxed{
+\text{system timeline}
+\rightarrow
+\text{frame/workload}
+\rightarrow
+\text{pipeline stage}
+\rightarrow
+\text{shader/source}
+}
+\]
+
+Jumping directly to source-level micro-optimization can waste hours when the real problem is an idle gap or synchronization edge.
+
+### Label everything before you need the labels
+
+A trace containing unnamed command buffers, passes and resources is technically detailed but practically opaque.
+
+Use stable labels such as:
+
+~~~
+Frame 381
+Shadow Cascades
+Visibility Cull
+GBuffer
+RT Reflections
+TAA Resolve
+Bloom Downsample 3
+Upload Mesh 1242
+~~~
+
+and name buffers/textures/pipelines where the API permits.
+
+These labels should correspond to engine concepts. If the render graph calls a pass “RTReflections” while the profiler sees “encoder_17,” the abstraction boundary has failed observability.
+
+### Measure representative workloads
+
+A trace of an empty test scene cannot answer whether the engine scales to its target workload.
+
+Profile:
+
+- typical scene,
+- worst expected scene,
+- content-loading spike,
+- shader-heavy scene,
+- geometry-heavy scene,
+- ray-tracing-heavy scene,
+- CPU submission stress,
+- memory-pressure case.
+
+Performance is a function of workload and hardware:
+
+\[
+T = T(\text{scene},\text{settings},\text{hardware},\text{driver},\text{build}).
+\]
+
+Store enough metadata with captures to reproduce that tuple.
+
+### Use counter evidence to choose the next experiment
+
+If GPU occupancy is low, that does not automatically mean “increase threads.” The cause might be:
+
+- dependency bubbles,
+- tiny dispatches,
+- register pressure,
+- memory latency,
+- divergent control flow,
+- insufficient work,
+- queue serialization.
+
+If a shader is bandwidth limited, reducing ALU may do nothing. If it is latency bound, arithmetic changes may help only if they improve scheduling or occupancy.
+
+Profiling is an iterative scientific loop:
+
+\[
+\boxed{
+\text{observe}
+\rightarrow
+\text{hypothesize}
+\rightarrow
+\text{change one cause}
+\rightarrow
+\text{remeasure}
+}
+\]
+
+Tracy and engine-side timers are excellent for continuous CPU instrumentation. RenderDoc is excellent for portable frame inspection. Nsight Systems is strong for CPU/GPU scheduling correlation on supported NVIDIA systems. Nsight Graphics provides deep Vulkan/D3D graphics and shader analysis on NVIDIA hardware. Xcode GPU tools serve the analogous Apple/Metal workflow.
+
+Do not ask one tool to answer every layer.
+
+
 ## PRACTICAL SOURCE TRIANGULATION: WHAT EACH SERIES IS ACTUALLY GOOD FOR
 
 A large curriculum gets weaker if every source is treated as authoritative about everything.
