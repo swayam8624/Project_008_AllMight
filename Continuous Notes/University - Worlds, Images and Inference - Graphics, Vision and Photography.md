@@ -80533,6 +80533,399 @@ def main():
 if __name__ == "__main__": main()
 ```
 
+
+---
+
+# XR systems closure — from a rendered eye image to a stable spatial computer
+
+The earlier XR material establishes optics, perception, sampling, stereo geometry and foveation. The remaining system-level lesson is that XR is not a stereo renderer with a headset attached. It is a continuously estimated, predicted, calibrated, composited and human-observed closed loop. Every stage carries uncertainty, age, coordinate-frame meaning and a deadline.
+
+## XR is a spectrum of scene ownership
+
+Virtual reality, augmented reality and mixed reality differ mainly in how much of the final view comes from reconstructed physical reality, how much comes from synthetic content, and who owns composition.
+
+In fully synthetic VR the application may render nearly every visible surface, but the runtime still owns tracking interfaces, lens correction, composition and presentation timing. In optical see-through AR, real light reaches the eye directly, so virtual content must be aligned to a world the display cannot overwrite. In video see-through MR, cameras capture the physical world and a compositor combines that view with synthetic imagery. This gives stronger control over occlusion, exposure, color and depth-aware effects, but makes camera latency and reconstruction error part of the visible experience.
+
+OpenXR formalizes an application-runtime boundary. The application supplies swapchain images and composition layers; the runtime owns device-facing details such as tracking integration, composition and final presentation. OpenXR 1.1 also promotes important ideas such as local-floor reference spaces and stereo foveated rendering into core functionality. An engine therefore should not encode one headset's pose conventions deep inside gameplay.
+
+## Coordinate spaces are contracts about meaning and lifetime
+
+A pose is not merely a position and quaternion. It is a transform from one named space to another at a specific time.
+
+A useful XR system distinguishes view/head space, local or stage-like world spaces, floor-aligned spaces, action spaces attached to hands/controllers/gaze/tools, persistent anchors, and application world space. If a runtime reports a transform from B to A at time t, composition must preserve that meaning:
+
+\[
+{}^AT_C(t) = {}^AT_B(t)\,{}^BT_C(t).
+\]
+
+This notation prevents a destructive XR bug: multiplying matrices whose source and destination frames do not match.
+
+Space lifetime matters. A local space can remain useful while global localization is weak. A persistent anchor can relocalize or be refined. A hand joint can disappear when confidence falls. Engine pose records therefore need validity, confidence and timestamp beside the transform rather than silently freezing the last good value.
+
+## The frame loop is organized around predicted display time
+
+Desktop rendering is often summarized as update, render, present. XR requires a more precise timeline because the pose used for rendering should correspond to when photons from the frame reach the eye.
+
+A runtime-oriented frame is conceptually:
+
+1. wait for the runtime to schedule a frame;
+2. receive the predicted display time;
+3. locate views and action spaces for that future time;
+4. simulate or interpolate application state;
+5. render each requested view into runtime-provided swapchain images;
+6. submit composition layers with their spaces and optional depth;
+7. let the compositor perform late correction, lens processing and presentation.
+
+The important quantity is the age of information at display, not CPU frame time alone. If gaze was sampled 12 ms ago, head pose was predicted for a different timestamp and the compositor presents later, visible error depends on the whole chain.
+
+For a scalar or vector state,
+
+\[
+\hat{x}(t+\Delta t)=x(t)+\dot{x}(t)\Delta t.
+\]
+
+For orientation, prediction belongs on the rotation manifold:
+
+\[
+R(t+\Delta t)\approx R(t)\exp([\boldsymbol\omega]_\times\Delta t).
+\]
+
+Prediction helps only when its model error is smaller than the error from stale state. Abrupt motion can make aggressive prediction overshoot.
+
+## Reprojection corrects a finished frame; it does not rerender the world
+
+The compositor may warp an already-rendered frame using a newer head pose. Rotational timewarp corrects orientation but cannot reveal correct disoccluded content and does not fix translational parallax. Positional reprojection can use submitted depth to approximate translation. Motion-aware methods can use motion vectors to extrapolate moving content.
+
+Meta's compositor documentation makes this hierarchy explicit: time warp updates head rotation; positional time warp uses depth for translation; App Spacewarp uses motion vectors for moving content.
+
+Therefore:
+
+- orientation-only warp has no scene depth;
+- depth-aware warp inherits depth error;
+- motion-vector warp inherits velocity error;
+- no warp can reconstruct arbitrary newly visible geometry without additional information.
+
+Black borders, stretched disocclusions, doubled edges and motion-vector disagreement are consequences of asking a warp to synthesize information absent from the source frame.
+
+## Optics make the pre-lens image intentionally distorted
+
+The image written to a headset panel is often not a geometrically correct flat-monitor image. The lens warps rays, so the renderer or compositor applies an approximate inverse warp.
+
+A simple radial model is
+
+\[
+x_d=x(1+k_1r^2+k_2r^4+k_3r^6), \qquad
+y_d=y(1+k_1r^2+k_2r^4+k_3r^6).
+\]
+
+Real devices can use asymmetric, per-channel, mesh-based or proprietary calibration. Chromatic aberration exists because wavelengths refract differently, so one geometric warp need not align every color channel.
+
+Runtime-provided view and projection data must therefore be treated as calibration data. Varjo's OpenXR documentation illustrates this concretely: a headset may expose quad views, eye tracking, foveation, MR, depth submission and multiple composition layers through a combination of core and extensions.
+
+## Display timing is more than FPS
+
+A headset display has refresh period, persistence, scanout behavior, brightness/contrast, pixel structure and optical MTF. If refresh rate is \(f_r\),
+
+\[
+T_r=\frac{1}{f_r}.
+\]
+
+At 90 Hz, one nominal refresh is about 11.11 ms, but motion-to-photon latency depends on tracking, queueing, rendering, compositor work and scanout. Reporting only 90 FPS hides the distribution that matters to head-coupled perception.
+
+## Tracking is state estimation under calibration and observability limits
+
+An IMU provides high-rate angular velocity and specific force. Cameras provide visual constraints at lower rate. Integrating IMU bias causes drift; vision can fail under blur, low texture, repeated texture, extreme exposure or occlusion.
+
+A visual-inertial state may contain
+
+\[
+\mathbf{x}=(R,\mathbf{p},\mathbf{v},\mathbf{b}_g,\mathbf{b}_a),
+\]
+
+representing orientation, position, velocity and sensor biases. VIO propagates with inertial data and corrects with visual evidence. SLAM additionally maintains a map, loop closure and relocalization so old places can constrain drift.
+
+OpenVINS is a useful filter-based VIO reference. ORB-SLAM3 demonstrates visual, visual-inertial and multi-map SLAM with relocalization and map reuse. These are not interchangeable tracking libraries; their state models, assumptions and failure modes differ.
+
+### Calibration errors can masquerade as rendering errors
+
+Calibration includes camera intrinsics, distortion, camera-to-IMU extrinsics, eye-camera geometry, display-to-eye geometry and time offsets between clocks.
+
+If a measurement timestamp is wrong by \(\delta t\), angular motion converts it into spatial error. At angular speed \(\omega\),
+
+\[
+\Delta\theta\approx \omega\delta t.
+\]
+
+At \(200^\circ/s\), a 5 ms timing error is about one degree. Clock synchronization is therefore part of geometry.
+
+## AR and MR require a real-world reconstruction contract
+
+To place a virtual cup behind a real table, the system needs more than camera color. It may need pose, depth, mesh geometry, semantic understanding and confidence.
+
+A practical pipeline can produce passthrough color, depth/disparity, a spatial mesh, planes, semantic labels, anchors, lighting estimates and body/person masks. These representations answer different questions. A depth image is dense but view dependent. A mesh supports occlusion and collision but can lag behind moving objects. A plane is stable and compact but cannot represent arbitrary geometry. Semantics tell what something might be, not necessarily its exact surface.
+
+Composition must state which depth source wins and what happens when estimates are stale.
+
+## Input is a family of tracked signals
+
+Controllers are only one modality. Modern XR can expose hand joints, eye gaze, head pose, voice, body pose, tracked tools and haptic outputs.
+
+Hand tracking includes self-occlusion, joint ambiguity, temporary loss, latency and smoothing. Eye gaze includes calibration drift, blinks, saccades, confidence and privacy. A robust engine represents input with value/pose, timestamp, source, confidence and validity, then maps those samples to semantic actions.
+
+## Spatial audio and haptics complete different loops
+
+For a world-space source direction \(\mathbf d_w\) and world-to-head orientation \(R_{wh}\), head-relative direction is
+
+\[
+\mathbf d_h=R_{wh}^{T}\mathbf d_w.
+\]
+
+Spatial audio should use the same transform graph as vision. A stationary sound that rotates with the head breaks world stability.
+
+Haptics range from simple vibrotactile pulses to force-feedback devices. The engine should separate high-level events such as impact, texture or detent from device-specific actuator waveforms.
+
+## Locomotion and cybersickness connect graphics to physiology
+
+Artificial locomotion can create visual motion without matching vestibular acceleration. This sensory conflict is one contributor to cybersickness, alongside latency, unstable frame rate, optical miscalibration and unexpected acceleration.
+
+Teleportation, snap turning, reduced acceleration, comfort vignettes and stable references trade presence against comfort differently. A research report should record locomotion method, exposure duration, frame-time distribution, participant history and symptom instrument rather than calling a setup simply comfortable.
+
+## Foveation is one instance of perceptual work allocation
+
+XR can vary fragment shading rate, geometry detail, ray count, path depth, denoiser effort, shadow/reflection quality, neural reconstruction quality, streaming bitrate and even update rate.
+
+A useful formulation is
+
+\[
+\min_{\{q_i\}}\sum_i D_i(q_i,\mathbf{s})
+\quad\text{subject to}\quad
+\sum_i C_i(q_i)\le B,
+\]
+
+where \(q_i\) is regional quality, \(D_i\) perceptual loss, \(C_i\) cost and \(\mathbf s\) contains gaze, motion and content.
+
+Gaze is uncertain. If prediction error has covariance \(\Sigma_g\), the foveal safety margin should be related to a desired coverage probability rather than treated as one magic radius. During saccades or invalid tracking, policy can widen or fall back conservatively.
+
+Mechanism is separate from policy. NVIDIA VRS changes fragment shading density; Varjo quad views provide focus and peripheral views; OpenXR exposes runtime-facing foveation paths; other systems may use rasterization-rate maps, density maps or software methods.
+
+## XR engine architecture should expose services, not one monolithic headset object
+
+A maintainable architecture separates:
+
+- runtime adapter: session, swapchain, extensions, frame pacing and layer submission;
+- tracking service: timestamped poses with explicit spaces and confidence;
+- view service: per-view projection, viewport and quality metadata;
+- input service: actions, hands, gaze and tracked objects;
+- composition service: projection/depth/passthrough/overlay layers;
+- spatial mapping: anchors, planes, meshes, depth and relocalization state;
+- perceptual policy: quality allocation independent of API mechanism;
+- instrumentation: sensor age, predicted display time, CPU/GPU timing, frame misses, gaze error and quality metrics.
+
+This makes ILLIXR, a production OpenXR runtime and a synthetic replay harness alternate realizations behind the same contracts.
+
+## ILLIXR is an inspectable research realization, not the definition of XR
+
+ILLIXR is valuable because tracking, perception, rendering, audio and timing can be studied together. That makes it appropriate for experiments where a local change should be traced through the integrated pipeline.
+
+The curriculum must remain broader:
+
+\[
+\text{XR theory}\rightarrow
+\text{runtime contracts}\rightarrow
+\text{ILLIXR as research realization}\rightarrow
+\text{physical-device validation}.
+\]
+
+A replayed trace or software Vulkan path can establish algorithmic correctness and repeatability. It cannot by itself establish physical-headset latency, optical quality, human perception or hardware-VRS speedup.
+
+## XR evaluation needs four evidence layers
+
+Separate:
+
+1. algorithmic correctness: transforms, projections, prediction and reconstruction;
+2. systems performance: CPU/GPU time, queueing, sensor age, bandwidth and power;
+3. image/scene quality: spatial error, temporal error, reprojection artifacts and reconstruction fidelity;
+4. human outcome: task performance, threshold, comfort, presence, stereoacuity or sickness score.
+
+A speedup is meaningful only if quality and task remain acceptable. A perceptual threshold is meaningful only under a specified display, task, eccentricity, motion regime and participant protocol.
+
+---
+
+# Neural rendering beyond NeRF and Gaussian splatting
+
+NeRF and Gaussian splatting are landmarks, but neural rendering is a family of learned components embedded across forward and inverse graphics.
+
+## Ask which part of the graphics pipeline is learned
+
+A learned component can replace or augment geometry, appearance, lighting, visibility/transport, sampling, denoising, image reconstruction, compression, animation, editing or generation.
+
+This classification predicts failure modes. A neural texture can preserve explicit mesh geometry while changing appearance. A radiance field can synthesize views with ambiguous surface location. A denoiser can remove Monte Carlo noise while smearing temporal detail.
+
+## Radiance fields are representations, not necessarily MLPs
+
+NeRF parameterized a radiance field with an MLP. The field itself can be stored differently. Plenoxels optimize sparse voxels without a neural network; TensoRF factorizes tensors; K-Planes uses feature planes; Instant-NGP combines multiresolution hash features with a small MLP.
+
+So separate three questions:
+
+1. what quantity is stored?
+2. how is it parameterized?
+3. how is it queried and integrated into an image?
+
+Calling every view-synthesis field a NeRF erases useful design differences.
+
+## Prefiltering remains necessary
+
+A camera pixel covers a finite footprint. Point queries can alias when representation content changes faster than the pixel footprint. Mip-NeRF-style methods reason about a footprint/distribution rather than only one infinitesimal ray. Gaussian methods need scale-aware filtering too; Mip-Splatting is one response.
+
+A continuous learned representation does not abolish sampling theory.
+
+## View synthesis and surface reconstruction are different objectives
+
+A model can reproduce images while containing geometry unsuitable for collision, editing, manufacturing or relighting.
+
+Neural SDF families such as VolSDF and NeuS bias the representation toward a surface. 2DGS gives primitives geometric normals and adds depth/normal regularization. SuGaR regularizes Gaussians toward a surface for mesh extraction and editing.
+
+Evaluation must match the claim:
+
+- PSNR/SSIM/LPIPS for image reproduction;
+- Chamfer/F-score/normal consistency for geometry;
+- relighting error for material-light separation;
+- temporal consistency for dynamic scenes;
+- frame time and memory for interactive deployment.
+
+## Dynamic scenes create another ambiguity axis
+
+Dynamic neural scenes can add time, deformation fields, trajectories, object structure or time-varying Gaussian parameters. Motion can be explained by moving geometry, changing appearance, lighting variation or camera error. A method should state what can deform and what is held fixed.
+
+## Relighting requires disentangling geometry, material and illumination
+
+Directly predicted view-dependent color can bake illumination into appearance. Inverse rendering instead seeks geometry \(G\), material \(M\) and light \(L\):
+
+\[
+I\approx\mathcal R(G,M,L;\text{camera}).
+\]
+
+This is underconstrained: a dark pixel can mean dark albedo, weak light, occlusion or orientation change. Multiple lighting conditions and physical priors reduce ambiguity.
+
+Recent Gaussian work such as DR-GS extends this direction to deformable, relightable splats. The important lesson is the movement from captured-color memorization toward editable physical factors.
+
+## Neural shading keeps an explicit renderer and learns a local function
+
+Neural shading can retain triangles, rays, visibility and explicit lights while compact networks replace expensive appearance or shading functions.
+
+NVIDIA's SIGGRAPH 2025 neural-shading course frames this as a real-time systems problem: compact networks, hardware-supported matrix operations, C++ deployment, neural texture compression and neural appearance models.
+
+A neural shader still needs coordinate conventions, precision, LOD behavior, deterministic fallback, cache/residency policy and profiling.
+
+## Neural radiance caching learns part of light transport
+
+Neural Radiance Caching learns an approximation to indirect radiance online while a path tracer continues to trace rays and generate training targets:
+
+\[
+\hat L_i(\mathbf x,\omega)\approx L_i(\mathbf x,\omega).
+\]
+
+The key engineering question is whether network query/training overhead is lower than the transport work it replaces, and where learned bias is acceptable.
+
+## Neural texture compression trades bandwidth for arithmetic
+
+Traditional texture compression stores independently decodable blocks. Neural compression stores latent information plus a decoder. This is useful only when reduced bandwidth/storage outweighs decoder cost, latency and quality loss. Random access is essential because shaders request arbitrary texels.
+
+## XR constrains neural rendering more harshly than offline view synthesis
+
+Captured-world XR requires low pose-to-photon latency, metrically stable near-field depth, dynamic-object handling, distortion/rolling-shutter awareness, predictable memory and conservative treatment of uncertainty. Hallucinated geometry can be unsafe if it changes perceived free space.
+
+A strong hybrid architecture often keeps explicit tracking and near-field geometry while using learned appearance/reconstruction where uncertainty is controlled.
+
+## Neural-rendering experiments need systems ablations
+
+Report representation size, reconstruction/training time, steady-state and tail render latency, peak memory, view quality, geometry quality where claimed, temporal stability, sensitivity to pose noise/blur/sparse views/distortion, editing/relighting behavior and hardware/precision.
+
+A method can win PSNR and still be unusable for XR because of memory, latency, geometric instability or flicker.
+
+---
+
+# Python as a 3D graphics and research instrument
+
+Python does not replace the real-time renderer. It makes reconstruction, experimentation, asset processing, analysis and validation inspectable.
+
+## A 3D workflow must preserve representation meaning
+
+A useful pipeline is
+
+\[
+\text{acquire}\rightarrow\text{clean}\rightarrow\text{register}\rightarrow
+\text{represent}\rightarrow\text{analyze}\rightarrow
+\text{reconstruct}\rightarrow\text{validate}\rightarrow\text{export}.
+\]
+
+The 3D Data Science material makes conversions among point clouds, voxels, meshes, rasters and parametric models explicit. They are not lossless bookkeeping. Mesh-to-point sampling loses connectivity; voxelization quantizes space; projection loses depth unless depth is stored; point-to-mesh reconstruction imposes a surface prior.
+
+## Spatial data structures make local geometry affordable
+
+Testing every pair of \(N\) points costs \(O(N^2)\). k-d trees, octrees and BVHs trade preprocessing/memory for faster neighborhood or intersection queries.
+
+These structures support normal estimation, ICP correspondences, radius search, point picking, collision broad phase and reconstruction.
+
+## PCA turns a point neighborhood into local shape evidence
+
+For neighbors \(\mathbf x_i\), compute
+
+\[
+\bar{\mathbf x}=\frac1N\sum_i\mathbf x_i,
+\qquad
+C=\frac1N\sum_i(\mathbf x_i-\bar{\mathbf x})(\mathbf x_i-\bar{\mathbf x})^T.
+\]
+
+With eigenvalues \(\lambda_1\ge\lambda_2\ge\lambda_3\), the eigenvector of \(\lambda_3\) is a local normal candidate. Eigenvalue ratios indicate linear, planar or volumetric structure.
+
+Neighborhood scale is part of the model. Too small follows noise; too large smooths corners and mixes surfaces.
+
+## ICP is correspondence plus alignment repeated
+
+Point-to-point ICP minimizes
+
+\[
+E(R,\mathbf t)=\sum_i\|R\mathbf p_i+\mathbf t-\mathbf q_i\|^2.
+\]
+
+Point-to-plane variants use target normals and often converge faster near a correct initialization. ICP is local optimization; poor initialization, repeated geometry, outliers or partial overlap can produce a wrong local minimum.
+
+## RANSAC separates model evidence from outliers
+
+For a minimal sample size \(s\), inlier probability \(w\) and desired success probability \(p\), the idealized iteration count is
+
+\[
+N\ge \frac{\log(1-p)}{\log(1-w^s)}.
+\]
+
+This explains why RANSAC becomes expensive when outliers dominate. Region growing solves a different problem: expand from seeds through neighboring points satisfying local smoothness criteria. Hybrid pipelines can use RANSAC for a model hypothesis and region growing for connected extent.
+
+## Surface reconstruction chooses a prior
+
+Ball Pivoting depends on a ball radius tied to sample density. Poisson reconstruction builds a global implicit surface from oriented points and often fills holes. Filling holes is useful only when the missing region plausibly represents an unobserved surface.
+
+Research pipelines should preserve raw measurements, reconstruction parameters and validation back to source data.
+
+## Python DCC scripting makes asset generation reproducible
+
+The 3D Modeling and Printing source demonstrates Blender Python automation for procedural geometry and repeated transforms. In an engine pipeline the same principle supports batch normalization, LOD generation, coordinate conversion, collision proxies, camera generation, material remapping and deterministic export.
+
+STL is a useful warning: its triangle facets are simple to parse but do not carry the scene semantics expected by a modern engine. Easy parsing is not the same as adequate interchange.
+
+## pandas belongs after the renderer, not inside the frame loop
+
+Graphics experiments naturally produce tables containing frame index, display prediction, CPU/GPU time, gaze error, quality setting, scene, participant and metrics.
+
+Means are insufficient for latency. Preserve distributions and report percentiles and deadline misses. Joins must preserve experimental keys; accidental many-to-many joins can duplicate samples and create convincing but false averages.
+
+## Jupyter is for exploration; the repository is the experiment
+
+Notebooks are excellent for inspecting a cloud or plotting a histogram, but hidden cell state is poor provenance. Stable logic should move into modules and command-line tools. Record environment versions, seeds, dataset hashes, configs and output manifests so a paper figure can be regenerated from raw results.
+
+
+
+
 ## A return map for the key terms
 
 Use this map to find the developed explanation, then test it with the chapter example. These terms connect this independent course series to the existing vault; they do not advance the numbered curriculum.
