@@ -30,3 +30,12 @@ Reconstruct the example and identify the condition that would invalidate it.
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choosing what information to keep|Continuous teaching story]] · [[Supplementary/Foundations#M006 - Parts 89-100|Source coverage ledger]] · [[Dependency Map]]
+
+## Range is preserved more than precision
+
+Bfloat16 keeps the 8-bit exponent width of binary32 but stores only 7 explicit fraction bits. A normal value therefore has 8 bits of significand precision including the hidden leading one. Compared with IEEE binary16, bfloat16 sacrifices substantial local precision to retain a binary32-like exponent range.
+
+That trade is useful for ML tensors whose dynamic range matters more than fine per-value precision. It is poor for algorithms where small relative changes accumulate over many steps. Common mixed-precision kernels store operands in bfloat16 but accumulate products in binary32.
+
+Conversion is not merely truncation if the implementation promises round-to-nearest behavior. Correct rounding must account for discarded bits and tie policy; NaN payloads and infinities need explicit handling. Tests should inspect bit-level round trips, halfway cases, overflow/underflow, NaNs, and error growth in dot products accumulated in bfloat16 versus binary32.
+
