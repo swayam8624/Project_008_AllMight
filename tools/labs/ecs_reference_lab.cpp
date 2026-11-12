@@ -168,7 +168,7 @@ void deterministic_tests() {
     assert(!positions.contains(b));
     assert(positions.contains(a));
     assert(positions.contains(c));
-    assert(positions.get(c) == Position{5, 6});
+    assert((positions.get(c) == Position{5, 6}));
 
     assert(entities.destroy(b));
     const Entity reused = entities.create();
