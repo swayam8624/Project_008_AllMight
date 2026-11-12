@@ -17819,6 +17819,213 @@ For a self-adjoint problem with a zero Neumann mode, the steady Green function f
 
 The continuous and discrete models therefore have matching but not identical contracts. In the continuum, the boundary condition defines the operator domain and Green identity. In the mesh, it determines constrained rows, boundary flux terms and the nullspace. In the spectrum, it selects modes and eigenvalues. In the time step, it controls stability and decay. Verifying one layer with the appropriate witness makes it possible to localize a bad result instead of compensating for it with an arbitrary damping factor or a smaller timestep.
 
+
+## Linear fields become easier when we choose coordinates that match the operator
+
+The heat-equation discussion above already showed that a differential operator has modes. Riley, Hobson, and Bence develop the larger mathematical pattern: many linear physical problems become tractable by finding functions that play the role of eigenvectors for a differential operator.
+
+A **Sturm–Liouville** problem has the form
+
+\[
+-\frac{d}{dx}
+\left(
+p(x)\frac{dy}{dx}
+\right)
+-q(x)y
+=
+\lambda \rho(x)y
+\]
+
+under boundary conditions that make the differential operator self-adjoint with respect to the weighted inner product
+
+\[
+\langle f,g\rangle_\rho
+=
+\int_a^b
+f(x)^*g(x)\rho(x)\,dx.
+\]
+
+Self-adjointness is the infinite-dimensional analogue of a real symmetric/Hermitian matrix. Under the appropriate regular setting, eigenvalues are real and eigenfunctions associated with distinct eigenvalues are orthogonal under the weight \(\rho\). The conceptual bridge to the matrix spectral theorem is direct: a function can be expanded in operator-adapted modes, and the differential equation acts independently on those modes.
+
+This is why sine/cosine series appear for strings and heat flow, spherical harmonics appear for angular problems on a sphere, and Bessel functions appear in cylindrical/radial separation problems. They are not a bag of unrelated “special functions.” They are eigenfunctions selected by the operator, coordinate geometry, and boundary conditions.
+
+For a one-dimensional fixed-end string, spatial separation leads to
+
+\[
+X''+\lambda X=0,
+\qquad
+X(0)=X(L)=0,
+\]
+
+whose nonzero modes are
+
+\[
+X_n(x)=
+\sin\left(\frac{n\pi x}{L}\right).
+\]
+
+The boundary conditions quantize the allowed spatial frequencies. The temporal equation then determines how each coefficient oscillates. For heat flow the same spatial modes decay exponentially rather than oscillate. The geometry of the domain and boundary conditions choose the basis; the time-evolution law chooses what happens to each coefficient.
+
+This operator viewpoint is useful far beyond textbook PDEs. Mesh Laplacian eigenvectors are discrete manifold modes. Environment maps can use spherical-harmonic bases. Modal deformation represents elastic motion in a reduced eigenbasis. Spectral denoising suppresses selected high-frequency coefficients. The same mathematical decision recurs: **choose a basis in which the governing operator is simple**.
+
+Source basis: Riley, Hobson, and Bence, *Mathematical Methods for Physics and Engineering*, Chapters 17–18 on self-adjoint/Hermitian operators, Sturm–Liouville equations, eigenfunction superposition, Green’s functions, and special-function eigenfamilies.
+
+### Fourier, Laplace, and Green methods answer different versions of “invert this linear system”
+
+A Fourier series expands a periodic function in discrete harmonics. A Fourier transform extends the idea to a continuum of frequencies. With one common convention,
+
+\[
+\hat f(\omega)
+=
+\int_{-\infty}^{\infty}
+f(t)e^{-i\omega t}\,dt,
+\qquad
+f(t)
+=
+\frac{1}{2\pi}
+\int_{-\infty}^{\infty}
+\hat f(\omega)e^{i\omega t}\,d\omega.
+\]
+
+The exact \(2\pi\) factors depend on convention; the transform pair must be declared together.
+
+Differentiation becomes multiplication:
+
+\[
+\widehat{f'}(\omega)=i\omega\hat f(\omega),
+\]
+
+when boundary/regularity assumptions justify the manipulation. Convolution becomes pointwise multiplication:
+
+\[
+\widehat{f*g}
+=
+\hat f\,\hat g.
+\]
+
+This is why blur kernels, linear shift-invariant filters, diffraction formulas, image correlation, and frequency-domain PDE solvers all meet Fourier analysis. The transform is not “making an image into frequencies” in a vague sense; it changes coordinates so translation-invariant linear operators become multiplication.
+
+A Laplace transform,
+
+\[
+F(s)
+=
+\int_0^\infty
+f(t)e^{-st}\,dt,
+\]
+
+uses a complex parameter \(s\) and is especially useful for initial-value systems where exponential growth/decay and transient behavior matter. Derivatives transform into algebraic expressions that include initial conditions. Fourier analysis emphasizes steady frequency content; Laplace analysis includes a real exponential weighting and exposes poles that govern temporal modes. One can often obtain a Fourier transform as a boundary case when the relevant convergence conditions permit.
+
+A **Green function** solves a different but connected problem. For a linear operator \(L\), define \(G(x,\xi)\) by
+
+\[
+L_x G(x,\xi)=\delta(x-\xi)
+\]
+
+with the desired boundary conditions. Then a solution of
+
+\[
+L u=f
+\]
+
+can be represented schematically as
+
+\[
+u(x)
+=
+\int G(x,\xi)f(\xi)\,d\xi
+\]
+
+plus any terms required by nonhomogeneous boundary conditions. \(G\) is an impulse response: it tells how a unit source at \(\xi\) influences \(x\). In translation-invariant domains, \(G(x,\xi)\) may depend only on \(x-\xi\), turning the integral into a convolution and reconnecting directly to Fourier multiplication.
+
+These are therefore three views of the same linear-operator problem. Eigenfunction expansion diagonalizes using problem-specific modes. Fourier/Laplace transforms diagonalize or algebraize operators using standard exponential families. A Green function represents the inverse operator as the response to impulses. The right choice depends on domain, boundary/initial conditions, symmetry, and whether an analytic or numerical representation is desired.
+
+Source basis: Riley, Hobson, and Bence, Chapters 12–17 and 20–21 on Fourier series/transforms, Laplace transforms, ODE/PDE eigenfunction methods, separation of variables, integral transforms, and Green functions.
+
+### PDE names are incomplete until the data and domain are specified
+
+The same differential expression can define very different physical and numerical problems depending on its boundary and initial data. Three canonical linear PDE families recur throughout graphics and simulation:
+
+\[
+\frac{\partial u}{\partial t}
+=
+\kappa\nabla^2u
+\quad\text{(diffusion/heat)},
+\]
+
+\[
+\frac{\partial^2u}{\partial t^2}
+=
+c^2\nabla^2u
+\quad\text{(wave)},
+\]
+
+and
+
+\[
+\nabla^2u=f
+\quad\text{(Poisson; \(f=0\) gives Laplace)}.
+\]
+
+Diffusion is dissipative: high-frequency modes decay rapidly. The wave equation is second order in time and supports propagating oscillations. Poisson/Laplace are typically boundary-value equations without a time evolution at all. Reusing one “PDE solver” abstraction without representing these different contracts can hide which data are mathematically required.
+
+A Dirichlet condition specifies the field value on a boundary. A Neumann condition specifies a normal derivative/flux. Mixed/Robin conditions combine them. Initial-value data specify the state at a starting time; a second-order time equation generally needs enough initial information for both displacement-like and velocity-like state. Existence and uniqueness depend on the equation, domain, and data together. For pure Neumann Poisson problems, for example, a constant gauge can remain unless an additional normalization fixes it, and source compatibility conditions may be required.
+
+**Separation of variables** assumes a product such as
+
+\[
+u(x,t)=X(x)T(t)
+\]
+
+and rearranges a PDE so each coordinate-dependent side must equal a separation constant. This does not magically solve arbitrary PDEs. It succeeds when geometry, coefficients, and boundary conditions permit a separable basis. The resulting spatial equations are often Sturm–Liouville eigenproblems, which explains why the previous section is not separate trivia.
+
+Characteristics provide another coordinate system for PDEs, especially first-order hyperbolic transport: they trace curves along which the PDE reduces to an ODE. In rendering, transport equations literally describe quantities moving along rays; in fluid and wave problems, characteristic directions encode propagation. Numerically, respecting that propagation structure often matters more than treating the PDE as a generic grid stencil.
+
+The practical workflow is therefore: state the PDE, domain, coefficients, initial/boundary data, regularity assumptions, and conserved/dissipated quantities **before** choosing the discretization. A stable discretization of the wrong boundary-value problem is still a wrong solver.
+
+Source basis: Riley, Hobson, and Bence, Chapters 20–21 on the wave, diffusion, Laplace and Poisson equations, characteristics, existence/uniqueness, separation of variables, integral-transform methods, and Green-function boundary problems.
+
+### Complex analysis explains why conformal maps, residues, and asymptotic integrals share one language
+
+A complex-valued function \(f(z)\) of \(z=x+iy\) is differentiable in the complex sense only under stronger conditions than ordinary two-variable differentiability. Writing
+
+\[
+f(z)=u(x,y)+iv(x,y),
+\]
+
+analyticity implies the Cauchy–Riemann relations
+
+\[
+u_x=v_y,\qquad u_y=-v_x
+\]
+
+under the standard regularity assumptions. These equations force angle-preserving local behavior wherever \(f'(z)\neq0\), which is why analytic functions are a natural source of **conformal maps**.
+
+Contour integration then turns analyticity into global identities. Cauchy’s theorem and integral formula constrain integrals of analytic functions; a Laurent series exposes isolated singularities. The coefficient of \((z-z_0)^{-1}\) is the **residue**, and the residue theorem converts certain contour integrals into a sum over enclosed singularities:
+
+\[
+\oint_C f(z)\,dz
+=
+2\pi i
+\sum_{z_k\in\mathrm{inside}(C)}
+\operatorname{Res}(f,z_k).
+\]
+
+For engineering mathematics, the point is not to replace numerical integration with clever contours everywhere. The pole/singularity structure often reveals system behavior directly. Inverse Laplace transforms, linear-system responses, wave propagation, and asymptotic integrals can all be interpreted through complex singularities.
+
+When an integral contains a rapidly varying phase or exponential,
+
+\[
+I(\lambda)
+=
+\int e^{\lambda\phi(z)}a(z)\,dz,
+\qquad |\lambda|\gg1,
+\]
+
+the dominant contribution often comes from neighborhoods of stationary/saddle points where \(\phi'(z)=0\). Stationary-phase and steepest-descent methods deform or analyze the integration path so the important local contributions become explicit. WKB methods apply related asymptotic reasoning to differential equations with a slowly varying scale. These techniques are useful conceptual ancestors of modern importance/saddle-point approximations: large problems can be dominated by small geometrically structured regions.
+
+Source basis: Riley, Hobson, and Bence, Chapters 24–25 on analytic functions, Cauchy–Riemann equations, conformal transformations, contour integration, Laurent series, residues, inverse Laplace transforms, WKB, stationary phase, and steepest descent.
+
 ## ODEs and numerical simulation
 ### Explicit Euler: deriving a simulator from a differential equation
 
@@ -21987,6 +22194,126 @@ This distinction matters when evaluating constrained numerical solvers. Merely r
 web.stanford.edu
 
 
+
+
+### The dual problem is a lower-bound certificate, a geometry, and a sensitivity model
+
+The KKT conditions above are easier to understand once the **Lagrange dual function** is derived rather than treated as a separate optimization trick. Consider
+
+\[
+\begin{aligned}
+\text{minimize}\quad & f_0(x)\\
+\text{subject to}\quad & f_i(x)\le 0,\quad i=1,\ldots,m,\\
+& Ax=b.
+\end{aligned}
+\]
+
+With multipliers \(\lambda_i\ge0\) and \(\nu\), the Lagrangian is
+
+\[
+L(x,\lambda,\nu)
+=
+f_0(x)
++
+\sum_{i=1}^{m}\lambda_i f_i(x)
++
+\nu^T(Ax-b).
+\]
+
+For fixed multipliers, minimize over the primal variable:
+
+\[
+g(\lambda,\nu)
+=
+\inf_x L(x,\lambda,\nu).
+\]
+
+For any primal-feasible \(x\) and dual-feasible \(\lambda\ge0\),
+
+\[
+g(\lambda,\nu)
+\le
+f_0(x).
+\]
+
+This is **weak duality**. Every dual-feasible point supplies a certified lower bound on the primal optimum in a minimization problem. The dual problem chooses the best such certificate:
+
+\[
+\text{maximize}\quad g(\lambda,\nu)
+\quad
+\text{subject to}\quad \lambda\ge0.
+\]
+
+The **duality gap**
+
+\[
+f_0(x)-g(\lambda,\nu)
+\]
+
+therefore measures how far a primal/dual candidate pair is from proving optimality. A small objective gradient alone cannot make that certification.
+
+For many convex problems, a constraint qualification such as **Slater’s condition**—existence of a strictly feasible point for the convex inequalities along with the affine equalities—gives strong duality. Then the primal and dual optima agree and KKT conditions characterize optimality. This is why complementary slackness is more than a memorized condition: at optimum, an inactive inequality has no need for a positive multiplier, while a positive multiplier can be associated with an active boundary.
+
+Dual variables also describe first-order **sensitivity**. If a constraint bound is perturbed, its optimal multiplier often gives the local rate at which the optimal objective changes. In an engine problem, a multiplier attached to a frame-time, memory, energy, or geometric tolerance can therefore be interpreted as a shadow price: how much objective improvement would be available if that resource limit were relaxed slightly. This interpretation is model-local and depends on regularity; it is not a universal causal effect.
+
+Geometry gives another bridge. Boyd and Vandenberghe show that projection/distance problems between convex sets have dual variables that define separating hyperplanes. Collision separation, constrained least squares, and resource allocation thus meet in the same architecture: primal variables construct a feasible candidate; dual variables can certify bounds and reveal active geometric constraints.
+
+A solver API can expose both. Report primal residuals, dual residuals, complementarity, and the duality gap instead of returning only “converged.” Those quantities tell different failure stories: the candidate may violate constraints, fail stationarity, or remain too far from a certificate even when the objective barely moves.
+
+Source basis: Boyd and Vandenberghe, *Convex Optimization*, Chapter 5 on the Lagrange dual function/problem, weak and strong duality, KKT conditions, Slater’s condition, perturbation/sensitivity analysis, and Chapter 8’s projection/separation interpretation.
+
+### Interior-point methods turn inequality constraints into a controlled path of Newton systems
+
+Projected methods react to a boundary after a trial step. **Interior-point methods** take a different route: stay inside the feasible region and solve a sequence of smooth problems that approach the constrained optimum. For inequalities
+
+\[
+f_i(x)\le0,
+\]
+
+the logarithmic barrier
+
+\[
+\phi(x)
+=
+-\sum_{i=1}^{m}\log(-f_i(x))
+\]
+
+is finite only for strictly feasible points and diverges as a boundary is approached. The barrier subproblem is
+
+\[
+\min_x\;
+t f_0(x)+\phi(x)
+\quad
+\text{subject to}\quad Ax=b,
+\]
+
+with \(t>0\). Small \(t\) gives the barrier substantial influence; increasing \(t\) makes the objective dominate while the iterates remain interior.
+
+The minimizers \(x^*(t)\) trace the **central path**. Introduce
+
+\[
+\lambda_i(t)
+=
+-\frac{1}{t f_i(x^*(t))}.
+\]
+
+The barrier optimality conditions can then be written like KKT, except complementary slackness becomes
+
+\[
+-\lambda_i f_i(x)=\frac{1}{t}.
+\]
+
+As \(t\rightarrow\infty\), the right side tends to zero. The central path is therefore a continuous deformation toward the KKT conditions rather than an arbitrary sequence of penalty parameters.
+
+Each centering step is usually solved with Newton’s method subject to equality constraints. Linearization produces a KKT-like block system. This reconnects interior-point optimization to the existing material on symmetric-indefinite factorization and Schur complements. The numerical core is not “take an inverse”; it is repeatedly solve a structured linear system while controlling line search, feasibility, and residual decrease.
+
+A primal-dual interior-point method works directly with modified KKT residuals. The state includes primal variables \(x\), inequality multipliers \(\lambda\), and equality multipliers \(\nu\). A Newton step simultaneously reduces stationarity, feasibility, and complementarity residuals. This is why a production implementation should track a vector of residual criteria rather than one scalar loss.
+
+The barrier also has a useful mechanical interpretation given by Boyd and Vandenberghe. Each constraint creates a repulsive potential that becomes large near its boundary, while the scaled objective pulls toward lower objective values. A central point is where these influences balance. The analogy helps intuition, but the actual convergence claim comes from convex analysis and self-concordance, not from simulated physical dynamics.
+
+Interior-point methods are especially attractive when high-accuracy solutions of structured convex LP, QP, SOCP, GP, or semidefinite problems justify solving dense/sparse Newton systems. They are not automatically the right real-time method for every per-frame problem. Factorization cost, warm-start behavior, sparsity, required accuracy, and deterministic budget all matter. The mathematical benefit is that the algorithm carries explicit feasibility and optimality certificates throughout the solve.
+
+Source basis: Boyd and Vandenberghe, *Convex Optimization*, Chapters 10–11 on equality-constrained Newton methods, logarithmic barriers, the central path, barrier methods, primal-dual interior-point methods, feasibility/phase-I methods, and structured Newton/KKT systems.
 
 ### Least-squares objectives
 
@@ -30362,6 +30689,176 @@ The confidence level $\delta$ controls a probability of error under the specifie
 
 Choosing among rendering strategies can be a pure-exploration task if the final output is a decision, such as which of two sampling distributions has lower estimated variance for a target class. But optimizing the decision criterion is not the same as estimating the final image without bias. A policy can correctly learn which strategy usually reduces a chosen loss while its output estimator remains biased due to incorrect weights, missing support, clamping, or data-dependent termination. The decision's utility and the image estimator's mathematical target must be specified separately.
 
+
+### Adversarial bandits replace a reward distribution with a sequence and force randomization
+
+The UCB discussion above assumes each arm has a stable reward law. *Bandit Algorithms* develops a different model in which the environment is represented by a sequence of reward vectors
+
+\[
+x_1,\ldots,x_n,\qquad x_t\in[0,1]^k,
+\]
+
+without assuming that arm \(i\) is repeatedly sampled from one fixed distribution. At round \(t\), the learner chooses a distribution \(P_t\), samples an action \(A_t\sim P_t\), and sees only \(x_{t,A_t}\). Performance is compared with the best **fixed** action in hindsight:
+
+\[
+R_n
+=
+\max_{i\in[k]}
+\sum_{t=1}^{n}x_{t,i}
+-
+\mathbb E\!\left[
+\sum_{t=1}^{n}x_{t,A_t}
+\right].
+\]
+
+The comparator matters. Low adversarial regret does not mean the learner tracks an arbitrarily changing best arm; that stronger target needs a switching/nonstationary comparator.
+
+Because unplayed rewards are hidden, the learner constructs an importance-weighted estimate. For an observed reward \(X_t=x_{t,A_t}\), a basic estimator for arm \(i\) is
+
+\[
+\hat x_{t,i}
+=
+\frac{\mathbf 1\{A_t=i\}X_t}{P_{t,i}}.
+\]
+
+Conditioned on the past and the current reward vector,
+
+\[
+\mathbb E[\hat x_{t,i}]
+=
+x_{t,i},
+\]
+
+provided \(P_{t,i}>0\). The price is variance: when \(P_{t,i}\) is tiny, \(1/P_{t,i}\) can be huge. **Exploration is therefore also a variance-control mechanism.** A policy that drives an arm’s probability essentially to zero loses reliable information about that arm.
+
+Exp3 combines this estimator with exponential weighting. Cumulative estimated reward \( \hat S_{t-1,i} \) is mapped to a probability roughly proportional to
+
+\[
+\exp(\eta\hat S_{t-1,i}),
+\]
+
+with learning rate \(\eta\). Large \(\eta\) commits aggressively to the apparent leader; small \(\eta\) stays closer to uniform. In the bounded adversarial model, an appropriate choice gives the characteristic regret scale
+
+\[
+R_n=O(\sqrt{nk\log k}).
+\]
+
+The theorem is not “Exp3 works on arbitrary reality.” It assumes a particular feedback protocol, reward range, comparator, and adversary model. If the environment reacts after seeing the learner’s current random action in a prohibited way, or if rewards are unbounded/heavy-tailed without adaptation, the proof no longer applies as stated.
+
+This model is valuable for engine experiments when rewards are not plausibly IID. Choosing among cache policies, sampling strategies, or online heuristics can change future workloads. An adversarial/no-regret view may be more honest than inventing a stationary arm mean. But the reward must still measure the real objective, and importance weighting must preserve support.
+
+Source basis: Lattimore and Szepesvári, *Bandit Algorithms*, Chapters 11–12 on adversarial bandits, importance-weighted estimators, Exp3/Exp3-IX, and regret analysis.
+
+### Context and linear structure let one observation teach us about more than one action
+
+A contextual bandit observes a context \(c_t\) **before** choosing the action. The benchmark is no longer necessarily the best one global arm; it can be a policy mapping contexts to actions. If every possible context is treated as an unrelated problem, data fragment badly. The useful question is what structure lets experience transfer across contexts.
+
+The expert-advice formulation represents candidate policies as experts. At each round, expert \(m\) provides a distribution over actions. Exp4 maintains weights over experts and mixes their recommendations, using bandit feedback and importance weighting to update the experts indirectly. This makes the comparator “best expert in hindsight” rather than “best arm.” The framework is powerful precisely because the internal form of an expert can be opaque to the bandit algorithm.
+
+A **linear bandit** assumes more explicit structure. Each action is represented by a feature vector \(a\in\mathbb R^d\), and expected reward is
+
+\[
+\mathbb E[X_t\mid A_t=a]
+=
+\langle \theta_*,a\rangle
+\]
+
+for an unknown parameter \(\theta_*\). One observation informs every action whose features overlap the measured direction. A regularized least-squares estimate is
+
+\[
+\hat\theta_t
+=
+V_t^{-1}
+\sum_{s=1}^{t}A_sX_s,
+\qquad
+V_t
+=
+\lambda I+\sum_{s=1}^{t}A_sA_s^T.
+\]
+
+The matrix \(V_t\) is not just bookkeeping. It records **which directions of parameter space have been excited by the chosen actions**. Directions with little action energy remain uncertain.
+
+Optimism now operates over a confidence **set** rather than an interval. If \(C_t\) is a high-probability set containing \(\theta_*\), define
+
+\[
+\operatorname{UCB}_t(a)
+=
+\max_{\theta\in C_t}
+\langle\theta,a\rangle,
+\]
+
+and choose the action with largest optimistic value. For ellipsoidal confidence sets this becomes a mean prediction plus a geometry-dependent uncertainty bonus involving \(V_t^{-1}\). An action can be attractive because its predicted reward is high or because it probes a weakly measured direction.
+
+The adaptive design makes confidence analysis subtle. \(A_t\) depends on earlier rewards, so ordinary fixed-design least-squares intervals cannot simply be copied into the bandit loop. The book develops martingale/self-normalized tools precisely because the design matrix is data-dependent. This is a recurring lesson in active vision and adaptive rendering: once the algorithm chooses where to measure based on previous measurements, uncertainty calculations must cover that adaptivity.
+
+A graphics example is choosing among candidate ray bundles whose feature vector describes depth variance, normal variation, material roughness, and prior sample count. A global arm mean throws away that structure. A linear model can share information across similar bundles, while its confidence geometry reveals which feature combinations have not been explored. If reward is nonlinear in those features, however, the linear-bandit guarantee is misspecified rather than merely conservative.
+
+Source basis: *Bandit Algorithms*, Chapters 18–20 on contextual bandits, expert advice/Exp4, stochastic linear bandits, regularized least squares, optimism over confidence sets, and adaptive least-squares confidence bounds.
+
+### Thompson sampling explores by sampling a plausible world, not by adding an optimism bonus
+
+In a Bayesian bandit model, uncertainty is represented by a posterior distribution over the unknown environment. **Thompson sampling** draws a plausible parameter/environment from that posterior and plays an action optimal for the sampled world. In a finite-armed form, an equivalent description is that an arm is selected with probability equal to its posterior probability of being optimal.
+
+For a Bernoulli arm with a Beta prior,
+
+\[
+\mu_i\sim\operatorname{Beta}(\alpha_i,\beta_i),
+\]
+
+success/failure observations update the posterior analytically. A Thompson step samples
+
+\[
+\tilde\mu_i\sim
+\operatorname{Beta}(\alpha_i+s_i,\beta_i+f_i)
+\]
+
+for each arm and selects \(\arg\max_i\tilde\mu_i\). Arms with uncertain posteriors sometimes produce optimistic samples and are explored automatically; concentrated clearly inferior posteriors are sampled less often.
+
+This should not be confused with “Bayesian means prior choice does not matter after enough data.” In a sequential bandit, an overly pessimistic prior can suppress an arm, which prevents collecting the data that would correct that pessimism. The feedback loop couples inference and data acquisition. Lattimore and Szepesvári explicitly warn that Thompson sampling is not a universal silver bullet; optimality depends on the model class and prior/algorithm assumptions.
+
+For linear contextual problems, posterior sampling can be performed over the parameter vector. Under a Gaussian model, one samples a plausible \(\tilde\theta_t\) from a covariance shaped by accumulated design information and chooses the action maximizing \(\langle \tilde\theta_t,a\rangle\). This makes the connection to covariance geometry concrete: exploration happens in directions where the posterior remains wide.
+
+The practical distinction among UCB, Exp3, and Thompson sampling is therefore not cosmetic. UCB constructs an explicit confidence-based optimistic bound under a stochastic model. Exp3 uses randomized exponential weighting and unbiased partial-feedback estimates to compete with a fixed action in an adversarial sequence. Thompson sampling samples a plausible environment from a Bayesian posterior. They can choose similar actions on one trace while carrying different correctness claims.
+
+Source basis: *Bandit Algorithms*, Chapters 34–36 on Bayesian learning, Bayesian bandits, posterior distributions, Thompson sampling, Bayesian regret, and information-theoretic analysis.
+
+### A bandit becomes a sequential-control problem when actions change what is observed next
+
+A standard bandit reward for arm \(i\) does not require an evolving state whose transition depends on the chosen action. Many engine and robotics decisions do. Moving the camera changes the next viewpoint; a navigation action changes the next location; an allocation decision changes cache state; a control impulse changes future dynamics. The appropriate abstraction is a **Markov decision process** rather than a stateless arm table.
+
+An MDP defines states \(S_t\), actions \(A_t\), transition probabilities
+
+\[
+P_a(s,s')
+=
+P(S_{t+1}=s'\mid S_t=s,A_t=a),
+\]
+
+and expected rewards \(r_a(s)\). A policy selects actions from state. The Markov property says the modeled current state contains the information needed for the next-state law; it does not say the real world has no memory. If crucial history is omitted from \(S_t\), the model is not Markov with respect to that state representation.
+
+For a discounted finite MDP, a familiar Bellman optimality equation is
+
+\[
+V^*(s)
+=
+\max_a
+\left[
+r(s,a)
++
+\gamma
+\sum_{s'}
+P(s'|s,a)V^*(s')
+\right].
+\]
+
+Lattimore and Szepesvári’s final chapter develops the average-reward strongly connected setting, where an optimal gain and a relative value/bias function replace the simple discounted form. The exact Bellman equation therefore depends on the objective. The structural idea is the same: optimal value satisfies a fixed-point relation combining immediate reward with the value of successor states.
+
+When \(P\) and \(r\) are unknown, reinforcement learning must explore **state–action dynamics**, not just reward means. Optimism can extend by constructing plausible MDPs or confidence regions for transitions/rewards and acting according to an optimistic model. The difficulty is now that poor exploration can prevent visiting entire state regions. A one-state MDP with action-dependent rewards collapses toward the bandit case; adding state introduces temporal credit and reachability.
+
+This boundary is important for adaptive engine systems. If choosing a denoiser only affects the current frame score, a bandit may suffice. If it changes a temporal history buffer that affects future frames, the reward process has state. If choosing a collision broad-phase rebuild policy changes the structure and cost of future queries, current action and future workload are coupled. Modeling that coupling explicitly is better than forcing history-dependent rewards into a stationary-arm assumption.
+
+Source basis: *Bandit Algorithms*, Chapter 38 on Markov decision processes, optimal policies, the Bellman optimality equation, learning in MDPs, and upper-confidence methods for reinforcement learning.
+
 ### Stationarity and reproducibility are part of the experiment
 
 A stationary bandit assumes that arm $i$ keeps the same reward distribution over time. A renderer that changes scene lighting mid-run, a sensor whose calibration drifts, or a vision stream with seasonal domain shifts violates stationarity. A standard UCB algorithm may then retain old observations that no longer predict current rewards. A useful alternative may be a sliding window, discounting, change detection, or a comparator that is allowed to switch arms. Each addresses a different drift model and adds its own assumptions.
@@ -32627,6 +33124,227 @@ Alternatively, a 20% reduction in error accompanied by wide uncertainty may be p
 Report effect sizes, uncertainty intervals, workload characteristics, and computational cost alongside hypothesis-test results.
 
 For an engineering research claim, those quantities are often more informative than a p-value alone.
+
+
+### Likelihood turns a forward probability model into an inverse estimation rule
+
+Probability starts with a model and asks what observations it can generate. Statistical inference reverses that direction: after seeing observations, we ask which model parameters remain plausible. Wasserman makes this probability/inference inversion the organizing idea of *All of Statistics*. The distinction matters in visual computing because a renderer, camera-noise model, tracking model, or reconstruction system often supplies the **forward law**, while calibration and inverse graphics solve the corresponding **inverse statistical problem**.
+
+Let independent observations \(X_1,\ldots,X_n\) have density or mass function \(f(x;\theta)\). Once the data \(x_1,\ldots,x_n\) are fixed, the same product
+
+\[
+L_n(\theta)=\prod_{i=1}^{n} f(x_i;\theta)
+\]
+
+is viewed as a function of the unknown parameter. It is the **likelihood**, not a probability density over \(\theta\); in general it need not integrate to one with respect to the parameter. The maximum-likelihood estimator is
+
+\[
+\hat\theta_{\mathrm{MLE}}\in\arg\max_{\theta\in\Theta}L_n(\theta).
+\]
+
+Products of many small probabilities underflow, so implementations normally maximize the log-likelihood
+
+\[
+\ell_n(\theta)=\sum_{i=1}^{n}\log f(x_i;\theta).
+\]
+
+The logarithm is monotone, so it preserves the maximizer while converting products into sums. Constants independent of \(\theta\) may be dropped when finding the argmax, but not when the actual normalized likelihood value matters.
+
+The familiar least-squares objective is therefore not a mysterious universal choice. If
+
+\[
+Y_i=g_\theta(X_i)+\varepsilon_i,\qquad
+\varepsilon_i\sim\mathcal N(0,\sigma^2)
+\]
+
+independently with fixed \(\sigma\), then
+
+\[
+-\ell_n(\theta)
+=
+\frac{1}{2\sigma^2}\sum_i
+\left(Y_i-g_\theta(X_i)\right)^2
++\text{constant}.
+\]
+
+Minimizing squared residuals is exactly maximum likelihood under this Gaussian conditional-noise model. Change the noise law and the statistically motivated loss changes. A Laplace error model leads to an absolute-deviation term; a Bernoulli observation model leads to a log-loss/cross-entropy term. This is why an inverse-rendering objective should say which residual distribution it assumes rather than merely calling a loss “standard.”
+
+Maximum likelihood also supplies an information geometry. For a one-parameter regular model the score is
+
+\[
+S_\theta(X)=\frac{\partial}{\partial\theta}\log f(X;\theta),
+\]
+
+and the Fisher information can be written, under the usual regularity assumptions, as
+
+\[
+I(\theta)=
+\mathbb E_\theta[S_\theta(X)^2].
+\]
+
+Large information means the likelihood changes strongly when the parameter moves; weak information means nearby parameters produce hard-to-distinguish observations. For regular fixed-dimensional models, the MLE often has asymptotic variance approximately \(1/(nI(\theta))\) in the scalar case and an inverse Fisher-information matrix in the multivariate case. This is an asymptotic statement, not a guarantee for small data, singular models, boundary parameters, changing model dimension, or poorly identifiable inverse problems. A reconstruction can have a perfectly implemented optimizer and still possess little information about one parameter.
+
+A useful engine/research diagnostic is therefore to keep three objects distinct:
+
+\[
+\boxed{
+\text{forward model}
+\;\longrightarrow\;
+\text{likelihood}
+\;\longrightarrow\;
+\text{estimator}
+}
+\]
+
+The forward model states what data would look like under a parameter. The likelihood scores parameters using the observed data. The estimator is a rule that converts the likelihood and any other assumptions into a reported parameter. Conflating them makes it difficult to tell whether failure came from the physical model, the statistical assumption, or the numerical optimizer.
+
+Source basis: Wasserman, *All of Statistics*, Chapters 6 and 9, especially the model/inference distinction, likelihood and log-likelihood definitions, maximum likelihood, large-sample properties, Fisher information, and assumption checking.
+
+### Bootstrap asks what would happen if we could repeat the data-collection process
+
+An estimate is only one number. Scientific use usually needs to know how much that number would vary under repeated sampling. Sometimes an exact sampling distribution is available; often it is not. The **bootstrap** approximates that repeated-sampling experiment using the observed empirical distribution.
+
+Given observations \(X_1,\ldots,X_n\), the empirical distribution places mass \(1/n\) on each observed value. A nonparametric bootstrap replicate draws
+
+\[
+X_1^*,\ldots,X_n^*
+\]
+
+independently **with replacement** from those observed values and recomputes the statistic,
+
+\[
+\hat\theta^*=T(X_1^*,\ldots,X_n^*).
+\]
+
+Repeating this \(B\) times produces \(\hat\theta_1^*,\ldots,\hat\theta_B^*\). Their sample spread estimates the sampling spread of \(\hat\theta\). For example,
+
+\[
+\widehat{\operatorname{se}}_{\mathrm{boot}}
+=
+\sqrt{
+\frac{1}{B-1}
+\sum_{b=1}^{B}
+(\hat\theta_b^*-\bar{\theta}^*)^2
+}.
+\]
+
+The key conceptual step is that the bootstrap does **not** resample arbitrary numbers around the estimator. It substitutes the empirical distribution for the unknown population and then repeats the same estimator on samples drawn from that surrogate population. A **parametric bootstrap** instead fits a parametric model \(f(x;\hat\theta)\), simulates data from that fitted model, and reruns the estimator. The two procedures make different assumptions.
+
+Bootstrap confidence intervals can be built in several ways. A percentile interval uses empirical quantiles of the bootstrap replicates. A pivotal construction instead approximates the distribution of \(\hat\theta-\theta\) using \(\hat\theta^*-\hat\theta\). More sophisticated corrections exist because bootstrap distributions can be biased or skewed. The important engineering lesson is not to memorize one interval recipe but to identify which sampling distribution the resampling scheme is trying to approximate.
+
+Bootstrap validity is not automatic. Statistics defined by extreme order behavior, nonsmooth boundaries, dependence, or non-IID data can defeat the naive IID bootstrap. Wasserman gives the uniform-endpoint MLE as a concrete warning: the ordinary nonparametric bootstrap can put anomalously large probability on reproducing the observed sample maximum because it can never generate values beyond that maximum. Time series, spatially correlated pixels, rays sharing random paths, and temporally correlated benchmark frames also violate the simple IID resampling story unless blocks or another dependence-aware scheme are used.
+
+The bootstrap therefore complements the uncertainty material already developed here. A standard error formula is a theorem under assumptions. A bootstrap is a computational approximation under assumptions. Neither becomes trustworthy merely because it produces a smooth histogram.
+
+Source basis: Wasserman, *All of Statistics*, Chapters 7–9, especially the empirical distribution, bootstrap variance estimation, bootstrap confidence intervals, the jackknife appendix, parametric bootstrap, and examples where nonparametric bootstrap behavior is poor.
+
+### Decision theory separates an estimator from the consequences of being wrong
+
+Two estimators can have different error patterns without one being universally “better.” Statistical decision theory makes the comparison explicit by specifying a **loss function**
+
+\[
+L(\theta,a),
+\]
+
+where \(\theta\) is the unknown state/parameter and \(a\) is the action or estimate reported by the procedure. The estimator \(\delta(X)\) is then a decision rule. Its frequentist **risk** at parameter value \(\theta\) is the expected loss over data generated from that \(\theta\):
+
+\[
+R(\theta,\delta)
+=
+\mathbb E_\theta[
+L(\theta,\delta(X))
+].
+\]
+
+Under squared-error loss this becomes mean squared error,
+
+\[
+R(\theta,\delta)
+=
+\operatorname{Var}_\theta[\delta(X)]
++
+\operatorname{Bias}_\theta[\delta(X)]^2,
+\]
+
+which connects decision theory directly to the bias–variance decomposition already used in rendering and learning experiments.
+
+Different losses encode genuinely different tasks. Squared error punishes large mistakes strongly. Absolute error changes the optimal point summary from a mean-like answer toward a median-like one. Zero-one loss asks whether a discrete decision is correct. Kullback–Leibler loss compares distributions. A perception system choosing a pose estimate, a renderer choosing a denoised pixel, and a safety test deciding “collision/no collision” can therefore prefer different decision rules even when they observe the same data.
+
+A **Bayes rule** minimizes risk averaged under a prior distribution on \(\theta\). Under squared error, the posterior mean is the Bayes estimator. A **minimax rule** minimizes the maximum risk over \(\theta\):
+
+\[
+\delta_{\mathrm{minimax}}
+\in
+\arg\min_\delta
+\sup_{\theta}R(\theta,\delta).
+\]
+
+These are different design criteria. Bayes risk asks for good average performance under a specified prior; minimax risk asks for protection against the worst parameter in the chosen class. An **admissible** rule is one that is not uniformly dominated by another rule. Admissibility is a weak sanity condition, not proof that a rule is practically good: a bizarre rule can be admissible because no single alternative beats it everywhere.
+
+This framework also prevents over-reading maximum likelihood. In regular fixed-dimensional parametric models, MLEs often enjoy attractive local large-sample risk properties, but Wasserman explicitly notes that this story can fail when the dimension grows with the data. “MLE” is an estimation construction, not a theorem of universal optimality.
+
+For visual-computing evaluation, write the loss before choosing the estimator. If a depth error of \(10\) cm at two metres matters differently from the same absolute error at fifty metres, ordinary squared depth error may not represent the application. If catastrophic outliers matter more than typical error, a mean metric can hide the relevant risk. Decision theory turns this from a metrics argument into a precise statement about which errors the system is being optimized to avoid.
+
+Source basis: Wasserman, *All of Statistics*, Chapter 12 on loss, risk, Bayes rules, minimax rules, admissibility, and the large-sample relationship between maximum likelihood, Bayes, and minimax procedures.
+
+### Generalization is a prediction problem, not a training-fit problem
+
+A model fitted and scored on the same observations is rewarded for remembering the noise in those observations. Wasserman’s regression discussion makes the distinction through **prediction risk** versus **training error**. Adding parameters can always make the training fit no worse, while future prediction can deteriorate because variance increases. This is the operational meaning of overfitting.
+
+Suppose a model class indexed by \(S\) produces a fitted predictor \(\hat r_S\). A future-data risk has the form
+
+\[
+R(S)
+=
+\mathbb E[
+L(Y^*,\hat r_S(X^*))
+],
+\]
+
+where the expectation includes a fresh observation. The training loss instead evaluates the same samples used to fit \(\hat r_S\). It is generally optimistically biased as an estimate of future risk because the fitted values depend on those same responses.
+
+**Cross-validation** breaks that reuse deliberately. In \(K\)-fold cross-validation, partition the sample into \(K\) blocks. For each fold, fit on the other \(K-1\) blocks and score on the held-out block. Aggregate the held-out losses. The procedure estimates performance of the full fitting pipeline, including preprocessing and hyperparameter selection that occurs **inside** each training split. If normalization, feature selection, or parameter tuning sees the held-out data before scoring, the apparent validation estimate leaks information.
+
+The bias–variance tradeoff is therefore not merely a slogan about “simple versus complex.” A larger model can reduce approximation bias while increasing sensitivity to the particular training sample. Regularization, feature selection, early stopping, and model averaging all change that trade. Their value should be judged on new data or through a defensible resampling procedure, not by training fit.
+
+For classification, empirical error alone also says little about what the hypothesis class could memorize. The **VC dimension** asks for the largest finite set that a class can shatter—realize every binary labeling on. Finite VC dimension supports uniform generalization bounds under IID assumptions. The lesson is not that every graphics model needs a VC-dimension calculation. It is that generalization depends jointly on sample size and the richness of the rule family being selected from. A benchmark repeatedly consulted during development can effectively become training data even when no gradient ever touches it.
+
+Source basis: Wasserman, Chapters 13 and 22, especially regression model selection, prediction risk versus training error, cross-validation, the bias–variance tradeoff, classification risk, shattering, and VC dimension.
+
+### A graphical model can encode conditional independence without proving causation
+
+A directed acyclic graph can make a multivariate probability law easier to reason about. If each variable \(X_i\) has parent set \(\pi_i\), a distribution Markov to a DAG factors as
+
+\[
+p(x_1,\ldots,x_k)
+=
+\prod_{i=1}^{k}
+p(x_i\mid \pi_i).
+\]
+
+This factorization says which conditional dependencies the model retains. It can reduce a high-dimensional joint distribution into local conditional models and exposes conditional independences through the graph.
+
+The graph’s arrows are not automatically causal arrows. **d-separation** gives a graphical criterion for conditional independence in a DAG under the relevant Markov/faithfulness assumptions. Chains and forks are blocked when conditioning on the intermediate node; colliders behave oppositely—conditioning on a collider, or on an appropriate descendant, can open a path that was otherwise blocked. This is why “control for every measured variable” is not a safe causal recipe: conditioning on the wrong variable can create association.
+
+Causal questions require another operation: intervention. Wasserman distinguishes passive conditioning
+
+\[
+P(Y\mid X=x)
+\]
+
+from an intervention written in his notation as
+
+\[
+P(Y\mid X:=x).
+\]
+
+To represent setting \(X=x\), arrows entering \(X\) are removed and the corresponding conditional factor for \(X\) is replaced by the intervention. Observation asks what tends to be true among cases where \(X=x\); intervention asks what would happen under a rule that forces \(X\) to \(x\). Those distributions can differ.
+
+A confounder \(Z\) that causes both treatment \(X\) and outcome \(Y\) can make association misleading. Randomization breaks the assignment dependence and can make the causal effect identifiable without modeling the original treatment-selection mechanism. In observational data, adjustment requires the relevant confounders to be measured and the causal assumptions to be defensible. An unobserved confounder cannot be repaired by adding more optimizer iterations.
+
+This distinction is directly relevant to graphics/vision experiments. If a new reconstruction method is evaluated mostly on easier scenes because it fails to initialize on harder ones, conditioning on “successful run” can create selection effects. If exposure settings affect both image noise and which frames enter a dataset, the observed noise/accuracy correlation is not automatically causal. A DAG can make those assumptions visible, but the graph itself must be justified by experimental design or domain knowledge.
+
+Source basis: Wasserman, Chapter 17 on DAG factorization, the Markov condition, d-separation, intervention versus observation, confounding, and the warning that causal graph structure is not generally recoverable from observational data without assumptions.
 
 ### Mean squared error
 
