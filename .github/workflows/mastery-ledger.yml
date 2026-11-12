@@ -1,0 +1,24 @@
+name: Mastery evidence ledger
+
+on:
+  push:
+    paths:
+      - 'mastery/**'
+      - 'tools/check_mastery_ledger.py'
+      - '.github/workflows/mastery-ledger.yml'
+  pull_request:
+    paths:
+      - 'mastery/**'
+      - 'tools/check_mastery_ledger.py'
+      - '.github/workflows/mastery-ledger.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate M001-M180 accounting and evidence tiers
+        run: python3 tools/check_mastery_ledger.py
