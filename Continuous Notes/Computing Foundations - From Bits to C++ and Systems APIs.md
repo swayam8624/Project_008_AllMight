@@ -7641,6 +7641,108 @@ When code intentionally depends on representation, use mechanisms that make the 
 
 Sanitizers matter because many lifetime and UB bugs stay visually silent until optimization level, workload, compiler, driver, allocator, or scheduling changes.
 
+
+<!-- Bible-final-pass: C++ temporary lifetime -->
+#### A temporary is still a real object with a real destruction point
+
+C++ lets us write expressions without naming every intermediate object. That convenience can hide a lifetime. A temporary object is still an object: it comes into existence, occupies valid storage for a period, and is destroyed at a defined point. Any pointer, reference, span, iterator, string view, callback capture, or coroutine reference that observes it is useful only while the required object and storage remain valid.
+
+Start with a safe local case:
+
+~~~cpp
+const Tracked& ref = make_tracked(42);
+~~~
+
+The returned temporary is bound directly to a local const reference. In this specific initialization context, the language extends the temporary's lifetime to the lifetime of that reference. This does not mean that references are owners, and it does not mean that every reference extends a lifetime.
+
+Compare that with a non-owning view:
+
+~~~cpp
+std::string owner = "render_graph";
+std::string_view view = owner;
+~~~
+
+The string owns its character storage. The string view only remembers an address and a length. It does not keep the string alive. If the owner disappears, or an operation invalidates the storage, the view does not become empty or repair itself; it dangles.
+
+This is the engine rule to remember:
+
+> Find the owner, find the destruction or invalidation point, and prove that every observer finishes before that point.
+
+The compiler also performs temporary materialization when an expression value needs an actual object so that a reference or another operation can bind to it. The formal vocabulary matters less than the consequence: compact expression syntax can hide object creation and destruction.
+
+A useful mental model is:
+
+~~~text
+expression
+  -> may create or materialize an object
+  -> that object has a lifetime
+  -> observers are valid only while the required object and storage stay valid
+~~~
+
+Do not generalize the local const-reference example into "references extend lifetimes." Returning a reference to a local object is invalid. A view into a temporary buffer becomes invalid after the buffer dies. Passing an observer through another function does not automatically keep the source alive. A coroutine that suspends while holding a reference needs an explicit owner and cancellation/join policy.
+
+The witness below runs only valid cases. The dangling-reference example is intentionally disabled because undefined behavior is not a correctness test.
+
+
+~~~cpp
+#include <cassert>
+#include <iostream>
+#include <string>
+#include <string_view>
+
+struct Tracked {
+    int value{};
+    inline static int alive = 0;
+
+    explicit Tracked(int v) : value(v) { ++alive; }
+    Tracked(const Tracked& other) : value(other.value) { ++alive; }
+    ~Tracked() { --alive; }
+};
+
+Tracked make_tracked(int v) {
+    return Tracked{v};
+}
+
+int main() {
+    assert(Tracked::alive == 0);
+
+    {
+        // Binding a temporary object to this local const reference extends
+        // that temporary's lifetime to the reference's lifetime.
+        const Tracked& ref = make_tracked(42);
+        assert(ref.value == 42);
+        assert(Tracked::alive == 1);
+    }
+    assert(Tracked::alive == 0);
+
+    {
+        // A string_view is only an observer.  Keeping the owner alive is the
+        // contract that makes this view valid.
+        std::string owner = "render_graph";
+        std::string_view view = owner;
+        assert(view == "render_graph");
+        owner[0] = 'R';
+        assert(view == "Render_graph");
+    }
+
+#if 0
+    // Intentionally NOT executed: returning a reference to a local object
+    // would create a dangling reference.  The source can look plausible while
+    // the lifetime contract is already broken.
+    const Tracked& bad() {
+        Tracked local{7};
+        return local;
+    }
+#endif
+
+    std::cout << "temporary lifetime: 3 suites PASS\n";
+}
+~~~
+
+**Reconstruct without reading:** explain why the reference-bound temporary survives for the local reference, while string_view does not own its characters. Then identify the owner and invalidation point for a span, an iterator, a callback reference capture, and a coroutine reference.
+
+**Evidence boundary:** this witness teaches the main ownership/lifetime distinction. It does not pretend to encode every temporary-lifetime corner case in the C++ standard. When a design depends on a subtle subobject, aggregate, range-for, or storage-reuse rule, verify that exact rule at the call site.
+
 #### Data-oriented design begins with the loop, not with a fashionable container
 
 Recent CppCon data-oriented material is valuable because it reframes DOD as a question about access patterns.
@@ -65804,6 +65906,296 @@ A particularly useful test would compare the analytical pose Jacobian with finit
 <!-- end V09.07 -->
 
 <!-- begin V09.08 -->
+
+<!-- Bible-final-pass: SE3 exp log -->
+#### From a six-number pose update to an actual rigid transform
+
+The previous section derived the tangent space of SO(3) and showed how a small rotational perturbation changes a point. One bridge was still missing: how a six-component local pose update becomes a finite rigid transform, and how a nearby rigid transform becomes a six-component update again.
+
+A rigid transform in SE(3) contains a rotation R in SO(3) and a translation t:
+
+~~~text
+T = [ R  t ]
+    [ 0  1 ]
+~~~
+
+A local six-vector is commonly written as:
+
+~~~text
+xi = [ omega ]
+     [ rho   ]
+~~~
+
+omega is a three-component local rotation vector, measured in radians. rho is the translational part of the tangent coordinate. The important point is that rho is not generally equal to the final translation column t when rotation is nonzero.
+
+The wedge form is:
+
+~~~text
+xi^ = [ [omega]x   rho ]
+      [    0         0 ]
+~~~
+
+The group exponential gives:
+
+~~~text
+Exp(xi^) = [ Exp([omega]x)   V(omega) rho ]
+           [       0               1      ]
+~~~
+
+Let theta = length(omega). Rodrigues' formula is:
+
+~~~text
+R = I
+  + (sin(theta) / theta) [omega]x
+  + ((1 - cos(theta)) / theta^2) [omega]x^2
+~~~
+
+The translation uses the SO(3) left Jacobian:
+
+~~~text
+V = I
+  + ((1 - cos(theta)) / theta^2) [omega]x
+  + ((theta - sin(theta)) / theta^3) [omega]x^2
+~~~
+
+This V matrix is the coupling that is easy to miss. When omega is zero, V becomes I and t equals rho. When rotation is present, the finite translation is V times rho. Rotation and translation are therefore not six unrelated scalar slots.
+
+Near theta = 0, the direct fractions lose numerical accuracy through cancellation. Use the series:
+
+~~~text
+R approximately I + [omega]x + 1/2 [omega]x^2
+V approximately I + 1/2 [omega]x + 1/6 [omega]x^2
+~~~
+
+The logarithm reverses the construction. First recover omega from Log(R), then recover rho from:
+
+~~~text
+rho = inverse(V(omega)) t
+~~~
+
+For ordinary non-singular angles:
+
+~~~text
+inverse(V) = I
+           - 1/2 [omega]x
+           + (1/theta^2 - (1 + cos(theta)) / (2 theta sin(theta))) [omega]x^2
+~~~
+
+Near zero:
+
+~~~text
+inverse(V) approximately I - 1/2 [omega]x + 1/12 [omega]x^2
+~~~
+
+Now the earlier pose Jacobian has a precise update convention. A left update is:
+
+~~~text
+T_new = Exp(delta_xi^) T
+~~~
+
+A right update is:
+
+~~~text
+T_new = T Exp(delta_xi^)
+~~~
+
+These are not interchangeable. They express the increment in different frames, so the Jacobians differ. Any paper or implementation that says only "we optimize six pose parameters" is incomplete until it states component ordering, units, frame convention, and left-versus-right composition.
+
+A simple hand trace makes the coupling visible. Let omega = (0, 0, 0.6) and rho = (1, 0, 0). The resulting translation is V(omega) times rho, not simply (1, 0, 0). The finite motion means "advance while rotating," so the displacement follows the geometry of the rigid-motion group.
+
+This is why bundle adjustment, visual odometry, XR tracking, camera calibration, robotics, and inverse graphics commonly update a pose through a local Lie-algebra increment instead of adding values directly to a 4 by 4 matrix.
+
+The executable witness below implements Rodrigues' formula, an SO(3) logarithm for ordinary non-pi cases, V, inverse(V), and SE(3) round trips.
+
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <numbers>
+
+struct Vec3 {
+    double x{}, y{}, z{};
+};
+
+Vec3 operator+(Vec3 a, Vec3 b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
+Vec3 operator-(Vec3 a, Vec3 b) { return {a.x-b.x, a.y-b.y, a.z-b.z}; }
+Vec3 operator*(double s, Vec3 v) { return {s*v.x, s*v.y, s*v.z}; }
+double dot(Vec3 a, Vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+double norm(Vec3 v) { return std::sqrt(dot(v,v)); }
+
+struct Mat3 {
+    std::array<std::array<double,3>,3> a{};
+};
+
+Mat3 identity() {
+    Mat3 M{};
+    for (int i=0;i<3;++i) M.a[i][i]=1.0;
+    return M;
+}
+Mat3 operator+(Mat3 A, Mat3 B) {
+    Mat3 C{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) C.a[r][c]=A.a[r][c]+B.a[r][c];
+    return C;
+}
+Mat3 operator-(Mat3 A, Mat3 B) {
+    Mat3 C{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) C.a[r][c]=A.a[r][c]-B.a[r][c];
+    return C;
+}
+Mat3 operator*(double s, Mat3 A) {
+    for(auto& row:A.a) for(double& v:row) v*=s;
+    return A;
+}
+Mat3 operator*(Mat3 A, Mat3 B) {
+    Mat3 C{};
+    for(int r=0;r<3;++r)
+        for(int c=0;c<3;++c)
+            for(int k=0;k<3;++k)
+                C.a[r][c]+=A.a[r][k]*B.a[k][c];
+    return C;
+}
+Vec3 operator*(Mat3 A, Vec3 v) {
+    return {
+        A.a[0][0]*v.x + A.a[0][1]*v.y + A.a[0][2]*v.z,
+        A.a[1][0]*v.x + A.a[1][1]*v.y + A.a[1][2]*v.z,
+        A.a[2][0]*v.x + A.a[2][1]*v.y + A.a[2][2]*v.z
+    };
+}
+Mat3 transpose(Mat3 A) {
+    Mat3 T{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) T.a[r][c]=A.a[c][r];
+    return T;
+}
+double trace(Mat3 A) { return A.a[0][0]+A.a[1][1]+A.a[2][2]; }
+
+Mat3 hat(Vec3 w) {
+    Mat3 W{};
+    W.a[0][1] = -w.z;
+    W.a[0][2] =  w.y;
+    W.a[1][0] =  w.z;
+    W.a[1][2] = -w.x;
+    W.a[2][0] = -w.y;
+    W.a[2][1] =  w.x;
+    return W;
+}
+Vec3 vee(Mat3 W) {
+    return {W.a[2][1], W.a[0][2], W.a[1][0]};
+}
+
+Mat3 so3_exp(Vec3 w) {
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) {
+        // sin(theta)/theta = 1 - theta^2/6 + ...
+        // (1-cos(theta))/theta^2 = 1/2 - theta^2/24 + ...
+        return identity() + W + 0.5*W2;
+    }
+    const double A=std::sin(theta)/theta;
+    const double B=(1.0-std::cos(theta))/(theta*theta);
+    return identity() + A*W + B*W2;
+}
+
+Vec3 so3_log(Mat3 R) {
+    const double cos_theta=std::clamp((trace(R)-1.0)*0.5,-1.0,1.0);
+    const double theta=std::acos(cos_theta);
+    if(theta < 1e-8) {
+        return vee(0.5*(R-transpose(R)));
+    }
+    // This compact witness deliberately avoids the numerically delicate theta≈pi case.
+    assert(std::abs(std::numbers::pi-theta) > 1e-5);
+    return vee((theta/(2.0*std::sin(theta)))*(R-transpose(R)));
+}
+
+Mat3 left_jacobian_so3(Vec3 w) {
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) return identity() + 0.5*W + (1.0/6.0)*W2;
+    const double t2=theta*theta, t3=t2*theta;
+    return identity()
+         + ((1.0-std::cos(theta))/t2)*W
+         + ((theta-std::sin(theta))/t3)*W2;
+}
+
+Mat3 left_jacobian_so3_inverse(Vec3 w) {
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) return identity() - 0.5*W + (1.0/12.0)*W2;
+    const double s=std::sin(theta), c=std::cos(theta);
+    const double coeff=1.0/(theta*theta) - (1.0+c)/(2.0*theta*s);
+    return identity() - 0.5*W + coeff*W2;
+}
+
+struct SE3 {
+    Mat3 R;
+    Vec3 t;
+};
+
+SE3 se3_exp(Vec3 omega, Vec3 rho) {
+    const Mat3 R=so3_exp(omega);
+    const Mat3 V=left_jacobian_so3(omega);
+    return {R, V*rho};
+}
+
+std::pair<Vec3,Vec3> se3_log(SE3 T) {
+    const Vec3 omega=so3_log(T.R);
+    const Mat3 Vinv=left_jacobian_so3_inverse(omega);
+    return {omega, Vinv*T.t};
+}
+
+bool near(double a,double b,double eps=1e-9){ return std::abs(a-b)<=eps; }
+bool near(Vec3 a,Vec3 b,double eps=1e-9){
+    return near(a.x,b.x,eps)&&near(a.y,b.y,eps)&&near(a.z,b.z,eps);
+}
+bool near(Mat3 A,Mat3 B,double eps=1e-9){
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c)
+        if(!near(A.a[r][c],B.a[r][c],eps)) return false;
+    return true;
+}
+
+int main() {
+    {
+        const Vec3 w{0.2,-0.3,0.1};
+        const Mat3 R=so3_exp(w);
+        assert(near(transpose(R)*R, identity(), 1e-10));
+        assert(near(so3_log(R), w, 1e-10));
+    }
+    {
+        const Vec3 w{1e-10,-2e-10,3e-10};
+        const Mat3 R=so3_exp(w);
+        assert(near(so3_log(R), w, 1e-9));
+    }
+    {
+        const Vec3 omega{0.25,-0.15,0.05};
+        const Vec3 rho{1.2,-0.4,0.7};
+        const SE3 T=se3_exp(omega,rho);
+        const auto [omega2,rho2]=se3_log(T);
+        assert(near(omega2,omega,1e-10));
+        assert(near(rho2,rho,1e-10));
+    }
+    {
+        // Translation and rotation are coupled by V(omega): t is not generally rho.
+        const Vec3 omega{0.0,0.0,0.6};
+        const Vec3 rho{1.0,0.0,0.0};
+        const SE3 T=se3_exp(omega,rho);
+        assert(!near(T.t,rho,1e-6));
+        const auto [w2,r2]=se3_log(T);
+        assert(near(w2,omega,1e-10));
+        assert(near(r2,rho,1e-10));
+    }
+    std::cout << "se3 exp/log: 4 suites PASS\n";
+}
+~~~
+
+The near-pi logarithm is a real numerical branch, not a footnote. Around a rotation of pi, the simple theta/(2 sin(theta)) expression becomes delicate and the axis needs a branch-aware recovery method. The compact witness deliberately rejects that hard region instead of pretending the simple formula is universally robust.
+
+**Reconstruct without reading:** derive Rodrigues from the exponential series, explain why V appears in translation, write the small-angle series, explain left versus right updates, and implement Exp/Log round trips. A production library must additionally test zero, tiny angles, ordinary angles, near-pi rotations, inverse/composition consistency, and analytical Jacobians against finite differences.
+
 ## Reliable optimization in practice
 ### Building a numerically tested gradient-based optimizer
 
@@ -74382,6 +74774,175 @@ Report effect sizes, uncertainty intervals, workload characteristics, and comput
 
 For an engineering research claim, those quantities are often more informative than a p-value alone.
 
+
+
+<!-- Bible-final-pass: research inference -->
+#### A research claim needs more than a p-value
+
+The paired t-test above is useful, but a paper-quality result needs four separate questions:
+
+1. How large is the effect?
+2. How uncertain is that estimate?
+3. How surprising would the data be under a stated null model?
+4. Was the experiment powerful enough to detect an effect that would actually matter?
+
+For paired measurements, keep the per-unit difference:
+
+~~~text
+D_i = E_A,i - E_B,i
+~~~
+
+The mean difference, mean(D), is the effect in the original engineering unit. Do not throw that away. A standardized paired effect size is often:
+
+~~~text
+d_z = mean(D) / standard_deviation(D)
+~~~
+
+The standardized value helps compare scales, but it does not replace the original unit. "0.8 standard deviations" and "0.18 ms" answer different questions.
+
+When a normal model for paired differences is doubtful, a paired sign-flip/randomization test can be useful if its design assumption is justified. Under the sharp paired null, keep each observed magnitude but flip its sign. Recompute the statistic for all sign choices, or for a large random sample of them, and measure how often the null statistic is at least as extreme as the observed one.
+
+This is not assumption-free. Its validity comes from the sign-exchangeability or randomization argument. If the experimental design does not justify that exchangeability, the resulting p-value does not have the claimed interpretation.
+
+A paired bootstrap answers a different question. Resample the pairs, or equivalently their paired differences, together with replacement. Recompute the statistic on each bootstrap sample. If the design was paired, do not independently resample algorithm A and algorithm B; that destroys the covariance that made pairing useful.
+
+Power asks whether the experiment could detect a meaningful effect. Formally:
+
+~~~text
+power = P(reject H0 | a specified alternative is true)
+~~~
+
+Power depends on the effect regarded as important, the variability, the test, the significance level, the design, and the sample size. A study that has only 20 percent power to detect the improvement it cares about cannot conclude "there is no difference" merely because p is above 0.05.
+
+For complex graphics/XR experiments, simulation-based power analysis is often clearer than forcing a closed-form formula. Specify a realistic effect and noise model, generate many complete synthetic studies, rerun the entire analysis pipeline, and count how often the decision rule detects the effect.
+
+Multiple comparisons add another contract. Holm's step-down procedure controls the familywise error rate without using the single blunt Bonferroni threshold for every hypothesis. False-discovery-rate procedures answer a different question. The correction strategy should be chosen before inspecting which comparison looks favorable whenever the analysis is confirmatory.
+
+A strong result table therefore reports more than a p-value: effect in the original unit, uncertainty interval, experimental unit and sample count, pairing/blocking structure, exact test or interval construction, multiple-comparison policy, and the compute/time/memory cost needed to obtain the effect.
+
+The executable witness below preserves pairing, computes d_z, performs an exact sign-flip test for a small sample, forms a paired bootstrap percentile interval, and applies Holm adjustment.
+
+
+~~~python
+#!/usr/bin/env python3
+"""Small deterministic inference witness for paired graphics/engine experiments.
+
+It intentionally uses only the Python standard library.  The goal is to make
+the research contracts executable: preserve pairing, report an effect size,
+obtain a randomization p-value without a normality assumption, build a paired
+bootstrap interval, and correct a family of p-values with Holm's procedure.
+"""
+
+from __future__ import annotations
+import itertools
+import math
+import random
+import statistics
+
+
+def paired_differences(a: list[float], b: list[float]) -> list[float]:
+    if len(a) != len(b) or not a:
+        raise ValueError("paired samples must be non-empty and have equal length")
+    return [x - y for x, y in zip(a, b)]
+
+
+def cohen_dz(d: list[float]) -> float:
+    if len(d) < 2:
+        raise ValueError("need at least two paired differences")
+    sd = statistics.stdev(d)
+    if sd == 0.0:
+        return math.inf if statistics.mean(d) != 0.0 else 0.0
+    return statistics.mean(d) / sd
+
+
+def exact_sign_flip_pvalue(d: list[float]) -> float:
+    """Two-sided exact randomization test under sign-exchangeability.
+
+    Under the sharp paired null, each difference may have either sign with
+    equal probability.  This is exact only when that sign-flip null is a
+    defensible design/model assumption.
+    """
+    n = len(d)
+    if n > 20:
+        raise ValueError("exact enumeration is intentionally capped at n<=20")
+    observed = abs(statistics.mean(d))
+    extreme = 0
+    total = 0
+    for signs in itertools.product((-1.0, 1.0), repeat=n):
+        candidate = abs(statistics.mean(s * x for s, x in zip(signs, d)))
+        extreme += candidate >= observed - 1e-15
+        total += 1
+    return extreme / total
+
+
+def paired_bootstrap_mean_ci(
+    d: list[float], *, confidence: float = 0.95, draws: int = 20_000, seed: int = 7
+) -> tuple[float, float]:
+    if not (0.0 < confidence < 1.0):
+        raise ValueError("confidence must lie in (0,1)")
+    if draws < 100:
+        raise ValueError("use enough bootstrap draws to estimate quantiles")
+    rng = random.Random(seed)
+    n = len(d)
+    means = []
+    for _ in range(draws):
+        means.append(statistics.mean(d[rng.randrange(n)] for _ in range(n)))
+    means.sort()
+    alpha = 1.0 - confidence
+    lo = means[int((alpha / 2.0) * (draws - 1))]
+    hi = means[int((1.0 - alpha / 2.0) * (draws - 1))]
+    return lo, hi
+
+
+def holm_adjust(pvalues: list[float]) -> list[float]:
+    """Holm step-down adjusted p-values preserving original order."""
+    m = len(pvalues)
+    order = sorted(range(m), key=pvalues.__getitem__)
+    adjusted = [0.0] * m
+    running = 0.0
+    for rank, idx in enumerate(order):
+        candidate = (m - rank) * pvalues[idx]
+        running = max(running, candidate)
+        adjusted[idx] = min(1.0, running)
+    return adjusted
+
+
+def main() -> None:
+    # Same six scenes, same measurement units, same pairing.
+    baseline = [10.4, 8.8, 12.1, 9.7, 11.5, 10.0]
+    proposed = [9.8, 8.3, 11.2, 9.5, 10.7, 9.2]
+    d = paired_differences(baseline, proposed)
+
+    mean_gain = statistics.mean(d)
+    effect = cohen_dz(d)
+    p = exact_sign_flip_pvalue(d)
+    ci = paired_bootstrap_mean_ci(d)
+
+    assert mean_gain > 0.0
+    assert effect > 1.0
+    assert 0.0 <= p <= 1.0
+    assert ci[0] > 0.0
+
+    raw = [0.004, 0.018, 0.041, 0.20]
+    adj = holm_adjust(raw)
+    assert all(a >= p0 for a, p0 in zip(adj, raw))
+    assert adj[0] <= adj[1] <= adj[2] <= adj[3]
+
+    print(f"paired mean improvement: {mean_gain:.6f}")
+    print(f"Cohen dz: {effect:.6f}")
+    print(f"exact sign-flip p-value: {p:.6f}")
+    print(f"95% paired bootstrap percentile CI: [{ci[0]:.6f}, {ci[1]:.6f}]")
+    print("Holm adjusted:", ", ".join(f"{x:.6f}" for x in adj))
+    print("research inference: 5 suites PASS")
+
+
+if __name__ == "__main__":
+    main()
+~~~
+
+**Reconstruct without reading:** given two per-scene error arrays, form paired differences, report their mean in the original unit, compute d_z, explain the null assumption behind a sign-flip test, bootstrap the pairs rather than the two marginal samples, and state the minimum effect your planned sample count was intended to detect.
+
+**Evidence boundary:** real studies must additionally account for dependence between frames, repeated measurements on the same participant or scene, hierarchical datasets, missing data, adaptive stopping, and preregistered versus exploratory analyses. Those facts determine the statistical unit and therefore determine which inferential method is defensible.
 
 ### Likelihood turns a forward probability model into an inverse estimation rule
 
