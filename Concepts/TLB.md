@@ -29,3 +29,14 @@ Distinguish a translation miss, cache miss, and page fault.
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]]
+
+## Reconstruction depth
+
+The Translation Lookaside Buffer caches recent virtual-page to physical-frame translations. Without a cached translation, the processor performs a page-table walk, which itself requires memory accesses and can stall an otherwise cache-friendly loop.
+
+TLB locality differs from data-cache locality. A traversal can touch one cache line from thousands of separate pages: each useful access is small, but the page working set can exceed TLB capacity. Huge pages increase TLB reach because one translation covers more bytes, although they introduce allocation and fragmentation trade-offs.
+
+When profiling, do not diagnose every unexplained memory stall as a TLB problem. Hardware performance counters can separate cache misses, page walks and TLB misses on supported CPUs. Synthetic experiments should vary stride and working-set pages while keeping useful work controlled.
+
+For engine data, dense arrays often help both cache and TLB locality; pointer-heavy structures can hurt both. NUMA adds another axis: a translation may be cached while the physical page still resides on a remote node.
+
