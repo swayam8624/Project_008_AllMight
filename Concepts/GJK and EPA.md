@@ -8,9 +8,9 @@ Read the connected explanation in [[Continuous Notes/University - Worlds, Images
 
 For convex shapes (A) and (B), the Minkowski difference (A-B) contains the origin exactly when they intersect. A support mapping avoids constructing that difference:
 
-[
+$$
 \operatorname{support}_{A-B}(d)=\operatorname{support}_A(d)-\operatorname{support}_B(-d).
-]
+$$
 
 GJK iteratively builds a simplex of support points and asks whether the simplex can contain the origin. A simplex update must return both the retained simplex and a new search direction. Degenerate directions, duplicate support points and insufficient progress need explicit termination policy.
 
