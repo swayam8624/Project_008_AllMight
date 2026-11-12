@@ -8,11 +8,11 @@ Read the connected explanation in [[Continuous Notes/Game Engine - From First Fr
 
 The center of mass is the mass-weighted mean position. Relative to the center of mass, the inertia tensor summarizes resistance to angular acceleration:
 
-[
+$$
 I=\int (\|r\|^2\mathbf{1}-rr^T)\,dm.
-]
+$$
 
-It depends on mass distribution and reference point, not just total mass. Moving an inertia tensor to a parallel axis requires the parallel-axis theorem; rotating it into world coordinates requires (I_W=R I_B R^T).
+It depends on mass distribution and reference point, not just total mass. Moving an inertia tensor to a \parallel axis requires the parallel-axis theorem; rotating it into world coordinates requires (I_W=R I_B R^T).
 
 A solver often stores inverse mass and inverse inertia because impulses map directly to velocity changes. Static/infinite-mass bodies use zero inverse mass/inertia by policy.
 
