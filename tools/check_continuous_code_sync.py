@@ -96,7 +96,11 @@ def verify() -> int:
                     print(f"SYNC {filename}: exact source agreement")
         python_witnesses = []
         if volume_path == GRAPHICS:
-            python_witnesses.append("xr_planar_vio_ekf_lab.py")
+            python_witnesses.extend((
+                "xr_planar_vio_ekf_lab.py",
+                "xr_3d_imu_preintegration_lab.py",
+                "nerf_volume_rendering_lab.py",
+            ))
         if volume_path == MATH:
             python_witnesses.append("research_inference_lab.py")
         for filename in python_witnesses:
