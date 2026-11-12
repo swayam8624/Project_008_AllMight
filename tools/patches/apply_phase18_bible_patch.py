@@ -58,9 +58,9 @@ def main() -> None:
         print("Applied Phase-18 coupled-contact narrative and exact lab source.")
 
     checker = CHECKER.read_text(encoding="utf-8")
-    entry = '        "two_point_contact_block_lab.cpp",\\n'
+    entry = '        "two_point_contact_block_lab.cpp",\n'
     if entry not in checker:
-        anchor = '        "persistent_contact_lab.cpp",\\n'
+        anchor = '        "persistent_contact_lab.cpp",\n'
         if checker.count(anchor) != 1:
             raise RuntimeError("could not find unique persistent-contact checker anchor")
         checker = checker.replace(anchor, anchor + entry)
