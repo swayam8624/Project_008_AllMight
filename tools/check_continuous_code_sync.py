@@ -94,6 +94,22 @@ def verify() -> int:
                     failed = True
                 else:
                     print(f"SYNC {filename}: exact source agreement")
+        if volume_path == ENGINE:
+            for filename in (
+                "rollback_netcode_lab.cpp",
+                "audio_voice_mixer_lab.cpp",
+                "ai_decision_models_lab.cpp",
+            ):
+                source_path = ROOT / "tools" / "labs" / filename
+                source = load(source_path).rstrip("\n")
+                exact_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
+                exact_tilde = "~~~cpp\n" + source + "\n~~~"
+                count = text.count(exact_backtick) + text.count(exact_tilde)
+                if count != 1:
+                    print(f"FAIL {filename}: exact full source differs or is duplicated")
+                    failed = True
+                else:
+                    print(f"SYNC {filename}: exact source agreement")
         python_witnesses = []
         if volume_path == GRAPHICS:
             python_witnesses.extend((
