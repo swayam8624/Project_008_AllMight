@@ -5,6 +5,8 @@ on:
     paths:
       - 'mastery/**'
       - 'tools/check_mastery_ledger.py'
+      - 'tools/check_concept_depth.py'
+      - 'tools/check_concept_depth.py'
       - '.github/workflows/mastery-ledger.yml'
   pull_request:
     paths:
@@ -22,3 +24,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate M001-M180 accounting and evidence tiers
         run: python3 tools/check_mastery_ledger.py
+      - name: Guard concept notes against shallow-card regression
+        run: python3 tools/check_concept_depth.py
