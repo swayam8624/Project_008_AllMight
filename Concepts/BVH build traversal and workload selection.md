@@ -52,3 +52,10 @@ tools/labs/spatial_index_lab.cpp builds a median-split BVH over deterministic ra
 The witness does not claim SAH quality, LBVH construction, dynamic updates, SIMD traversal, ray packet behavior, navmesh construction, or KairoSpatial parity. Those remain separate evidence layers.
 
 Related: [[AABB overlap and containment]], [[Prefix scan and stream compaction]], [[Field reordering and AoS versus SoA]].
+
+## SAH, Morton and refit witness
+
+`tools/labs/bvh_sah_refit_lab.cpp` advances the construction side beyond the earlier median-split query oracle. It computes prefix/suffix bounds for candidate partitions and minimizes the surface-area-weighted primitive cost, verifies that two separated three-object clusters split between the clusters, tests 3D Morton bit interleaving on a controlled monotone coordinate sweep, and refits a parent bound after one child moves.
+
+This is enough to make the equations executable, but not enough to call the builder a production binned SAH or LBVH. A complete next layer needs fixed-bin accumulation, stable primitive partitioning, LBVH range/split construction from Morton prefixes, dynamic-tree rotations or reinsertion, and measured build-versus-query trade-offs on real workloads.
+
