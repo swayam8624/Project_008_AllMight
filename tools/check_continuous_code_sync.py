@@ -15,13 +15,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTINUOUS = ROOT / "Continuous Notes"
-MATH = CONTINUOUS / "00 - From Vectors to Images - Integrated Mathematics for Visual Computing.md"
+FOUNDATIONS = CONTINUOUS / "Computing Foundations - From Bits to C++ and Systems APIs.md"
 GRAPHICS = CONTINUOUS / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
 ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
 # Every entry is a complete standalone witness embedded in the reader-facing book.
 EMBEDDED = {
-    MATH: ("math_contact_toi_lab.cpp",),
+    FOUNDATIONS: ("basis_measurement_lab.cpp", "math_contact_toi_lab.cpp",),
     GRAPHICS: (
         "disk_ccd_lab.cpp",
         "swept_broadphase_lab.cpp",
@@ -71,7 +71,7 @@ def embedded_cpp(volume: str, source: str, path: Path) -> str:
 
 def verify() -> int:
     failed = False
-    for volume_path in (MATH, GRAPHICS, ENGINE):
+    for volume_path in (FOUNDATIONS, GRAPHICS, ENGINE):
         text = load(volume_path)
         fences = sum(line.startswith("```") for line in text.splitlines())
         math = sum(line.strip() == "$$" for line in text.splitlines())
