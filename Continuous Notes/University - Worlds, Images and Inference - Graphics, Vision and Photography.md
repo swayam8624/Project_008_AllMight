@@ -80646,6 +80646,237 @@ representing orientation, position, velocity and sensor biases. VIO propagates w
 
 OpenVINS is a useful filter-based VIO reference. ORB-SLAM3 demonstrates visual, visual-inertial and multi-map SLAM with relocalization and map reuse. These are not interchangeable tracking libraries; their state models, assumptions and failure modes differ.
 
+
+### The estimator behind the predicted pose — deriving and testing visual-inertial tracking
+
+The preceding description names a state containing orientation, position, velocity and inertial biases. Those are not meaningful state variables until we specify how a sensor measurement changes them, how uncertainty evolves, and what a visual observation can actually correct. The next two problems are therefore different: *propagation* asks how the current estimate moves during a short interval when no new image arrives; *correction* asks how much to trust a camera observation that disagrees with that estimate. A headset complicates both by asking for a pose in a specific coordinate space **at the future display time**, not merely a pose when the last camera frame was acquired.
+
+#### State and frames: the meaning of a pose precedes its equation
+
+Use \(T^A_B\) to denote a rigid transform converting \(B\)-frame coordinates into \(A\)-frame coordinates. With column vectors, \(\mathbf p_A=R^A_B\mathbf p_B+\mathbf t^A_B\); composition is \(T^A_C=T^A_BT^B_C\), and a rigid inverse maps with \(R^T\) and \(-R^T\mathbf t\). This convention must be stated because a camera-to-IMU calibration is not a world-to-camera pose, and a covariance in one frame is not silently interchangeable with a covariance in another. Intrinsics describe how camera-frame rays become image measurements; extrinsics describe the rigid relationship between two sensor frames. The estimated *orientation* is not a three-vector in ordinary Euclidean space: it lies on the rotation group SO(3).
+
+Take a 3-D nominal state \(\hat{\mathbf x}=(\mathbf p,\mathbf v,R,\mathbf b_g,\mathbf b_a)\), with position in world metres, velocity in world metres per second, \(R=R^W_B\) rotating body to world, gyro bias in rad/s and accelerometer bias in m/s². A full error-state filter can use fifteen small-error coordinates \((\delta\mathbf p,\delta\mathbf v,\delta\boldsymbol\theta,\delta\mathbf b_g,\delta\mathbf b_a)\). It must choose whether rotation errors multiply the nominal rotation on the left or right; that choice changes the Jacobians and covariance reset. A filter whose equations mix these conventions will often appear to work for small motions before failing dramatically under rotation.
+
+#### An accelerometer does not simply report world acceleration
+
+An IMU reports angular rate \(\boldsymbol\omega_m=\boldsymbol\omega+\mathbf b_g+\mathbf n_g\) and *specific force* \(\mathbf f_m=R^T(\dot{\mathbf v}-\mathbf g)+\mathbf b_a+\mathbf n_a\). Gravity \(\mathbf g\) is expressed in world coordinates; \(\mathbf n_g,\mathbf n_a\) represent sensor noise. Consequently the nominal continuous dynamics are
+
+\[
+\dot R=R[\boldsymbol\omega_m-\mathbf b_g]_\times,\quad
+\dot{\mathbf v}=\mathbf g+R(\mathbf f_m-\mathbf b_a),\quad
+\dot{\mathbf p}=\mathbf v.
+\]
+
+The skew matrix \([\mathbf a]_\times\) satisfies \([\mathbf a]_\times\mathbf b=\mathbf a\times\mathbf b\). Under constant sensor readings over a short interval \(\Delta t\), an explicit approximation is
+
+\[
+R_{k+1}=R_k\operatorname{Exp}([\boldsymbol\omega_m-\mathbf b_g]_\times\Delta t),\quad
+\mathbf a_k=\mathbf g+R_k(\mathbf f_m-\mathbf b_a),\quad
+\mathbf v_{k+1}=\mathbf v_k+\Delta t\,\mathbf a_k,\quad
+\mathbf p_{k+1}=\mathbf p_k+\Delta t\,\mathbf v_k+\tfrac12\Delta t^2\mathbf a_k.
+\]
+
+These are not exact when rotation, acceleration or bias changes substantially inside the interval. More advanced preintegration integrates high-rate samples and carries bias sensitivities. Storing an orientation quaternion rather than a matrix does not eliminate the need to integrate on the rotation manifold and renormalize appropriately.
+
+#### How uncertain state turns into an uncertainty prediction
+
+The propagation covariance belongs to a *local error model*. Linearize the dynamics: \(\delta\mathbf x_{k+1}\approx F_k\delta\mathbf x_k+G_k\mathbf n_k\), so \(P_{k+1}=F_kP_kF_k^T+G_kQ_kG_k^T\). The full filter's \(P\) and \(F\) are \(15\times15\) if we use fifteen error coordinates, not arbitrary matrices decorated with statistical language. Their entries have compound units—position–position is m²; position–yaw is m·rad, and so forth. For right-multiplicative orientation errors \(R_{\rm true}\approx R\operatorname{Exp}([\delta\boldsymbol\theta]_\times)\), the velocity perturbation includes \(-R[\mathbf f_m-\mathbf b_a]_\times\delta\boldsymbol\theta\) and \(-R\delta\mathbf b_a\). That is the geometric reason uncertain orientation affects uncertain future position. Bias random-walk noise and per-sample sensor noise must use a discretization consistent with the physical sampling time; a density per \(\sqrt{\rm Hz}\) is not automatically a per-sample standard deviation.
+
+#### Vision produces a residual and a Jacobian, not ground truth
+
+For a known world landmark \(\mathbf P_W\), the calibrated camera predicts \( \mathbf P_C=R^C_W(\mathbf P_W-\mathbf p_C)\) and pinhole pixels \(u=f_x X_C/Z_C+c_x\), \(v=f_yY_C/Z_C+c_y\) before applying a specified lens-distortion model. The camera residual \(\mathbf r=\mathbf z-h(\hat{\mathbf x})\) depends on what feature was detected, associated and timestamped. Differentiating \(h\) through frame inversion, extrinsics and perspective projection gives its state Jacobian \(H\). A landmark behind the camera, a depth near zero, a false correspondence, rolling shutter and an incorrect calibration are distinct failure modes; not all can be solved by raising the Kalman gain.
+
+With measurement noise covariance \(R_z\), use \(S=HPH^T+R_z\), \(K=PH^TS^{-1}\), then apply the correction in the declared error-state convention. The Joseph covariance update \(P^+=(I-KH)P(I-KH)^T+KR_zK^T\) is numerically safer than subtracting two nearly equal covariance matrices. A normalized innovation squared \(\mathbf r^TS^{-1}\mathbf r\) provides a principled, dimension-dependent outlier test when residual statistics are adequately modeled. It does **not** prove the assumed Gaussian model is correct, and a consistent calibration bias can evade per-observation outlier checks.
+
+#### A fully reconstructable first model, with its limitations exposed
+
+A complete 3-D VIO estimator requires several independent algorithms, so the first executable witness below uses a simpler but physically coherent **horizontal-plane** system. It deliberately assumes vertical gravity was already removed; it does not claim to model a raw 3-D accelerometer. Its eight-state vector is
+
+\[
+\mathbf x=(p_x,p_y,v_x,v_y,\theta,b_g,b_{ax},b_{ay})^T.
+\]
+
+Position is measured in world metres, velocity in world m/s, yaw \(\theta\) in radians, \(b_g\) in rad/s, and the horizontal acceleration biases in body m/s². At each 20 ms step, a gyroscope and body-frame horizontal acceleration reading propagate the state; every sixth step, the synthetic camera observes angular bearings to three **surveyed fixed world landmarks**. Because the landmark locations and correspondences are supplied, this laboratory is **neither visual mapping nor unknown-landmark SLAM**.
+
+For a planar body-to-world rotation \(R(\theta)=\begin{bmatrix}\cos\theta&-\sin\theta\\\sin\theta&\cos\theta\end{bmatrix}\), put \(\mathbf a_W=R(\theta)(\mathbf a_m-\mathbf b_a)\). The state update uses \(\mathbf p'=\mathbf p+\mathbf v\Delta t+\tfrac12\Delta t^2\mathbf a_W\), \(\mathbf v'=\mathbf v+\Delta t\mathbf a_W\), and \(\theta'=\operatorname{wrap}(\theta+\Delta t(\omega_m-b_g))\). This is zero-order-hold integration. Since \(dR/d\theta=RJ\) where \(J=\begin{bmatrix}0&-1\\1&0\end{bmatrix}\), the acceleration's derivative with respect to heading is \(RJ(\mathbf a_m-\mathbf b_a)\), and its derivative with respect to horizontal accelerometer bias is \(-R\). The code carries both dependencies through the position and velocity rows of \(F\); omitting them is a common reason an otherwise functioning filter reports false confidence.
+
+Given one landmark \(L=(L_x,L_y)\), the predicted bearing is \(h(\mathbf x)=\operatorname{wrap}(\operatorname{atan2}(L_y-p_y,L_x-p_x)-\theta)\). Defining \(d_x=L_x-p_x\), \(d_y=L_y-p_y\), \(r^2=d_x^2+d_y^2\), its nonzero derivatives are
+
+\[
+H_{p_x}=d_y/r^2,\qquad H_{p_y}=-d_x/r^2,\qquad H_\theta=-1.
+\]
+
+The sign matters: the camera turning left makes a fixed landmark appear to move right in the camera-relative bearing. Angles must use shortest-arc subtraction around \(\pm\pi\), and the bearing is undefined when the camera coincides with its point landmark. Those cases are represented in the implementation, not left as comments.
+
+**Hand trace.** For a camera at \((0,0)\), yaw \(0.1\) radians, and the landmark \((6,4)\) metres, the predicted bearing is \(\operatorname{atan2}(4,6)-0.1\approx0.4880\) radians. The squared range is \(52\) m², so the three nonzero Jacobian entries are \(4/52\approx0.076923\), \(-6/52\approx-0.115385\), and \(-1\). A measured residual of \(+0.02\) radians does **not** mean position or yaw must change by exactly \(+0.02\): the correction is \(K\cdot0.02\), distributed according to the position–orientation covariance and observation uncertainty. Its heading component tends negative in this example because \(H_\theta=-1\).
+
+The source code is mirrored as \`tools/labs/xr_planar_vio_ekf_lab.py\` for execution, but is taught here to preserve the self-contained first-use explanation. It includes all ordinary and exceptional branches for its scope, tests every analytic propagation/measurement Jacobian column against finite differences, injects one false correspondence, rejects it with a one-dimensional 99% normalized-innovation-squared threshold, uses the Joseph covariance update, and checks covariance eigenvalues. The random seed is fixed. The local synthetic run accepted 119 observations, rejected one, and ended at approximately 0.0484 m planar positional error and 0.0033 rad yaw error; these are a regression *for this synthetic problem*, not experimental headset or real-camera results.
+
+\`\`\`python
+#!/usr/bin/env python3
+"""Deterministic planar visual-inertial EKF, not full 3-D VIO or OpenXR.
+World is horizontal; gravity removed from horizontal acceleration channels.
+Three surveyed landmarks give camera bearings. Requires NumPy.
+"""
+import math
+import numpy as np
+
+DT = 0.02
+LANDMARKS = (np.array([6.0, 4.0]), np.array([-3.0, 5.0]), np.array([4.0, -6.0]))
+N = 240
+PX, PY, VX, VY, YAW, BG, BAX, BAY = range(8)
+BIAS = np.array([0.025, 0.040, -0.020])
+STD_ACC, STD_GYR = 0.025, 0.007
+STD_BIAS_G, STD_BIAS_A = 0.0005, 0.001
+STD_CAMERA = 0.012
+CHI2_99_1DOF = 6.635
+
+def wrap(angle: float) -> float:
+    """Normalize bearings and corrections to shortest signed angular distance."""
+    return (angle + math.pi) % (2.0 * math.pi) - math.pi
+
+def rotation(theta: float) -> np.ndarray:
+    c, s = math.cos(theta), math.sin(theta)
+    return np.array([[c, -s], [s, c]], dtype=float)
+
+def propagation(x: np.ndarray, gyro: float, a_sensor: np.ndarray) -> np.ndarray:
+    """x=(world p, world v, yaw, gyro bias, body accel bias); zero-order hold."""
+    y = x.copy()
+    R = rotation(x[YAW])  # body -> world
+    a_world = R @ (a_sensor - x[[BAX, BAY]])
+    y[[PX, PY]] += DT * x[[VX, VY]] + 0.5 * DT**2 * a_world
+    y[[VX, VY]] += DT * a_world
+    y[YAW] = wrap(x[YAW] + DT * (gyro - x[BG]))
+    return y
+
+def propagation_jacobian(x: np.ndarray, a_sensor: np.ndarray) -> np.ndarray:
+    """F_ij=d f_i / d x_j; mistakes here create silently inconsistent covariance."""
+    F = np.eye(8)
+    R = rotation(x[YAW])
+    J = np.array([[0.0, -1.0], [1.0, 0.0]])
+    dacc_dtheta = R @ J @ (a_sensor - x[[BAX, BAY]])
+    F[PX:PY+1, VX:VY+1] = DT * np.eye(2)
+    F[PX:PY+1, YAW] = 0.5 * DT**2 * dacc_dtheta
+    F[VX:VY+1, YAW] = DT * dacc_dtheta
+    F[PX:PY+1, BAX:BAY+1] = -0.5 * DT**2 * R
+    F[VX:VY+1, BAX:BAY+1] = -DT * R
+    F[YAW, BG] = -DT
+    return F
+
+def process_covariance(x: np.ndarray) -> np.ndarray:
+    """Inject per-sample gyro/accel noise and bias random-walk increments."""
+    G = np.zeros((8, 3))
+    R = rotation(x[YAW])
+    G[PX:PY+1, :2] = 0.5 * DT**2 * R
+    G[VX:VY+1, :2] = DT * R
+    G[YAW, 2] = DT
+    sample_variance = np.diag([STD_ACC**2, STD_ACC**2, STD_GYR**2])
+    Q = G @ sample_variance @ G.T
+    Q[BG, BG] += STD_BIAS_G**2 * DT
+    Q[BAX, BAX] += STD_BIAS_A**2 * DT
+    Q[BAY, BAY] += STD_BIAS_A**2 * DT
+    return Q
+
+def camera_bearing(x: np.ndarray, landmark=LANDMARKS[0]) -> float:
+    dx, dy = landmark - x[[PX, PY]]
+    if dx*dx + dy*dy < 1e-8:
+        raise ValueError("undefined landmark bearing at zero range")
+    return wrap(math.atan2(dy, dx) - x[YAW])
+
+def camera_jacobian(x: np.ndarray, landmark=LANDMARKS[0]) -> np.ndarray:
+    """For delta=(L-p), d atan2(delta_y,delta_x)/d p=(dy,-dx)/r^2."""
+    dx, dy = landmark - x[[PX, PY]]
+    r2 = dx*dx + dy*dy
+    if r2 < 1e-8:
+        raise ValueError("undefined bearing Jacobian at zero range")
+    H = np.zeros((1, 8))
+    H[0, PX], H[0, PY], H[0, YAW] = dy/r2, -dx/r2, -1.0
+    return H
+
+def camera_update(x: np.ndarray, P: np.ndarray, z: float, landmark=LANDMARKS[0]):
+    """EKF with angular residual, 99% one-DOF NIS gate and Joseph covariance."""
+    H = camera_jacobian(x, landmark)
+    innovation = wrap(z - camera_bearing(x, landmark))
+    variance = STD_CAMERA**2
+    S = float((H @ P @ H.T)[0, 0] + variance)
+    if innovation**2 / S > CHI2_99_1DOF:
+        return x, P, False
+    K = (P @ H.T)[:, 0] / S
+    corrected = x + K * innovation
+    corrected[YAW] = wrap(corrected[YAW])
+    A = np.eye(8) - np.outer(K, H[0])
+    next_cov = A @ P @ A.T + variance * np.outer(K, K)
+    next_cov = 0.5 * (next_cov + next_cov.T)
+    return corrected, next_cov, True
+
+def check_jacobians_and_rejection():
+    """Every analytic derivative must agree with independent central differences."""
+    x = np.array([0.2, -0.1, 0.8, 0.1, 0.3, 0.02, -0.01, 0.03])
+    a = np.array([0.4, -0.2])
+    F, H = propagation_jacobian(x, a), camera_jacobian(x)
+    eps = 1e-6
+    for j in range(8):
+        d = np.zeros(8)
+        d[j] = eps
+        plus = propagation(x + d, 0.12, a)
+        minus = propagation(x - d, 0.12, a)
+        derivative = (plus - minus) / (2 * eps)
+        derivative[YAW] = wrap(plus[YAW] - minus[YAW]) / (2 * eps)
+        np.testing.assert_allclose(F[:, j], derivative, atol=2e-8, rtol=1e-7)
+        difference = wrap(camera_bearing(x + d) - camera_bearing(x - d))
+        np.testing.assert_allclose(H[0, j], difference/(2*eps), atol=2e-8)
+    P = np.diag([.02, .02, .02, .02, .02, .001, .001, .001])
+    xx, PP, accepted = camera_update(x, P, camera_bearing(x) + 2.5)
+    assert not accepted and np.array_equal(xx, x) and np.array_equal(PP, P)
+
+def simulate():
+    rng = np.random.default_rng(20261112)
+    truth = np.array([0., 0., 1., 0.1, 0.1, *BIAS])
+    est = np.array([0.08, -0.08, 0.85, 0.05, -0.03, 0., 0., 0.])
+    P = np.diag([.12, .12, .08, .08, .08, .004, .012, .012])
+    accepted = rejected = 0
+    for step in range(N):
+        t = step * DT
+        angular_rate = 0.14 + 0.02 * math.sin(0.7*t)
+        true_body_acc = np.array([0.06 + 0.02*math.sin(t), .015*math.cos(t)])
+        # Advance truth using exact synthetic bias; sensor noise only affects estimates.
+        truth = propagation(truth, angular_rate + BIAS[0], true_body_acc + BIAS[1:])
+        measured_gyro = angular_rate + BIAS[0] + rng.normal(0, STD_GYR)
+        measured_acc = true_body_acc + BIAS[1:] + rng.normal(0, STD_ACC, 2)
+        F = propagation_jacobian(est, measured_acc)
+        Q = process_covariance(est)
+        est = propagation(est, measured_gyro, measured_acc)
+        P = F @ P @ F.T + Q
+        if step % 6 == 0:
+            for index, landmark in enumerate(LANDMARKS):
+                z = camera_bearing(truth, landmark) + rng.normal(0, STD_CAMERA)
+                if step == 60 and index == 0:
+                    z += 2.5  # deliberately wrong feature correspondence
+                est, P, ok = camera_update(est, P, z, landmark)
+                accepted += int(ok)
+                rejected += int(not ok)
+        assert np.min(np.linalg.eigvalsh(P)) > -1e-10
+    position_error = float(np.linalg.norm(est[[PX, PY]] - truth[[PX, PY]]))
+    yaw_error = abs(wrap(est[YAW] - truth[YAW]))
+    print(f"camera updates accepted={accepted}, rejected={rejected}")
+    print(f"final planar position error={position_error:.4f} m")
+    print(f"final yaw error={yaw_error:.4f} rad")
+    assert rejected >= 1 and accepted > 100 and position_error < 0.25
+
+if __name__ == "__main__":
+    check_jacobians_and_rejection()
+    simulate()
+    print("PASS: Jacobians, outlier gate, PSD covariance and deterministic replay")
+\`\`\`
+
+Run \`python3 tools/labs/xr_planar_vio_ekf_lab.py\` with NumPy. Finite-difference Jacobian checks are a separate acceptance obligation from seeing a plausible trajectory. A single landmark, restricted motion or an unmodeled gauge can leave state directions weakly observable even when covariance stays numerically positive; testing with three surveyed landmarks intentionally makes this small reconstruction more stable. It does not prove general estimation consistency.
+
+#### Where the real system becomes more difficult
+
+In *real visual-inertial odometry*, scene landmarks are usually not surveyed in advance. Feature detection, image-space uncertainty, track management, outlier removal, camera intrinsics/distortion, camera-to-IMU spatial calibration, temporal calibration and often rolling-shutter models have to be part of the contract. An MSCKF maintains multiple camera poses and eliminates unknown feature state to update a filter; sliding-window optimization instead minimizes visual and inertial residuals, may use IMU preintegration, and needs robust losses, stable sparse linear algebra and careful marginalization. Full SLAM adds persistent map identity, loop closure, relocalization and gauge handling. A full fifteen-state error filter must implement 3-D rotation perturbation/retraction, gravity, bias Jacobians and covariance reset. None of those are silently certified by the planar laboratory.
+
+In *XR*, the pose must also be meaningful in the runtime's declared reference space at the predicted display time. Prediction consumes a timestamped tracking state and requested future time; the renderer consumes predicted view transforms, while the compositor may obtain a later sample for reprojection. A pose estimate with a missing time basis, wrong extrinsic or stale spatial origin can make a mathematically correct rasterizer appear to slip against the real world. Therefore algorithmic accuracy, hardware timing, optical/image quality and human task performance are separate verification layers. The next calibration section returns to exactly that problem rather than presenting the small laboratory as the end of XR tracking.
+
 ### Calibration errors can masquerade as rendering errors
 
 Calibration includes camera intrinsics, distortion, camera-to-IMU extrinsics, eye-camera geometry, display-to-eye geometry and time offsets between clocks.
