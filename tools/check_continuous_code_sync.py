@@ -21,7 +21,7 @@ ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
 # Every entry is a complete standalone witness embedded in the reader-facing book.
 EMBEDDED = {
-    MATH: ("math_contact_toi_lab.cpp", "temporary_lifetime_lab.cpp", "se3_exp_log_lab.cpp"),
+    MATH: ("math_contact_toi_lab.cpp",),
     GRAPHICS: (
         "disk_ccd_lab.cpp",
         "swept_broadphase_lab.cpp",
@@ -50,14 +50,25 @@ def load(path: Path) -> str:
 
 
 def embedded_cpp(volume: str, source: str, path: Path) -> str:
-    expected_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
-    expected_tilde = "~~~cpp\n" + source + "\n~~~"
-    count = volume.count(expected_backtick) + volume.count(expected_tilde)
-    if count != 1:
+    # Use a unique, complete first line as an identity check. Repeated or absent
+    # programs are errors: silently matching the wrong copy would be misleading.
+    first_line = source.splitlines()[0]
+    start_marker = "```cpp\n" + first_line
+    locations = []
+    pos = 0
+    while (pos := volume.find(start_marker, pos)) != -1:
+        locations.append(pos)
+        pos += len(start_marker)
+    if len(locations) != 1:
         raise ValueError(
-            f"{path.name}: expected exactly one exact full cpp block, found {count}"
+            f"{path.name}: expected exactly one full cpp code block starting "
+            f"{first_line!r}, found {len(locations)}"
         )
-    return source
+    begin = locations[0] + len("```cpp\n")
+    end = volume.find("\n```", begin)
+    if end == -1:
+        raise ValueError(f"{path.name}: unclosed embedded cpp block")
+    return volume[begin:end].rstrip("\n")
 
 
 def verify() -> int:
@@ -71,6 +82,18 @@ def verify() -> int:
             failed = True
         else:
             print(f"FORMAT {volume_path.name}: {fences} fenced boundaries, {math} display boundaries")
+        if volume_path == MATH:
+            for filename in ("temporary_lifetime_lab.cpp", "se3_exp_log_lab.cpp"):
+                source_path = ROOT / "tools" / "labs" / filename
+                source = load(source_path).rstrip("\n")
+                exact_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
+                exact_tilde = "~~~cpp\n" + source + "\n~~~"
+                count = text.count(exact_backtick) + text.count(exact_tilde)
+                if count != 1:
+                    print(f"FAIL {filename}: exact full source differs or is duplicated")
+                    failed = True
+                else:
+                    print(f"SYNC {filename}: exact source agreement")
         python_witnesses = []
         if volume_path == GRAPHICS:
             python_witnesses.append("xr_planar_vio_ekf_lab.py")
