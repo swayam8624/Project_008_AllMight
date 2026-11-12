@@ -11075,6 +11075,272 @@ Playback channels are not the same as output channels. The source describes 16 p
 
 Short effects can load as one decoded buffer. Long music or voice tracks can reuse two buffers: queue both, unqueue each after playback, refill it with the next samples, then queue it again. The source reports a worker per playback source guarded by a mutex and a brief sleep between work checks; its reason that audio playback blocks is specific narration, not a general OpenAL contract. The implementation uses stb_vorbis and minimp3, and MP3 cleanup remains flagged. Error recovery, format coverage, and stress behavior are not established by the stream. [Kohi #142](https://www.youtube.com/watch?v=xb23Y9o7tP4)
 
+<!-- Bible-final-pass: real-time audio runtime -->
+#### Turn the audio front end into a real-time voice and mixing system
+
+The front-end/backend split above tells us who owns the public API. We still need the runtime path that turns many play requests into the sample block consumed by the device.
+
+Separate four meanings:
+
+~~~text
+audio asset
+  decoded or compressed sound data
+
+voice
+  one active playback instance of an asset
+
+mixer
+  combines active voices into output buses
+
+device backend
+  delivers final sample blocks to the platform audio API
+~~~
+
+One explosion asset can have twenty simultaneous voices. Asset identity and playback identity are different.
+
+#### The audio callback is a deadline boundary
+
+Many audio APIs periodically request the next block of samples. Missing the deadline creates an audible underrun, click, or gap.
+
+Treat the callback more strictly than a normal update. Avoid filesystem/network I/O, unpredictable decoding, waiting on game-thread mutexes, unbounded heap allocation, blocking logging, or complex destruction in the callback path.
+
+A common structure is:
+
+~~~text
+game thread:
+  enqueue Play(sound, gain, position, priority)
+
+audio thread:
+  consume bounded commands
+  update preallocated voice slots
+  mix next block
+  submit samples
+~~~
+
+The exact queue can vary. The important contract is that audio completion does not depend on a slow editor or gameplay operation.
+
+#### A voice owns playback state, not the asset
+
+A voice may contain an asset reference, sample cursor, gain, playback rate, loop state, priority, spatial parameters, bus routing, fade/envelope state, and start sequence.
+
+The cursor is per voice. Two enemies playing the same footstep asset at different times must not share one cursor.
+
+When a non-looping cursor reaches the end, the slot becomes reusable. A loop wraps according to its loop range. A streamed voice may point at decoded chunks rather than one fully resident PCM buffer.
+
+#### Mixing is addition plus a level policy
+
+For mono voices x_j[n] and gains g_j:
+
+~~~text
+y[n] = sum_j g_j x_j[n]
+~~~
+
+Several individually legal samples can sum outside the final range. Hard clipping is easy but distorts. A production engine may keep floating-point headroom, use bus gains, compression/limiting, or another mastering policy.
+
+The witness hard-clips only to keep its small test output bounded. That is a test policy, not a recommendation for final mastering.
+
+#### Voice capacity needs an overload rule
+
+CPU and hardware budgets limit active voices. When all slots are occupied, an engine can reject the new sound, steal the oldest, steal the quietest, steal the lowest priority, or virtualize inaudible voices.
+
+The policy is player-visible. Critical dialogue should not disappear because many low-priority debris sounds started first.
+
+The witness uses a deterministic rule: steal the lowest-priority voice; for equal priority, steal the oldest. If the new request is lower priority than every active voice, reject it.
+
+#### Streaming separates decoding from playback
+
+A long track need not be fully decoded into memory. Keep a small queue of PCM blocks:
+
+~~~text
+compressed asset
+  -> worker fills block A
+  -> worker fills block B
+
+audio consumes A
+worker refills retired A
+audio consumes B
+...
+~~~
+
+The decoder must stay ahead of playback. If it falls behind, report an underrun. Seek, pause, loop, and device changes all belong to this state machine.
+
+#### Resampling is part of correct playback
+
+A 44.1 kHz source mixed into a 48 kHz device cannot advance one source sample per output sample without changing speed.
+
+The source-position increment is approximately:
+
+~~~text
+source_rate / output_rate
+~~~
+
+That gives a fractional cursor. A reconstruction filter estimates values between stored samples. Linear interpolation is simple; higher-quality resamplers spend more work for better frequency behavior.
+
+Changing playback rate also changes pitch and duration. Time stretching without changing pitch is a different algorithm.
+
+#### Spatial audio consumes published world meaning
+
+The game owns emitter and listener transforms. Publish a compact timestamped snapshot for audio rather than letting the callback query arbitrary ECS state. Occlusion queries can run at a safe cadence elsewhere and publish their results to the mixer.
+
+The executable witness below owns a fixed voice pool and performs no allocation inside its mixing function. It verifies summation, natural voice retirement, looping, deterministic voice stealing, rejection of an unimportant sound when all slots are more important, and bounded output.
+
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+
+struct Clip {
+    std::vector<float> mono;
+};
+
+struct Voice {
+    const Clip* clip = nullptr;
+    std::size_t cursor = 0;
+    float gain = 1.0f;
+    int priority = 0;
+    std::uint64_t age = 0;
+    bool loop = false;
+    bool active = false;
+};
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+template <std::size_t N>
+class Mixer {
+public:
+    // In a production audio callback, clip memory and voice storage must already
+    // exist. This teaching mixer performs no allocation in mix_block().
+    bool play(const Clip& clip, float gain, int priority, bool loop) {
+        if (clip.mono.empty()) return false;
+
+        Voice* slot = nullptr;
+        for (auto& v : voices_) {
+            if (!v.active) { slot = &v; break; }
+        }
+
+        if (!slot) {
+            // Steal the least-important voice. For equal priority, steal the
+            // oldest one so the rule is deterministic and inspectable.
+            auto it = std::min_element(
+                voices_.begin(), voices_.end(),
+                [](const Voice& a, const Voice& b) {
+                    if (a.priority != b.priority) return a.priority < b.priority;
+                    return a.age < b.age;
+                });
+            if (priority < it->priority) return false;
+            slot = &*it;
+        }
+
+        *slot = Voice{&clip, 0, gain, priority, next_age_++, loop, true};
+        return true;
+    }
+
+    template <std::size_t Frames>
+    std::array<float, Frames> mix_block() {
+        std::array<float, Frames> out{};
+        for (std::size_t frame = 0; frame < Frames; ++frame) {
+            float sample = 0.0f;
+            for (auto& voice : voices_) {
+                if (!voice.active) continue;
+
+                sample += voice.clip->mono[voice.cursor] * voice.gain;
+                ++voice.cursor;
+
+                if (voice.cursor == voice.clip->mono.size()) {
+                    if (voice.loop) {
+                        voice.cursor = 0;
+                    } else {
+                        voice.active = false;
+                    }
+                }
+            }
+            // This witness uses hard clipping only so the output contract is
+            // bounded. A real engine may use headroom, limiters and mastering.
+            out[frame] = std::clamp(sample, -1.0f, 1.0f);
+        }
+        return out;
+    }
+
+    std::size_t active_voices() const {
+        return std::count_if(voices_.begin(), voices_.end(),
+                             [](const Voice& v){ return v.active; });
+    }
+
+    bool has_priority(int p) const {
+        return std::any_of(voices_.begin(), voices_.end(),
+                           [=](const Voice& v){ return v.active && v.priority == p; });
+    }
+
+private:
+    std::array<Voice, N> voices_{};
+    std::uint64_t next_age_ = 0;
+};
+
+bool near(float a, float b, float eps=1e-6f) {
+    return std::fabs(a-b) <= eps;
+}
+
+int main() {
+    const Clip a{{0.25f, 0.25f, 0.25f}};
+    const Clip b{{0.50f, -0.50f}};
+    const Clip loop{{0.10f, 0.20f}};
+
+    {
+        Mixer<4> m;
+        require(m.play(a, 1.0f, 1, false), "first voice should start");
+        require(m.play(b, 0.5f, 2, false), "second voice should start");
+        const auto out = m.mix_block<3>();
+        require(near(out[0], 0.25f + 0.25f), "voices must sum into the same sample");
+        require(near(out[1], 0.25f - 0.25f), "signed PCM samples must mix correctly");
+        require(near(out[2], 0.25f), "finished short voice must stop contributing");
+        require(m.active_voices() == 0, "non-looping voices should retire at end");
+    }
+
+    {
+        Mixer<1> m;
+        require(m.play(loop, 1.0f, 1, true), "looping voice should start");
+        const auto out = m.mix_block<5>();
+        require(near(out[0],0.10f) && near(out[1],0.20f) &&
+                near(out[2],0.10f) && near(out[3],0.20f) && near(out[4],0.10f),
+                "looping cursor must wrap exactly");
+        require(m.active_voices() == 1, "loop remains active");
+    }
+
+    {
+        Mixer<2> m;
+        require(m.play(a, 1.0f, 1, true), "low-priority voice A");
+        require(m.play(b, 1.0f, 5, true), "high-priority voice B");
+        require(m.play(loop, 1.0f, 3, true), "new medium voice steals least priority");
+        require(!m.has_priority(1) && m.has_priority(3) && m.has_priority(5),
+                "voice stealing must preserve more important voices");
+        require(!m.play(a, 1.0f, 0, true),
+                "lower-priority request should be rejected when all slots are more important");
+    }
+
+    {
+        Mixer<2> m;
+        const Clip loud{{0.9f}};
+        require(m.play(loud,1.0f,1,false) && m.play(loud,1.0f,1,false),
+                "two loud voices should start");
+        const auto out=m.mix_block<1>();
+        require(near(out[0],1.0f), "output contract must remain bounded");
+    }
+
+    std::cout << "audio voice mixer: 4 suites PASS\n";
+}
+~~~
+
+It does not implement HRTF processing, resampling, streaming decode, effects buses, device hot-swap, or thread-safe command publication. Those now have explicit architectural homes instead of being hidden behind a single play-sound call.
+
+**Reconstruct without reading:** distinguish an asset from a voice, explain why the callback should not wait on the game thread, derive the basic mix equation, state a voice-stealing rule, and explain how streaming buffers stay ahead of playback.
 
 #### Shared systems should pay for themselves
 
@@ -112918,6 +113184,333 @@ The phrase **how good is good enough?** should become a production question with
 
 Source basis: Rouse, *Game Design: Theory & Practice*, Chapter 9 on AI goals, the sloped playing field, “how real is too real,” “how good is good enough,” scripting, artificial stupidity, and creating a living world.
 
+<!-- Bible-final-pass: AI decision layer -->
+## Navigation answers how to move; the decision layer answers what to do
+
+The navigation chapter already teaches graphs, A*, navmeshes, funnels, dynamic obstacles, and path queries. Those systems answer a geometric question:
+
+> Given a destination, how can this agent reach it?
+
+They do not decide whether the agent should attack, heal, investigate, retreat, reload, guard, or choose a different goal. That belongs to a decision layer.
+
+Behavior trees, utility systems, and goal-oriented action planning solve related decision problems with different tradeoffs.
+
+### Behavior trees expose authored control structure
+
+A sequence usually means:
+
+~~~text
+try child 1
+if it succeeds, try child 2
+fail on the first failure
+succeed if all succeed
+~~~
+
+A selector usually means:
+
+~~~text
+try child 1
+if it fails, try child 2
+succeed on the first success
+fail if all fail
+~~~
+
+Leaves commonly return Success, Failure, or Running. Running matters because movement or animation can take many ticks.
+
+A small combat tree might be:
+
+~~~text
+Selector
+  Sequence
+    IsHealthLow
+    MoveToCover
+  Sequence
+    CanAttack
+    Attack
+  SearchForEnemy
+~~~
+
+Priority is visible in the structure. The tradeoff is that large trees can accumulate repeated conditions and hidden priority interactions.
+
+A running node also needs interruption policy. Does the tree reevaluate higher-priority branches each tick, or stay committed until the current task finishes? Both are valid and produce different behavior.
+
+### Utility AI scores alternatives
+
+Utility AI computes a score for each candidate action:
+
+~~~text
+score(action, state) -> real number
+choose the highest acceptable score
+~~~
+
+For example, cover score can rise as health falls, attack score can be high only when a visible target can be attacked, and search score can rise when no target is visible.
+
+This makes continuous tradeoffs easy to tune, but it adds contracts: normalize inputs, define response curves, prevent tiny score changes from causing rapid action switching, expose scores in debug tools, and use deterministic tie-breaking when replay matters.
+
+Numbers do not automatically make an AI smarter. Bad utility curves can be less readable than a small tree.
+
+### GOAP searches over preconditions and effects
+
+Goal-Oriented Action Planning represents actions with symbolic preconditions, effects, and costs.
+
+Suppose the goal is enemy_defeated=true. Actions might be:
+
+~~~text
+find_weapon:
+  pre: no weapon
+  effect: has weapon
+  cost: 2
+
+find_ammo:
+  pre: has weapon and no ammo
+  effect: has ammo
+  cost: 2
+
+find_enemy:
+  pre: enemy not visible
+  effect: enemy visible
+  cost: 1
+
+attack:
+  pre: weapon + ammo + visible enemy
+  effect: enemy defeated
+  cost: 1
+~~~
+
+The planner searches the symbolic state graph for a low-cost sequence that reaches the goal.
+
+The symbolic action find_enemy does not specify pathfinding, animation, or perception implementation. It says what subgoal should occur. Lower systems execute it.
+
+### A plan must survive a changing world
+
+Another agent may take the ammo before this agent arrives. Therefore each action must verify its preconditions when it begins and often while it runs. If they fail, repair or replan.
+
+Replanning every frame can waste CPU and make behavior unstable. Useful triggers include action failure, important fact changes, goal changes, invalidated plans, or periodic low-frequency reconsideration.
+
+Planning work must also be bounded. A large symbolic state space can explode just like an unbounded path search.
+
+### Keep perception, memory, decision, navigation, and action separate
+
+A useful pipeline is:
+
+~~~text
+sensors / perception
+  -> interpreted facts
+  -> memory with age/confidence
+  -> decision system
+  -> chosen goal/action
+  -> navigation or task executor
+  -> animation/physics/gameplay command
+  -> changed world
+  -> new perception
+~~~
+
+This prevents one opaque AI leaf from raycasting, pathfinding, changing animation, and directly editing physics velocity without clear ownership.
+
+### AI needs observability
+
+For one selected agent, a debug view should show perceived facts, remembered targets and their age, active goal, active behavior-tree branch or utility scores, current plan, path result, action status, and reason for failure/replan.
+
+"Enemy acted stupid" becomes useful only after the engine can show which fact or decision produced the action.
+
+The executable witness below sends small world states through all three models. The behavior tree exposes authored priority, utility AI scores alternatives, and GOAP searches action preconditions/effects. It is a comparison of semantics, not a declaration that one architecture wins.
+
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <optional>
+#include <queue>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+struct World {
+    int health = 100;
+    int ammo = 0;
+    bool enemy_visible = false;
+    bool has_weapon = false;
+    bool enemy_defeated = false;
+};
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+// ---- Behavior tree: authored control structure ----
+enum class Status { Success, Failure, Running };
+
+Status behavior_tree_decide(const World& w, std::string& action) {
+    // Selector priority is explicit: survive first, then attack, then search.
+    if (w.health < 30) {
+        action = "seek_cover";
+        return Status::Success;
+    }
+    if (w.enemy_visible && w.has_weapon && w.ammo > 0) {
+        action = "attack";
+        return Status::Success;
+    }
+    action = "search";
+    return Status::Success;
+}
+
+// ---- Utility AI: score alternatives from current facts ----
+std::string utility_decide(const World& w) {
+    struct Candidate { std::string name; double score; };
+    std::vector<Candidate> c{
+        {"seek_cover", std::clamp((50.0 - w.health) / 30.0, 0.0, 1.0)},
+        {"attack", (w.enemy_visible && w.has_weapon && w.ammo > 0) ? 0.85 : 0.0},
+        {"search", w.enemy_visible ? 0.1 : 0.55},
+    };
+    return std::max_element(c.begin(), c.end(),
+        [](const Candidate& a, const Candidate& b) {
+            if (a.score != b.score) return a.score < b.score;
+            return a.name > b.name; // deterministic tie-break
+        })->name;
+}
+
+// ---- GOAP: search over symbolic actions and effects ----
+struct Facts {
+    bool has_weapon = false;
+    bool has_ammo = false;
+    bool enemy_visible = false;
+    bool enemy_defeated = false;
+    friend bool operator==(const Facts&, const Facts&) = default;
+};
+
+struct Action {
+    std::string name;
+    int cost;
+    std::function<bool(const Facts&)> pre;
+    std::function<Facts(Facts)> apply;
+};
+
+int encode(const Facts& f) {
+    return (f.has_weapon ? 1 : 0)
+         | (f.has_ammo ? 2 : 0)
+         | (f.enemy_visible ? 4 : 0)
+         | (f.enemy_defeated ? 8 : 0);
+}
+
+std::optional<std::vector<std::string>> goap_plan(Facts start) {
+    const std::vector<Action> actions{
+        {"find_weapon", 2,
+            [](const Facts& f){ return !f.has_weapon; },
+            [](Facts f){ f.has_weapon=true; return f; }},
+        {"find_ammo", 2,
+            [](const Facts& f){ return f.has_weapon && !f.has_ammo; },
+            [](Facts f){ f.has_ammo=true; return f; }},
+        {"find_enemy", 1,
+            [](const Facts& f){ return !f.enemy_visible; },
+            [](Facts f){ f.enemy_visible=true; return f; }},
+        {"attack", 1,
+            [](const Facts& f){
+                return f.has_weapon && f.has_ammo && f.enemy_visible && !f.enemy_defeated;
+            },
+            [](Facts f){ f.enemy_defeated=true; f.has_ammo=false; return f; }},
+    };
+
+    struct Node {
+        int cost;
+        Facts facts;
+        std::vector<std::string> plan;
+    };
+    struct Greater {
+        bool operator()(const Node& a, const Node& b) const {
+            if (a.cost != b.cost) return a.cost > b.cost;
+            return a.plan > b.plan; // deterministic queue tie-break
+        }
+    };
+
+    std::priority_queue<Node,std::vector<Node>,Greater> q;
+    std::array<int,16> best;
+    best.fill(std::numeric_limits<int>::max());
+    best[encode(start)] = 0;
+    q.push({0,start,{}});
+
+    while(!q.empty()) {
+        Node n=q.top(); q.pop();
+        if(n.facts.enemy_defeated) return n.plan;
+        if(n.cost != best[encode(n.facts)]) continue;
+
+        for(const auto& a:actions) {
+            if(!a.pre(n.facts)) continue;
+            Facts next=a.apply(n.facts);
+            int cost=n.cost+a.cost;
+            int key=encode(next);
+            if(cost >= best[key]) continue;
+            best[key]=cost;
+            auto plan=n.plan;
+            plan.push_back(a.name);
+            q.push({cost,next,std::move(plan)});
+        }
+    }
+    return std::nullopt;
+}
+
+int main() {
+    {
+        World w{20,10,true,true,false};
+        std::string bt;
+        require(behavior_tree_decide(w,bt)==Status::Success && bt=="seek_cover",
+                "behavior-tree priority should choose survival branch");
+        require(utility_decide(w)=="seek_cover",
+                "utility score should also favor cover at very low health");
+    }
+
+    {
+        World w{80,10,true,true,false};
+        std::string bt;
+        behavior_tree_decide(w,bt);
+        require(bt=="attack" && utility_decide(w)=="attack",
+                "both models should attack when attack is clearly useful");
+    }
+
+    {
+        Facts start{};
+        auto plan=goap_plan(start);
+        require(plan.has_value(), "planner should find a plan");
+        // Several equal-cost orderings can be logically valid. Verify the plan
+        // reaches the goal and has the expected total number of required steps.
+        require(plan->size()==4, "planner should need four prerequisite/action steps");
+        Facts f=start;
+        const std::unordered_map<std::string,Action> table{
+            {"find_weapon",{"find_weapon",2,[](const Facts& x){return !x.has_weapon;},
+                [](Facts x){x.has_weapon=true;return x;}}},
+            {"find_ammo",{"find_ammo",2,[](const Facts& x){return x.has_weapon&&!x.has_ammo;},
+                [](Facts x){x.has_ammo=true;return x;}}},
+            {"find_enemy",{"find_enemy",1,[](const Facts& x){return !x.enemy_visible;},
+                [](Facts x){x.enemy_visible=true;return x;}}},
+            {"attack",{"attack",1,[](const Facts& x){return x.has_weapon&&x.has_ammo&&x.enemy_visible&&!x.enemy_defeated;},
+                [](Facts x){x.enemy_defeated=true;x.has_ammo=false;return x;}}},
+        };
+        for(const auto& name:*plan) {
+            const auto& a=table.at(name);
+            require(a.pre(f), "GOAP action precondition must hold when executed");
+            f=a.apply(f);
+        }
+        require(f.enemy_defeated, "GOAP plan must actually establish the goal");
+    }
+
+    {
+        Facts impossible{false,false,false,true};
+        auto plan=goap_plan(impossible);
+        require(plan.has_value() && plan->empty(),
+                "already-satisfied goal should produce an empty plan");
+    }
+
+    std::cout << "AI decision models: 4 suites PASS\n";
+}
+~~~
+
+A real game can combine them: utility chooses fight versus flee, a behavior tree executes the mode, GOAP handles a special multistep task, and navigation moves toward requested destinations.
+
+**Reconstruct without reading:** explain what A* answers that a behavior tree does not. Write one selector, one utility score, and one GOAP action. Then state when replanning should occur and which AI state the editor must expose.
+
 ## Let companion AI and level geometry share one contract
 
 A companion that follows the player is not only a navigation feature. It is part of the level’s reachable-state design. In the *Damage Incorporated* example, a rudimentary teammate AI was built before substantial level design. That early version could not jump or swim, and it struggled in tight spaces where companions collided or blocked the player. The author reports that this discovery changed level design: routes had to remain traversable by the follower, and constrained spaces had to be reconsidered. (*Game Design: Theory and Practice*, supplied PDF p. 191, source `src-f508b5433ab08ffd2964`, unit `u-4274992395bc43b21d421cf2`.)
@@ -112983,6 +113576,347 @@ Treat the earliest prototype as a question about the game’s intended shared ac
 The same production chapter warns that beta testers may be unusually invested players and may not represent casual audiences; it also notes that some testers can benefit from keeping an exploit undisclosed. Its later discussion recommends community managers to interpret and communicate player feedback and describes player metrics as another source of evidence (PDF pp. 279–280; units `u-e3e73c42b9ad8eb3140f355a`, `u-a4de81035bbfc7ebaf2b8750`). These are the authors’ observations, not a guarantee about every beta cohort. More generally, measurements record selected actions under a particular build and sampling setup; they do not explain why a player acted or whether an outcome felt fair. Combine telemetry with representative playtests, observation, and a clear design question. When a change may alter a valued mechanic, test the consequence with players before treating a metric movement as proof that the design improved.
 
 The system boundary therefore extends past networking code: it includes the intended player relationship, the content and test setup that exercise it, and the post-launch capacity to interpret reports and maintain the experience. That is a design and operations implication drawn from this historical production discussion, not a prescribed live-service architecture.
+
+<!-- Bible-final-pass: rollback netcode -->
+### Prediction hides latency; rollback repairs a wrong prediction
+
+The earlier networking sections correctly start from authority, identity, packet validation, and bounded work. A fast action game still has one practical question: what should the local machine do before a remote input or server correction arrives?
+
+If the client waits for every remote input before simulating, network delay becomes control delay. Prediction avoids that wait by simulating with the best information currently available. Prediction creates a second problem: it can be wrong. Rollback is the repair mechanism.
+
+Keep the simulation on integer ticks. Write one tick as:
+
+~~~text
+S_(k+1) = F(S_k, I_k)
+~~~
+
+S_k is the complete gameplay state needed to continue the simulation. I_k is the complete input set for that tick.
+
+For a two-player rollback peer:
+
+~~~text
+known local input    -> use it
+known remote input   -> use it
+missing remote input -> predict it
+simulate tick
+store resulting state
+~~~
+
+A common prediction rule is to repeat the last known remote input. It is simple and often useful for held movement. It is not a universal rule. A fighting game might repeat a direction while predicting one-shot attack buttons as unpressed. Prediction policy affects game feel.
+
+Suppose the peer has simulated through tick 105 while the remote input for tick 101 was predicted. The real tick-101 input later arrives.
+
+If it matches the prediction, no repair is needed.
+
+If it differs:
+
+~~~text
+restore S_100
+replace predicted I_101 with real I_101
+resimulate 101, 102, 103, 104, 105
+continue from corrected S_105
+~~~
+
+The player normally sees the newest corrected state, not the temporary historical replay.
+
+#### Rollback requires reproducible simulation
+
+Rollback assumes that the same starting state plus the same input sequence produces the same result. That requirement reaches beyond networking. It affects update order, random-number generation, physics ordering, unordered-container iteration, script side effects, spawning and stable IDs, event delivery, and any system that reads wall-clock time or other mutable external state.
+
+The witness uses integer gameplay state so this requirement is visible. A production engine can use floating point, but supported platforms still need a tested determinism policy instead of an assumption.
+
+A useful diagnostic is a state hash:
+
+~~~text
+hash(tick, gameplay state that should agree)
+~~~
+
+Comparing hashes can reveal the first divergent tick. A hash says that state differs; it does not say why. Serious replay tooling should also expose subsystem or component traces so the first differing value can be found.
+
+#### Rollback history is finite
+
+To repair an input from N ticks ago, the engine needs a state from before that input and enough input history to replay forward.
+
+A rollback buffer therefore has a finite window:
+
+~~~text
+oldest retained state ... current speculative state
+~~~
+
+The window costs memory and resimulation CPU. If a correction arrives older than retained history, the engine needs a declared recovery policy: request an authoritative snapshot, hard-correct, pause/disconnect, or another explicit rule. Missing history must not become silent state corruption.
+
+#### Prediction, rollback, interpolation, and reconciliation are different tools
+
+Local prediction makes the local player's own controls feel immediate.
+
+Rollback repairs speculative simulation when late input disagrees.
+
+Snapshot interpolation intentionally renders remote objects a little in the past so two received snapshots are usually available for smooth interpolation.
+
+A server-authoritative client can use server reconciliation. The client predicts numbered local inputs. The server later sends an authoritative state and the last processed input number. The client installs the server state, discards acknowledged inputs, and reapplies newer inputs:
+
+~~~text
+client predicts input 80
+client predicts input 81
+
+server replies with state after input 80 and ack=80
+
+client:
+  install server state
+  discard history through 80
+  replay input 81 and later
+~~~
+
+Lag compensation is different again. A server may evaluate a shot against a reconstructed historical world near the shooter's command time. That requires policy: maximum rewind, which objects rewind, interpolation rules, and what happens when the shooter's past view conflicts with another player's present view.
+
+#### Presentation does not have to expose every correction
+
+A corrected gameplay state may jump. Rendering that correction directly can look harsh. Keep simulation truth separate from visual smoothing. The gameplay state can become correct immediately while a presentation transform eases toward it, provided the smoothed value never becomes authoritative collision or gameplay state.
+
+The executable witness below predicts missing remote input, stores state history, detects a late mismatch, restores the previous state, resimulates to the present, and verifies that the final state equals a direct authoritative simulation. It also checks duplicate packets and a correction older than retained history.
+
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <deque>
+#include <iostream>
+#include <map>
+#include <stdexcept>
+#include <string>
+
+struct Input {
+    int move = 0;   // -1, 0, +1
+    bool fire = false;
+    friend bool operator==(const Input&, const Input&) = default;
+};
+
+struct State {
+    std::int64_t tick = 0;
+    std::int64_t p0 = 0;
+    std::int64_t p1 = 0;
+    std::int64_t score0 = 0;
+    std::int64_t score1 = 0;
+    friend bool operator==(const State&, const State&) = default;
+};
+
+State step(State s, Input a, Input b) {
+    ++s.tick;
+    s.p0 += a.move;
+    s.p1 += b.move;
+
+    // Deterministic toy hit rule: firing scores when players are at most one
+    // integer cell apart after movement. Integer state avoids floating-point
+    // cross-platform drift in this teaching witness.
+    if (a.fire && std::llabs(s.p0 - s.p1) <= 1) ++s.score0;
+    if (b.fire && std::llabs(s.p0 - s.p1) <= 1) ++s.score1;
+    return s;
+}
+
+std::uint64_t hash_state(const State& s) {
+    // A tiny deterministic diagnostic hash, not a cryptographic hash.
+    std::uint64_t h = 1469598103934665603ull;
+    auto mix = [&](std::int64_t v) {
+        std::uint64_t x = static_cast<std::uint64_t>(v);
+        for (int i = 0; i < 8; ++i) {
+            h ^= (x >> (i * 8)) & 0xffu;
+            h *= 1099511628211ull;
+        }
+    };
+    mix(s.tick); mix(s.p0); mix(s.p1); mix(s.score0); mix(s.score1);
+    return h;
+}
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+class RollbackPeer {
+public:
+    explicit RollbackPeer(std::size_t history_capacity)
+        : capacity_(history_capacity) {
+        if (capacity_ < 2) throw std::invalid_argument("history must hold at least two states");
+        states_[0] = State{};
+    }
+
+    void set_local_input(std::int64_t tick, Input in) {
+        local_[tick] = in;
+    }
+
+    // Returns true when the new remote input changed a past prediction and a
+    // rollback/resimulation was performed.
+    bool receive_remote_input(std::int64_t tick, Input in) {
+        if (tick <= confirmed_before_) return false; // duplicate/ancient confirmed packet
+        if (tick <= current_.tick && !states_.contains(tick - 1))
+            throw std::runtime_error("correction is older than retained rollback history");
+        auto old = remote_.find(tick);
+        if (old != remote_.end() && old->second == in) return false; // idempotent duplicate
+
+        remote_[tick] = in;
+
+        const auto predicted = remote_used_.find(tick);
+        if (predicted != remote_used_.end() && predicted->second != in) {
+            if (!states_.contains(tick - 1))
+                throw std::runtime_error("misprediction is older than retained rollback history");
+            rollback_from(tick);
+            return true;
+        }
+        return false;
+    }
+
+    void advance_to(std::int64_t target_tick) {
+        while (current_.tick < target_tick) simulate_one(current_.tick + 1);
+    }
+
+    const State& state() const { return current_; }
+    std::uint64_t state_hash() const { return hash_state(current_); }
+
+    void confirm_through(std::int64_t tick) {
+        confirmed_before_ = std::max(confirmed_before_, tick);
+        trim_history();
+    }
+
+private:
+    Input local_for(std::int64_t tick) const {
+        if (auto it = local_.find(tick); it != local_.end()) return it->second;
+        return {};
+    }
+
+    Input remote_for(std::int64_t tick) const {
+        if (auto it = remote_.find(tick); it != remote_.end()) return it->second;
+
+        // Common rollback prediction policy: repeat the last known remote input.
+        Input last{};
+        auto it = remote_.upper_bound(tick);
+        if (it != remote_.begin()) {
+            --it;
+            last = it->second;
+        }
+        return last;
+    }
+
+    void simulate_one(std::int64_t tick) {
+        const Input a = local_for(tick);
+        const Input b = remote_for(tick);
+        remote_used_[tick] = b;
+        current_ = step(current_, a, b);
+        states_[current_.tick] = current_;
+        trim_history();
+    }
+
+    void rollback_from(std::int64_t tick) {
+        const std::int64_t previous_target = current_.tick;
+        current_ = states_.at(tick - 1);
+
+        for (auto it = states_.lower_bound(tick); it != states_.end(); )
+            it = states_.erase(it);
+        for (auto it = remote_used_.lower_bound(tick); it != remote_used_.end(); )
+            it = remote_used_.erase(it);
+
+        while (current_.tick < previous_target) simulate_one(current_.tick + 1);
+    }
+
+    void trim_history() {
+        while (states_.size() > capacity_) states_.erase(states_.begin());
+
+        // Inputs older than the oldest retained transition are no longer useful.
+        if (!states_.empty()) {
+            const std::int64_t oldest_state = states_.begin()->first;
+            for (auto it = remote_used_.begin(); it != remote_used_.end() && it->first <= oldest_state; )
+                it = remote_used_.erase(it);
+        }
+    }
+
+    std::size_t capacity_;
+    State current_{};
+    std::map<std::int64_t, State> states_;
+    std::map<std::int64_t, Input> local_;
+    std::map<std::int64_t, Input> remote_;
+    std::map<std::int64_t, Input> remote_used_;
+    std::int64_t confirmed_before_ = -1;
+};
+
+State authoritative_run(
+    std::int64_t ticks,
+    const std::map<std::int64_t, Input>& a,
+    const std::map<std::int64_t, Input>& b
+) {
+    State s{};
+    for (std::int64_t t = 1; t <= ticks; ++t) {
+        const Input ia = a.contains(t) ? a.at(t) : Input{};
+        const Input ib = b.contains(t) ? b.at(t) : Input{};
+        s = step(s, ia, ib);
+    }
+    return s;
+}
+
+int main() {
+    std::map<std::int64_t, Input> local{
+        {1,{1,false}}, {2,{1,false}}, {3,{0,true}}, {4,{-1,false}}, {5,{0,true}}
+    };
+    std::map<std::int64_t, Input> remote_truth{
+        {1,{-1,false}}, {2,{-1,false}}, {3,{1,false}}, {4,{1,true}}, {5,{0,false}}
+    };
+
+    const State truth = authoritative_run(5, local, remote_truth);
+
+    RollbackPeer peer(16);
+    for (const auto& [t,in] : local) peer.set_local_input(t,in);
+
+    // Tick 1 remote input arrives in time. Ticks 2..5 are initially predicted
+    // by repeating that last known input.
+    peer.receive_remote_input(1, remote_truth.at(1));
+    peer.advance_to(5);
+    const auto speculative_hash = peer.state_hash();
+    require(!(peer.state() == truth), "prediction should differ before late packets arrive");
+
+    // A late authoritative tick 2 happens to match the repeated prediction.
+    require(!peer.receive_remote_input(2, remote_truth.at(2)),
+            "matching late input should not require rollback");
+
+    // Tick 3 differs from prediction, so the peer restores tick 2 and resimulates.
+    require(peer.receive_remote_input(3, remote_truth.at(3)),
+            "mispredicted past input must trigger rollback");
+    require(peer.state_hash() != speculative_hash,
+            "rollback should change the speculative result in this scenario");
+
+    // Later authoritative inputs can trigger further resimulation.
+    require(peer.receive_remote_input(4, remote_truth.at(4)),
+            "tick 4 mismatch must trigger rollback");
+    require(peer.receive_remote_input(5, remote_truth.at(5)),
+            "tick 5 mismatch must trigger rollback");
+
+    require(peer.state() == truth,
+            "after all authoritative inputs arrive, rollback state must equal direct simulation");
+    require(peer.state_hash() == hash_state(truth),
+            "deterministic state hash must agree with authoritative run");
+
+    // Duplicate packet: application layer remains idempotent.
+    require(!peer.receive_remote_input(5, remote_truth.at(5)),
+            "duplicate authoritative input must be harmless");
+
+    // History overflow is an explicit policy, not silent corruption.
+    RollbackPeer tiny(3);
+    tiny.set_local_input(1,{1,false});
+    tiny.receive_remote_input(1,{0,false});
+    tiny.advance_to(8);
+    bool rejected_old = false;
+    try {
+        tiny.receive_remote_input(2,{1,false});
+    } catch (const std::runtime_error&) {
+        rejected_old = true;
+    }
+    require(rejected_old, "too-old correction must fail visibly when history is gone");
+
+    std::cout << "rollback netcode: 7 suites PASS\n";
+}
+~~~
+
+This witness does not implement transport, congestion control, authentication, packet redundancy, anti-cheat, floating-point cross-platform determinism, snapshot compression, or lag-compensated hit validation. It makes the simulation/history contract reconstructable before those layers are added.
+
+**Reconstruct without reading:** if a wrong tick-101 prediction is discovered after simulating tick 105, name the snapshot restored and every tick replayed. Then distinguish local prediction, rollback, server reconciliation, snapshot interpolation, and lag compensation.
 
 ### A reconnect window needs an ownership policy
 
