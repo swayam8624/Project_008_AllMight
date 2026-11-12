@@ -14,6 +14,7 @@ VOL = ROOT / "Continuous Notes"
 FOUNDATIONS = VOL / "Computing Foundations - From Bits to C++ and Systems APIs.md"
 GRAPHICS = VOL / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
 ENGINE = VOL / "Game Engine - From First Frame to Living Worlds.md"
+PHASE28 = ROOT / "Supplementary" / "Phase 28 - Emulator OS Network Crypto Reconstruction.md"
 LAB = ROOT / "tools" / "labs" / "basis_measurement_lab.cpp"
 BASE = "89c386f25b361685051bb035799014c8875487cd"
 
@@ -96,7 +97,13 @@ def main() -> None:
 
     checked = 0
     for historical_path, destination_path in {**RETIRED, **BASE_CANONICAL}.items():
-        prove_preserved(git_show(BASE, historical_path), read(destination_path), historical_path)
+        destination = read(destination_path)
+        if historical_path.endswith("Systems - From Cartridge Bytes to Reproducible State.md"):
+            # The final consolidation exposed a small set of genuinely missing
+            # systems/crypto lines. They are restored in the active Phase-28
+            # reconstruction supplement and verified together with Engine.
+            destination += "\n" + read(PHASE28)
+        prove_preserved(git_show(BASE, historical_path), destination, historical_path)
         checked += 1
 
     basis = read(LAB).rstrip()
