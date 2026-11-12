@@ -17,7 +17,11 @@ def insert_or_refresh_before(text, anchor, marker, body):
             start -= 1
         end = text.index(anchor, start)
         return text[:start] + "\n\n" + normalized + "\n\n" + text[end:]
-    return text.replace(anchor, normalized + "\n\n" + anchor, 1)
+    idx = text.index(anchor)
+    start = idx
+    while start > 0 and text[start - 1] == "\n":
+        start -= 1
+    return text[:start] + "\n\n" + normalized + "\n\n" + text[idx:]
 
 text = NOTE.read_text()
 
