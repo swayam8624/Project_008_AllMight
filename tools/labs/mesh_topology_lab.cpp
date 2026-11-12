@@ -32,7 +32,6 @@ Topology build_topology(int vertex_count,const std::vector<Face>& faces){
     out.faces=faces;
 
     std::map<std::pair<int,int>,std::vector<int>> undirected;
-    std::map<std::pair<int,int>,int> directed;
 
     for(std::size_t fi=0;fi<faces.size();++fi){
         const auto f=faces[fi].v;
@@ -45,9 +44,10 @@ Topology build_topology(int vertex_count,const std::vector<Face>& faces){
             out.halfedges.push_back({a,b,static_cast<int>(fi),-1});
             const auto key=std::minmax(a,b);
             undirected[{key.first,key.second}].push_back(hi);
-
-            const auto d=std::make_pair(a,b);
-            require(directed.emplace(d,hi).second,"duplicate directed edge: duplicate face or orientation inconsistency");
+            // Do not reject repeated directed incidence here. Three or more
+            // faces can share an undirected edge, in which case duplicate
+            // directions are unavoidable. Collect the complete incidence first
+            // and classify manifoldness/orientation below.
         }
     }
 
