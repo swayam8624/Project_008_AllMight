@@ -74,3 +74,34 @@ tools/labs/gaussian_projection_reference_lab.cpp:
 This is an independent CPU reference layer. It does not prove the current Metal/CUDA/Vulkan Gaussian implementation.
 
 Related: [[Radiance fields and Gaussian splatting]], [[Captured-world similarity alignment]], [[Rendering history validity]].
+
+## Conic inversion, tile duplication and depth order
+
+Projection produces a 2D covariance, but a splat rasterizer normally consumes its inverse as a **conic**. For
+
+$$
+\Sigma=
+\begin{bmatrix}
+a&b\\
+b&c
+\end{bmatrix},
+\qquad
+\det\Sigma=ac-b^2>0,
+$$
+
+the inverse is
+
+$$
+\Sigma^{-1}
+=
+\frac{1}{ac-b^2}
+\begin{bmatrix}
+c&-b\\
+-b&a
+\end{bmatrix}.
+$$
+
+For a pixel displacement $d=(\Delta x,\Delta y)$, the Mahalanobis exponent uses $d^T\Sigma^{-1}d$. A conservative screen radius can be built from the largest eigenvalue of $\Sigma$; the resulting box determines which tiles receive a duplicate splat record. Those records must then be grouped by tile and ordered front-to-back before alpha compositing.
+
+`tools/labs/gaussian_tile_conic_lab.cpp` now verifies the 2D inverse, positive conic evaluation, eigenvalue footprint bound, conservative tile duplication, stable tile/depth ordering, and the front-to-back transmittance identity. GPU radix sorting and exact ellipse-tile rejection remain separate native-performance layers.
+
