@@ -67879,13 +67879,13 @@ This supplement draws on the completed extracted points only where their linked 
 
 The Graphics volume's perspective-interpolation experiment uses a vertex buffer, pipeline, color attachment, submission and readback; the Mathematics volume supplies the exact reference value. Neither establishes correctness if the engine rewrites the vertex data before the GPU has read it or destroys the attachment while a command buffer still refers to it. Numerical correctness, GPU memory visibility and backing-object lifetime are three different promises. A barrier may order accesses without extending object lifetime; keeping an allocation alive does not automatically make a GPU write visible to a CPU read.
 
-Give each submitted unit of GPU work a monotonically increasing completion value \(s\). For every backing allocation, track the largest submitted serial that may reference it. The retirement invariant is
+Give each submitted unit of GPU work a monotonically increasing completion value $s$. For every backing allocation, track the largest submitted serial that may reference it. The retirement invariant is
 
-\[
+$
 \operatorname{completedSerial}\geq\operatorname{lastSubmittedUse}
 \quad\Longrightarrow\quad
 \text{reclamation may proceed}.
-\]
+$
 
 The converse is equally important: before that condition, destruction is forbidden. Logical identity has another lifetime: a slot and generation pair names one incarnation of a resource. Reassigning slot 17 must change its generation, so an old handle does not silently bind a new object. Logical invalidation is immediate; physical reclamation can be delayed. The following C++20 program models exactly those transitions. It deliberately uses CPU allocations to permit deterministic testing without assuming a Vulkan or Metal device is available.
 
