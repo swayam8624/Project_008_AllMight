@@ -78756,14 +78756,14 @@ The event-step implementation above has two candidate-generation modes: the exha
 
 The implementation owns a mutable array of disks for the *duration of a step*. A caller passes the initial scene by value into each test path, so the exhaustive pass cannot mutate the swept pass's input. Both scenes are advanced by the same time interval, with the same restitution coefficient and iteration/event budgets. After the runs, the test compares the number of impact events, number of event batches, simulated duration, stable body identities, positions and velocities. The comparisons use a declared numerical tolerance rather than requiring bitwise equality; the two paths can evaluate candidate pairs in different but deterministic orders, and coupled iterative solvers may then have small order-dependent rounding differences. A discrepancy larger than tolerance is a failure requiring an execution trace, not permission to widen tolerance until it passes.
 
-The next code is a **complete standalone regression** against the already-shown event stepper. It includes that source with its demonstration \`main\` disabled, constructs four explicit scenes, then generates 2,000 seeded isolated impact scenes spanning masses, closing speeds and restitution. The RNG seed makes failures reproducible. It is intentionally kept in the continuous teaching volume, with the checked repository source at [the differential laboratory](../tools/labs/disk_event_broadphase_differential_lab.cpp); the reader should be able to compile it without hunting through a supplementary explanation.
+The next code is a **complete standalone regression** against the already-shown event stepper. It includes that source with its demonstration `main` disabled, constructs four explicit scenes, then generates 2,000 seeded isolated impact scenes spanning masses, closing speeds and restitution. The RNG seed makes failures reproducible. It is intentionally kept in the continuous teaching volume, with the checked repository source at [the differential laboratory](../tools/labs/disk_event_broadphase_differential_lab.cpp); the reader should be able to compile it without hunting through a supplementary explanation.
 
-\`\`\`sh
+```sh
 c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_diff
 /tmp/disk_diff
-\`\`\`
+```
 
-\`\`\`cpp
+```cpp
 // Compare exhaustive and swept candidate generation through the SAME event solver.
 // This tests source-level behavior but does not replace native Kairo integration.
 // c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_diff && /tmp/disk_diff
@@ -78816,7 +78816,7 @@ int main() {
     }
     std::cout<<"event broadphase differential: 4 scenes + 2000 seeded pairs PASS\n";
 }
-\`\`\`
+```
 
 **Execution trace for the case that matters most.** For the three-disk chain, A initially moves right toward B, while B and C start stationary. The first event transfers speed from A to B. The simulation then computes another broadphase *for the remaining interval*, so B's newly nonzero velocity creates a future candidate against C. If the broadphase was cached from the first frame state, that pair could be missing because B had no prior swept distance. The exhaustive and swept simulation outcomes should therefore agree on the two event batches and on the final velocities, not just on the initial pair A–B.
 
