@@ -1542,6 +1542,97 @@ To see the weighting issue without a full rasterizer, consider two endpoints wit
 
 This formula requires a valid projected configuration and clipping policy. A denominator near zero or a primitive crossing the camera's projective boundary cannot be repaired by casually dividing. The projective story below explains why.
 
+### The camera changes the meaning of interpolation: reconstruct the invariant before writing a shader
+
+The triangle's affine weights above describe a point on a flat surface. A camera first projects each corner through a homogeneous clip coordinate \((x_c,y_c,z_c,w_c)\), then maps \((x_c/w_c,y_c/w_c)\) into the viewport. The projection is not an affine map when the vertices have different \(w_c\). Therefore the barycentric weights obtained from **screen-space** edge functions do not generally equal the weights of the corresponding 3D surface point. Interpolating UV coordinates, normals, colors, or any other surface attribute using those raw screen weights produces the classic warped-texture failure.
+
+Let the original surface point have affine weights \(\alpha_i\) and vertex clip positions \(\mathbf c_i=(x_i,y_i,z_i,w_i)\), with \(\sum_i\alpha_i=1\). Because a projective transform is linear in homogeneous coordinates, its clip coordinate is \(\mathbf c=\sum_i\alpha_i\mathbf c_i\). The projected screen point satisfies \(x=\big(\sum_i\alpha_i x_i\big)/\big(\sum_i\alpha_i w_i\big)\). A screen-space interpolation can instead reconstruct that same point using weights \(\lambda_i\) on projected vertices \((x_i/w_i,y_i/w_i)\). Setting \(W=\sum_j\alpha_jw_j\) shows that \(\lambda_i=\alpha_iw_i/W\), since \(\sum_i\lambda_i=1\). Solving for the original weights gives
+
+\[
+\boxed{\alpha_i=\frac{\lambda_i/w_i}{\sum_j\lambda_j/w_j}}.
+\]
+
+If a scalar attribute \(a_i\) varies affinely over the surface, then \(a(P)=\sum_i\alpha_i a_i\), hence
+
+\[
+\boxed{a(P)=\frac{\sum_i\lambda_i a_i/w_i}{\sum_i\lambda_i/w_i}}.
+\]
+
+The numerator is the interpolated quantity \(a/w\); the denominator is the interpolated reciprocal clip \(w\). These two quantities are affine in screen coordinates; their ratio reconstructs the original surface interpolation. This is **perspective-correct interpolation**, not an optional visual enhancement. For a direction like a normal, interpolate its components under the declared convention and normalize afterward when the shading model requires unit length. Do not apply the same formula blindly to the depth buffer: the device's post-divide depth \(z_c/w_c\) has its own screen-plane interpolation rule. An API's interpolation qualifiers can explicitly request different modes, including flat interpolation; an implementation must map the formula to those semantics.
+
+For a numerical oracle, use the projected triangle \(A=(0,0)\), \(B=(4,0)\), \(C=(0,4)\), sampled at \(P=(1,1)\). Its screen barycentrics are \((1/2,1/4,1/4)\). Give the vertices clip \(w=(1,2,4)\) and scalar attributes \(a=(0,1,1)\). Naive interpolation gives \(1/2\), but perspective reconstruction gives
+
+\[
+a(P)=\frac{(1/4)/2+(1/4)/4}{(1/2)/1+(1/4)/2+(1/4)/4}
+=\frac{3/16}{11/16}=\boxed{\frac3{11}}.
+\]
+
+That discrepancy is not rounding noise; the two calculations describe different parameterizations of the surface.
+
+The following complete C++20 oracle computes the interpolated value using a signed triangle determinant. This reference deliberately uses double precision to diagnose geometry and does not pretend to reproduce a GPU's fixed-point coverage rules. The projected triangle must be nondegenerate, all three \(w_i\) must be finite and nonzero, and the rational denominator must not vanish. Clipping against the appropriate homogeneous frustum precedes this operation in a real rasterizer; near-plane crossings cannot safely be handled by dividing arbitrary negative and positive \(w\) values first.
+
+\`\`\`cpp
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <stdexcept>
+
+struct ProjectedVertex {
+    double x;       // Window-coordinate X, using one consistent viewport convention.
+    double y;       // Window-coordinate Y.
+    double clipW;   // Homogeneous clip-space W, before perspective division.
+    double value;   // One surface-affine attribute, e.g. a texture U coordinate.
+};
+
+double edge(double ax, double ay, double bx, double by, double px, double py) {
+    return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+}
+
+double perspectiveAttribute(
+    const std::array<ProjectedVertex, 3>& v, double px, double py)
+{
+    const double twiceArea = edge(v[0].x, v[0].y,
+                                  v[1].x, v[1].y, v[2].x, v[2].y);
+    if (!std::isfinite(twiceArea) || std::abs(twiceArea) < 1e-12)
+        throw std::domain_error("Degenerate projected triangle");
+
+    const std::array<double, 3> lambda{
+        edge(v[1].x, v[1].y, v[2].x, v[2].y, px, py) / twiceArea,
+        edge(v[2].x, v[2].y, v[0].x, v[0].y, px, py) / twiceArea,
+        edge(v[0].x, v[0].y, v[1].x, v[1].y, px, py) / twiceArea
+    };
+
+    double numerator = 0.0;
+    double denominator = 0.0;
+    for (std::size_t i = 0; i != v.size(); ++i) {
+        if (!std::isfinite(v[i].clipW) || v[i].clipW == 0.0)
+            throw std::domain_error("Invalid homogeneous W");
+        const double weightedReciprocalW = lambda[i] / v[i].clipW;
+        numerator += weightedReciprocalW * v[i].value;
+        denominator += weightedReciprocalW;
+    }
+    if (!std::isfinite(denominator) || std::abs(denominator) < 1e-12)
+        throw std::domain_error("Unstable reciprocal-W denominator");
+    return numerator / denominator;
+}
+
+int main() {
+    constexpr std::array<ProjectedVertex, 3> triangle{{
+        {0.0, 0.0, 1.0, 0.0},
+        {4.0, 0.0, 2.0, 1.0},
+        {0.0, 4.0, 4.0, 1.0}
+    }};
+    assert(std::abs(perspectiveAttribute(triangle, 1.0, 1.0) - 3.0/11.0) < 1e-12);
+
+    // Under a constant clip W, projective interpolation reduces to affine interpolation.
+    auto equalW = triangle;
+    for (auto& vertex : equalW) vertex.clipW = 1.0;
+    assert(std::abs(perspectiveAttribute(equalW, 1.0, 1.0) - 0.5) < 1e-12);
+}
+\`\`\`
+
+Compile with \`c++ -std=c++20 -O2 -Wall -Wextra -pedantic\`. A debug assertion depends on whether \`NDEBUG\` is defined; preserve assertions for this check. Additional tests should change triangle winding without changing the computed attribute, approach a degenerate projected triangle and demand an explicit rejection, and compare many nondegenerate samples with a shader configured for smooth perspective interpolation. Coverage ownership and interpolation correctness are separate tests: one can pass while the other fails. This is the mathematical bridge to the covered-sample and shader-ABI contracts in the Graphics and Game Engine volumes.
+
 ## Weighted points lead from affine geometry to collision shapes
 
 We have now met three kinds of combinations. They answer different questions:
