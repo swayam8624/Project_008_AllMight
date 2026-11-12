@@ -80887,6 +80887,344 @@ In *real visual-inertial odometry*, scene landmarks are usually not surveyed in 
 
 In *XR*, the pose must also be meaningful in the runtime's declared reference space at the predicted display time. Prediction consumes a timestamped tracking state and requested future time; the renderer consumes predicted view transforms, while the compositor may obtain a later sample for reprojection. A pose estimate with a missing time basis, wrong extrinsic or stale spatial origin can make a mathematically correct rasterizer appear to slip against the real world. Therefore algorithmic accuracy, hardware timing, optical/image quality and human task performance are separate verification layers. The next calibration section returns to exactly that problem rather than presenting the small laboratory as the end of XR tracking.
 
+<!-- Bible-final-pass: XR 3D VIO spine -->
+#### From raw 3-D IMU samples to the pose constraint used by VIO
+
+The planar EKF above is useful because every state variable and Jacobian can be inspected. A real headset, however, rotates around all three axes and accelerates in three dimensions. We therefore need the next bridge: not a second list of VIO vocabulary, but the exact path from high-rate IMU samples to a constraint that a filter or sliding-window optimizer can use.
+
+Keep the frame convention from the previous section. Let R_i be body-to-world orientation at keyframe i, p_i world position, v_i world velocity, and g world gravity. The IMU reports
+
+~~~text
+omega_m = omega + b_g + n_g
+f_m     = R^T (a_world - g) + b_a + n_a
+~~~
+
+The accelerometer measures specific force, not world acceleration. That one sentence explains a common debugging surprise: a level, stationary accelerometer can report roughly +9.81 m/s^2 along its upward body axis. After rotating that specific force into the world and adding world gravity, the net translational acceleration is zero.
+
+If every IMU sample were integrated from the beginning of the trajectory each time an optimizer changed an old pose, optimization would be wasteful. **Preintegration** compresses all IMU samples between two keyframes into a relative motion summary.
+
+For samples between i and j, define three quantities in frame i:
+
+~~~text
+Delta R_ij   relative rotation
+Delta v_ij   gravity-free relative velocity change
+Delta p_ij   gravity-free relative position change
+~~~
+
+Under a zero-order-hold discretization with one sample interval dt,
+
+~~~text
+Delta R <- Delta R Exp((omega_m - b_g) dt)
+
+a_local <- Delta R_before (f_m - b_a)
+
+Delta p <- Delta p + Delta v dt + 1/2 a_local dt^2
+Delta v <- Delta v + a_local dt
+~~~
+
+The order matters. The force sample for that interval is rotated by the relative orientation at the start of the interval in this simple discretization.
+
+After the whole interval has been compressed, the later navigation state is predicted by
+
+~~~text
+R_j = R_i Delta R_ij
+
+v_j = v_i + g Delta t + R_i Delta v_ij
+
+p_j = p_i + v_i Delta t
+            + 1/2 g Delta t^2
+            + R_i Delta p_ij
+~~~
+
+Notice where gravity appears: not inside the stored preintegrated delta above, but when the delta is connected to the world state. This separation is what lets one relative IMU constraint be reused while the optimizer changes R_i, p_i, and v_i.
+
+Two consecutive preintegrated intervals also compose without replaying the raw samples. If a is i->j and b is j->k,
+
+~~~text
+Delta R_ik = Delta R_ij Delta R_jk
+
+Delta v_ik = Delta v_ij
+           + Delta R_ij Delta v_jk
+
+Delta p_ik = Delta p_ij
+           + Delta v_ij Delta t_jk
+           + Delta R_ij Delta p_jk
+~~~
+
+This is not merely an optimization trick. It is a testable algebraic contract. Integrating 200 samples in one pass should agree with integrating the first 100, integrating the second 100 in the intermediate frame, and composing the two deltas.
+
+##### Bias changes the relative motion, so production preintegration carries bias sensitivity
+
+The compact recurrence above assumes a particular gyro bias b_g and accelerometer bias b_a. If the optimizer later changes those bias estimates, the preintegrated delta is no longer exactly correct.
+
+A production preintegrator therefore carries first-order Jacobians such as
+
+~~~text
+d(Delta R) / d b_g
+d(Delta v) / d b_g
+d(Delta v) / d b_a
+d(Delta p) / d b_g
+d(Delta p) / d b_a
+~~~
+
+and a covariance for the preintegrated measurement. Small bias changes can then correct the delta without replaying every IMU sample. Large changes may require reintegration. The exact Jacobian recurrence depends on the left/right perturbation convention and SO(3) Jacobians; copying formulas from a paper while using the opposite rotation convention is a reliable way to build a filter that looks plausible but is inconsistent.
+
+The executable witness below intentionally stops one level before that production complexity. It verifies the 3-D geometry first: SO(3) exp/log, a stationary gravity-cancellation case, constant yaw integration, interval composition, and visible drift when a known gyro bias is ignored.
+
+
+~~~python
+#!/usr/bin/env python3
+"""Deterministic 3-D IMU preintegration witness.
+
+Scope:
+- SO(3) exponential/logarithm
+- zero-order-hold IMU preintegration over many high-rate samples
+- composition of preintegrated intervals
+- reconstruction of the later navigation state with gravity
+- explicit gyro/accelerometer bias handling
+
+This is not a complete VIO/SLAM estimator: it does not include visual residuals,
+bias Jacobians, covariance propagation, marginalization, loop closure, or
+camera/IMU calibration estimation.
+"""
+from __future__ import annotations
+from dataclasses import dataclass
+import math
+import numpy as np
+
+EPS = 1e-10
+GRAVITY = np.array([0.0, 0.0, -9.81])
+
+
+def hat(v: np.ndarray) -> np.ndarray:
+    x, y, z = v
+    return np.array([[0.0, -z, y], [z, 0.0, -x], [-y, x, 0.0]])
+
+
+def so3_exp(phi: np.ndarray) -> np.ndarray:
+    theta = float(np.linalg.norm(phi))
+    W = hat(phi)
+    if theta < 1e-8:
+        return np.eye(3) + W + 0.5 * (W @ W)
+    a = math.sin(theta) / theta
+    b = (1.0 - math.cos(theta)) / (theta * theta)
+    return np.eye(3) + a * W + b * (W @ W)
+
+
+def so3_log(R: np.ndarray) -> np.ndarray:
+    cos_theta = float(np.clip((np.trace(R) - 1.0) * 0.5, -1.0, 1.0))
+    theta = math.acos(cos_theta)
+    if theta < 1e-8:
+        return 0.5 * np.array([
+            R[2, 1] - R[1, 2],
+            R[0, 2] - R[2, 0],
+            R[1, 0] - R[0, 1],
+        ])
+    if abs(math.pi - theta) < 1e-5:
+        raise ValueError("compact logarithm intentionally excludes the near-pi branch")
+    return theta / (2.0 * math.sin(theta)) * np.array([
+        R[2, 1] - R[1, 2],
+        R[0, 2] - R[2, 0],
+        R[1, 0] - R[0, 1],
+    ])
+
+
+@dataclass
+class Delta:
+    dR: np.ndarray
+    dv: np.ndarray
+    dp: np.ndarray
+    dt: float
+
+
+def preintegrate(
+    gyros: np.ndarray,
+    accels: np.ndarray,
+    dt: float,
+    gyro_bias: np.ndarray,
+    accel_bias: np.ndarray,
+) -> Delta:
+    if gyros.shape != accels.shape or gyros.ndim != 2 or gyros.shape[1] != 3:
+        raise ValueError("gyros and accels must both have shape (N,3)")
+    if dt <= 0.0 or not np.isfinite(dt):
+        raise ValueError("dt must be finite and positive")
+
+    dR = np.eye(3)
+    dv = np.zeros(3)
+    dp = np.zeros(3)
+
+    for wm, fm in zip(gyros, accels):
+        omega = wm - gyro_bias
+        specific_force = fm - accel_bias
+
+        # The force during this interval is expressed through the orientation
+        # at the start of the interval: a zero-order-hold discretization.
+        a0 = dR @ specific_force
+        dp = dp + dv * dt + 0.5 * a0 * dt * dt
+        dv = dv + a0 * dt
+        dR = dR @ so3_exp(omega * dt)
+
+    return Delta(dR=dR, dv=dv, dp=dp, dt=len(gyros) * dt)
+
+
+def compose(a: Delta, b: Delta) -> Delta:
+    """Compose interval i->j with j->k into i->k."""
+    return Delta(
+        dR=a.dR @ b.dR,
+        dv=a.dv + a.dR @ b.dv,
+        dp=a.dp + a.dv * b.dt + a.dR @ b.dp,
+        dt=a.dt + b.dt,
+    )
+
+
+def apply_delta(
+    R_i: np.ndarray,
+    p_i: np.ndarray,
+    v_i: np.ndarray,
+    delta: Delta,
+    gravity: np.ndarray = GRAVITY,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Recover state j from state i and a preintegrated interval."""
+    R_j = R_i @ delta.dR
+    v_j = v_i + gravity * delta.dt + R_i @ delta.dv
+    p_j = (
+        p_i
+        + v_i * delta.dt
+        + 0.5 * gravity * delta.dt * delta.dt
+        + R_i @ delta.dp
+    )
+    return R_j, p_j, v_j
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise AssertionError(message)
+
+
+def main() -> None:
+    # 1. Exp/log and orthogonality are checked independently.
+    phi = np.array([0.2, -0.1, 0.3])
+    R = so3_exp(phi)
+    np.testing.assert_allclose(R.T @ R, np.eye(3), atol=1e-12)
+    np.testing.assert_allclose(so3_log(R), phi, atol=1e-11)
+
+    # 2. A stationary, level IMU measures +g specific force in body z.
+    # Gravity is added only when the preintegrated delta is applied.
+    dt = 0.005
+    n = 200
+    gyros = np.zeros((n, 3))
+    accels = np.tile(np.array([0.0, 0.0, 9.81]), (n, 1))
+    zero = np.zeros(3)
+    stationary = preintegrate(gyros, accels, dt, zero, zero)
+    R1, p1, v1 = apply_delta(np.eye(3), zero, zero, stationary)
+    np.testing.assert_allclose(R1, np.eye(3), atol=1e-12)
+    np.testing.assert_allclose(v1, zero, atol=1e-10)
+    np.testing.assert_allclose(p1, zero, atol=1e-10)
+
+    # 3. Constant yaw rate integrates on SO(3), not by adding matrix entries.
+    yaw_rate = 0.6
+    gyros_yaw = np.tile(np.array([0.0, 0.0, yaw_rate]), (n, 1))
+    yaw_delta = preintegrate(gyros_yaw, np.zeros_like(gyros_yaw), dt, zero, zero)
+    expected = so3_exp(np.array([0.0, 0.0, yaw_rate * n * dt]))
+    np.testing.assert_allclose(yaw_delta.dR, expected, atol=2e-12)
+
+    # 4. Splitting an interval and composing it must agree with one full pass.
+    half_a = preintegrate(gyros_yaw[:100], accels[:100], dt, zero, zero)
+    half_b = preintegrate(gyros_yaw[100:], accels[100:], dt, zero, zero)
+    joined = compose(half_a, half_b)
+    full = preintegrate(gyros_yaw, accels, dt, zero, zero)
+    np.testing.assert_allclose(joined.dR, full.dR, atol=2e-12)
+    np.testing.assert_allclose(joined.dv, full.dv, atol=2e-12)
+    np.testing.assert_allclose(joined.dp, full.dp, atol=2e-12)
+    require(abs(joined.dt - full.dt) < EPS, "composed time interval must match")
+
+    # 5. Bias is part of the state. Ignoring a known gyro bias creates drift.
+    true_bias = np.array([0.0, 0.0, 0.03])
+    biased_measurements = np.tile(np.array([0.0, 0.0, 0.2]) + true_bias, (n, 1))
+    corrected = preintegrate(biased_measurements, np.zeros_like(biased_measurements), dt, true_bias, zero)
+    uncorrected = preintegrate(biased_measurements, np.zeros_like(biased_measurements), dt, zero, zero)
+    correct_angle = np.linalg.norm(so3_log(corrected.dR))
+    wrong_angle = np.linalg.norm(so3_log(uncorrected.dR))
+    require(abs(correct_angle - 0.2) < 1e-10, "bias-corrected yaw must match truth")
+    require(wrong_angle - correct_angle > 0.02, "ignored gyro bias must create visible drift")
+
+    print("3D IMU preintegration: 5 suites PASS")
+
+
+if __name__ == "__main__":
+    main()
+~~~
+
+This witness reaches reconstructable depth for the **3-D inertial propagation and preintegration subproblem**. It does not claim that a full VIO system is finished.
+
+##### How the preintegrated delta enters a sliding-window optimizer
+
+A keyframe optimizer keeps several camera/IMU states. Between adjacent states it adds an IMU residual. In simplified form,
+
+~~~text
+r_R = Log( Delta R_ij^-1 (R_i^T R_j) )
+
+r_v = R_i^T (v_j - v_i - g Delta t) - Delta v_ij
+
+r_p = R_i^T (p_j - p_i - v_i Delta t
+             - 1/2 g Delta t^2) - Delta p_ij
+~~~
+
+The rotation residual is a three-vector in a tangent space, not nine elementwise matrix differences. Velocity and position residuals are expressed in the same local frame as the preintegrated quantities. Bias random-walk residuals connect b_g and b_a across the interval.
+
+Stack those residuals with visual reprojection residuals. Then a Gauss-Newton or Levenberg-Marquardt iteration repeatedly:
+
+1. evaluates residuals at the current state;
+2. builds Jacobians using the declared perturbation convention;
+3. whitens residuals using their covariance or information;
+4. applies a robust loss where justified;
+5. solves the sparse normal-equation or square-root system;
+6. retracts rotation increments back onto SO(3);
+7. repeats until a defensible stopping rule is met.
+
+The word **factor graph** is simply a useful representation of this sparse dependency structure. Variable nodes hold unknown poses, velocities, biases, landmarks, calibration values, and possibly other states. Factor nodes hold measurements or priors that depend on a small subset of those variables. The graph does not solve the problem by itself; it exposes which blocks of the Jacobian can be nonzero.
+
+##### Filter VIO and sliding-window VIO remove old information differently
+
+An MSCKF-style filter keeps a state estimate and covariance, augments it with a short history of camera poses, and uses feature tracks without permanently adding every feature as a state. Unknown feature position can be eliminated from the measurement constraint, leaving a residual that updates the navigation state.
+
+A sliding-window optimizer instead keeps a recent set of states and often selected landmarks, then jointly minimizes visual and inertial residuals. When the window grows, old variables are **marginalized**. Marginalization does not mean deleting them and forgetting their information; their local information is folded into a prior on the variables that remain.
+
+That prior is tied to the linearization point used when marginalization happened. Repeatedly treating it as if it were a fresh nonlinear measurement can create inconsistency. This is one reason VIO papers discuss first-estimate Jacobians, observability, square-root marginalization, or other consistency choices.
+
+##### Observability tells us which errors measurements can actually remove
+
+With only inertial data, position and velocity drift because small bias errors integrate over time. Vision constrains relative motion, but not every global degree of freedom is automatically observable.
+
+In a typical monocular visual-inertial system with gravity estimated, global translation and global yaw remain gauge freedoms unless an external reference fixes them. Scale becomes observable through the metric accelerometer only when motion provides enough excitation and the calibration/model is adequate. A stationary or weakly excited initialization can therefore be mathematically ambiguous even with perfectly written code.
+
+This changes how we test the estimator. A singular direction caused by a real gauge freedom should not be “fixed” by secretly adding numerical damping and then presented as newly observed information. Choose a gauge explicitly, add a stated prior, or compare quantities invariant to that gauge.
+
+##### SLAM adds map identity, loop closure, and relocalization
+
+VIO answers: “How did I move recently?” SLAM also asks: “Have I been here before, and can old map evidence reduce accumulated drift?”
+
+A loop-closure pipeline needs a place-recognition candidate, geometric verification, a constraint between distant poses, and an optimization strategy that can distribute the correction without tearing the local map apart. Relocalization is related but asks for the current camera pose in an existing map after tracking was lost.
+
+A false loop is usually more damaging than a missed loop because it adds a strong incorrect global constraint. Descriptor similarity alone is therefore not enough; geometric verification and robust graph optimization are part of the correctness path.
+
+##### XR adds one final state: the pose at display time
+
+Even a mathematically consistent VIO estimate is usually an estimate at a sensor timestamp. The renderer needs a pose for predicted display time. Keep those operations separate:
+
+~~~text
+sensor samples
+    -> estimator state at estimation time
+    -> short-horizon prediction to display time
+    -> render view
+    -> optional later compositor reprojection
+    -> photons
+~~~
+
+Prediction should propagate not only a pose value but also an age/uncertainty story. A six-millisecond prediction during smooth head motion is a different evidence regime from a long prediction during an abrupt turn. OpenXR's predicted display time is therefore part of the pose contract, not a convenience timestamp.
+
+**Reconstruct without reading:** derive the three preintegration recurrences, derive the state reconstruction equations containing gravity, compose two preintegrated intervals, explain why bias Jacobians are needed, write the three simplified IMU residuals, and distinguish MSCKF elimination, sliding-window marginalization, loop closure, relocalization, and display-time prediction. If those five ideas collapse into the word “tracking,” the pipeline is not yet understood.
+
 ### Calibration errors can masquerade as rendering errors
 
 Calibration includes camera intrinsics, distortion, camera-to-IMU extrinsics, eye-camera geometry, display-to-eye geometry and time offsets between clocks.
@@ -81001,6 +81339,362 @@ NeRF and Gaussian splatting are landmarks, but neural rendering is a family of l
 A learned component can replace or augment geometry, appearance, lighting, visibility/transport, sampling, denoising, image reconstruction, compression, animation, editing or generation.
 
 This classification predicts failure modes. A neural texture can preserve explicit mesh geometry while changing appearance. A radiance field can synthesize views with ambiguous surface location. A denoiser can remove Monte Carlo noise while smearing temporal detail.
+
+<!-- Bible-final-pass: neural volume rendering -->
+## A NeRF pixel is an integral before it is a neural-network output
+
+The phrase “NeRF uses an MLP to synthesize new views” skips the part that makes the method understandable. The network does **not** directly have to output a finished pixel. It represents a field that is sampled along a camera ray, and a differentiable volume-rendering equation turns those samples into the pixel used by the loss.
+
+Let a camera ray be
+
+~~~text
+r(t) = o + t d
+~~~
+
+with origin o, direction d, and distance parameter t. At a sample position x = r(t), a basic NeRF-style field predicts
+
+~~~text
+sigma(x) >= 0              volume density
+c(x, d)                     emitted/view-dependent RGB color
+~~~
+
+Density says how quickly light traveling along the ray is terminated. Color says what radiance is contributed if the ray terminates there.
+
+### Continuous transmittance explains the discrete alpha formula
+
+Suppose density along the ray is sigma(s). The probability-like fraction of light that survives from the ray start t_n to a later point t is the **transmittance**
+
+~~~text
+T(t) = exp( - integral[t_n to t] sigma(s) ds )
+~~~
+
+The rendered color is
+
+~~~text
+C(r) = integral T(t) sigma(r(t)) c(r(t), d) dt
+       + T(t_f) C_background
+~~~
+
+This equation says something simple: a sample contributes strongly only if the ray first survives to that sample and then terminates there.
+
+A computer uses finite intervals. If sample i represents an interval of length delta_i and density is treated as constant over that interval,
+
+~~~text
+alpha_i = 1 - exp(-sigma_i delta_i)
+~~~
+
+is the opacity of that interval. The transmittance reaching sample i is
+
+~~~text
+T_i = product over j<i of (1 - alpha_j)
+~~~
+
+and its rendering weight is
+
+~~~text
+w_i = T_i alpha_i.
+~~~
+
+The discrete pixel is therefore
+
+~~~text
+C = sum_i w_i c_i + T_end C_background.
+~~~
+
+The weights plus the surviving background transmittance sum to one, up to floating-point error. That gives us an immediate implementation invariant.
+
+### Why density is not the same thing as opacity
+
+Density sigma has units of inverse distance. Opacity alpha is dimensionless and depends on both density and interval length.
+
+If the same density is sampled using a larger delta, alpha becomes larger. This is why changing ray-sampling spacing without changing the rendering equation changes the model. A paper that reports “128 samples per ray” is also telling us something about numerical integration and training cost.
+
+The exponential form also keeps opacity in [0,1) for finite nonnegative density. Implementations often produce a raw neural value and map it through a nonnegative activation or another density parameterization rather than allowing negative physical density.
+
+### The renderer is differentiable because every weight is a smooth chain of operations
+
+For a scalar-color version of the ray,
+
+~~~text
+C = sum_i T_i alpha_i c_i + T_end c_bg.
+~~~
+
+The derivative with respect to color is especially clear:
+
+~~~text
+dC / dc_i = w_i.
+~~~
+
+A color at a fully occluded sample receives almost no gradient because its weight is tiny.
+
+Density is more interesting. Increasing sigma_i increases alpha_i, which makes sample i contribute more but makes every later sample and the background contribute less. Let C_after_i be the color the remaining tail would produce if its incoming transmittance were reset to one. Then
+
+~~~text
+dC / d sigma_i
+    = T_i delta_i (1 - alpha_i) (c_i - C_after_i).
+~~~
+
+The sign has a physical interpretation. If the current sample is brighter than what lies behind it, increasing its density raises the pixel. If it is darker, increasing density hides a brighter tail and lowers the pixel.
+
+This is the missing bridge between rendering and learning: the photometric loss sends gradients through transmittance into density, color, and eventually the field parameters.
+
+The standalone witness below implements the compositing equation, checks the weight partition, derives analytic gradients, verifies every density/color derivative against finite differences, performs a tiny inverse-rendering optimization, demonstrates one-pixel non-identifiability, and builds a positional encoding.
+
+
+~~~python
+#!/usr/bin/env python3
+"""Small NeRF-style volume-rendering and inverse-rendering witness.
+
+The lab isolates the part a paper often compresses into one equation:
+density -> alpha -> transmittance -> sample weight -> pixel color.
+It verifies analytic gradients with finite differences and runs a tiny inverse
+problem.  It is not a neural-network trainer or a benchmark implementation.
+"""
+from __future__ import annotations
+import math
+import numpy as np
+
+
+def volume_render(
+    sigma: np.ndarray,
+    color: np.ndarray,
+    delta: np.ndarray,
+    background: float = 0.0,
+) -> tuple[float, np.ndarray, float]:
+    if sigma.ndim != 1 or color.shape != sigma.shape or delta.shape != sigma.shape:
+        raise ValueError("sigma, color and delta must be equal-length 1-D arrays")
+    if np.any(sigma < 0.0) or np.any(delta <= 0.0):
+        raise ValueError("density must be nonnegative and interval length positive")
+
+    alpha = 1.0 - np.exp(-sigma * delta)
+    weights = np.empty_like(alpha)
+    T = 1.0
+    for i, a in enumerate(alpha):
+        weights[i] = T * a
+        T *= 1.0 - a
+    pixel = float(np.dot(weights, color) + T * background)
+    return pixel, weights, T
+
+
+def analytic_gradients(
+    sigma: np.ndarray,
+    color: np.ndarray,
+    delta: np.ndarray,
+    background: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return dC/dsigma and dC/dcolor for a scalar-color ray."""
+    pixel, weights, _ = volume_render(sigma, color, delta, background)
+    del pixel
+
+    alpha = 1.0 - np.exp(-sigma * delta)
+
+    # tail[i] is the color produced by samples strictly after i when their
+    # incoming transmittance is reset to one.
+    n = len(sigma)
+    tail = np.empty(n)
+    tail_color = background
+    for i in range(n - 1, -1, -1):
+        tail[i] = tail_color
+        tail_color = alpha[i] * color[i] + (1.0 - alpha[i]) * tail_color
+
+    d_color = weights.copy()
+    d_sigma = np.empty(n)
+    T = 1.0
+    for i in range(n):
+        # d alpha / d sigma = delta * exp(-sigma*delta)
+        d_alpha = delta[i] * (1.0 - alpha[i])
+        d_sigma[i] = T * d_alpha * (color[i] - tail[i])
+        T *= 1.0 - alpha[i]
+    return d_sigma, d_color
+
+
+def finite_difference(
+    sigma: np.ndarray,
+    color: np.ndarray,
+    delta: np.ndarray,
+    background: float,
+    eps: float = 1e-6,
+) -> tuple[np.ndarray, np.ndarray]:
+    gs = np.zeros_like(sigma)
+    gc = np.zeros_like(color)
+    for i in range(len(sigma)):
+        plus, minus = sigma.copy(), sigma.copy()
+        plus[i] += eps
+        minus[i] -= eps
+        # Keep the finite-difference probe inside the legal sigma >= 0 domain.
+        if minus[i] < 0.0:
+            raise ValueError("finite-difference density probe crossed zero")
+        a = volume_render(plus, color, delta, background)[0]
+        b = volume_render(minus, color, delta, background)[0]
+        gs[i] = (a - b) / (2.0 * eps)
+
+        cp, cm = color.copy(), color.copy()
+        cp[i] += eps
+        cm[i] -= eps
+        a = volume_render(sigma, cp, delta, background)[0]
+        b = volume_render(sigma, cm, delta, background)[0]
+        gc[i] = (a - b) / (2.0 * eps)
+    return gs, gc
+
+
+def positional_encoding(x: float, levels: int) -> np.ndarray:
+    values = [x]
+    for k in range(levels):
+        f = (2.0**k) * math.pi
+        values.extend((math.sin(f * x), math.cos(f * x)))
+    return np.array(values)
+
+
+def main() -> None:
+    sigma = np.array([0.4, 1.2, 0.7, 0.3])
+    color = np.array([0.1, 0.8, 0.4, 0.9])
+    delta = np.array([0.2, 0.25, 0.15, 0.4])
+    background = 0.05
+
+    # 1. Weights plus surviving background transmittance form a partition.
+    pixel, weights, T_end = volume_render(sigma, color, delta, background)
+    np.testing.assert_allclose(np.sum(weights) + T_end, 1.0, atol=1e-12)
+    assert 0.0 <= pixel <= 1.0
+
+    # 2. Analytic rendering gradients agree with independent finite differences.
+    gs, gc = analytic_gradients(sigma, color, delta, background)
+    fs, fc = finite_difference(sigma, color, delta, background)
+    np.testing.assert_allclose(gs, fs, atol=3e-10, rtol=2e-7)
+    np.testing.assert_allclose(gc, fc, atol=3e-10, rtol=2e-7)
+
+    # 3. A tiny inverse problem can optimize density through the renderer.
+    target_sigma = np.array([0.7, 1.5, 0.5, 0.8])
+    target = volume_render(target_sigma, color, delta, background)[0]
+    estimate = np.full(4, 0.55)
+    initial_loss = None
+    for _ in range(1500):
+        pred = volume_render(estimate, color, delta, background)[0]
+        residual = pred - target
+        loss = 0.5 * residual * residual
+        if initial_loss is None:
+            initial_loss = loss
+        dC_dsigma, _ = analytic_gradients(estimate, color, delta, background)
+        estimate -= 1.0 * residual * dC_dsigma
+        estimate = np.maximum(estimate, 1e-6)
+    final_pred = volume_render(estimate, color, delta, background)[0]
+    final_loss = 0.5 * (final_pred - target) ** 2
+    assert final_loss < initial_loss * 1e-4
+
+    # 4. One pixel cannot uniquely identify all densities/colors.
+    # A single homogeneous slab has C = alpha*c on a black background.
+    sigma_a, c_a, d = 1.0, 0.8, 0.5
+    target_pixel = (1.0 - math.exp(-sigma_a * d)) * c_a
+    sigma_b = 2.0
+    alpha_b = 1.0 - math.exp(-sigma_b * d)
+    c_b = target_pixel / alpha_b
+    assert 0.0 < c_b < 1.0
+    pixel_b = (1.0 - math.exp(-sigma_b * d)) * c_b
+    assert abs(pixel_b - target_pixel) < 1e-12
+    assert abs(sigma_a - sigma_b) > 0.5 and abs(c_a - c_b) > 0.1
+
+    # 5. Positional encoding exposes multiple spatial frequencies explicitly.
+    enc = positional_encoding(0.125, 4)
+    assert enc.shape == (9,)
+    assert np.all(np.isfinite(enc))
+
+    print("NeRF volume rendering: 5 suites PASS")
+
+
+if __name__ == "__main__":
+    main()
+~~~
+
+The tiny optimization should not be mistaken for “training NeRF.” Its purpose is to prove the differentiable rendering path on an inspectable problem.
+
+### One pixel is not enough to recover a unique scene
+
+The witness deliberately constructs two different density/color pairs that produce the same pixel. This is not a bug in gradient descent. It is an **inverse-problem ambiguity**.
+
+Real NeRF training reduces that ambiguity by using many calibrated images whose rays intersect the same scene from different viewpoints. Even then, the result depends on camera accuracy, coverage, appearance assumptions, regularization, network capacity, and the sampled training distribution. A model can reproduce training views while holding geometry that is poor for collision or relighting.
+
+This is why image reconstruction quality and geometric correctness must be evaluated separately.
+
+### Positional encoding changes the function class the network can learn efficiently
+
+A plain coordinate MLP tends to learn low-frequency variation first. The original NeRF maps a coordinate through sinusoidal functions at multiple frequencies before the MLP sees it. In one dimension a simple form is
+
+~~~text
+gamma(x) =
+[x,
+ sin(pi x), cos(pi x),
+ sin(2 pi x), cos(2 pi x),
+ ...].
+~~~
+
+The encoding does not create missing scene information. It gives the network basis features that make high-frequency spatial variation easier to represent.
+
+Instant-NGP changes the parameterization again. Instead of a large fixed sinusoidal expansion feeding a deep MLP, it learns multiresolution grid features stored through hash tables and uses a much smaller network. The rendering equation can remain NeRF-like while the representation and training speed change dramatically.
+
+This distinction is important:
+
+~~~text
+field quantity
+    != field parameterization
+    != ray sampler
+    != volume compositor
+    != training objective
+~~~
+
+A paper may innovate in one of these layers while leaving the others nearly unchanged.
+
+### Sampling is part of both bias and cost
+
+A basic ray sampler places points between near and far bounds. If important density lies between poorly chosen samples, the discrete integral can miss it.
+
+Hierarchical sampling uses an earlier pass to estimate where ray weight is concentrated, then spends more samples there. Occupancy grids and empty-space skipping avoid querying regions believed to contain no useful density. Instant-NGP relies heavily on this systems side of the problem.
+
+Mip-NeRF changes a different assumption: one pixel corresponds to a footprint, not an infinitesimal line. It integrates encoded features over a conical frustum region so distant high-frequency detail is prefiltered rather than point-sampled into aliasing.
+
+No acceleration method earns correctness merely by reducing network evaluations. It must preserve the quantity the renderer is trying to estimate closely enough for the claim being made.
+
+### A complete NeRF training loop has several contracts
+
+A minimal research implementation needs to make each of these explicit:
+
+1. **camera model:** intrinsics, extrinsics, distortion handling, near/far bounds;
+2. **ray generation:** which world-space origin and direction correspond to each training pixel;
+3. **sampling:** stratified, hierarchical, occupancy-guided, or another declared policy;
+4. **field query:** position/view encoding and the mapping to density/color;
+5. **compositing:** alpha, transmittance, weights, background policy;
+6. **loss:** usually some photometric term plus any regularizers;
+7. **optimization:** optimizer, learning-rate schedule, precision, batch/ray count;
+8. **validation:** held-out views and metrics not used to choose every training decision;
+9. **geometry claim:** separate surface/depth tests if the paper claims geometry;
+10. **systems claim:** training time, memory, render latency, hardware, and precision.
+
+If any one of those is hidden behind “we trained a NeRF,” reproduction becomes guesswork.
+
+### 3D Gaussian Splatting changes the representation and rasterization path, not the need for training discipline
+
+A 3-D Gaussian primitive stores a world-space mean, covariance/scale-and-rotation, opacity, and appearance coefficients such as spherical harmonics. Rendering projects the Gaussian into screen space, determines which pixels it overlaps, sorts or otherwise orders visible contributions, and alpha-composites them.
+
+Training commonly begins from a Structure-from-Motion point cloud when available. Then gradient descent adjusts positions, anisotropic shape, opacity, and appearance so rendered training views match captured images.
+
+The representation has a special problem: the right number and placement of primitives are not known in advance. **Densification** changes model structure during optimization. Underfit regions may clone or split Gaussians according to gradient/size criteria; useless or nearly transparent primitives may be pruned. Some implementations periodically reset or control opacity so early saturation does not permanently block useful gradients.
+
+That means a faithful 3DGS reproduction needs more than the rasterizer. It needs the training lifecycle:
+
+~~~text
+camera/SfM initialization
+ -> differentiable splat rasterization
+ -> photometric loss
+ -> parameter update
+ -> densification / split / clone
+ -> pruning / opacity policy
+ -> repeat
+ -> evaluate held-out views and geometry/system behavior
+~~~
+
+Changing the densification thresholds, schedule, opacity policy, image resolution, or initialization can change quality, memory, and training time. These are algorithmic parameters, not housekeeping.
+
+The later 2DGS, Mip-Splatting, 3DGUT and surface-oriented families should now be read against this baseline. They change geometry bias, filtering, projection, or robustness, but they still need an explicit optimization and evaluation contract.
+
+**Reconstruct without reading:** derive alpha from constant density over an interval; derive transmittance and w_i; explain why dC/dc_i equals w_i; explain why density affects all later samples; identify the ambiguity demonstrated by the lab; then write the ten contracts of a complete NeRF experiment and the training lifecycle of 3DGS. If you can only name architectures, you do not yet understand neural rendering as an algorithm.
 
 ## Radiance fields are representations, not necessarily MLPs
 
