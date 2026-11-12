@@ -8,7 +8,7 @@ The differential is a linear scalar measurement of displacement. The metric grad
 
 The differential (df) is fundamentally a linear functional: it maps a perturbation (v) to the first-order change (df(v)). A gradient vector is obtained only after choosing an inner product/metric (g) such that (df(v)=g(\nabla f,v)).
 
-In Euclidean orthonormal coordinates, this identification is invisible and the gradient components are just partial derivatives. In a non-orthonormal coordinate basis with metric matrix (G), the coordinate vector of the gradient satisfies (G\,\nabla f = \partial f), hence (\nabla f=G^{-1}\partial f).
+In Euclidean orthonormal coordinates, this identification is invisible and the gradient components are just \partial derivatives. In a non-orthonormal coordinate basis with metric matrix (G), the coordinate vector of the gradient satisfies (G\,\nabla f = \partial f), hence (\nabla f=G^{-1}\partial f).
 
 This distinction matters in curvilinear coordinates, optimization with non-Euclidean metrics, surface geometry and when interpreting covectors such as normals.
 
