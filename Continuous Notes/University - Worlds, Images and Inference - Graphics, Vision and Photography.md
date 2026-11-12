@@ -33846,6 +33846,80 @@ Pixels are finite areas, not mathematical points. If a polygon edge crosses only
 
 *This checked example uses packed float32 positions and colors, a 24-byte vertex stride, and a color offset of 12 bytes. It illustrates one memory layout, not every GPU format or binding model.*
 
+### Turn the interpolation derivation into a GPU agreement experiment
+
+The mathematics volume derived what the GPU must evaluate when a camera views a triangle with differing clip-space \(w\). Here we close the implementation loop. A complete rasterizer does not merely run the vertex shader and divide by \(w\): it must also clip against the correct homogeneous volume, assemble primitives, determine sample ownership at shared edges, interpolate fragment inputs under the shader's qualifiers, test depth and stencil, shade, and resolve or blend the stored result. An experiment that observes the final pixel color mixes all of these causes together. To isolate interpolation, first disable blending, discard, alpha test, and depth competition; use one visible triangle and write a scalar interpolated value to an output color.
+
+For each test vertex, record both its **clip position** and the scalar attribute before creating the GPU vertex buffer. With a consistent viewport, reconstruct window coordinates using \(x_w=x_0+\tfrac12 W(x_c/w_c+1)\) and, for a downward-positive framebuffer, \(y_w=y_0+\tfrac12 H(1-y_c/w_c)\). For Vulkan, confirm the actual viewport dimensions and sign: a negative viewport height can invert the Y direction and thus the winding used by face culling and the top-left edge rule. A CPU mathematical oracle operates on the resulting window coordinates and their original \(w_c\), not on object-space XYZ substituted after the divide.
+
+Use a test triangle whose three clip-\(w\) values differ, with a slowly varying scalar across the vertices. For a sample where window barycentrics are \((1/2,1/4,1/4)\), choose \(w=(1,2,4)\) and attributes \((0,1,1)\). The correct fragment value is \(3/11\), while a deliberately wrong screen-affine interpolator produces \(1/2\). This is a high-signal test because the separation is much larger than normal floating-point rounding. A sample need not fall exactly on the ideal coordinates after window quantization, so use the **actual** sample position and recompute its barycentrics for comparisons. For multisample anti-aliasing, each sample can have distinct coverage, while attributes may be interpolated at the pixel center or at another location depending on pipeline features and shader qualifiers; isolate single-sampling first.
+
+For a minimal Vulkan GLSL demonstration, bind three vertices containing clip-space positions and one scalar attribute. A vertex shader should forward the original clip position without a second projection and pass the scalar as a default smoothly interpolated varying:
+
+\`\`\`glsl
+#version 450
+layout(location = 0) in vec4 inClipPosition;
+layout(location = 1) in float inScalar;
+layout(location = 0) out float perspectiveScalar;
+
+void main() {
+    gl_Position = inClipPosition;          // GPU still clips and divides homogeneous coordinates.
+    perspectiveScalar = inScalar;         // Default smooth perspective interpolation.
+}
+\`\`\`
+
+\`\`\`glsl
+#version 450
+layout(location = 0) in float perspectiveScalar;
+layout(location = 0) out vec4 outColor;
+
+void main() {
+    outColor = vec4(perspectiveScalar, 0.0, 0.0, 1.0);
+}
+\`\`\`
+
+This pair tests the **hardware interpolator**, not texture sampling. The render target should be a linear floating-point format when comparing numeric values; an 8-bit normalized target adds quantization, and an sRGB target changes the transfer function on storage. Disable any post-processing and tone mapping. Use a known full-viewport scissor, no vertex blending, and back-face culling disabled while diagnosing the sign convention. Later enable culling to verify the exact front-face setting.
+
+An equivalent Metal Shading Language pair makes the stage boundary explicit. The code below assumes a Metal version that supports the shown vertex and fragment stage syntax and uses data already encoded into a vertex buffer; it does **not** assume Vulkan GLSL input layout rules apply automatically to Metal's vertex descriptor.
+
+\`\`\`metal
+#include <metal_stdlib>
+using namespace metal;
+
+struct TestVertex {
+    float4 clipPosition;
+    float  scalar;
+};
+
+struct RasterOut {
+    float4 position [[position]];
+    float  scalar;
+};
+
+vertex RasterOut testVertex(
+    const device TestVertex* vertices [[buffer(0)]],
+    uint vertexID [[vertex_id]])
+{
+    TestVertex v = vertices[vertexID];
+    RasterOut out;
+    out.position = v.clipPosition;
+    out.scalar = v.scalar;
+    return out;
+}
+
+fragment float4 testFragment(RasterOut in [[stage_in]]) {
+    return float4(in.scalar, 0.0f, 0.0f, 1.0f);
+}
+\`\`\`
+
+These shaders express the same intended smooth perspective interpolation, but equal source-level intent does not prove equal coverage at boundaries or identical floating-point results. The two APIs have platform-dependent differences in viewport origin, front-face orientation, clip/control conventions, supported sample locations, attachment formats, and shader language layout. Fix these variables before comparing outputs. In particular, never interpret a flipped or vertically offset image as a failure of the interpolation equation until coordinate conversion has been checked.
+
+A reliable CPU/GPU agreement protocol separates tests by cause. First render vertices with distinct flat colors to verify assembly and order. Then use one affine triangle with constant \(w\): both the perspective formula and a naive screen-affine interpolation should agree. Next use the variable-\(w\) triangle: only the perspective-correct path should reproduce the rational oracle. Then move the triangle so an edge crosses the near plane, which requires homogeneous clipping before the divide. Finally use two adjacent triangles and a sample on their shared edge to investigate the coverage ownership rule separately from attribute interpolation. Track the raw clip vertices, viewport settings, sample coordinates, CPU edge-function values, reconstructed \(\lambda_i\), \(1/w_i\), expected attribute, shader value and difference. A failed experiment should identify which contract diverged, not merely report a black frame.
+
+A practical failure taxonomy follows directly from the observable outputs. A wholly absent triangle suggests pipeline state, clipping, winding, scissor, or attachment issues. A triangle with correct coverage but warped patterns suggests wrong interpolation qualifiers or pre-divided attributes. A correct red channel with an unexpectedly shifted stored value suggests render-target encoding or normalization. Flickering only at common edges suggests edge inclusion or geometric precision rather than a BRDF. A failure only at great distances can indicate depth precision and reversed-Z configuration, which requires both projection and comparison conventions to agree. A sample whose expected value is ill-conditioned because \(\sum_i\lambda_i/w_i\) approaches zero should be classified as invalid input to the simple oracle rather than hidden behind a larger tolerance.
+
+The first acceptance gate is reconstructive: from the four homogeneous vertex components and window sample coordinates alone, derive the attribute value without a graphics API. The second is executable: compile both shader pairs, capture a linear red channel, and compare it to the CPU oracle for several interior samples. The third is architectural: the Game Engine volume explains how to retain the vertex buffer, attachments and readback resources until the GPU has finished using them; otherwise corrupted inputs can masquerade as interpolation failure. The mathematical oracle and the GPU result should be recorded with device/backend details, not reported as universal bitwise identity.
+
 ## Textures and surface detail
 
 ### Match a texture footprint to the surface signal
