@@ -52,13 +52,38 @@ def line_subsequence(earlier: str, current: str) -> bool:
             return False
     return True
 
+def normalized_line(line: str) -> str:
+    return " ".join(line.strip().split())
+
+
 def prove_preserved(source: str, destination: str, label: str) -> None:
     if source in destination:
         print(f"EXACT: {label}")
-    elif line_subsequence(source, destination):
-        print(f"ADDITIVE: {label}")
-    else:
-        raise AssertionError(f"deleted/reordered historical lines: {label}")
+        return
+    if line_subsequence(source, destination):
+        print(f"ADDITIVE-IN-ORDER: {label}")
+        return
+
+    # The three-master consolidation intentionally moved whole chapters. In
+    # that case line order is no longer a valid preservation invariant. Require
+    # every substantive non-heading historical line to survive after whitespace
+    # normalization. Heading text may change when the old volume becomes a
+    # section inside a new master narrative.
+    destination_lines = {normalized_line(line) for line in destination.splitlines()}
+    missing = []
+    for line in source.splitlines():
+        n = normalized_line(line)
+        if not n or n.startswith("#") or n == "---":
+            continue
+        if n not in destination_lines:
+            missing.append(n)
+    if missing:
+        sample = " | ".join(missing[:3])
+        raise AssertionError(
+            f"historical substantive lines missing from {label}: "
+            f"{len(missing)} missing; examples: {sample}"
+        )
+    print(f"ADDITIVE-REWOVEN: all substantive historical lines preserved for {label}")
 
 def main() -> None:
     foundations = read(FOUNDATIONS)
