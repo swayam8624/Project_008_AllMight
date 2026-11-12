@@ -7408,6 +7408,598 @@ The source hierarchy for this volume is therefore:
 rather than a list of style commandments.
 
 
+
+### CppCon deepening: engine C++ is mostly about proving lifetime, layout, and execution contracts
+
+The previous modern-C++ section establishes the language mechanics. The next step is to connect those mechanics to failures that appear only when a codebase becomes large, asynchronous, data-heavy, and performance-sensitive. Recent CppCon material repeatedly returns to the same production lesson: the hardest C++ problems are rarely solved by memorizing more syntax. They are solved by making hidden contracts visible enough that the compiler, profiler, sanitizer, reviewer, and runtime can all check them.
+
+#### Rule of zero is a reduction in the number of states you must prove correct
+
+Suppose an engine resource wrapper manually owns a heap allocation:
+
+~~~cpp
+class CpuBlob {
+public:
+    explicit CpuBlob(std::size_t bytes)
+        : size_(bytes),
+          data_(new std::byte[bytes]) {}
+
+    ~CpuBlob() {
+        delete[] data_;
+    }
+
+private:
+    std::size_t size_{};
+    std::byte* data_{};
+};
+~~~
+
+This type already has a problem: the compiler-generated copy constructor copies the pointer value, so two objects can later delete the same allocation.
+
+The naive response is to implement every special member manually. That can be correct, but it expands the proof surface. Copy construction, copy assignment, move construction, move assignment, destruction, self-assignment, exception paths, and moved-from state all require review.
+
+A better representation is:
+
+~~~cpp
+class CpuBlob {
+public:
+    explicit CpuBlob(std::size_t bytes)
+        : data_(std::make_unique<std::byte[]>(bytes)),
+          size_(bytes) {}
+
+    std::span<std::byte> bytes() noexcept {
+        return {data_.get(), size_};
+    }
+
+    std::span<const std::byte> bytes() const noexcept {
+        return {data_.get(), size_};
+    }
+
+private:
+    std::unique_ptr<std::byte[]> data_;
+    std::size_t size_{};
+};
+~~~
+
+Now ownership semantics are inherited from a tested vocabulary type. The compiler generates destruction and moving correctly, while copying is disabled because the owner is non-copyable.
+
+The important reduction is
+
+\[
+\boxed{
+\text{fewer custom lifetime transitions}
+\Rightarrow
+\text{fewer states requiring manual proof}
+}
+\]
+
+Rule of zero therefore matters to engine design because it moves correctness responsibility from ad-hoc transitions into well-defined types.
+
+#### Value, owner, observer, and handle are different categories even when their representations are similar
+
+A pointer, integer handle, unique owner, span, and index can all be small machine values, but their semantic contracts are completely different.
+
+A useful engine vocabulary is:
+
+~~~text
+value:
+    conceptually owns its value state
+    copying creates another value
+
+owner:
+    controls a resource lifetime
+    destruction has release semantics
+
+observer:
+    refers to state owned elsewhere
+    must not outlive that owner
+
+stable handle:
+    indirect identity that can be re-resolved
+    can survive relocation of the underlying object
+
+ephemeral index:
+    valid only relative to a particular container epoch
+~~~
+
+This distinction prevents bugs that cannot be diagnosed from the raw bit pattern alone.
+
+This is dangerous:
+
+~~~cpp
+struct TextureJob {
+    Texture* texture;
+    UploadQueue* queue;
+};
+~~~
+
+The two pointers hide whether either object is owned, borrowed, nullable, stable, or allowed to outlive the scheduling scope.
+
+A stronger interface can carry stable identity and explicitly owned payload:
+
+~~~cpp
+struct TextureId {
+    std::uint32_t slot{};
+    std::uint32_t generation{};
+};
+
+struct TextureUploadJob {
+    TextureId texture;
+    std::shared_ptr<const UploadPayload> payload;
+};
+~~~
+
+The job owns the immutable upload payload but only carries identity for the texture. When the job executes, it resolves the handle through the resource manager. If the generation no longer matches, the object was destroyed or recycled and the job can fail safely instead of dereferencing a stale pointer.
+
+The rule is:
+
+\[
+\boxed{
+\text{representation should reveal lifetime category whenever practical}
+}
+\]
+
+A raw pointer can be correct, but pointer alone does not communicate enough of the lifetime contract for long-lived asynchronous engine work.
+
+#### Moved-from is a valid-state requirement, not a promise that the old value stays meaningful
+
+Move semantics are often described as making the source empty. The language contract is generally weaker: a moved-from object must remain valid enough for the operations its type promises, especially destruction and assignment, unless a stronger postcondition is documented.
+
+For a GPU resource wrapper, defining a stronger moved-from state is valuable:
+
+~~~cpp
+class BufferHandle {
+public:
+    BufferHandle() = default;
+
+    BufferHandle(VkBuffer buffer, VkDevice device) noexcept
+        : buffer_(buffer), device_(device) {}
+
+    BufferHandle(BufferHandle&& other) noexcept
+        : buffer_(std::exchange(other.buffer_, VK_NULL_HANDLE)),
+          device_(std::exchange(other.device_, VK_NULL_HANDLE)) {}
+
+    BufferHandle& operator=(BufferHandle&& other) noexcept {
+        if (this == &other) return *this;
+
+        release();
+
+        buffer_ = std::exchange(other.buffer_, VK_NULL_HANDLE);
+        device_ = std::exchange(other.device_, VK_NULL_HANDLE);
+        return *this;
+    }
+
+    ~BufferHandle() {
+        release();
+    }
+
+    BufferHandle(const BufferHandle&) = delete;
+    BufferHandle& operator=(const BufferHandle&) = delete;
+
+private:
+    void release() noexcept {
+        if (buffer_ != VK_NULL_HANDLE && device_ != VK_NULL_HANDLE) {
+            vkDestroyBuffer(device_, buffer_, nullptr);
+        }
+
+        buffer_ = VK_NULL_HANDLE;
+        device_ = VK_NULL_HANDLE;
+    }
+
+    VkBuffer buffer_{VK_NULL_HANDLE};
+    VkDevice device_{VK_NULL_HANDLE};
+};
+~~~
+
+Here exchange extracts the old value and writes a known neutral value into the source. The lifetime-sensitive type now has a small state machine:
+
+~~~text
+empty:
+    buffer = null
+    device = null
+
+owning:
+    buffer != null
+    device != null
+
+move:
+    destination becomes owning
+    source becomes empty
+
+destroy:
+    owning -> release -> empty
+    empty -> no-op
+~~~
+
+If the state machine cannot be explained this simply, the type may be carrying too many responsibilities.
+
+#### Undefined behavior removes assumptions under which optimization is reasoned about
+
+Undefined behavior is not merely an unusual runtime result. C++ compilers optimize under the assumption that the program obeys language preconditions. Once code violates one of those preconditions, the optimizer is no longer required to preserve the intuitive behavior of the invalid execution.
+
+This matters for:
+
+- out-of-bounds access,
+- use-after-free,
+- invalid pointer provenance,
+- signed overflow,
+- data races,
+- misaligned typed access,
+- aliasing violations,
+- invalid object lifetime after storage reuse,
+- calling through an incompatible function type.
+
+The engine rule is not to fear low-level code. It is to write low-level code inside a model whose assumptions can be established.
+
+\[
+\boxed{
+\text{only optimize inside a contract whose preconditions you can prove}
+}
+\]
+
+When code intentionally depends on representation, use mechanisms that make the operation legal and visible: bit-casting, byte copies, alignment-aware allocation, explicit lifetime APIs where needed, and small wrappers around platform-specific behavior.
+
+Sanitizers matter because many lifetime and UB bugs stay visually silent until optimization level, workload, compiler, driver, allocator, or scheduling changes.
+
+#### Data-oriented design begins with the loop, not with a fashionable container
+
+Recent CppCon data-oriented material is valuable because it reframes DOD as a question about access patterns.
+
+Suppose an engine updates one million particles:
+
+~~~cpp
+struct Particle {
+    Vec3 position;
+    Vec3 velocity;
+    Vec4 color;
+    float lifetime;
+    std::uint32_t textureIndex;
+    std::uint32_t flags;
+};
+~~~
+
+If simulation touches only position, velocity, and lifetime, every cache line also carries render-only color, texture index, and flags.
+
+An SoA representation could be:
+
+~~~cpp
+struct ParticleSet {
+    std::vector<Vec3> positions;
+    std::vector<Vec3> velocities;
+    std::vector<float> lifetimes;
+
+    std::vector<Vec4> colors;
+    std::vector<std::uint32_t> textureIndices;
+    std::vector<std::uint32_t> flags;
+};
+~~~
+
+The simulation loop becomes:
+
+~~~cpp
+void simulate(ParticleSet& p, float dt) {
+    const std::size_t n = p.positions.size();
+
+    for (std::size_t i = 0; i < n; ++i) {
+        p.velocities[i].y += -9.81f * dt;
+        p.positions[i] += p.velocities[i] * dt;
+        p.lifetimes[i] -= dt;
+    }
+}
+~~~
+
+This is not automatically faster. It helps only if memory traffic, vectorization, branch behavior, or working-set size improve on the target hardware.
+
+A simple decomposition is:
+
+\[
+T
+\approx
+T_{\text{memory}}
++
+T_{\text{compute}}
++
+T_{\text{branches}}
++
+T_{\text{synchronization}}
++
+T_{\text{overhead}}.
+\]
+
+Changing AoS to SoA primarily attacks memory traffic and vectorization constraints. If another term dominates, the speedup may be small.
+
+The real workflow is therefore:
+
+~~~text
+identify hot loop
+    ↓
+list fields actually touched
+    ↓
+measure working set/cache behavior
+    ↓
+change layout
+    ↓
+benchmark the same workload
+    ↓
+inspect counters/generated code if needed
+~~~
+
+This is much stronger than the slogan that SoA is always faster than OOP.
+
+#### Physical layout and abstraction boundary do not have to be the same thing
+
+A common false choice is clean abstraction versus fast data.
+
+A value-like view can sit on top of SoA storage:
+
+~~~cpp
+class ParticleView {
+public:
+    ParticleView(ParticleSet& set, std::size_t i)
+        : set_(&set), i_(i) {}
+
+    Vec3& position() noexcept { return set_->positions[i_]; }
+    Vec3& velocity() noexcept { return set_->velocities[i_]; }
+    float& lifetime() noexcept { return set_->lifetimes[i_]; }
+
+private:
+    ParticleSet* set_;
+    std::size_t i_;
+};
+~~~
+
+Hot loops can still traverse direct arrays, while editor, debugging, scripting, and gameplay code can receive structured views.
+
+\[
+\boxed{
+\text{abstraction boundary need not equal physical memory layout}
+}
+\]
+
+This is central to ECS, animation, particles, transforms, visibility, and renderer scene databases.
+
+#### span and mdspan separate ownership from access geometry
+
+A span expresses a borrowed contiguous sequence without taking ownership:
+
+~~~cpp
+void upload_vertices(std::span<const Vertex> vertices);
+~~~
+
+The caller may own those vertices in a vector, fixed array, memory-mapped file, or custom arena. The upload function receives only the range contract.
+
+For multidimensional data, mdspan extends the same idea to shape, strides, and index mapping. This is valuable for matrices, tiled images, tensors, simulation grids, and staging views because it separates four concerns:
+
+\[
+\text{owner}
+\quad
+\text{shape}
+\quad
+\text{layout mapping}
+\quad
+\text{element access}.
+\]
+
+Conceptually:
+
+\[
+\text{logical index}
+\overset{\text{mapping}}{\longrightarrow}
+\text{linear offset}
+\overset{\text{accessor}}{\longrightarrow}
+\text{element}.
+\]
+
+That separation mirrors GPU resource-view design and is useful far beyond the standard library type itself.
+
+#### PMR matters when allocation policy is part of the subsystem contract
+
+Polymorphic memory resources let ordinary standard containers allocate from a subsystem-specific resource.
+
+A per-frame scratch allocator is a natural example:
+
+~~~cpp
+struct FrameScratch {
+    std::array<std::byte, 2 * 1024 * 1024> backing;
+
+    std::pmr::monotonic_buffer_resource arena{
+        backing.data(),
+        backing.size()
+    };
+};
+
+void build_visibility_list(
+    FrameScratch& scratch,
+    std::span<const RenderItem> items)
+{
+    std::pmr::vector<std::uint32_t> visible{&scratch.arena};
+    visible.reserve(items.size());
+
+    for (std::uint32_t i = 0; i < items.size(); ++i) {
+        if (is_visible(items[i])) {
+            visible.push_back(i);
+        }
+    }
+
+    submit_visible(visible);
+}
+~~~
+
+A monotonic resource is efficient when individual deallocation is unnecessary and the whole region can be reset together.
+
+But the critical rule is:
+
+\[
+\boxed{
+\text{an object allocated from a short-lived resource must not escape that resource lifetime}
+}
+\]
+
+PMR does not eliminate lifetime reasoning. It makes the allocation domain explicit enough that the lifetime can be audited.
+
+#### Coroutines are suspension syntax; they do not automatically provide structured lifetime
+
+A coroutine can suspend while retaining references to objects that later disappear.
+
+~~~cpp
+Task<void> stream_texture(Texture& texture) {
+    auto bytes = co_await read_file_async(texture.source_path());
+    co_await upload_async(texture, bytes);
+}
+~~~
+
+The linear syntax hides several contracts:
+
+- who owns texture while the coroutine is suspended,
+- who owns the coroutine frame,
+- what cancels the task if the texture unloads,
+- where execution resumes,
+- how exceptions propagate,
+- whether shutdown waits for children,
+- whether one child can outlive its scheduling subsystem.
+
+Structured concurrency treats asynchronous work as a lifetime tree:
+
+~~~text
+AssetSystem lifetime
+|
++-- texture streaming scope
+    |
+    +-- file read task
+    +-- transcode task
+    +-- GPU upload task
+~~~
+
+When the parent scope ends, children are completed, cancelled, or joined according to an explicit policy.
+
+That gives a powerful invariant:
+
+\[
+\boxed{
+\text{async lifetime should be nested whenever possible}
+}
+\]
+
+Detached work is sometimes necessary, but it should be exceptional because detached lifetime is harder to prove.
+
+#### Cancellation is a protocol, not a boolean checked once
+
+A robust asynchronous pipeline needs cancellation points where it can stop without violating resource invariants.
+
+A texture pipeline might be:
+
+~~~text
+queued
+→ reading
+→ decoded
+→ staging allocation
+→ GPU copy submitted
+→ ready
+~~~
+
+Cancellation before GPU submission can usually release CPU resources immediately.
+
+Cancellation after submission is different. GPU work may already reference staging memory, command storage, descriptor state, or the destination image. At that point cancellation often means stop publishing the logical result while allowing already-submitted work to retire safely.
+
+Therefore:
+
+\[
+\boxed{
+\text{cancel logical operation}
+\neq
+\text{instantly destroy all physical resources involved}
+}
+\]
+
+This is the same lifetime separation used by deferred GPU destruction.
+
+#### Build-time cost is part of architecture
+
+Large C++ engines can lose enormous developer time to translation-unit fan-out, template instantiation, and public-header inclusion.
+
+The runtime dependency graph and compile dependency graph are different.
+
+A class can need a type at runtime without requiring that type's full definition in a public header. Forward declarations, pImpl, modules, implementation-only includes, stable interfaces, and disciplined template placement can reduce rebuild radius.
+
+The relevant productivity model is:
+
+\[
+T_{\text{developer loop}}
+=
+T_{\text{edit}}
++
+T_{\text{incremental compile}}
++
+T_{\text{link}}
++
+T_{\text{launch/test}}.
+\]
+
+If a frequently edited header forces hundreds of translation units to rebuild, it is a productivity hotspot even when runtime performance is perfect.
+
+Build profiling is therefore performance engineering for the developer loop.
+
+#### Preserve the causal chain when optimizing
+
+A production optimization should be explainable as:
+
+~~~text
+measured symptom
+    ↓
+identified limiting resource
+    ↓
+specific hypothesis
+    ↓
+targeted code/data change
+    ↓
+same-workload remeasurement
+    ↓
+regression guard
+~~~
+
+For example:
+
+~~~text
+symptom:
+    transform update = 3.8 ms
+
+evidence:
+    LLC misses high
+    SIMD utilization low
+
+hypothesis:
+    mixed component layout streams unused data
+
+change:
+    split hot transform arrays from cold metadata
+
+result:
+    transform update = 1.9 ms
+    memory traffic reduced
+
+guard:
+    benchmark scene plus performance threshold in CI
+~~~
+
+This keeps optimization from becoming folklore.
+
+The combined rule for this C++ layer is:
+
+\[
+\boxed{
+\text{make ownership explicit}
++
+\text{make access patterns measurable}
++
+\text{make async lifetime nested}
++
+\text{make performance claims reproducible}
+}
+\]
+
+Source integration basis for this deepening includes CppCon material on lifetime management, undefined behavior, data-oriented design, mdspan, performance engineering, build profiling, and coroutine/structured-concurrency practice. The conference boundaries are intentionally not preserved: each concept is placed where it constrains engine code.
+
+
 ### A collection of assets makes parameter packs and fold expressions necessary
 
 The editor may submit several kinds of resources in one batch. We want the total source-byte count before deciding whether a batch fits an upload budget. A fixed function accepting one mesh and two texture arguments would not scale to other combinations. We already have `AssetTraits<T>::byte_size` for each supported type; we need a way to repeat that operation for every asset in an arbitrary argument list.

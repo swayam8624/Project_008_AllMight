@@ -431,6 +431,1029 @@ Those two layers belong in one narrative: first understand what the renderer com
 Source basis: MIT 6.837 Computer Graphics and Ray Tracing Gems, especially its sections on intersections/efficiency, sampling, denoising/filtering, hybrid systems and global illumination.
 
 
+
+### MIT graphics gap closure: the renderer is one continuous numerical model from shape to motion to light to pixels
+
+The ray-tracing section above closes an important production gap, but the MIT 6.837 sequence is valuable precisely because it refuses to treat rendering as an isolated API exercise. Curves, transformations, hierarchy, color, animation, differential equations, collisions, shading, sampling, global illumination, rasterization and shadows are all different views of one problem:
+
+\[
+\boxed{
+\text{represent a changing world continuously}
+\rightarrow
+\text{approximate it discretely}
+\rightarrow
+\text{produce a finite image}
+}
+\]
+
+The deep connection is numerical. Geometry is sampled into vertices. Curves are sampled into segments. Motion is sampled in time. Textures are sampled in image space. Illumination is sampled in direction/path space. Rasterization samples coverage. A camera samples radiance. A display reconstructs emitted light from finite pixels.
+
+Once this common structure is visible, many engine rules stop looking arbitrary.
+
+#### Parametric curves are functions whose derivatives are geometric information
+
+A parametric curve is
+
+\[
+\mathbf p(t)=
+\begin{bmatrix}
+x(t)\\
+y(t)\\
+z(t)
+\end{bmatrix},
+\qquad
+t\in[a,b].
+\]
+
+The first derivative
+
+\[
+\mathbf p'(t)
+\]
+
+gives tangent direction and speed with respect to parameter t.
+
+The second derivative
+
+\[
+\mathbf p''(t)
+\]
+
+describes how that tangent changes.
+
+A cubic Bézier curve with control points \(\mathbf P_0,\mathbf P_1,\mathbf P_2,\mathbf P_3\) is
+
+\[
+\mathbf B(t)
+=
+(1-t)^3\mathbf P_0
++
+3(1-t)^2t\mathbf P_1
++
+3(1-t)t^2\mathbf P_2
++
+t^3\mathbf P_3.
+\]
+
+Its endpoint properties are immediate:
+
+\[
+\mathbf B(0)=\mathbf P_0,
+\qquad
+\mathbf B(1)=\mathbf P_3.
+\]
+
+Its derivative is
+
+\[
+\mathbf B'(t)
+=
+3(1-t)^2(\mathbf P_1-\mathbf P_0)
++
+6(1-t)t(\mathbf P_2-\mathbf P_1)
++
+3t^2(\mathbf P_3-\mathbf P_2).
+\]
+
+Therefore
+
+\[
+\mathbf B'(0)=3(\mathbf P_1-\mathbf P_0),
+\qquad
+\mathbf B'(1)=3(\mathbf P_3-\mathbf P_2).
+\]
+
+This explains why the inner control points determine endpoint tangents even though the curve generally does not pass through them.
+
+For an engine, derivatives matter because a curve is rarely only a visible line. It can drive:
+
+- camera motion,
+- animation paths,
+- rails,
+- roads,
+- particle emitters,
+- ribbon orientation,
+- procedural modeling,
+- motion blur,
+- arc-length parameterization.
+
+A camera following \(\mathbf B(t)\) can use a normalized tangent
+
+\[
+\mathbf T(t)=
+\frac{\mathbf B'(t)}
+{\|\mathbf B'(t)\|}
+\]
+
+as one orientation axis.
+
+But parameter t does not usually correspond to constant world-space speed.
+
+The speed is
+
+\[
+v(t)=\|\mathbf B'(t)\|.
+\]
+
+Arc length from 0 to t is
+
+\[
+s(t)=\int_0^t\|\mathbf B'(u)\|\,du.
+\]
+
+If the camera should move at constant physical speed, the engine should advance approximately uniformly in s, not uniformly in t.
+
+This often requires a lookup table:
+
+~~~text
+sample t values
+    ↓
+accumulate segment lengths
+    ↓
+store approximate cumulative arc length
+    ↓
+desired distance s
+    ↓
+binary search/interpolate table
+    ↓
+recover t
+~~~
+
+The general lesson is:
+
+\[
+\boxed{
+\text{parameter uniformity}
+\neq
+\text{spatial uniformity}
+}
+\]
+
+This same distinction appears in texture parameterization and animation timing.
+
+#### de Casteljau is both an evaluator and a geometric proof
+
+Cubic Bézier evaluation can be written as repeated interpolation.
+
+First level:
+
+\[
+\mathbf Q_0=(1-t)\mathbf P_0+t\mathbf P_1
+\]
+
+\[
+\mathbf Q_1=(1-t)\mathbf P_1+t\mathbf P_2
+\]
+
+\[
+\mathbf Q_2=(1-t)\mathbf P_2+t\mathbf P_3.
+\]
+
+Second level:
+
+\[
+\mathbf R_0=(1-t)\mathbf Q_0+t\mathbf Q_1
+\]
+
+\[
+\mathbf R_1=(1-t)\mathbf Q_1+t\mathbf Q_2.
+\]
+
+Final:
+
+\[
+\mathbf B(t)=(1-t)\mathbf R_0+t\mathbf R_1.
+\]
+
+This construction proves the convex-hull property because every stage is an interpolation of points already inside the previous convex hull.
+
+It also gives subdivision naturally. Evaluating at a split parameter produces control points for two smaller Bézier curves.
+
+That is useful for adaptive tessellation:
+
+~~~text
+curve segment
+    ↓
+estimate flatness/error
+    ↓
+if acceptable:
+    emit line/patch
+else:
+    subdivide with de Casteljau
+    recurse
+~~~
+
+The important engine pattern is adaptive work based on error, not fixed work based on habit.
+
+#### Continuity between curve segments has levels
+
+Two curve pieces can meet with different continuity guarantees.
+
+\(C^0\) continuity means positions agree:
+
+\[
+\mathbf B_1(1)=\mathbf B_2(0).
+\]
+
+\(C^1\) continuity means first derivatives also agree:
+
+\[
+\mathbf B_1'(1)=\mathbf B_2'(0).
+\]
+
+Geometric \(G^1\) continuity only requires tangent directions to agree up to positive scaling:
+
+\[
+\mathbf B_2'(0)=\lambda\mathbf B_1'(1),
+\qquad
+\lambda>0.
+\]
+
+This distinction matters visually.
+
+A road or camera path can look directionally smooth under \(G^1\) while speed changes because derivative magnitudes differ.
+
+Animation, camera rails, and physically meaningful trajectories often care about more than geometric appearance.
+
+#### Hierarchical modeling is repeated change of basis
+
+A scene graph is often introduced as a parent-child tree. The deeper model is composition of coordinate transforms.
+
+Let
+
+\[
+M_{world}^{child}
+=
+M_{world}^{parent}
+M_{parent}^{child}.
+\]
+
+For a chain
+
+~~~text
+world
+  ↓
+vehicle
+  ↓
+wheel
+  ↓
+brake-caliper
+~~~
+
+the final transform is
+
+\[
+M_{world}^{caliper}
+=
+M_{world}^{vehicle}
+M_{vehicle}^{wheel}
+M_{wheel}^{caliper}.
+\]
+
+The multiplication order encodes the change-of-basis sequence.
+
+This is why transform order is not cosmetic.
+
+If the convention uses column vectors,
+
+\[
+\mathbf p_{world}
+=
+M_{world}^{object}
+\mathbf p_{object}.
+\]
+
+Then composing translation and rotation in the wrong order changes the pivot/orbit behavior.
+
+A useful debugging technique is to draw basis vectors at each node:
+
+~~~text
+X axis = red line
+Y axis = green line
+Z axis = blue line
+origin = point
+~~~
+
+A wrong transform then becomes visible as a wrong basis, not merely as a mysteriously misplaced mesh.
+
+#### A scene graph and a transform-update graph are related but not identical
+
+Logical hierarchy describes ownership or semantic relationship.
+
+Transform dependency describes mathematical dependency.
+
+A production engine may flatten transform data for update efficiency while retaining a logical entity hierarchy for editor purposes.
+
+For example:
+
+~~~text
+Editor hierarchy:
+Car
+ ├─ Body
+ ├─ FrontLeftWheel
+ └─ FrontRightWheel
+
+Runtime transform arrays:
+parentIndex[]
+localMatrix[]
+worldMatrix[]
+dirtyBits[]
+~~~
+
+The hot update can traverse arrays in topological order.
+
+The editor can still present the tree.
+
+Again:
+
+\[
+\boxed{
+\text{logical abstraction}
+\neq
+\text{physical data layout}
+}
+\]
+
+This connects MIT hierarchical modeling directly to the data-oriented C++ discussion.
+
+#### Skinning is weighted coordinate transformation
+
+Linear blend skinning transforms a rest-pose vertex by several joint transforms.
+
+For vertex position \(\mathbf p\),
+
+\[
+\mathbf p'
+=
+\sum_{j=1}^{k}
+w_j
+M_j
+\mathbf p,
+\]
+
+with
+
+\[
+\sum_j w_j=1.
+\]
+
+In practice each joint matrix often combines current pose with inverse bind pose:
+
+\[
+M_j
+=
+M_{world,j}^{current}
+\left(M_{world,j}^{bind}\right)^{-1}.
+\]
+
+The inverse bind transform maps the vertex from mesh bind space into the joint's bind-local frame, after which the current joint transform carries it into the current posed frame.
+
+The weighted sum is simple and GPU-friendly, but it has well-known artifacts such as collapsing volume around twisting joints.
+
+That artifact is not a bug in matrix multiplication. It comes from linearly blending transformed positions produced by different rigid transformations.
+
+Dual-quaternion skinning and other methods attempt to preserve rotational behavior better.
+
+The engine lesson is to know what approximation the skinning representation makes.
+
+#### Normals cannot always use the same matrix as positions
+
+A transformed tangent \(\mathbf t\) and normal \(\mathbf n\) should remain perpendicular:
+
+\[
+\mathbf n^\top\mathbf t=0.
+\]
+
+Under a linear transform A,
+
+\[
+\mathbf t'=A\mathbf t.
+\]
+
+We want a transformed normal \(\mathbf n'\) such that
+
+\[
+{\mathbf n'}^\top A\mathbf t=0.
+\]
+
+Choosing
+
+\[
+\mathbf n'=(A^{-1})^\top\mathbf n
+\]
+
+gives
+
+\[
+{\mathbf n'}^\top A\mathbf t
+=
+\mathbf n^\top A^{-1}A\mathbf t
+=
+\mathbf n^\top\mathbf t
+=
+0.
+\]
+
+Therefore the normal matrix is inverse-transpose of the relevant linear transform when nonuniform scale/shear is present.
+
+This derivation is better than memorizing the phrase inverse-transpose because it explains the invariant being preserved.
+
+#### Color values are not all in the same mathematical space
+
+An RGB triplet can represent several different things:
+
+~~~text
+linear scene radiance-like value
+encoded display value
+texture data
+albedo parameter
+normal-map vector encoding
+HDR intermediate
+post-tonemapped image
+~~~
+
+Arithmetic such as interpolation and lighting belongs in a linear-light domain.
+
+If values are gamma encoded, naive averaging is wrong.
+
+For two encoded colors \(c_1,c_2\), generally
+
+\[
+decode\left(
+\frac{c_1+c_2}{2}
+\right)
+\neq
+\frac{decode(c_1)+decode(c_2)}{2}.
+\]
+
+This is why texture formats and framebuffer transfer functions matter.
+
+Color management is not a final export concern; it is part of numerical correctness throughout the pipeline.
+
+#### The rendering equation and BRDF are only meaningful under consistent units and spaces
+
+The rendering equation is
+
+\[
+L_o(\mathbf x,\omega_o)
+=
+L_e(\mathbf x,\omega_o)
++
+\int_{\Omega}
+f_r(\mathbf x,\omega_i,\omega_o)
+L_i(\mathbf x,\omega_i)
+(\mathbf n\cdot\omega_i)^+
+d\omega_i.
+\]
+
+Each factor has a role:
+
+- \(L_o\): outgoing radiance,
+- \(L_e\): emitted radiance,
+- \(f_r\): BRDF,
+- \(L_i\): incident radiance,
+- cosine term: projected-area factor,
+- solid-angle differential: directional integration measure.
+
+A renderer that mixes encoded color values, inconsistent normals, and arbitrary light units can still produce attractive images, but the equation no longer describes what the code is computing.
+
+The point of physically based rendering is not realism by naming. It is maintaining enough consistent semantics that parameters behave predictably.
+
+#### Animation turns the world into an ODE problem
+
+Many animation systems can be expressed as ordinary differential equations.
+
+For particle position x and velocity v:
+
+\[
+\dot{\mathbf x}=\mathbf v,
+\]
+
+\[
+m\dot{\mathbf v}=\mathbf F(\mathbf x,\mathbf v,t).
+\]
+
+Equivalently,
+
+\[
+\dot{\mathbf v}
+=
+\frac{\mathbf F}{m}.
+\]
+
+The continuous equations do not directly tell the computer how to advance one frame.
+
+A numerical integrator approximates that evolution.
+
+##### Explicit Euler
+
+\[
+\mathbf x_{n+1}
+=
+\mathbf x_n+h\mathbf v_n,
+\]
+
+\[
+\mathbf v_{n+1}
+=
+\mathbf v_n+h\mathbf a_n.
+\]
+
+It is simple and first-order accurate, but it can inject energy into oscillatory systems.
+
+##### Semi-implicit Euler
+
+Update velocity first:
+
+\[
+\mathbf v_{n+1}
+=
+\mathbf v_n+h\mathbf a_n,
+\]
+
+then position using the new velocity:
+
+\[
+\mathbf x_{n+1}
+=
+\mathbf x_n+h\mathbf v_{n+1}.
+\]
+
+For many game-physics systems, this small change has much better qualitative energy behavior than explicit Euler while remaining cheap.
+
+This is why two methods with nearly identical code can behave very differently.
+
+##### Backward Euler
+
+Backward Euler evaluates the derivative at the future state:
+
+\[
+\mathbf x_{n+1}
+=
+\mathbf x_n
++
+h f(\mathbf x_{n+1},t_{n+1}).
+\]
+
+Because the unknown future state appears on both sides, the step is implicit and often requires solving a system.
+
+Its advantage is strong stability for stiff systems.
+
+The trade is numerical damping and solve cost.
+
+##### Verlet-style position integration
+
+A simple position Verlet form is
+
+\[
+\mathbf x_{n+1}
+=
+2\mathbf x_n
+-
+\mathbf x_{n-1}
++
+h^2\mathbf a_n.
+\]
+
+It stores previous position rather than explicit velocity.
+
+Constraint-based cloth and particle systems often like Verlet-style formulations because positional constraints can be applied directly.
+
+The deeper point is:
+
+\[
+\boxed{
+\text{integration scheme is part of the simulated model}
+}
+\]
+
+Changing integrator can change observed energy, damping, stability, and phase behavior even when the force equations remain identical.
+
+#### Time step is a numerical parameter, not merely frame duration
+
+If the render frame takes \(\Delta t\), it does not follow that the physics integrator should always advance by exactly that variable step.
+
+Large variable steps can destabilize simulation.
+
+A fixed-step accumulator uses:
+
+~~~text
+accumulator += realFrameDelta
+
+while accumulator >= h:
+    simulate(h)
+    accumulator -= h
+
+render interpolated state
+~~~
+
+This separates simulation step size h from render cadence.
+
+The simulation then has more predictable numerical behavior and deterministic-replay potential.
+
+The remaining interpolation fraction is
+
+\[
+\alpha=
+\frac{accumulator}{h}.
+\]
+
+Visual state can be interpolated between the previous and current simulation states.
+
+#### A mass-spring system exposes stiffness
+
+For a spring between positions \(\mathbf x_i\) and \(\mathbf x_j\),
+
+\[
+\mathbf d=\mathbf x_j-\mathbf x_i,
+\qquad
+\ell=\|\mathbf d\|.
+\]
+
+Hooke's law force magnitude is
+
+\[
+F=-k(\ell-\ell_0).
+\]
+
+A vector force can be
+
+\[
+\mathbf F_i
+=
+k(\ell-\ell_0)
+\frac{\mathbf d}{\ell},
+\]
+
+with opposite force on j.
+
+As stiffness k increases, explicit integration often requires smaller h for stability.
+
+This is the practical meaning of a stiff system: some modes evolve on a much faster time scale than the overall motion.
+
+Integrator choice and time step therefore cannot be chosen independently from physical parameters.
+
+#### Collision detection and collision response are different problems
+
+Detection asks whether objects overlap or will contact.
+
+Response asks what change in velocity/position should follow.
+
+For a simple frictionless impulse between two bodies with contact normal \(\mathbf n\), relative contact velocity is
+
+\[
+\mathbf v_r
+=
+\mathbf v_B-\mathbf v_A.
+\]
+
+Its normal component is
+
+\[
+v_n=\mathbf v_r\cdot\mathbf n.
+\]
+
+If \(v_n\ge0\), the bodies are already separating along the normal and a new closing impulse is usually unnecessary.
+
+For point masses with inverse masses \(m_A^{-1}\) and \(m_B^{-1}\), coefficient of restitution e, the scalar impulse magnitude is
+
+\[
+j
+=
+-\frac{(1+e)v_n}
+{m_A^{-1}+m_B^{-1}}.
+\]
+
+Then
+
+\[
+\mathbf v_A'
+=
+\mathbf v_A
+-
+j m_A^{-1}\mathbf n,
+\]
+
+\[
+\mathbf v_B'
+=
+\mathbf v_B
++
+j m_B^{-1}\mathbf n.
+\]
+
+Rigid bodies add rotational terms because an impulse away from the center of mass changes angular velocity.
+
+The full denominator contains effective mass contributions from inertia tensors and contact-arm cross products.
+
+The conceptual lesson is:
+
+\[
+\boxed{
+\text{contact response acts on relative velocity through effective mass}
+}
+\]
+
+not simply by reversing one object's velocity.
+
+#### Restitution is not a generic bounce multiplier
+
+Restitution relates pre- and post-collision normal relative velocity in an idealized contact:
+
+\[
+v_n'
+=
+-e v_n.
+\]
+
+Using high restitution for tiny resting contacts can create jitter because numerical noise becomes repeated bounce energy.
+
+Production solvers often suppress restitution below a velocity threshold.
+
+This is an example of a physically motivated model requiring numerical policy.
+
+#### Friction is constrained tangential impulse
+
+After solving the normal impulse, compute tangential relative velocity:
+
+\[
+\mathbf v_t
+=
+\mathbf v_r
+-
+(\mathbf v_r\cdot\mathbf n)\mathbf n.
+\]
+
+If nonzero, tangent direction is
+
+\[
+\mathbf t=
+\frac{\mathbf v_t}{\|\mathbf v_t\|}.
+\]
+
+A candidate tangential impulse can be derived through tangential effective mass, then clamped according to Coulomb friction:
+
+\[
+|j_t|
+\le
+\mu j_n.
+\]
+
+The normal impulse creates the bound on friction impulse.
+
+This explains why friction cannot be modeled correctly as an arbitrary global velocity damping term.
+
+#### Position correction and velocity correction solve different errors
+
+A velocity impulse can stop future penetration but does not necessarily remove overlap already present because of discrete stepping.
+
+Engines often need positional correction, split impulses, Baumgarte-style stabilization, or position-level constraint solves.
+
+But aggressive correction injects energy or causes jitter.
+
+The solver therefore balances:
+
+~~~text
+remove overlap fast enough to avoid visible sinking
+versus
+avoid adding excessive artificial energy
+~~~
+
+This is why contact resolution is iterative numerical optimization, not a one-line bounce formula.
+
+#### Sampling unifies rasterization and ray tracing
+
+A pixel value conceptually averages a continuous image signal over a footprint.
+
+For pixel region A,
+
+\[
+I_A
+=
+\frac{1}{|A|}
+\int_A I(x,y)\,dx\,dy.
+\]
+
+One sample at the pixel center estimates that integral poorly when signal frequencies exceed the sampling rate.
+
+Aliasing appears because high-frequency variation is reconstructed as lower-frequency structure.
+
+Supersampling, MSAA, texture filtering, mipmapping, TAA, stochastic path samples, and ray differentials are all responses to the same basic problem: finite samples approximate a continuous integral.
+
+This is the central MIT sampling connection.
+
+#### Mipmapping is prefiltered integration over scale
+
+A mip chain stores progressively low-pass-filtered versions of a texture.
+
+If a projected pixel footprint covers many texels, reading only the finest level samples a high-frequency signal too sparsely.
+
+Choosing a coarser mip level approximates integrating the texture over a larger footprint.
+
+Trilinear filtering interpolates between mip levels to reduce transitions between discrete scales.
+
+Anisotropic filtering goes further because the projected footprint is often elongated, not square.
+
+The correct abstraction is:
+
+\[
+\boxed{
+\text{texture lookup should approximate footprint integration}
+}
+\]
+
+not merely nearest color retrieval.
+
+#### Rasterization is an analytic visibility shortcut plus sampling
+
+For a triangle projected to screen, rasterization determines which pixels/samples lie inside the projected primitive and interpolates attributes across it.
+
+Barycentric coordinates express a point as
+
+\[
+\mathbf p
+=
+\lambda_0\mathbf p_0
++
+\lambda_1\mathbf p_1
++
+\lambda_2\mathbf p_2,
+\]
+
+with
+
+\[
+\lambda_0+\lambda_1+\lambda_2=1.
+\]
+
+Attributes can be interpolated from those weights.
+
+But perspective changes the correct interpolation rule.
+
+For an attribute a stored at clip-space vertices with w values, perspective-correct interpolation uses quantities related to
+
+\[
+\frac{a_i}{w_i}
+\quad\text{and}\quad
+\frac{1}{w_i}
+\]
+
+then divides after interpolation:
+
+\[
+a
+=
+\frac{
+\sum_i \lambda_i \frac{a_i}{w_i}
+}{
+\sum_i \lambda_i \frac{1}{w_i}
+}.
+\]
+
+This is why naive screen-space linear interpolation makes textures visibly warp.
+
+#### Depth is also a convention-sensitive quantity
+
+Depth buffering depends on projection convention and representation.
+
+Precision is not uniformly distributed in world-space distance.
+
+Perspective projection makes near geometry consume more representational precision.
+
+Reverse-Z techniques exploit floating-point distribution and projection mapping to improve useful depth precision.
+
+The durable lesson is that a depth value is not just distance. It is the result of a projection mapping plus a depth-range convention.
+
+#### Shadow mapping is another sampling problem
+
+A shadow map samples visibility from the light's viewpoint.
+
+The scene is projected into a finite depth texture.
+
+A camera-visible point is transformed into light space and compared against stored light-space depth.
+
+Artifacts follow from finite sampling and numerical mismatch:
+
+- shadow acne,
+- peter-panning,
+- aliasing,
+- perspective undersampling,
+- cascade transitions,
+- temporal instability.
+
+Bias trades self-shadow error against detached-shadow error.
+
+PCF averages multiple binary comparisons to approximate filtered visibility.
+
+Cascaded shadow maps allocate more light-space resolution near the camera where screen-space error is more noticeable.
+
+Again:
+
+\[
+\boxed{
+\text{shadow quality}
+=
+\text{visibility approximation}
++
+\text{sampling allocation}
++
+\text{numerical robustness}
+}
+\]
+
+#### Image-based lighting turns the environment into an integral
+
+An environment map provides incident radiance over direction.
+
+Diffuse irradiance at normal n is
+
+\[
+E(\mathbf n)
+=
+\int_{\Omega^+}
+L_i(\omega)
+(\mathbf n\cdot\omega)
+\,d\omega.
+\]
+
+Rather than evaluate this expensive integral per shading point from raw environment samples, renderers precompute approximations such as irradiance maps or spherical-harmonic coefficients.
+
+Specular IBL is roughness dependent because a rough microfacet BRDF integrates a broader range of directions than a smooth mirror-like surface.
+
+Prefiltered environment maps approximate this directional convolution at different roughness levels.
+
+This is the same strategy used throughout graphics:
+
+~~~text
+expensive continuous integral
+    ↓
+precompute/filter
+    ↓
+small runtime lookup
+~~~
+
+#### Output devices complete the numerical pipeline
+
+The renderer eventually produces values that a physical display converts into emitted light.
+
+That conversion includes:
+
+- transfer functions,
+- peak luminance,
+- black level,
+- color primaries,
+- white point,
+- bit depth,
+- local/global tone behavior,
+- HDR metadata in relevant systems.
+
+A physically meaningful HDR internal value cannot simply be copied into an 8-bit display buffer.
+
+Tone mapping performs a mapping from scene-referred radiometric range into display-referred range.
+
+The creative and technical choices are intertwined because the mapping controls highlight compression, contrast, colorfulness, and adaptation.
+
+The rendering pipeline is therefore not finished at lighting.
+
+It is finished only when the display-facing signal is produced under a known color/transfer convention.
+
+#### The MIT sequence is a dependency graph, not a list of disconnected lectures
+
+The most useful reading of the course is:
+
+\[
+\boxed{
+\begin{array}{c}
+\text{curves/surfaces}\\
+\downarrow\\
+\text{transforms/hierarchy}\\
+\downarrow\\
+\text{animation + ODE integration}\\
+\downarrow\\
+\text{collision constraints}\\
+\downarrow\\
+\text{camera/visibility}\\
+\downarrow\\
+\text{shading + texture}\\
+\downarrow\\
+\text{sampling}\\
+\downarrow\\
+\text{global illumination}\\
+\downarrow\\
+\text{raster/ray execution}\\
+\downarrow\\
+\text{display}
+\end{array}
+}
+\]
+
+A game engine repeatedly traverses this dependency graph every frame.
+
+That is why the best curriculum narrative introduces mathematics where it becomes operational: derivatives when curves need tangents, inverse-transpose when normals must remain perpendicular, differential equations when motion must advance, impulses when contact changes momentum, probability when illumination is sampled, and signal processing when pixels and textures alias.
+
+Source integration basis: MIT 6.837 Computer Graphics lecture sequence covering curves/surfaces, transformations, hierarchical modeling, color, animation/skinning, particle systems and ODE solvers, mass-spring systems, collisions, ray casting/tracing and acceleration, shading, texture mapping, sampling/mipmaps, Monte Carlo/global illumination, image-based rendering/lighting, rasterization, real-time shadows, and output devices.
+
+
 ### Algorithmic scope and debugging the image pipeline
 
 The first lecture treats graphics as the math and algorithms behind images, not as a tour of drawing software. Its examples introduce a shared toolkit: functions describe shape, transforms set pose, time-stepping rules evolve state, and sampling converts continuous pictures into pixels. Rasterization and ray-based rendering handle visibility in opposite directions, from primitive to pixel and from pixel to scene. A renderer can combine both. [[#MITG-01 - Introduction|MITG-01]] · [[#MITG-09 - Ray casting|MITG-09]] · [[#MITG-17 - Rasterization|MITG-17]] (00:19:00–00:45:00; 00:10:00–00:25:00; 00:10:00–00:30:00)
