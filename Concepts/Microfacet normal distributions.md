@@ -54,3 +54,10 @@ Those checks establish mathematical contracts. They do not prove white-furnace e
 Primary reading in the graphics volume: [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Ask a surface where incoming energy can go]].
 
 Related: [[Multiple importance sampling]], [[Color encoding and linear-light operations]], [[Surface tangents normals and bitangents]].
+
+## Extended executable reference
+
+`tools/labs/pbr_extended_reference_lab.cpp` adds the cases that the first isotropic oracle explicitly left open. It numerically checks projected-area normalization for anisotropic GGX with independent tangent-axis roughness, evaluates exact dielectric Fresnel at normal and grazing limits, reconstructs Snell refraction including total internal reflection, and integrates a Lambertian material in a uniform white furnace.
+
+The furnace check is intentionally modest: Lambertian reflection has an analytic target equal to albedo, making it an independent conservation oracle. It does **not** claim that a single-scattering rough microfacet reflection model automatically passes a furnace test at every roughness; multiple-scattering compensation and rough transmission need their own model-specific derivations and tests.
+
