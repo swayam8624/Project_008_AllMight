@@ -24,19 +24,19 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 12 | Geometry primitives | Reference implemented in teaching corpus | geometry/closest-point/intersection material | full production geometry-library fuzzing remains separate |
 | 13 | Collision/GJK/CCD | Multiple independent reference witnesses | disk CCD, swept broadphase, contact/TOI labs | arbitrary rotating 3D convex CCD and production solver parity remain higher evidence |
 | 14 | Spatial acceleration/navigation | Differential reference implemented | spatial_index_lab.cpp | SAH/LBVH quality, dynamic updates, SIMD/GPU traversal need workload/native evidence |
-| 15 | ECS/data-oriented runtime | Reference implemented | ecs_reconstruction_lab.cpp | concurrent structural mutation, full scheduler and KairoECS parity need production evidence |
+| 15 | ECS/data-oriented runtime | Storage + scheduler/hierarchy references implemented | ecs_reconstruction_lab.cpp, ecs_scheduler_hierarchy_lab.cpp | concurrent structural mutation, work stealing and KairoECS parity need production evidence |
 | 16 | Engine architecture/assets/tooling | Reference implemented with publication/concurrency witnesses | asset pipeline, world contract, threaded publication labs | current Kairo production integration remains a separate repository audit |
 | 17 | Rigid-body dynamics | Reference implemented + numerical checks | rigid/spring/mass/inertia teaching and labs | production multi-body/3D engine parity remains separate |
 | 18 | Contacts/constraints/CCD response | Strong reference/differential evidence | persistent contact, cache, penetration refresh, rigid-contact labs | complete 3D stacks/friction/islands and production parity are not implied |
 | 19 | Rasterization | Independent CPU reference implemented | raster_reference_lab.cpp | clipping/MSAA/stencil/conservative raster and GPU parity remain additional layers |
 | 20 | PBR/materials | Mathematical oracle implemented | pbr_reference_lab.cpp | full white-furnace suite, transmission, anisotropy and material-import parity remain |
-| 21 | Ray/path transport | Estimator invariants independently verified | monte_carlo_transport_lab.cpp plus retained ray/path teaching | complete scene path tracer, NEE/MIS image convergence and media parity remain |
+| 21 | Ray/path transport | Scene-level geometry + MIS reference verified | monte_carlo_transport_lab.cpp, path_transport_scene_lab.cpp | emissive-geometry NEE, multibounce transport, BVH/image parity and media remain |
 | 22 | GPU architecture/parallel algorithms | Derived/reference + compile/native boundary | prefix-scan teaching, native graphics workflow | occupancy/bank/coalescing claims require device counters |
 | 23 | Vulkan | Native API execution smoke | tools/native/vulkan_sync_smoke.cpp | resource-specific layouts/queue ownership/timeline protocols and production renderer parity remain |
 | 24 | Metal/render graph | Logical graph reference + real MSL compile | render_graph_contract_lab.cpp, metal_compile_smoke.metal | Metal command-buffer execution/capture, heap aliasing and physical Apple-GPU behavior remain |
-| 25 | Gaussian splatting/captured worlds | Independent CPU mathematical oracle | gaussian_projection_reference_lab.cpp | conic/tile/sort/full SH/native GPU and current Maveb/Vulkax parity remain |
+| 25 | Gaussian splatting/captured worlds | Projection + conic/tile/order CPU oracles | gaussian_projection_reference_lab.cpp, gaussian_tile_conic_lab.cpp | full SH, GPU radix/binning/rasterization and current Maveb/Vulkax parity remain |
 | 26 | Advanced real-time rendering | CPU semantic reference implemented | realtime_rendering_reference_lab.cpp | full TAA/SSR/SSAO/volumetrics/particles and GPU renderer parity remain |
-| 27 | Meshes/animation | Topology + rigid-blend reference implemented | mesh_topology_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | complete QEM/remeshing and production GPU skinning/import parity remain |
+| 27 | Meshes/animation | Topology + QEM + rigid-blend reference implemented | mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | optimal QEM/link-condition remeshing and production GPU skinning/import parity remain |
 | 28 | Emulation/OS/network/crypto | Real POSIX/network execution + known-answer crypto | emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp | internet faults, crash durability, side channels/key management and production security remain |
 | 29 | ML runtime/tensors/compressed inference | New reference implementation | phase29_ml_runtime_lab.cpp | full GGUF, protobuf ONNX/opsets, tokenizer, SIMD/Metal kernels and model parity remain |
 | 30 | Production/DCC/research/capstone | Host-neutral publication reference + research methodology | production_pipeline_contract_lab.cpp | actual Blender/Maya/Houdini/Nuke host runs, render farm/filesystem durability and learner oral mastery remain |
@@ -81,3 +81,15 @@ tools/check_depth_repair_contract.py checks that:
 The generic C++20 workflow separately compiles and executes every tools/labs/*_lab.cpp under GCC sanitizer, Clang strict and GCC release modes. The native graphics workflow exercises Vulkan and Metal-specific toolchains. The consolidation/source-sync workflows protect the three-volume teaching surface.
 
 These checks are necessary evidence, not a semantic completion certificate.
+
+
+## Second-wave closure — executable boundaries tightened
+
+The follow-up repair converted four previously explicit boundaries into tested reference artifacts:
+
+- `ecs_scheduler_hierarchy_lab.cpp` adds read/write conflict scheduling and subtree transform invalidation to the ECS layer;
+- `path_transport_scene_lab.cpp` connects camera geometry, Lambertian transport, two proposal PDFs and balance MIS to an analytic pixel target;
+- `gaussian_tile_conic_lab.cpp` continues projected covariance through conic inversion, conservative tile duplication, depth ordering and transmittance;
+- `qem_edge_collapse_lab.cpp` moves mesh simplification from topology-only discussion to plane quadrics, candidate error and geometric collapse rejection.
+
+These raise the corresponding claims from prose/partial-reference status. They do not erase the higher evidence boundaries stated in the phase table.
