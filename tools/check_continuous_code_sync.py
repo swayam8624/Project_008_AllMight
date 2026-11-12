@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mechanical source-to-continuous-volume contract, not a semantic teaching audit.
 
-The canonical Graphics and Game Engine volumes embed the COMPLETE runnable C++20
+The three canonical volumes embed selected COMPLETE runnable C++20
 witnesses. An edited source must also be synchronized into the teaching chapter.
 This check intentionally avoids treating short source links as complete instruction.
 
@@ -21,6 +21,7 @@ ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
 # Every entry is a complete standalone witness embedded in the reader-facing book.
 EMBEDDED = {
+    MATH: ("math_contact_toi_lab.cpp",),
     GRAPHICS: (
         "disk_ccd_lab.cpp",
         "swept_broadphase_lab.cpp",
