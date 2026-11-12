@@ -39,11 +39,12 @@ void set_timeout(int fd){
 std::vector<std::uint8_t> frame(const std::string& s){
     require(s.size()<=1024,"teaching frame too large");
     const std::uint32_t n=static_cast<std::uint32_t>(s.size());
-    return {
+    std::vector<std::uint8_t> out{
         static_cast<std::uint8_t>(n>>24),static_cast<std::uint8_t>(n>>16),
-        static_cast<std::uint8_t>(n>>8),static_cast<std::uint8_t>(n),
-        s.begin(),s.end()
+        static_cast<std::uint8_t>(n>>8),static_cast<std::uint8_t>(n)
     };
+    out.insert(out.end(),s.begin(),s.end());
+    return out;
 }
 
 class StreamDecoder{
