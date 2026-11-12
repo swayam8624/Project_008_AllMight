@@ -135,7 +135,7 @@ def main() -> None:
     if expected_part != 3001:
         raise RuntimeError(f"mastery matrix stops at part {expected_part - 1}, expected 3000")
 
-    print(f"PASS: {len(list(CONCEPTS.glob('*.md')))} concept notes; none below 1000 bytes")
+    print(f"PASS: {len(list(CONCEPTS.glob('*.md')))} concept notes; none below 1200 bytes")
     print(f"PASS: {len(REQUIRED_ARTIFACTS)} required depth-repair artifacts present")
     print("PASS: exact M001-M180 matrix partitions Parts 1-3000 and carries an evidence floor + next gate")
     print("PASS: reconstruction checkpoints remain in all three canonical volumes")
