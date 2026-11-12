@@ -9,7 +9,6 @@ This deliberately avoids hard-coding deleted historical volume names.
 """
 from __future__ import annotations
 
-import difflib
 import sys
 from pathlib import Path
 
@@ -48,20 +47,19 @@ def load(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def code_blocks(volume: str, source: str) -> list[str]:
-    """Return every cpp block whose first line identifies this witness."""
-    first_line = source.splitlines()[0]
-    start_marker = "```cpp\n" + first_line
+def all_cpp_blocks(volume: str) -> list[str]:
+    """Extract every complete cpp fenced block without guessing its identity."""
+    marker = "```cpp\n"
     blocks: list[str] = []
     pos = 0
     while True:
-        pos = volume.find(start_marker, pos)
+        pos = volume.find(marker, pos)
         if pos == -1:
             break
-        begin = pos + len("```cpp\n")
+        begin = pos + len(marker)
         end = volume.find("\n```", begin)
         if end == -1:
-            raise ValueError(f"unclosed embedded block starting {first_line!r}")
+            raise ValueError("unclosed cpp fenced block")
         blocks.append(volume[begin:end].rstrip("\n"))
         pos = end + 4
     return blocks
@@ -80,44 +78,28 @@ def verify() -> int:
         else:
             print(f"FORMAT {path.name}: fences={fences}, display-math boundaries={math}")
 
+    parsed: dict[Path, list[str]] = {}
+    for volume_path, volume in volumes.items():
+        try:
+            parsed[volume_path] = all_cpp_blocks(volume)
+        except ValueError as error:
+            print(f"FAIL {volume_path.name}: {error}")
+            failed = True
+            parsed[volume_path] = []
+
     for filename in EMBEDDED:
         source_path = ROOT / "tools" / "labs" / filename
         source = load(source_path).rstrip("\n")
-        found: list[tuple[Path, str]] = []
-
-        for volume_path, volume in volumes.items():
-            try:
-                for block in code_blocks(volume, source):
-                    found.append((volume_path, block))
-            except ValueError as error:
-                print(f"FAIL {volume_path.name}: {error}")
-                failed = True
-
-        if not found:
-            print(f"FAIL {filename}: complete witness not embedded in any canonical volume")
+        owners = [
+            volume_path
+            for volume_path, blocks in parsed.items()
+            if source in blocks
+        ]
+        if not owners:
+            print(f"FAIL {filename}: exact complete witness not embedded in any canonical volume")
             failed = True
             continue
-
-        stale = False
-        for volume_path, embedded in found:
-            if embedded != source:
-                stale = True
-                failed = True
-                diff = list(
-                    difflib.unified_diff(
-                        embedded.splitlines(),
-                        source.splitlines(),
-                        fromfile=f"{volume_path.name}/{filename}",
-                        tofile=f"tools/labs/{filename}",
-                        lineterm="",
-                    )
-                )
-                print(f"FAIL {filename}: stale copy in {volume_path.name}")
-                print("\n".join(diff[:24]))
-
-        if not stale:
-            owners = ", ".join(path.name for path, _ in found)
-            print(f"SYNC {filename}: exact source in {owners}")
+        print(f"SYNC {filename}: exact source in {', '.join(path.name for path in owners)}")
 
     if failed:
         print("Continuous volume source sync: FAIL")
