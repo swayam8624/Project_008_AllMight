@@ -67897,6 +67897,7 @@ The converse is equally important: before that condition, destruction is forbidd
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <utility>  // std::move transfers the retired allocation without copying bytes.
 #include <vector>
 
 struct Handle {
