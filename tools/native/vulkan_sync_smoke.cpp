@@ -68,11 +68,13 @@ int main() {
         std::vector<const char*> extensions;
         if (debug_utils) extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-        VkApplicationInfo app{};\n        app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        VkApplicationInfo app{};
+        app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         app.pApplicationName = "PROJECTALLMIGHT synchronization2 witness";
         app.apiVersion = VK_API_VERSION_1_3;
 
-        VkInstanceCreateInfo ici{};\n        ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        VkInstanceCreateInfo ici{};
+        ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         ici.pApplicationInfo = &app;
         ici.enabledLayerCount = static_cast<std::uint32_t>(layers.size());
         ici.ppEnabledLayerNames = layers.data();
@@ -89,7 +91,8 @@ int main() {
             vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
 
         if (debug_utils && create_debug) {
-            VkDebugUtilsMessengerCreateInfoEXT ci{};\n            ci.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+            VkDebugUtilsMessengerCreateInfoEXT ci{};
+        ci.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
             ci.messageSeverity =
                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -111,9 +114,10 @@ int main() {
         std::uint32_t queue_family = 0;
         bool found = false;
         for (VkPhysicalDevice candidate : physicals) {
-            VkPhysicalDeviceSynchronization2Features sync2{
-                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES};
-            VkPhysicalDeviceFeatures2 features{};\n            features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            VkPhysicalDeviceSynchronization2Features sync2{};
+            sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+            VkPhysicalDeviceFeatures2 features{};
+        features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             features.pNext = &sync2;
             vkGetPhysicalDeviceFeatures2(candidate, &features);
             if (!sync2.synchronization2) continue;
@@ -136,16 +140,18 @@ int main() {
         if (!found) throw std::runtime_error("no device with synchronization2 and usable queue found");
 
         const float priority = 1.0F;
-        VkDeviceQueueCreateInfo qci{};\n        qci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        VkDeviceQueueCreateInfo qci{};
+        qci.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         qci.queueFamilyIndex = queue_family;
         qci.queueCount = 1;
         qci.pQueuePriorities = &priority;
 
-        VkPhysicalDeviceSynchronization2Features sync2_enable{
-            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES};
+        VkPhysicalDeviceSynchronization2Features sync2_enable{};
+        sync2_enable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
         sync2_enable.synchronization2 = VK_TRUE;
 
-        VkDeviceCreateInfo dci{};\n        dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        VkDeviceCreateInfo dci{};
+        dci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         dci.pNext = &sync2_enable;
         dci.queueCreateInfoCount = 1;
         dci.pQueueCreateInfos = &qci;
@@ -156,43 +162,51 @@ int main() {
         VkQueue queue = VK_NULL_HANDLE;
         vkGetDeviceQueue(device, queue_family, 0, &queue);
 
-        VkCommandPoolCreateInfo pci{};\n        pci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        VkCommandPoolCreateInfo pci{};
+        pci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pci.queueFamilyIndex = queue_family;
         pci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         VkCommandPool pool = VK_NULL_HANDLE;
         check(vkCreateCommandPool(device, &pci, nullptr, &pool), "vkCreateCommandPool");
 
-        VkCommandBufferAllocateInfo cai{};\n        cai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        VkCommandBufferAllocateInfo cai{};
+        cai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         cai.commandPool = pool;
         cai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cai.commandBufferCount = 1;
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         check(vkAllocateCommandBuffers(device, &cai, &cmd), "vkAllocateCommandBuffers");
 
-        VkCommandBufferBeginInfo begin{};\n        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        VkCommandBufferBeginInfo begin{};
+        begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         check(vkBeginCommandBuffer(cmd, &begin), "vkBeginCommandBuffer");
 
-        VkMemoryBarrier2 barrier{};\n        barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+        VkMemoryBarrier2 barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
         barrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
         barrier.dstStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
         barrier.dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT;
 
-        VkDependencyInfo dependency{};\n        dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        VkDependencyInfo dependency{};
+        dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
         dependency.memoryBarrierCount = 1;
         dependency.pMemoryBarriers = &barrier;
         vkCmdPipelineBarrier2(cmd, &dependency);
         check(vkEndCommandBuffer(cmd), "vkEndCommandBuffer");
 
-        VkCommandBufferSubmitInfo cbsi{};\n        cbsi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+        VkCommandBufferSubmitInfo cbsi{};
+        cbsi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
         cbsi.commandBuffer = cmd;
 
-        VkSubmitInfo2 submit{};\n        submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+        VkSubmitInfo2 submit{};
+        submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
         submit.commandBufferInfoCount = 1;
         submit.pCommandBufferInfos = &cbsi;
 
-        VkFenceCreateInfo fci{};\n        fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        VkFenceCreateInfo fci{};
+        fci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         VkFence fence = VK_NULL_HANDLE;
         check(vkCreateFence(device, &fci, nullptr, &fence), "vkCreateFence");
         check(vkQueueSubmit2(queue, 1, &submit, fence), "vkQueueSubmit2");
