@@ -1,0 +1,35 @@
+name: Three canonical volume preservation
+
+on:
+  pull_request:
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/check_three_volume_consolidation.py'
+      - 'tools/labs/basis_measurement_lab.cpp'
+      - '.github/workflows/three-volume-preservation.yml'
+  push:
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/check_three_volume_consolidation.py'
+      - 'tools/labs/basis_measurement_lab.cpp'
+      - '.github/workflows/three-volume-preservation.yml'
+
+jobs:
+  source-and-narrative-preservation:
+    name: Source bodies, ordered lines and runnable basis lab
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with original history for additive comparison
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify exact source inclusion and preserved prior text
+        run: |
+          python3 tools/check_three_volume_consolidation.py
+
+      - name: Compile and run the mathematics reference in release mode
+        run: |
+          g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror \
+            tools/labs/basis_measurement_lab.cpp -o /tmp/basis_measurement_lab
+          /tmp/basis_measurement_lab
