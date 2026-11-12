@@ -97,3 +97,21 @@ This ledger records sources actually inspected for this integration pass. It is 
 - Khronos Vulkan Learn page — checked its current learning-resource index, including Brendan Galea tutorials and TU Wien's Vulkan lecture series.
 - NVIDIA/SIGGRAPH 2025 “An Introduction to Neural Shading” course page — checked course scope, presenters, slides/code/video links and real-time neural-shader deployment focus.
 
+
+
+## Human factors, interaction, locomotion, audio and display sources checked in the final breadth sweep
+
+- Steven M. LaValle, Virtual Reality, Cambridge University Press / free online text — checked the current book page and its stated coverage of geometry, rendering, optics, visual/auditory/vestibular perception, tracking, interfaces and human factors.
+- Poupyrev, Billinghurst, Weghorst and Ichikawa, “The Go-Go Interaction Technique: Non-linear Mapping for Direct Manipulation in VR,” UIST 1996 — distant direct manipulation through nonlinear arm extension.
+- Stoakley, Conway and Pausch, “Virtual Reality on a WIM: Interactive Worlds in Miniature,” CHI 1995 — miniature-world selection, manipulation, navigation and path-planning metaphor.
+- EPFL CS-444 lecture “3D Interaction: Selection and Manipulation,” Ronan Boulic — checked as a teaching source tying ray casting, occlusion/framing, virtual-hand manipulation, Go-Go and WIM into a 3D-interaction taxonomy.
+- Razzaque, Kohn and Whitton, “Redirected Walking,” Eurographics 2001 — physical walking redirected through imperceptible scene rotation to extend usable virtual space.
+- Kennedy, Lane, Berbaum and Lilienthal, “Simulator Sickness Questionnaire: An Enhanced Method for Quantifying Simulator Sickness,” 1993 — SSQ development and scoring basis.
+- Warburton et al., “Measuring motion-to-photon latency for sensorimotor experiments with virtual reality systems,” Behavior Research Methods, 2023 — verification of consumer VR latency for research use.
+- Guenter, Finch, Drucker, Tan and Snyder, “Foveated 3D Graphics,” SIGGRAPH Asia 2012 — gaze-contingent multiresolution rendering and perceptual acuity model.
+- Patney et al., “Towards Foveated Rendering for Gaze-Tracked Virtual Reality,” ACM TOG / SIGGRAPH Asia 2016 — perceptual study, peripheral filtering, contrast preservation and temporal stability.
+- Jenny and Reuter, “Can I trust my ears in VR?”, International Journal of Virtual Reality, 2021 — HRTF and virtual-acoustics review.
+- IEEE Signal Processing Society 2026 research spotlight based on the 2025 survey of machine-learning HRTF individualization — current HRTF personalization direction.
+- Meta XR Audio SDK documentation, updated April 2026 — current HRTF-based object/ambisonic spatialization and room-acoustics implementation reference.
+- Hu et al., “Varifocal displays reduce the impact of the vergence-accommodation conflict on 3D pointing performance in augmented reality systems,” Virtual Reality, published August 2026 — current task-level evaluation of varifocal versus fixed-focus AR viewing.
+

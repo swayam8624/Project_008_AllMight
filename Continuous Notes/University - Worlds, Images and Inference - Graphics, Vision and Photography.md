@@ -80992,6 +80992,99 @@ with independent axes for surface bias, time, appearance, lighting, compression 
 
 
 
+
+## 3D interaction is its own design space, not a byproduct of hand tracking
+
+Tracking a hand gives coordinates. It does not answer how a user should select, manipulate, scale, inspect or navigate a world.
+
+A useful decomposition is **selection, manipulation and navigation**.
+
+For selection, direct touch is natural when the object is within reach, but distant objects need another mapping. Ray casting projects a pointing ray from a controller, hand or gaze origin and chooses an intersected target. It is efficient but becomes difficult for tiny or densely packed targets because angular error grows with distance. Cone- or aperture-based techniques enlarge the selection volume, after which disambiguation can choose among candidates.
+
+Manipulation then maps tracked motion into object motion. A one-to-one virtual hand preserves spatial intuition but cannot reach beyond the user's physical arm. The classic Go-Go technique solves this with a nonlinear reach function: nearby motion remains approximately direct, while motion beyond a threshold produces increasing virtual extension. HOMER-style interaction instead uses a ray to acquire a distant object and then changes to hand-centered manipulation. These are examples of a broader rule: **selection mapping and manipulation mapping do not have to be the same function**.
+
+Worlds-in-Miniature provides another solution by giving the user a manipulable miniature copy of the environment. The miniature acts as a second coordinate system in which distant objects become physically reachable. It can support selection, manipulation, path planning and navigation without making the user's virtual arm arbitrarily long.
+
+The engineering implication is that an XR engine should not hard-code “grab = attach object to hand.” An interaction technique is a mapping
+
+\[
+\mathcal I:
+(\text{tracked state},\text{task state},\text{world state})
+\rightarrow
+(\text{selection},\text{transform command},\text{feedback}).
+\]
+
+Different tasks need different mappings. Precision placement, large-object manipulation, UI selection and game combat do not have the same error tolerance.
+
+### Interaction fidelity is not always maximal naturalism
+
+A physically literal interface can be slower, less precise or more tiring than an abstract one. A virtual keyboard need not reproduce every physical resistance force to be useful. A distant object may be easier to select with a ray than by walking to it. Snap turning is less physically natural than smooth turning but can be more comfortable for some users.
+
+Therefore evaluate interaction by task metrics such as completion time, error, throughput, fatigue, learnability and subjective workload rather than by asking only whether the technique “feels natural.”
+
+## Locomotion couples interaction, tracked-space geometry and perception
+
+Locomotion methods include physical walking, joystick/smooth translation, teleportation, walking-in-place, arm-swinging, vehicle metaphors and redirected walking.
+
+Physical walking gives strong proprioceptive and vestibular agreement but is bounded by the tracked space. Redirected walking exploits perceptual tolerance by applying small transformations to the virtual world so the user's physical path bends while the perceived virtual path remains different. The 2001 Razzaque, Kohn and Whitton work is foundational because it turns locomotion into a control problem: steer the user away from physical boundaries without making the redirection perceptually obvious.
+
+Teleportation avoids continuous optic flow during translation but introduces discontinuity in spatial updating. Smooth locomotion preserves continuous motion but can create strong visual-vestibular mismatch. The correct choice depends on task, space, user population and exposure duration.
+
+An engine that supports room-scale locomotion should treat the safe physical boundary as part of runtime state. Navigation algorithms should not assume that a virtual path implies a feasible physical path.
+
+## Presence, comfort and sickness are measurements, not adjectives
+
+“Immersive,” “comfortable” and “present” are not sufficient experimental results.
+
+The Simulator Sickness Questionnaire (SSQ) was designed to quantify symptom clusters associated with simulator exposure. It is one instrument, not a perfect universal measure, but it is much more informative than asking participants whether they felt fine.
+
+Motion-to-photon latency should also be measured rather than inferred from engine frame time. Sensor sampling, runtime prediction, render queues, compositor work and scanout can all contribute. Modern measurement work emphasizes that consumer VR systems used for sensorimotor experiments need their latency verified as scientific instruments.
+
+Presence is similarly multidimensional. A system can have high visual fidelity but weak interaction consistency, or low graphical realism but strong sensorimotor contingency. Research should define the operational measure being used instead of treating “presence” as synonymous with polygon count.
+
+## Spatial audio is a geometry-and-filtering pipeline
+
+A point sound source does not become spatial merely because its left and right channel volumes differ.
+
+For headphone rendering, a head-related transfer function describes how sound arriving from a direction is filtered by the listener's head, torso and outer ears before reaching each eardrum. For source signal \(s(t)\) and direction-dependent left/right impulse responses \(h_L,h_R\),
+
+\[
+y_L(t)=s(t)*h_L(t),\qquad
+y_R(t)=s(t)*h_R(t).
+\]
+
+The convolution carries interaural time difference, interaural level difference and direction-dependent spectral cues. Head motion is especially valuable because the auditory scene should remain world-stable while the filters update with the listener's orientation.
+
+Generic HRTFs do not match every listener's anatomy, which can cause front-back confusion or poor externalization. Current research includes HRTF individualization using measurements, anthropometric prediction and machine learning. Real-time engines may also use ambisonics for scene-based sound fields and room models for early reflections and reverberation.
+
+The audio renderer therefore has its own approximation stack:
+
+\[
+\text{source} \rightarrow
+\text{propagation/occlusion} \rightarrow
+\text{room response} \rightarrow
+\text{spatial encoding} \rightarrow
+\text{head-relative decoding}.
+\]
+
+Visual geometry can help with acoustic occlusion, but visual material parameters are not automatically acoustic material parameters.
+
+## Display architectures attack different perceptual limitations
+
+A fixed-focus stereoscopic HMD can present binocular disparity for many virtual depths while the eye's accommodation remains tied to one optical focal distance. That is the vergence-accommodation conflict already derived earlier.
+
+A **varifocal** display changes focal distance, usually using gaze or depth information, so accommodation demand can better follow the intended virtual target. A **multifocal** display provides several focal planes. A **light-field** or holographic approach attempts to reproduce a richer set of rays so focus cues emerge more naturally. Each architecture trades optical complexity, brightness, resolution, eye-box size, calibration and latency differently.
+
+A 2026 AR study using a custom varifocal display found improved 3D pointing performance overall relative to fixed-focus viewing while also reporting substantial individual differences. That is a useful reminder that solving an optical cue conflict should be evaluated in tasks, not only with ray diagrams.
+
+## Foveated rendering has a research lineage before modern VRS
+
+Guenter et al.'s 2012 foveated 3D graphics work used gaze-contingent multiresolution image layers and perceptual acuity models to reduce shading work. Patney et al. 2016 then studied foveated rendering specifically for gaze-tracked VR, combining peripheral filtering, contrast preservation and temporal methods with user studies.
+
+Modern hardware VRS, quad views and runtime foveation extensions are mechanisms that make these ideas more practical; they are not the origin of the perceptual principle. This distinction matters when designing experiments. A paper evaluating a VRS implementation should compare its policy and perceptual assumptions separately from the hardware mechanism used to realize them.
+
+
+
 ## A return map for the key terms
 
 Use this map to find the developed explanation, then test it with the chapter example. These terms connect this independent course series to the existing vault; they do not advance the numbered curriculum.
