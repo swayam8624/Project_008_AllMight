@@ -100610,6 +100610,48 @@ Software replay validates algorithms and repeatability. Physical HMD tests valid
 
 
 
+
+## Remote XR turns frame pacing into a networked control problem
+
+Cloud rendering moves some or all graphics work to a remote GPU, encodes the resulting views, sends them across a network, decodes them on the client and still has to react to current head and input state.
+
+The end-to-end motion-to-photon path becomes roughly
+
+\[
+T =
+T_{sensor}
++T_{uplink}
++T_{server}
++T_{encode}
++T_{network}
++T_{decode}
++T_{client-compose}
++T_{scanout}.
+\]
+
+These terms overlap in real pipelines, so the equation is an accounting model rather than a claim that every stage runs strictly serially. It is still valuable because moving rendering to a server adds latency and jitter sources that a local engine does not have.
+
+NVIDIA CloudXR 6.x is one current example. Its 2026 runtime is OpenXR-facing on the server side and streams head/controller/hand state from clients while returning encoded visual output. Current releases expose network latency and packet-loss reporting, adaptive bitrate/foveated streaming, WebRTC paths, hand input and haptics.
+
+A remote-XR engine therefore needs more than a conventional video streamer:
+
+- pose prediction must account for network delay;
+- bitrate and resolution changes must not destabilize the foveal region;
+- packet loss can create age-of-information spikes rather than merely lower visual quality;
+- input and haptics travel in the opposite direction from video;
+- encoder queues can add hidden latency even when GPU rendering is fast;
+- the client compositor may still need late reprojection using a newer pose than the server saw.
+
+This also changes benchmarking. Report not only server render time but glass-to-glass latency, pose age, encode/decode time, packet loss, bitrate, frame drops, reprojection rate and tail latency. A 10 ms average network delay with 80 ms spikes is a different XR experience from a stable 15 ms path.
+
+## WebXR and platform runtimes are different deployment layers
+
+OpenXR standardizes native application-to-runtime interaction across many XR systems. WebXR exposes immersive devices to web applications through browser security and lifecycle rules. Cloud streaming can place an OpenXR application on the server while a browser/WebXR client acts as the device endpoint.
+
+These layers should not be collapsed into one abstraction. The engine's portable spatial concepts can be shared, but session creation, graphics binding, permission model, input exposure and compositor ownership differ.
+
+
+
 ## The deterministic system capstone and its evidence boundary
 
 The conceptual capstone is a single pipeline: a validated cartridge file enters a deterministic CPU interpreter; a complete versioned state snapshot is constructed; a temporary filesystem object is atomically published with an explicitly chosen crash-durability contract; the state is length-framed for transport; received bytes are authenticated and authorized; a trusted snapshot is restored; and time-stamped input is replayed to reproduce the same program behavior. Any stage can fail, and the complete application must preserve the previous valid state or report a safe, diagnosable error.

@@ -61,3 +61,39 @@ This ledger records sources actually inspected for this integration pass. It is 
 - XR subsystem ownership, OpenXR-facing architecture, foveation mechanisms and neural-renderer capability contracts -> Game Engine volume.
 - Python object/data model, profiling, numerical stability, scientific computing, data analysis and reproducibility -> Computing Foundations volume.
 - 3D Python point-cloud/reconstruction work -> University graphics/vision volume, with DCC/asset-pipeline consequences linked into the Engine volume.
+
+
+## Additional foundational XR sources checked in the second sweep
+
+- Ivan Sutherland, “The Ultimate Display” (1965), located through historical VR literature and retained as the conceptual origin for interactive computer-mediated displays.
+- Ivan Sutherland, “A Head-Mounted Three Dimensional Display” (AFIPS 1968), cross-checked through Steve LaValle's archive of the original HMD photographs and historical notes.
+- Steve LaValle, Virtual Reality historical HMD archive — clarified that “Sword of Damocles” more precisely names the overhead mechanical position sensor rather than the complete 1968 display system.
+- Paul Milgram and Fumio Kishino, “A Taxonomy of Mixed Reality Visual Displays,” IEICE Transactions, 1994 — reality–virtuality continuum plus world-knowledge, reproduction-fidelity and presence dimensions.
+- Ronald T. Azuma, “A Survey of Augmented Reality,” Presence, 1997 — real/virtual combination, real-time interaction, 3D registration, and the central role of sensing/registration error.
+- Skarbez et al., “Revisiting Milgram and Kishino's Reality-Virtuality Continuum,” Frontiers in Virtual Reality, 2021 — modern critique/revision of the classic continuum.
+- Bozkir et al., “Eye-Tracked Virtual Reality: A Comprehensive Survey on Methods and Privacy Challenges,” Proceedings of the IEEE 113(10), published online 2026 — eye-tracking pipeline plus authentication/privacy literature.
+- David-John, Butler and Jain, “Privacy-preserving datasets of eye-tracking samples with applications in XR,” IEEE TVCG, 2023.
+- Maynard et al., “EyeSpy: Inferring Eye Gaze via Side-Channel Attacks Against Foveated Rendering,” IEEE Symposium on Security and Privacy 2026 — foveation-dependent GPU timing as a gaze side channel.
+- NVIDIA CloudXR SDK 6.2.1 / 6.2.0 / 6.1.0 release documentation, checked November 2026 — current OpenXR-server, WebRTC, hand/controller/haptics, network quality and foveated-streaming capabilities.
+
+## Additional neural-scene papers checked in the second sweep
+
+- Chen et al., “TensoRF: Tensorial Radiance Fields,” ECCV 2022 — tensor-factorized radiance fields.
+- Fridovich-Keil et al., “K-Planes: Explicit Radiance Fields in Space, Time, and Appearance,” CVPR 2023 — plane-factorized arbitrary-dimensional radiance fields.
+- Barron et al., “Zip-NeRF: Anti-Aliased Grid-Based Neural Radiance Fields,” ICCV 2023 — scale-aware anti-aliasing for fast grid-based fields.
+- Li et al., “Neuralangelo: High-Fidelity Neural Surface Reconstruction,” CVPR 2023 — neural SDF surface reconstruction.
+- Yu et al., “Mip-Splatting: Alias-free 3D Gaussian Splatting,” CVPR 2024 Best Student Paper — scale-aware 3D and 2D filtering for Gaussian splats.
+- Wu et al., “4D Gaussian Splatting for Real-Time Dynamic Scene Rendering,” CVPR 2024 — time-dependent Gaussian representation via neural voxel features and deformation prediction.
+- Guédon and Lepetit, “SuGaR: Surface-Aligned Gaussian Splatting for Efficient 3D Mesh Reconstruction and High-Quality Mesh Rendering,” CVPR 2024 — surface alignment, mesh extraction and mesh-bound Gaussian refinement.
+
+## Additional learning/video/channel sources actually resolved
+
+- Freya Holmér, “Math for Game Devs” 2022 series; the checked first part covers numbers, vectors, normalization, dot product, scalar/vector projection and assignments. A course index was also checked for the broader ten-part sequence through matrices, trigonometry, interpolation, derivatives, splines and procedural animation.
+- Brendan Galea, “Vulkan Game Engine Tutorial” YouTube series — checked the introductory video and its stated engine-from-scratch Vulkan scope.
+- Sascha Willems, Vulkan examples / HowToVulkan GitHub presence — checked current 2026 profile/resources and explicit Vulkan example structure.
+- The Cherno / Hazel game-engine series — current channel/resource index checked; retained as engine-construction supplementary material rather than primary specification evidence.
+- MIT 6.837 Introduction to Computer Graphics — current MIT Graphics course index and an archived 2020 lecture-series index checked; topics span curves, transforms, scene graphs, animation, ODEs/cloth, ray tracing, acceleration, materials, sampling, rasterization, shadows, color, image processing and displays.
+- Stanford CS 148 Introduction to Computer Graphics and Imaging, Fall 2026 course page — checked current topic coverage including rasterization, meshes, light/color, BRDFs, ray tracing, sampling and acceleration structures.
+- Khronos Vulkan Learn page — checked its current learning-resource index, including Brendan Galea tutorials and TU Wien's Vulkan lecture series.
+- NVIDIA/SIGGRAPH 2025 “An Introduction to Neural Shading” course page — checked course scope, presenters, slides/code/video links and real-time neural-shader deployment focus.
+

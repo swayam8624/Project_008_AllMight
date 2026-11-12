@@ -80926,6 +80926,72 @@ Notebooks are excellent for inspecting a cloud or plotting a histogram, but hidd
 
 
 
+
+## XR terminology has a history, and the history prevents sloppy category names
+
+Ivan Sutherland's 1965 “The Ultimate Display” and 1968 head-mounted three-dimensional display are useful because they make a point that survives modern hardware: the display is an interface between a computed world model and human perception, while head tracking closes the loop by changing the generated view with the observer. The famous 1968 system combined head-mounted optics with mechanical and ultrasonic tracking. Historical descriptions often call the entire apparatus the “Sword of Damocles”; Steve LaValle's archive of the original photographs notes that the phrase more precisely refers to the overhead mechanical head-position sensor.
+
+Milgram and Kishino's 1994 reality–virtuality continuum then gives a more careful language for systems that mix real and virtual content. Their taxonomy does not reduce the field to three marketing buckets. It asks how much the system knows about the physical world, how faithfully it reproduces that world, and how strongly it creates a presence metaphor. That is still useful today because two systems both sold as “mixed reality” can differ radically in mapping, display fidelity, occlusion and interaction.
+
+Azuma's 1997 survey sharpens augmented reality around three properties that remain engineering tests rather than branding: real and virtual content are combined, the system is interactive in real time, and the augmentation is registered in 3D. It also identifies registration and sensing error as central problems. A floating label composited over a video feed may be useful, but without world registration it is not solving the same problem as a spatially anchored AR object.
+
+These historical frameworks should not be treated as immutable definitions. Later work revisits the continuum and points out that current multisensory systems blur its endpoints. Their value here is conceptual discipline: describe what the system senses, models, renders and mixes rather than relying on product labels alone.
+
+## Eye tracking is a privacy surface, not only a rendering optimization
+
+Gaze can drive interaction, avatar animation, attention analysis, foveated rendering and foveated streaming. The same signal can reveal identity or sensitive behavioral information.
+
+Recent privacy work shows three distinct threat levels.
+
+First, raw or lightly processed gaze trajectories can support re-identification. Privacy-preserving XR datasets have therefore been studied with k-anonymity, plausible deniability and differential-privacy mechanisms, showing that utility and identification risk trade against one another.
+
+Second, a permission boundary around the gaze API is not the end of the problem. EyeSpy, accepted at IEEE Security and Privacy 2026, demonstrates a side channel in dynamic foveated rendering: because work near the fovea can change GPU timing, an attacker can probe rendering cost and infer gaze without direct eye-tracking API access. The reported attacks span Quest Pro, Varjo XR-4 and desktop configurations. The broader lesson is architectural: a secret can leak through any observable computation that depends on it.
+
+Third, privacy mechanisms have to be evaluated in interactive tasks. A mechanism that makes a gaze trace statistically anonymous can still damage targeting, selection, reading or foveated rendering. Privacy evaluation therefore belongs beside latency and perceptual-quality evaluation, not in a detached policy appendix.
+
+For a research engine, the gaze contract should explicitly state:
+
+- whether raw samples ever leave the tracking subsystem;
+- whether logs store gaze, derived foveal regions or only aggregate metrics;
+- which plugins can observe GPU timing and quality maps;
+- whether samples are retained across sessions;
+- whether experiments require consent for gaze-derived behavioral analysis;
+- what perturbation, aggregation or access control is applied before publication.
+
+This is directly relevant to foveated-rendering research because the optimization signal itself can become an information channel.
+
+## Neural-scene representations form a continuum between dense grids and learned functions
+
+The existing NeRF, Instant-NGP and Gaussian-splatting material can be placed in a wider representation family.
+
+TensoRF represents a radiance field as a factorized tensor rather than a large coordinate MLP. Its low-rank decompositions trade a dense 4D tensor for compact vector/matrix factors. K-Planes extends the same spirit to arbitrary dimensions by factorizing a d-dimensional field into 2D planes, making time and varying appearance explicit dimensions rather than special cases hidden inside a monolithic network.
+
+Zip-NeRF returns to the sampling problem. Grid acceleration is fast, but a point lookup does not know the pixel's footprint. Zip-NeRF combines grid-based speed with scale-aware anti-aliasing so fine content does not shimmer or disappear when the view scale changes. The conceptual bridge to classic graphics is exact: representation acceleration must not discard prefiltering.
+
+Mip-Splatting applies that lesson to 3D Gaussian Splatting. A splat representation can still alias when its learned primitives become too small or when training and testing occur at different sampling rates. The method adds 3D smoothing and 2D mip-like filtering so the learned scene respects a sampling bound across scale. The general lesson is that a differentiable renderer is not exempt from Nyquist.
+
+Neuralangelo illustrates the surface-reconstruction branch: rather than optimizing only view reproduction, it targets high-fidelity surfaces with neural signed-distance representations and numerical derivatives. SuGaR takes a different route from the Gaussian side by encouraging Gaussians to align with a surface, extracting a mesh and optionally binding Gaussians to that mesh so editing and relighting can use conventional surface structure.
+
+Dynamic scenes widen the representation dimension. 4D Gaussian Splatting combines 3D Gaussian primitives with a time-dependent deformation representation so one scene can be queried at multiple timestamps. K-Planes similarly shows how time can be introduced as a first-class coordinate. These methods solve different pieces of the same question: how much temporal behavior should be explicit, factorized or learned?
+
+The correct curriculum map is therefore not “NeRF then 3DGS.” It is:
+
+\[
+\text{dense explicit field}
+\leftrightarrow
+\text{factorized explicit field}
+\leftrightarrow
+\text{hybrid encoded field}
+\leftrightarrow
+\text{implicit neural field}
+\leftrightarrow
+\text{explicit learned primitives},
+\]
+
+with independent axes for surface bias, time, appearance, lighting, compression and filtering.
+
+
+
 ## A return map for the key terms
 
 Use this map to find the developed explanation, then test it with the chapter example. These terms connect this independent course series to the existing vault; they do not advance the numbered curriculum.
