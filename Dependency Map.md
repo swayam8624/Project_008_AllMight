@@ -183,11 +183,11 @@ Phase 6 establishes vectors, coordinates, and geometry; Phase 7 treats matrices 
 
 | Phase | Teaching volume |
 |---|---|
-| 6 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn\|06 - From Movement to Meaning - Vectors, Geometry and Reliable Code]] |
-| 7 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations\|07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions]] |
-| 8 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation\|08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions]] |
-| 9 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|09 - From Local Change to Reliable Motion - Calculus and Optimization]] |
-| 10 | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Learning route\|10 - From Uncertainty to Trustworthy Samples - Probability and Monte Carlo]] |
+| 6 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The panel gives us a reason to learn\|06 - From Movement to Meaning - Vectors, Geometry and Reliable Code]] |
+| 7 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations\|07 - From Basis Images to Moving Worlds - Matrices, Transforms and Quaternions]] |
+| 8 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The graphics problem hiding inside a matrix equation\|08 - From Constraints to Spectra - Systems, Decompositions and Matrix Functions]] |
+| 9 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change\|09 - From Local Change to Reliable Motion - Calculus and Optimization]] |
+| 10 | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Learning route\|10 - From Uncertainty to Trustworthy Samples - Probability and Monte Carlo]] |
 
 ## Phase 9-10 prerequisite edges
 
