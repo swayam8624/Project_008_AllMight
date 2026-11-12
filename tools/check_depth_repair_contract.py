@@ -50,6 +50,8 @@ REQUIRED_ARTIFACTS = [
     "tools/native/vulkan_sync_smoke.cpp",
     "tools/native/vulkan_buffer_timeline_smoke.cpp",
     "tools/native/metal_runtime_smoke.mm",
+    "tools/dcc/blender_contract.py",
+    ".github/workflows/blender-dcc-contract.yml",
     "tools/native/metal_compile_smoke.metal",
     "Concepts/Mastery evidence levels.md",
 ]
