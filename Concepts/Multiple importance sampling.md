@@ -45,3 +45,16 @@ tools/labs/monte_carlo_transport_lab.cpp checks the simple balance-weight partit
 Read the connected derivation at [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Follow one path without losing its probability]].
 
 Related: [[Russian roulette path termination]], [[Inverse, rejection, and importance sampling]], [[Sampling support and missing strata]].
+
+## Scene-level MIS witness
+
+`tools/labs/path_transport_scene_lab.cpp` lifts the estimator checks into an actual camera/geometry/shading path. A camera ray intersects a sphere, establishes the shading normal, and evaluates Lambertian outgoing radiance under a constant environment using two proposals for the same hemisphere integral: uniform-hemisphere light sampling and cosine-weighted BSDF sampling. Each sample evaluates both PDFs in the same solid-angle measure and uses the balance heuristic.
+
+Because constant environment radiance over a Lambertian surface has the analytic solution
+
+$$
+L_o = \rho L_{env},
+$$
+
+the pixel estimate has an independent target rather than merely comparing two noisy implementations. The witness therefore checks geometry, throughput, proposal PDFs, MIS weighting and convergence together. Emissive-geometry NEE, multiple bounces, media and full rendered-image parity remain later evidence layers.
+
