@@ -80722,7 +80722,7 @@ The sign matters: the camera turning left makes a fixed landmark appear to move 
 
 The source code is mirrored as \`tools/labs/xr_planar_vio_ekf_lab.py\` for execution, but is taught here to preserve the self-contained first-use explanation. It includes all ordinary and exceptional branches for its scope, tests every analytic propagation/measurement Jacobian column against finite differences, injects one false correspondence, rejects it with a one-dimensional 99% normalized-innovation-squared threshold, uses the Joseph covariance update, and checks covariance eigenvalues. The random seed is fixed. The local synthetic run accepted 119 observations, rejected one, and ended at approximately 0.0484 m planar positional error and 0.0033 rad yaw error; these are a regression *for this synthetic problem*, not experimental headset or real-camera results.
 
-\`\`\`python
+```python
 #!/usr/bin/env python3
 """Deterministic planar visual-inertial EKF, not full 3-D VIO or OpenXR.
 World is horizontal; gravity removed from horizontal acceleration channels.
@@ -80877,7 +80877,7 @@ if __name__ == "__main__":
     check_jacobians_and_rejection()
     simulate()
     print("PASS: Jacobians, outlier gate, PSD covariance and deterministic replay")
-\`\`\`
+```
 
 Run \`python3 tools/labs/xr_planar_vio_ekf_lab.py\` with NumPy. Finite-difference Jacobian checks are a separate acceptance obligation from seeing a plausible trajectory. A single landmark, restricted motion or an unmodeled gauge can leave state directions weakly observable even when covariance stays numerically positive; testing with three surveyed landmarks intentionally makes this small reconstruction more stable. It does not prove general estimation consistency.
 
