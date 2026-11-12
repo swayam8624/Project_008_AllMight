@@ -7177,6 +7177,237 @@ A fully worked trace makes this concrete. The lab constructs `std::vector<std::u
 
 This trace is evidence about constructor selection and ownership on the tested type. It is not an assertion that moving every asset is cheaper than copying, or that a forwarded temporary can safely be retained by a target that stores an unchecked reference.
 
+
+### Modern C++ rules matter when they change ownership, lifetime or concurrency contracts
+
+The broad C++ story in this volume is already deeper than any single “tips” book, so the useful contribution from A Tour of C++, Effective Modern C++, Professional C++, The Cherno and CppCon is not another feature catalogue. Their strongest material is the set of places where a convenient-looking language feature changes an engine's correctness or performance contract.
+
+#### move is a cast of expression category, not a transport operation
+
+A call such as
+
+~~~
+std::move(resource)
+~~~
+
+does not itself move bytes or transfer ownership. It produces an xvalue expression that allows overload resolution to select move-aware operations.
+
+The actual move happens only if the receiving operation implements one.
+
+This explains why
+
+~~~
+const Texture texture = ...;
+consume(std::move(texture));
+~~~
+
+may still copy: most move constructors take a non-const rvalue reference because moving usually modifies the source. A const rvalue cannot bind to that parameter, so a copy overload may win.
+
+The engine rule is:
+
+\[
+\boxed{
+\text{use move to express permission to transfer from a source whose state may change}
+}
+\]
+
+not “sprinkle move on expensive objects.”
+
+#### forwarding references preserve caller category only with forwarding
+
+For a template
+
+~~~
+template<class T>
+void add(T&& value);
+~~~
+
+the parameter can be a forwarding reference when T is deduced. If the caller passes an lvalue, T deduces as an lvalue reference; if the caller passes an rvalue, T is a non-reference type.
+
+Inside the function, however, the named variable value is itself an lvalue expression. Passing value onward therefore loses the caller's category unless the function uses forwarding:
+
+~~~
+target(std::forward<T>(value));
+~~~
+
+This is why an asset factory or ECS construction helper can accidentally turn every rvalue into a copy even when its public API looks perfectly generic.
+
+Reference collapsing provides the mechanism:
+
+\[
+T\&\& \text{ with } T=U\&
+\quad\Rightarrow\quad
+U\&.
+\]
+
+The engineering point is not memorizing the collapse table. It is understanding that generic wrappers must preserve the semantic difference between “borrow/copy this existing object” and “you may consume this temporary.”
+
+#### noexcept can change which operation a container is willing to use
+
+A move constructor that may throw can force a standard container to prefer copying during reallocation when copying offers a stronger exception guarantee.
+
+So
+
+~~~
+Type(Type&&) noexcept;
+~~~
+
+is not merely documentation if the operation truly cannot throw. It can affect whether vector growth moves or copies elements.
+
+But declaring noexcept dishonestly is worse: an escaping exception causes termination.
+
+The rule is therefore:
+
+\[
+\boxed{
+\text{declare noexcept when the implementation's contract genuinely supports it}
+}
+\]
+
+and understand that exception specifications participate in optimization and generic-library behavior.
+
+#### special-member generation is an ownership audit
+
+Once a type manually declares some combination of destructor, copy constructor, copy assignment, move constructor or move assignment, implicit generation rules change.
+
+For an engine resource wrapper this is not trivia. A handle type that owns a GPU buffer should answer explicitly:
+
+~~~
+copyable?
+movable?
+destructor owns release?
+moved-from state valid?
+copy duplicates ownership or shares it?
+~~~
+
+If copying would create two owners of one raw handle, delete copying deliberately.
+
+If moving transfers the handle, leave the source in a destructible empty state.
+
+A type's special members are therefore a compact statement of its ownership algebra.
+
+#### const member functions are not automatically thread-safe
+
+A const member function promises not to modify the object's logical state through the ordinary non-mutable interface. It does not create synchronization.
+
+A cache may be mutable. A lazily initialized field may be mutable. Another object reachable through a pointer may change. Two threads may call the same const method and still race.
+
+For a shared engine object, the concurrency contract must be separate:
+
+\[
+\boxed{
+\text{const-correctness}
+\neq
+\text{data-race freedom}
+}
+\]
+
+If a const method mutates a cache, that cache needs synchronization or a design that avoids shared mutation.
+
+#### volatile is not a threading primitive
+
+In C++, volatile primarily constrains optimization around accesses intended for special memory or externally observable interactions. It does not make an operation atomic and does not establish inter-thread happens-before relationships.
+
+For inter-thread synchronization use the concurrency model:
+
+- atomics,
+- mutexes,
+- condition variables,
+- futures/tasks,
+- or higher-level queues/job systems.
+
+For hardware/MMIO or other special memory, volatile may be relevant according to platform rules.
+
+The dangerous sentence is:
+
+> this flag is volatile, so the worker thread will see it.
+
+That is not a valid C++ synchronization argument.
+
+#### atomics solve one memory location; they do not design the protocol
+
+Making a state variable atomic prevents a data race on that atomic object. It does not automatically make surrounding non-atomic data safe.
+
+A publication pattern needs an ordering relationship:
+
+~~~
+producer writes payload
+producer publishes readiness with release
+
+consumer observes readiness with acquire
+consumer reads payload
+~~~
+
+If the protocol uses relaxed atomics, it must prove that only atomicity/modification order is required.
+
+The memory order is part of the algorithm. Choosing memory_order_relaxed because it “sounds fast” is not performance engineering.
+
+#### default lambda capture hides lifetime dependencies
+
+A lambda that captures by reference can outlive the referenced stack object. A lambda that captures this implicitly can outlive the object. A broad capture mode can also silently begin capturing a newly referenced variable after later edits.
+
+For callbacks, jobs and deferred GPU/IO completions, prefer explicit capture because lifetime is part of correctness.
+
+Badly hidden dependency:
+
+~~~
+enqueue([&] { upload(asset); });
+~~~
+
+Better design asks:
+
+- does the job own asset?
+- borrow it under a larger lifetime?
+- copy an ID and resolve later?
+- move a self-contained payload?
+
+The capture list should reveal that answer.
+
+#### task-based APIs describe intent better than manually owning a thread
+
+A task says “run this work and produce/completion-signal this result.” A thread says “own this operating-system execution resource.”
+
+Engine code usually cares about the first.
+
+That is why futures, task systems and job graphs can scale better architecturally than one subsystem creating a permanent thread for every asynchronous need.
+
+The caveat is that standard async facilities have policy/lifetime details of their own. A production engine still needs to know whether work is guaranteed asynchronous, how exceptions propagate, how cancellation works, and how tasks interact with the engine scheduler.
+
+#### emplacement is not automatically faster or safer
+
+Emplace-style APIs construct an element from arguments at the destination. That can avoid an intermediate temporary, but the benefit depends on the call.
+
+If the caller already has an object, insertion plus move may be equally appropriate. Emplacement can also enable conversions that an explicit temporary would have made visible.
+
+Use emplacement when constructing the element from constructor arguments is the intended operation, not because “emplace is the modern faster spelling of insert.”
+
+#### explicit modern C++ is often simpler than clever modern C++
+
+The consistent message across the modern C++ sources is not “use the newest feature everywhere.” It is:
+
+\[
+\boxed{
+\text{make ownership, lifetime, type intent and synchronization easier to verify}
+}
+\]
+
+A Tour of C++ gives the integrated language map. Effective Modern C++ concentrates on C++11/14 feature interactions such as type deduction, smart pointers, move/forwarding, lambdas and atomics. Professional C++ broadens the discussion into design, testing, debugging, efficiency, multithreading and maintainability. CppCon talks are most useful when a particular engine problem needs a deeper specialist treatment. The Cherno's C++ material gives practical demonstrations that can be connected back to these rules.
+
+The source hierarchy for this volume is therefore:
+
+\[
+\text{language semantics}
+\rightarrow
+\text{small example}
+\rightarrow
+\text{engine ownership/lifetime consequence}
+\rightarrow
+\text{measured production behavior}
+\]
+
+rather than a list of style commandments.
+
+
 ### A collection of assets makes parameter packs and fold expressions necessary
 
 The editor may submit several kinds of resources in one batch. We want the total source-byte count before deciding whether a batch fits an upload budget. A fixed function accepting one mesh and two texture arguments would not scale to other combinations. We already have `AssetTraits<T>::byte_size` for each supported type; we need a way to repeat that operation for every asset in an arbitrary argument list.
