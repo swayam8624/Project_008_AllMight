@@ -1588,6 +1588,72 @@ $$
 
 Both bracketed terms remain in their respective convex sets, so the result stays in the sum. A naive vertex-pair construction produces $mn$ candidate sums for $m$ and $n$ vertices; support queries can avoid materializing that whole set.
 
+### A swept region answers *whether*; a time-of-impact equation answers *when*
+
+We just constructed the swept region of a moving disk as a Minkowski sum. The next question is more demanding: the robot or physics engine needs to know *the first time* its boundary touches another object, because it must integrate only up to that event before changing velocity. That is a different mathematical object from a yes/no overlap query. It is also the point where convex geometry, quadratic equations, constrained dynamics, and floating-point error become one computational system.
+
+Let two planar disks have initial centres $\mathbf x_A,\mathbf x_B\in\mathbb R^2$, constant velocities $\mathbf v_A,\mathbf v_B$ in metres per second, and positive radii $r_A,r_B$ in metres. Define $\mathbf p=\mathbf x_B-\mathbf x_A$ (relative centre position), $\mathbf v=\mathbf v_B-\mathbf v_A$ (relative velocity), and $R=r_A+r_B$ (combined radius). The moving disk centres touch at a time $t$ precisely if $\|\mathbf p+t\mathbf v\|=R$. Squaring is valid because both sides are nonnegative. Expanding the Euclidean inner product gives
+
+$
+\begin{aligned}
+(\mathbf p+t\mathbf v)\cdot(\mathbf p+t\mathbf v)&=R^2,\\
+(\mathbf v\cdot\mathbf v)t^2+2(\mathbf p\cdot\mathbf v)t
++\mathbf p\cdot\mathbf p-R^2&=0,\\
+at^2+bt+c&=0,\\
+a=\mathbf v\cdot\mathbf v,\quad
+b=2\mathbf p\cdot\mathbf v,\quad
+c=\mathbf p\cdot\mathbf p-R^2.&
+\end{aligned}
+$
+
+Here $a$ has units $\mathrm{m}^2/\mathrm{s}^2$, $b$ has units $\mathrm{m}^2/\mathrm{s}$, and $c$ has units $\mathrm{m}^2$: every term in the equation has units of squared distance. Unit consistency is a useful implementation test. An initial overlap corresponds to $c<0$ and needs a separate positional-contact policy; it is not a new impact with a negative time. If $c>0$ and $a=0$, the relative positions do not move and cannot make first contact. If $c>0$ and $b\ge0$, squared separation is initially nondecreasing and, under constant relative velocity, no future positive-time first contact occurs. If the discriminant $D=b^2-4ac<0$, the path misses; $D=0$ is a geometrically tangent path whose normal closing speed at touch is zero. A valid approaching root must lie inside $[0,\Delta t]$ for the requested step.
+
+The quadratic formula appears sufficient until the near root is obtained by subtracting nearly equal floating-point values. Under $b<0$ and $c>0$, use the numerically more stable $q=-\tfrac12(b-\sqrt D)$, then compute $t_{\mathrm{near}}=c/q$ and $t_{\mathrm{far}}=q/a$. This follows from Vieta's identity: the product of the two roots equals $c/a$. Choose the earlier nonnegative root, check it against the time horizon, and reject nonfinite coefficients or endpoints. Computing $D$ with a fused multiply-add can avoid one rounding step, but does not magically make arbitrary floating-point inputs exact. The independent, compilable implementation and its edge-case tests live in [the CCD lab](../tools/labs/disk_ccd_lab.cpp); the corresponding geometry lesson explains outward-rounded swept bounds.
+
+For a fixed radius-1 disk at $x_A=0$ and radius-1 disk initially at $x_B=10$ moving at $-100\ \mathrm{m/s}$, $\mathbf p=(10,0)$, $\mathbf v=(-100,0)$ and $R=2$. The quadratic is $10000t^2-2000t+96=0$, giving roots $t=0.08$ and $t=0.12$ seconds. The first is *entry*, the second would be *exit* if the two disks passed through each other without a collision response. During a $0.10$-second frame the engine must advance only $0.08$ seconds before solving the contact. A return value of “yes, these swept regions intersect” does not specify that event boundary.
+
+### The same contact has a second quadratic structure: effective mass
+
+At the impact, a velocity constraint determines what impulse is required. For planar rigid bodies, let $\mathbf r_A=\mathbf x_c-\mathbf x_A$ and $\mathbf r_B=\mathbf x_c-\mathbf x_B$ be contact-point offsets measured from centres of mass, with $\mathbf n$ a unit normal pointing A to B. A body point has velocity $\mathbf u=\mathbf v+\omega(-r_y,r_x)$; the scalar $\omega$ is angular velocity in radians per second, which acts as reciprocal seconds because radians are dimensionless. Define the relative normal velocity
+
+$
+v_n=\mathbf n\cdot\left[
+(\mathbf v_B+\omega_B\times\mathbf r_B)-
+(\mathbf v_A+\omega_A\times\mathbf r_A)\right].
+$
+
+Here planar $\omega\times(r_x,r_y)=(-\omega r_y,\omega r_x)$. An impulse $+\lambda\mathbf n$ on B and $-\lambda\mathbf n$ on A changes both linear and angular velocity. Applying $\Delta\mathbf v=\mathbf P/m$ and $\Delta\omega=I^{-1}(\mathbf r\times\mathbf P)$, then substituting into $v_n$, gives
+
+$
+\Delta v_n=k_n\lambda,\qquad
+k_n=m_A^{-1}+m_B^{-1}
++I_A^{-1}(\mathbf r_A\times\mathbf n)^2
++I_B^{-1}(\mathbf r_B\times\mathbf n)^2.
+$
+
+The scalar $k_n$ is the **inverse effective mass** of the contact direction; the rotational terms are not arbitrary corrections but the projection of the angular impulse back into contact-point velocity. A positive inverse mass or inverse inertia is a measure of how readily the body responds, and a static body is represented by zero for both. The expression is nonnegative under physically valid inverse masses. A static/static pair has $k_n=0$ and cannot be solved by division. In matrix language this is one row of $JM^{-1}J^\mathsf T$, where $M^{-1}$ is the generalized inverse-mass matrix and $J$ maps generalized velocity to relative normal velocity.
+
+For a nonpenetrating frictionless contact at the velocity level, normal impulse $\lambda\ge0$ must not attract the bodies. With desired outgoing normal speed $b_{\mathrm{out}}$ frozen from the initial impact state, an iterative projected update is
+
+$
+\lambda_{\mathrm{new}}=\max\!\left(0,\lambda_{\mathrm{old}}
++\frac{b_{\mathrm{out}}-v_n}{k_n}\right).
+$
+
+Only the **change** $\Delta\lambda=\lambda_{\mathrm{new}}-\lambda_{\mathrm{old}}$ is applied to velocities, because $\lambda_{\mathrm{old}}$ has already been applied in prior iterations or a carefully initialized warm start. Reapplying the full accumulated impulse double-counts a historical correction. Friction introduces a tangential direction $\mathbf t=(-n_y,n_x)$ and projected constraint $|\lambda_t|\le\mu\lambda_n$; in three dimensions a single tangent scalar becomes a two-dimensional tangent impulse. These are constraints on *impulses*, not an invitation to add arbitrary forces every frame.
+
+For equal unit masses at a central contact, $\mathbf r_A\times\mathbf n=\mathbf r_B\times\mathbf n=0$, hence $k_n=2\ \mathrm{kg}^{-1}$. If A moves at $2\ \mathrm{m/s}$ and B is stationary, $v_n=-2\ \mathrm{m/s}$. For restitution $e=1$ the outgoing target is $b_{\mathrm{out}}=-e\,v_n^{\mathrm{before}}=+2\ \mathrm{m/s}$. The first impulse is $(2-(-2))/2=2\ \mathrm{kg\,m/s}$; A becomes stationary and B moves at $2\ \mathrm{m/s}$. Linear momentum and kinetic energy are each conserved for this isolated ideal elastic pair. In contrast, an inelastic pair loses kinetic energy even while preserving its combined linear momentum.
+
+### Conservative bounds are a mathematical inclusion guarantee, not a collision decision
+
+A moving disk's **exact swept set** over $[0,h]$ is the Minkowski sum of its centre-path segment and its closed radius-$r$ disk. Its axis-aligned bounding box has x limits $\min(x_0,x_0+hv_x)-r$ and $\max(x_0,x_0+hv_x)+r$, and corresponding y limits. Let $S_i$ be a disk's swept set and $B_i$ its box. By construction $S_i\subseteq B_i$. If two disks ever overlap at a shared time, some point belongs to both swept sets; hence $B_i\cap B_j\neq\varnothing$. This gives the **no false negatives** proof for the broad phase.
+
+The converse fails: boxes may overlap even if the disks are never at the same place at the same time. Such false positives are intentionally passed to a narrower collision test. In floating-point code, outward rounding and finite-input checks help preserve inclusion. For accelerating bodies, using only linear-motion endpoints may no longer enclose the true path, so the proof's assumptions must be changed; invoking the same code without stronger motion bounds is unsound.
+
+A full event step repeatedly finds the earliest surviving narrow-phase hit, advances all bodies to that time, solves simultaneous contacts, and recomputes candidates for the remaining interval after velocity changes. In the worked wall impact, after $0.08$ seconds the moving disk is at $x=2$, reverses to $+100\ \mathrm{m/s}$, and ends at $x=4$ after another $0.02$ seconds. This can be checked against the [complete event simulation lab](../tools/labs/disk_event_pipeline_lab.cpp), its [10,000-case seeded property regression](../tools/labs/disk_event_property_lab.cpp), and the [swept-bound candidate oracle](../tools/labs/swept_broadphase_lab.cpp). These are independent CPU witnesses, not a certificate that a particular engine runtime uses the same pipeline.
+
+**Reconstruction gate.** Without looking at the formulas, derive the contact-time polynomial from relative position, explain why its three coefficients have compatible physical units, reconstruct $k_n$ by tracking one impulse through linear and angular point velocity, and prove why intersecting swept disks force intersecting bounding boxes. Then write two tests: a fast disk that would cross an obstacle in one frame, and an equal-mass elastic collision whose outgoing velocities conserve momentum and energy. Finally identify the cases deliberately *not* solved here: initial deep penetration, nonconstant acceleration, finite-precision degeneracies, persistent resting manifolds, arbitrary spinning convex shapes, and solver convergence for large coupled contact graphs.
+
 ### Collision becomes a question about the origin
 
 In collision detection, the commonly named **Minkowski difference** is
