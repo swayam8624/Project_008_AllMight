@@ -26,7 +26,6 @@ struct Rng{
 };
 
 struct V3{ double x=0,y=0,z=0; };
-double dot(V3 a,V3 b){ return a.x*b.x+a.y*b.y+a.z*b.z; }
 
 V3 cosine_sample(Rng& rng){
     const double u1=rng.uniform();
