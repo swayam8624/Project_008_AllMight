@@ -32,23 +32,23 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 20 | PBR/materials | Isotropic + anisotropic/dielectric/furnace mathematical oracles | pbr_reference_lab.cpp, pbr_extended_reference_lab.cpp | rough transmission, multiple scattering, measured-material and material-import parity remain |
 | 21 | Ray/path transport | Scene-level geometry + MIS reference verified | monte_carlo_transport_lab.cpp, path_transport_scene_lab.cpp | emissive-geometry NEE, multibounce transport, BVH/image parity and media remain |
 | 22 | GPU architecture/parallel algorithms | Derived/reference + compile/native boundary | prefix-scan teaching, native graphics workflow | occupancy/bank/coalescing claims require device counters |
-| 23 | Vulkan | Native sync2 + buffer-visibility/timeline execution | vulkan_sync_smoke.cpp, vulkan_buffer_timeline_smoke.cpp | image layouts, queue-family transfer, descriptor/shader visibility, transient aliasing and production parity remain |
+| 23 | Vulkan | Native sync2 + buffer/timeline + image-layout/readback execution | vulkan_sync_smoke.cpp, vulkan_buffer_timeline_smoke.cpp, vulkan_image_layout_smoke.cpp | queue-family transfer, descriptor/shader visibility, transient aliasing, swapchain/present and production parity remain |
 | 24 | Metal/render graph | Logical graph + real MSL compile + native compute execution | render_graph_contract_lab.cpp, metal_compile_smoke.metal, metal_runtime_smoke.mm | CI executed MTLDevice/queue/pipeline/buffer/dispatch/completion; heaps, hazard capture, render-pass behavior, multi-queue sync and production parity remain |
 | 25 | Gaussian splatting/captured worlds | Projection + conic/tile/order CPU oracles | gaussian_projection_reference_lab.cpp, gaussian_tile_conic_lab.cpp | full SH, GPU radix/binning/rasterization and current Maveb/Vulkax parity remain |
-| 26 | Advanced real-time rendering | CPU semantic reference implemented | realtime_rendering_reference_lab.cpp | full TAA/SSR/SSAO/volumetrics/particles and GPU renderer parity remain |
+| 26 | Advanced real-time rendering | Temporal/shadow/cluster + TAA/SSR/SSAO/volume/particle CPU references | realtime_rendering_reference_lab.cpp, realtime_effects_reference_lab.cpp | production TAA masks/variance clipping, Hi-Z SSR, GTAO, scattering/froxels, GPU particle systems and renderer parity remain |
 | 27 | Meshes/animation | Topology + QEM + rigid-blend reference implemented | mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | optimal QEM/link-condition remeshing and production GPU skinning/import parity remain |
-| 28 | Emulation/OS/network/crypto | Real POSIX/network execution + known-answer crypto | emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp | internet faults, crash durability, side channels/key management and production security remain |
+| 28 | Emulation/OS/network/crypto | Real POSIX/network execution + primitive and native AES-GCM known-answer evidence | emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp, openssl_aes_gcm_smoke.cpp | internet faults, crash durability, nonce/key lifecycle, replay policy, side channels and production security remain |
 | 29 | ML runtime/tensors/compressed inference | Tensor/attention + GGUF metadata/tensor subset references | phase29_ml_runtime_lab.cpp, gguf_metadata_tensor_lab.cpp | full GGUF type catalog/payload, protobuf ONNX/opsets, tokenizer, SIMD/Metal kernels and model parity remain |
-| 30 | Production/DCC/research/capstone | Host-neutral publication reference + research methodology | production_pipeline_contract_lab.cpp | actual Blender/Maya/Houdini/Nuke host runs, render farm/filesystem durability and learner oral mastery remain |
+| 30 | Production/DCC/research/capstone | Host-neutral pipeline + real Blender save/export/re-import host execution | production_pipeline_contract_lab.cpp, tools/dcc/blender_contract.py | Maya/Houdini/Nuke host runs, arbitrary-scene/material/armature parity, render farm/filesystem durability and learner oral mastery remain |
 
 ## What this repair changed
 
 The repair specifically closes the former **representation gap** where a topic could be called developed because a heading or short concept card existed. The repository now has:
 
-- no Concepts/*.md file below the structural 1000-byte smoke floor;
+- no Concepts/*.md file below the structural 1200-byte smoke floor;
 - explicit evidence levels rather than one ambiguous developed state;
-- fifteen new C++ reference laboratories for the previously weakest subjects;
-- native Vulkan synchronization2 execution CI and Metal shader compilation CI;
+- an expanded family of independently compiled/run C++ reference laboratories for the previously weakest subjects;
+- native Vulkan synchronization2/resource/image execution CI and Metal shader compilation plus command-buffer compute execution CI;
 - reconstruction checkpoints inside all three canonical master volumes;
 - known-answer cryptographic tests rather than prose-only primitive names;
 - real POSIX loopback and mmap/descriptor execution;
@@ -60,11 +60,11 @@ The repair specifically closes the former **representation gap** where a topic c
 
 The goal is maximum depth, not maximum confidence language. Some proof layers require hardware, external applications, current production repositories or human reconstruction:
 
-- a software Vulkan ICD can prove API execution/validation but not NVIDIA/AMD/Apple physical-GPU performance;
-- MSL compilation can prove shader-language/toolchain validity but not Metal runtime hazard behavior without Apple-GPU execution;
+- a software Vulkan ICD now proves API execution/validation for synchronization, buffer visibility/timeline, and image-layout/readback contracts, but not discrete-vendor physical-GPU performance;
+- the current macOS CI host executed a real Metal compute pipeline, but heap aliasing, explicit hazard-tracking captures, render-pass behavior, multi-queue synchronization and production parity remain;
 - a CPU Gaussian oracle can expose projection bugs but does not certify the current Maveb Metal kernel;
 - an educational SHA/HMAC/HKDF implementation can prove bit-level understanding and known-answer agreement but should not become production cryptography;
-- a host-neutral DCC contract cannot prove Blender/Maya/Houdini/Nuke adapters until those hosts execute it;
+- Blender now has a real headless host round trip; Maya/Houdini/Nuke remain host-neutral until equivalent licensed/current hosts execute their adapters;
 - written material cannot prove Level 7 reconstructed mastery until a learner derives/implements/debugs it without copying.
 
 Those are not excuses or hidden gaps. They are the next evidence layer attached to the exact claim that needs it.
@@ -74,7 +74,7 @@ Those are not excuses or hidden gaps. They are the next evidence layer attached 
 tools/check_depth_repair_contract.py checks that:
 
 1. every required repair artifact still exists;
-2. no concept card silently collapses below the 1000-byte structural floor;
+2. no concept card silently collapses below the 1200-byte structural floor;
 3. exactly the three canonical continuous volumes remain;
 4. each canonical volume retains its reconstruction checkpoints.
 
@@ -120,3 +120,16 @@ This still does not elevate every Phase 23/24 claim to native verification. Imag
 Blender is no longer represented only by prose or a host-neutral adapter. The dedicated CI workflow launches Blender in background mode, constructs a deterministic mesh asset and collection through `bpy`, attaches logical publication metadata, saves the source `.blend`, exports GLB, validates the GLB container/JSON contract, resets the host, re-imports the published artifact and checks geometry plus custom identity fields.
 
 This is intentionally a **Blender-only** native-host escalation. Maya, Houdini and Nuke are not marked executed because their current hosts/licenses are not available in this CI environment. Their contracts remain explicit and can be promoted only when equivalent host-side witnesses exist.
+
+
+## Fourth-wave closure — temporal effects, native image state, security, and host DCC
+
+The latest repair wave closes four more areas that were previously recorded only as future boundaries.
+
+**Advanced real-time effects.** `realtime_effects_reference_lab.cpp` now checks deterministic Halton jitter, current-neighborhood history clipping, a screen-space depth-crossing ray-march oracle, SSAO-style depth/thickness visibility, homogeneous Beer–Lambert transmittance, and deterministic particle update/death/stable compaction. These are deliberately semantic CPU references; production Hi-Z traversal, GTAO, froxel scattering, reactive masks and native GPU particle systems remain higher evidence levels.
+
+**Vulkan images.** `vulkan_image_layout_smoke.cpp` moves native evidence beyond a generic barrier and buffer visibility. It allocates an optimal-tiled RGBA image, records `UNDEFINED → TRANSFER_DST → TRANSFER_SRC` synchronization2 layout transitions, clears it, copies to a host-visible buffer, performs transfer-to-host synchronization and checks the UNORM bytes under validation. Queue-family ownership, descriptor/shader hazards and presentation remain separate.
+
+**Authenticated encryption.** `openssl_aes_gcm_smoke.cpp` checks a standard AES-128-GCM known-answer vector through OpenSSL EVP, authenticated round trip, tag and AAD tamper rejection, nonce-sensitive output and discard-on-authentication-failure behavior. The evidence is for the primitive/API contract, not for nonce persistence, replay defense, key management or a complete production protocol.
+
+**DCC execution.** Blender is now exercised as a real host rather than only named in an adapter contract: background Python creates the asset, saves the source scene, exports GLB with logical metadata, validates the binary glTF container, resets the host, re-imports the publication and checks geometry plus identity fields. Maya, Houdini and Nuke remain explicitly unexecuted rather than being promoted by analogy.
