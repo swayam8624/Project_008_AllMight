@@ -67889,7 +67889,7 @@ Give each submitted unit of GPU work a monotonically increasing completion value
 
 The converse is equally important: before that condition, destruction is forbidden. Logical identity has another lifetime: a slot and generation pair names one incarnation of a resource. Reassigning slot 17 must change its generation, so an old handle does not silently bind a new object. Logical invalidation is immediate; physical reclamation can be delayed. The following C++20 program models exactly those transitions. It deliberately uses CPU allocations to permit deterministic testing without assuming a Vulkan or Metal device is available.
 
-\`\`\`cpp
+```cpp
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -68007,7 +68007,7 @@ int main() {
     table.complete(2);
     assert(table.pending() == 0);
 }
-\`\`\`
+```
 
 Compile as C++20 with warnings and run with assertions enabled. The test is meaningful because the replacement immediately reuses the logical slot while receiving a different backing allocation. The old allocation remains in the retirement queue and survives until submission 1 is reported complete. This program is an ownership oracle, not a Vulkan/Metal backend. It assumes serialized table operations, and that commands referencing a handle have already been submitted and their last-use serial recorded before the handle is released. An as-yet-unsubmitted recorded command referring to a released handle violates a separate command-recording contract; a real engine must validate or retain those references through submission.
 
