@@ -54,7 +54,7 @@ bool has_instance_extension(const char* name) {
 int main() {
     try {
         std::uint32_t loader_version = VK_API_VERSION_1_0;
-        if (vkEnumerateInstanceVersion) check(vkEnumerateInstanceVersion(&loader_version), "vkEnumerateInstanceVersion");
+        check(vkEnumerateInstanceVersion(&loader_version), "vkEnumerateInstanceVersion");
         if (VK_API_VERSION_MAJOR(loader_version) < 1 ||
             (VK_API_VERSION_MAJOR(loader_version) == 1 && VK_API_VERSION_MINOR(loader_version) < 3)) {
             throw std::runtime_error("Vulkan 1.3 loader required for this core synchronization2 witness");
