@@ -12,16 +12,16 @@ A microfacet BRDF models a rough surface as unresolved oriented facets. The norm
 
 For an isotropic GGX/Trowbridge-Reitz model, one common form is
 
-[
+$$
 D(m)=\frac{\alpha^2}{\pi\left((n\cdot m)^2(\alpha^2-1)+1\right)^2}.
-]
+$$
 
 The BRDF combines the normal distribution with Fresnel (F), masking-shadowing (G), and the projected-area denominator:
 
-[
+$$
 f_r(v,l)=\frac{D(h)F(v,h)G(v,l)}
 {4|n\cdot v||n\cdot l|}.
-]
+$$
 
 Every term has a geometric role. (D) says how much facet orientation is available; (F) says how much of an incident wave reflects at an interface; (G) accounts for facets hidden by other facets; the denominator converts between projected measures.
 
