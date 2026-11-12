@@ -47,9 +47,13 @@ REQUIRED_ARTIFACTS = [
     "tools/labs/gguf_metadata_tensor_lab.cpp",
     "tools/labs/gpu_parallel_primitives_lab.cpp",
     "tools/labs/work_stealing_scheduler_lab.cpp",
+    "tools/labs/realtime_effects_reference_lab.cpp",
     "tools/native/vulkan_sync_smoke.cpp",
     "tools/native/vulkan_buffer_timeline_smoke.cpp",
+    "tools/native/vulkan_image_layout_smoke.cpp",
     "tools/native/metal_runtime_smoke.mm",
+    "tools/native/openssl_aes_gcm_smoke.cpp",
+    ".github/workflows/security-native-contract.yml",
     "tools/dcc/blender_contract.py",
     ".github/workflows/blender-dcc-contract.yml",
     "tools/native/metal_compile_smoke.metal",
@@ -61,16 +65,19 @@ REQUIRED_MASTER_MARKERS = {
         "## From model bytes to a validated compressed-inference runtime",
         "tools/labs/phase29_ml_runtime_lab.cpp",
         "tools/labs/network_loopback_lab.cpp",
+        "## Depth-repair checkpoint — execution evidence behind the foundations",
     ],
     "engine": [
         "### Reconstruction checkpoint — prove identity survives relocation",
         "### Native-API evidence is a separate layer from the logical renderer",
         "### Publication reconstruction — make DCC output pass through one engine contract",
+        "## Depth-repair checkpoint — runtime systems now have executable boundary witnesses",
     ],
     "graphics": [
         "### Reconstruction checkpoint — make the coverage rule executable",
         "### Reconstruction checkpoint — test the microfacet equations, not only the picture",
         "### Reconstruction checkpoint — project a Gaussian before optimizing the rasterizer",
+        "## Depth-repair checkpoint — raster, transport, splats, and mesh operations as reference programs",
     ],
 }
 
@@ -83,12 +90,12 @@ def main() -> None:
     tiny = []
     for path in sorted(CONCEPTS.glob("*.md")):
         size = path.stat().st_size
-        if size < 1000:
+        if size < 1200:
             tiny.append((path.name, size))
     if tiny:
         details = ", ".join(f"{name}={size}B" for name, size in tiny)
         raise RuntimeError(
-            "concept cards below the 1000-byte smoke floor; deepen or explicitly "
+            "concept cards below the 1200-byte smoke floor; deepen or explicitly "
             f"redesign the contract instead of padding blindly: {details}"
         )
 
