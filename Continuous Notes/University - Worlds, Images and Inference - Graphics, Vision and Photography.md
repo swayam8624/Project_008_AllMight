@@ -81744,6 +81744,94 @@ This is underconstrained: a dark pixel can mean dark albedo, weak light, occlusi
 
 Recent Gaussian work such as DR-GS extends this direction to deformable, relightable splats. The important lesson is the movement from captured-color memorization toward editable physical factors.
 
+<!-- Bible-final-pass: score distillation -->
+## Generative 3-D can borrow a 2-D diffusion prior without having a target photograph
+
+View synthesis starts from captured images of one scene. Text-to-3-D asks a different inverse problem: find one 3-D scene whose rendered views look as though they belong to a text-conditioned image distribution.
+
+That is the idea behind **score distillation sampling (SDS)**. Let theta be the 3-D representation. A differentiable renderer produces an image from camera v:
+
+~~~text
+x = R(theta, v).
+~~~
+
+Encode that image as z if the diffusion model works in latent space. Choose diffusion time t and add known Gaussian noise epsilon:
+
+~~~text
+z_t = alpha_t z + sigma_t epsilon.
+~~~
+
+A frozen text-conditioned diffusion model predicts the noise it expects:
+
+~~~text
+epsilon_hat = epsilon_phi(z_t, y, t).
+~~~
+
+The useful update direction is proportional to
+
+~~~text
+w(t) (epsilon_hat - epsilon)
+    * dz/dx
+    * dx/dtheta.
+~~~
+
+The last factor is the differentiable renderer. It carries the 2-D prior back into the 3-D representation: density, Gaussian positions, mesh vertices, texture, or whatever theta stores.
+
+This is not ordinary supervised image regression. There is no single target photograph. The diffusion model supplies a learned prior over plausible images.
+
+### Why papers often describe SDS through its gradient
+
+A diffusion score is related to the gradient of log probability in noisy image space. Differentiating the full denoiser would introduce a large network Jacobian. Practical SDS formulations use an approximation that treats the denoiser output as an image-update direction rather than differentiating through every internal denoiser derivative.
+
+So when two papers both say “SDS,” inspect the actual implementation. They may differ in timestep weighting, latent versus RGB space, guidance, noise schedule, timestep range, gradient scaling, regularization, and whether extra score/Jacobian terms are retained.
+
+### Classifier-free guidance changes the force applied to the 3-D scene
+
+A common guided prediction is
+
+~~~text
+epsilon_guided
+  = epsilon_uncond
+  + s (epsilon_cond - epsilon_uncond).
+~~~
+
+The guidance scale s changes the optimization direction. Larger is not automatically better: strong guidance can increase semantic pressure while also causing saturation, instability, or reduced diversity.
+
+### A 2-D prior does not automatically enforce one coherent 3-D object
+
+This is the central failure mode. Each rendered view can look individually plausible while all views together describe bad geometry. The familiar **Janus** failure gives an object several front-like faces because the 2-D prior likes a plausible front from many sampled directions.
+
+Other failures include floating density, thin shells, duplicated structures, view-dependent texture tricks, or geometry that looks acceptable only from training cameras.
+
+This leads to one of the best questions to ask while reading a text-to-3-D paper:
+
+> **What forces different camera views to describe the same 3-D object?**
+
+Possible answers include camera-distribution design, orientation-aware prompts, depth/normal priors, explicit surfaces, multiview diffusion models, geometric regularization, staged optimization, or later mesh refinement. None is a universal cure.
+
+### The complete research system has more than the SDS equation
+
+A reproducible text-to-3-D pipeline needs at least:
+
+~~~text
+3-D representation theta
+ -> camera sampling
+ -> differentiable renderer
+ -> RGB/latent encoding
+ -> frozen generative prior
+ -> SDS or related gradient
+ -> geometry/appearance regularizers
+ -> parameter update
+ -> surface extraction/refinement if required
+ -> multiview and geometry evaluation
+~~~
+
+Record the diffusion checkpoint, prompt and negative prompt, guidance scale, timestep distribution, camera distribution, render resolution, representation initialization, optimizer schedule, seeds, regularizers, and extraction/refinement stage.
+
+Text-image similarity alone cannot certify the result. Separate semantic alignment, multiview consistency, geometric quality when geometry is claimed, diversity across seeds, optimization time, memory, and failure rate. If the result is intended for an engine, also test mesh cleanliness, editability, collision suitability, animation compatibility, and runtime cost.
+
+**Reconstruct without reading:** draw the gradient path from theta to rendered image to noisy latent to diffusion prediction and back to theta. Explain epsilon_hat minus epsilon, state where classifier-free guidance enters, and explain why several individually good 2-D views can still correspond to a bad 3-D object.
+
 ## Neural shading keeps an explicit renderer and learns a local function
 
 Neural shading can retain triangles, rays, visibility and explicit lights while compact networks replace expensive appearance or shading functions.
@@ -81976,6 +82064,90 @@ The Simulator Sickness Questionnaire (SSQ) was designed to quantify symptom clus
 Motion-to-photon latency should also be measured rather than inferred from engine frame time. Sensor sampling, runtime prediction, render queues, compositor work and scanout can all contribute. Modern measurement work emphasizes that consumer VR systems used for sensorimotor experiments need their latency verified as scientific instruments.
 
 Presence is similarly multidimensional. A system can have high visual fidelity but weak interaction consistency, or low graphical realism but strong sensorimotor contingency. Research should define the operational measure being used instead of treating “presence” as synonymous with polygon count.
+
+<!-- Bible-final-pass: XR human study design -->
+## An XR user study is an experiment with people, not a benchmark loop with extra columns
+
+Frame time, pose error, image metrics, and memory can be measured without participants. They cannot by themselves prove that a foveation change is invisible, that one locomotion method is more comfortable, or that a display improves pointing. Those are human-subject claims, so the study design becomes part of the technical evidence.
+
+Start by naming the **experimental unit**. If one participant tries both method A and method B, those observations are paired within that person. Ten thousand rendered frames from one participant are not ten thousand independent participants.
+
+### Within-subject and between-subject designs trade different sources of variance
+
+In a **within-subject** study, each participant experiences multiple conditions. This controls for large person-to-person differences in acuity, reaction time, gaming experience, or sickness susceptibility.
+
+The cost is carryover. Participants can learn the task, become tired, adapt to VR, remember scenes, or remain sick from an earlier condition.
+
+In a **between-subject** study, different participants receive different conditions. Carryover is smaller, but natural differences between people increase variance, so more participants may be required.
+
+Neither design is universally better. The choice should follow the claim and the practical constraints.
+
+### Counterbalancing stops condition order from becoming a hidden treatment
+
+If every participant uses the baseline first and the new method second, an apparent improvement may simply be practice. An apparent degradation may be fatigue.
+
+With two conditions, split orders across AB and BA when practical. With many conditions, testing every possible order grows factorially. Latin-square or balanced-Latin-square schedules can distribute condition positions and preceding-condition effects more economically when their assumptions fit the study.
+
+Randomization and counterbalancing are related but not identical. Randomization supports an assignment/inference model. Counterbalancing deliberately spreads order effects.
+
+### Practice trials and measured trials should not be silently mixed
+
+If the first minute of using a new selection technique is included in the final speed metric, the study may measure onboarding rather than steady performance.
+
+Define practice trials, the rule for starting measured trials, rest periods, and failed-trial handling before looking at the result. If learnability is itself the question, model performance over time instead of averaging learning away.
+
+### Each dependent variable needs an operational definition
+
+“Comfort” and “immersion” are not single measurements. Possible outcomes include task completion time, target-selection error, throughput, head/hand path length, gaze behavior, SSQ symptoms, presence scales, NASA-TLX workload, dropout, and measured motion-to-photon latency.
+
+Each answers a different question. Lower task time with higher sickness is not a universal win.
+
+For repeated conditions, the analysis must preserve the repeated structure. Paired tests, repeated-measures models, mixed-effects models, or appropriate randomization tests may be used depending on the outcome and design. Treating every trial from every participant as independent can make uncertainty look much smaller than it really is.
+
+The Computing Foundations volume already develops effect sizes, confidence intervals, paired sign-flip tests, bootstrap reasoning, power, and multiple-comparison control. The XR-specific rule is simple:
+
+> **The statistical analysis must preserve the design that generated the data.**
+
+### Exclusions and stopping rules belong in the protocol before the result is known
+
+Tracking failure, calibration failure, inability to complete the task, excessive sickness, or violation of vision requirements can justify exclusion. But deciding those rules after seeing which exclusions improve significance invites bias.
+
+State participant criteria, trial/participant exclusions, primary outcomes, intended comparisons, sample-size or power reasoning, and stopping policy before data collection when the study is confirmatory. Label post-hoc analyses as exploratory.
+
+A participant who stops because of sickness may itself be evidence about tolerability. Silently deleting that participant can reverse the story.
+
+### The apparatus is part of reproducibility
+
+Report the headset/display, refresh rate, resolution, runtime, tracking system, controller or eye tracker, eye-tracking calibration, IPD handling, application frame rate, scene/task geometry, physical tracked area, and latency measurement method.
+
+For gaze-contingent work also report sampling rate, filtering, confidence rejection, blink handling, prediction, foveal-region definition, and how calibration drift was checked.
+
+If two techniques run at different frame rates, the user study compares both the algorithm and that systems difference unless the design controls or models it.
+
+### Ethics and privacy are technical constraints too
+
+Human studies normally require the applicable institutional ethics process, informed consent, safe stopping, and careful treatment of identifiable data. Gaze, voice, body motion, and room scans can be sensitive even when screenshots look anonymous.
+
+Collect only what the study needs, define access and retention, de-identify where appropriate, and make released data consistent with the consent that was obtained.
+
+### A clean study pipeline
+
+~~~text
+research question
+ -> primary hypothesis and meaningful effect
+ -> participant population
+ -> within/between-subject design
+ -> randomization/counterbalancing
+ -> apparatus calibration
+ -> practice protocol
+ -> measured trials
+ -> predefined exclusions/stopping
+ -> paired or repeated-measures analysis
+ -> effect + uncertainty + raw distribution
+ -> limitations and generalization boundary
+~~~
+
+**Reconstruct without reading:** design a comparison of two foveated-rendering policies. State the study design, order counterbalancing, practice protocol, primary outcome, experimental unit, exclusion policy, minimum effect worth detecting, and the system variables that must be controlled or reported.
 
 ## Spatial audio is a geometry-and-filtering pipeline
 
