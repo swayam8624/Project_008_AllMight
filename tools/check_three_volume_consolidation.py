@@ -1,89 +1,107 @@
 #!/usr/bin/env python3
-"""Mechanical preservation audit for three canonical PROJECTALLMIGHT volumes."""
+"""Verify live three-volume inventory, inline witnesses and lossless XR relocation.
+
+Structural and source-preservation check only. It does NOT prove source coverage,
+semantics, device correctness, or reconstruction of the original 3,000 parts.
+"""
 from __future__ import annotations
 from pathlib import Path
-import os
 import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VOL = ROOT / "Continuous Notes"
-MATH = VOL / "00 - From Vectors to Images - Integrated Mathematics for Visual Computing.md"
-GRAPHICS = VOL / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
-ENGINE = VOL / "Game Engine - From First Frame to Living Worlds.md"
-FOUNDATIONS = VOL / "Computing Foundations - From Bits to C++ and Systems APIs.md"
-XR = VOL / "XR - From Light to Perception - Seeing and Representing Reality.md"
-RIGID = VOL / "Rigid Bodies - From Extended Motion to Contact Constraints.md"
-SYSTEMS = VOL / "Systems - From Cartridge Bytes to Reproducible State.md"
-LAB = ROOT / "tools" / "labs" / "basis_measurement_lab.cpp"
-BASE = "89c386f25b361685051bb035799014c8875487cd"
+NOTES = ROOT / "Continuous Notes"
+FOUNDATIONS = NOTES / "Computing Foundations - From Bits to C++ and Systems APIs.md"
+GRAPHICS = NOTES / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
+ENGINE = NOTES / "Game Engine - From First Frame to Living Worlds.md"
+BASE = "5be7d79c337c3d359569c9531621dd386fa0b7f0"
+START = "## A correct image must survive the viewer — perceptual rendering and XR"
+END = "## Mathematical language: points, vectors, and derivatives"
+LABS = {
+    FOUNDATIONS: ("basis_measurement_lab.cpp", "math_contact_toi_lab.cpp"),
+    GRAPHICS: ("xr_planar_vio_ekf_lab.py",),
+    ENGINE: ("render_graph_contract_lab.cpp", "resource_state_plan_lab.cpp"),
+}
 
-def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
 
-def fence_count(content: str) -> int:
-    return sum(line.startswith(chr(96) * 3) for line in content.splitlines())
+def verify(condition: bool, message: str) -> None:
+    if not condition:
+        raise RuntimeError(message)
 
-def line_subsequence(earlier: str, current: str) -> bool:
-    """All old lines remain in order even if new paragraphs are inserted."""
-    stream = iter(current.splitlines(keepends=True))
-    for old_line in earlier.splitlines(keepends=True):
-        for new_line in stream:
-            if new_line == old_line:
+
+def subsequence(old: str, new: str) -> bool:
+    """Verify all old lines still exist in the same order after insertions."""
+    cursor = iter(new.splitlines(keepends=True))
+    for wanted in old.splitlines(keepends=True):
+        for candidate in cursor:
+            if candidate == wanted:
                 break
         else:
             return False
     return True
 
+
+def baseline_text(path: Path) -> str:
+    relative = path.relative_to(ROOT).as_posix()
+    proc = subprocess.run(
+        ["git", "show", f"{BASE}:{relative}"],
+        cwd=ROOT, capture_output=True, check=False
+    )
+    verify(proc.returncode == 0,
+           f"Cannot read pinned baseline {BASE}:{relative}; fetch full history")
+    return proc.stdout.decode("utf-8")
+
+
+def display_check(path: Path, content: str) -> None:
+    lines = content.splitlines()
+    backtick = chr(96) * 3
+    fences = sum(line.startswith(backtick) or line.startswith("~~~") for line in lines)
+    maths = sum(line.strip() == "$$" for line in lines)
+    verify(fences % 2 == 0, f"{path.name}: odd code fence count {fences}")
+    verify(maths % 2 == 0, f"{path.name}: odd display-math fence count {maths}")
+    print(f"FORMAT {path.name}: {fences} code boundaries, {maths} math boundaries")
+
+
 def main() -> None:
-    math, graphics, engine = map(read, (MATH, GRAPHICS, ENGINE))
-    foundations, xr, rigid, systems = map(read, (FOUNDATIONS, XR, RIGID, SYSTEMS))
-    a = foundations.index("## Make a shader record an explicit binary contract")
-    b = foundations.index("## From generated GPU work to safe explicit execution")
-    assert 0 < a < b
-    front, shader, backend = foundations[:a], foundations[a:b], foundations[b:]
-    assert front + shader + backend == foundations
-    assert all(fence_count(x) % 2 == 0 for x in (front, shader, backend))
-    for source, destination, name in [
-        (front, engine, "C++/CPU engine foundations"),
-        (backend, engine, "Vulkan/Metal engine backend"),
-        (shader, graphics, "GPU shader and execution"),
-        (xr, graphics, "XR and human perception"),
-        (rigid, engine, "rigid-body bridge"),
-        (systems, engine, "emulator and low-level systems"),
-    ]:
-        # First check exact inclusion for the initial migration; future in-place
-        # explanatory paragraphs are allowed between original lines, provided
-        # no original content or order is lost.
-        if source in destination:
-            print(f"EXACT: {name}")
+    current = {p: p.read_text(encoding="utf-8") for p in LABS}
+    discovered = set(NOTES.glob("*.md"))
+    verify(discovered == set(LABS),
+           "Live physical three-volume inventory changed; adjust routing/checker")
+    for path, body in current.items():
+        display_check(path, body)
+        previous = baseline_text(path)
+        if path == GRAPHICS:
+            verify(previous.count(START) == 1 and previous.count(END) == 1,
+                   "Baseline XR source anchors are not unique")
+            start, end = previous.index(START), previous.index(END)
+            verify(start < end, "Old XR source seam order changed")
+            original_xr = previous[start:end]
+            verify(body.count(original_xr) == 1,
+                   "Losslessly relocated XR foundation is missing or changed")
+            verify(body.index(END) < body.index(START),
+                   "XR block moved back before mathematics prerequisites")
+            verify(subsequence(previous.replace(original_xr, "", 1),
+                               body.replace(original_xr, "", 1)),
+                   "Graphics lost or reordered baseline text outside relocated XR")
+            print(f"RELOCATED XR: {len(original_xr)} original characters preserved")
         else:
-            assert line_subsequence(source, destination), (
-                f"Deleted or rewritten original source lines: {name}"
-            )
-            print(f"ADDITIVE: original lines preserved in order for {name}")
-    assert read(LAB).rstrip() in math, "Standalone basis lab differs from inline math code"
-    assert all(fence_count(x) % 2 == 0 for x in (math, graphics, engine))
+            verify(subsequence(previous, body),
+                   f"{path.name}: original source lines removed or reordered")
+        print(f"BASELINE PRESERVED: {path.name}")
+        for filename in LABS[path]:
+            source = (ROOT / "tools" / "labs" / filename).read_text("utf-8").rstrip()
+            verify(source in body, f"{filename} differs from inline complete code")
+            print(f"INLINE SOURCE: {filename} matches")
 
-    earlier_checked = 0
-    for path, current in ((MATH, math), (GRAPHICS, graphics), (ENGINE, engine)):
-        relative = path.relative_to(ROOT).as_posix()
-        result = subprocess.run(["git", "show", f"{BASE}:{relative}"],
-                                cwd=ROOT, capture_output=True, check=False)
-        if result.returncode:
-            print(f"NOT CHECKED: baseline history unavailable for {relative}")
-            continue
-        original = result.stdout.decode("utf-8")
-        assert line_subsequence(original, current), f"Original lines removed: {relative}"
-        earlier_checked += 1
+    print("PASS: actual three-volume inventory, inline labs, formatting, and "
+          "lossless source preservation with XR relocation")
+    print("LIMIT: this does not prove source exhaustion, S4 for every part, "
+          "GPU driver validation, or current Kairo/Maveb integration")
 
-    print("PASS: all former source bodies in three canonical volumes")
-    print("PASS: inline C++ laboratory, split boundaries, Markdown fence parity")
-    print(f"Original canonical books preserved by ordered-line audit: {earlier_checked}/3")
-    if earlier_checked != 3:
-        if os.environ.get("CI"):
-            raise RuntimeError("CI must fetch full baseline history for the ordered-line audit")
-        print("WARNING: historical audit needs complete git history")
-    print("LIMIT: conceptual coverage, hardware behavior, sources and all 3,000 parts need more review")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, UnicodeError, RuntimeError) as problem:
+        print(f"FAIL: {problem}", file=sys.stderr)
+        raise SystemExit(1)
