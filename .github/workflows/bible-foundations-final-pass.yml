@@ -2,6 +2,15 @@ name: Bible foundations final pass
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - allmight/closure-and-narrative-20261112
+    paths:
+      - 'tools/patches/apply_foundations_final_pass.py'
+      - 'tools/labs/se3_exp_log_lab.cpp'
+      - 'tools/labs/research_inference_lab.py'
+      - 'tools/labs/temporary_lifetime_lab.cpp'
+      - '.github/workflows/bible-foundations-final-pass.yml'
 
 permissions:
   contents: write
