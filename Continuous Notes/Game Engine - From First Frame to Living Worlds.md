@@ -67881,11 +67881,11 @@ The Graphics volume's perspective-interpolation experiment uses a vertex buffer,
 
 Give each submitted unit of GPU work a monotonically increasing completion value $s$. For every backing allocation, track the largest submitted serial that may reference it. The retirement invariant is
 
-$
+$$
 \operatorname{completedSerial}\geq\operatorname{lastSubmittedUse}
 \quad\Longrightarrow\quad
 \text{reclamation may proceed}.
-$
+$$
 
 The converse is equally important: before that condition, destruction is forbidden. Logical identity has another lifetime: a slot and generation pair names one incarnation of a resource. Reassigning slot 17 must change its generation, so an old handle does not silently bind a new object. Logical invalidation is immediate; physical reclamation can be delayed. The following C++20 program models exactly those transitions. It deliberately uses CPU allocations to permit deterministic testing without assuming a Vulkan or Metal device is available.
 
