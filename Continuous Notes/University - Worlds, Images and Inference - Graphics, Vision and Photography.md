@@ -165,6 +165,1848 @@ $$
 x=f\frac{X}{Z},\qquad y=f\frac{Y}{Z},
 $$
 
+## A correct image must survive the viewer — perceptual rendering and XR
+
+The workshop image is only the beginning of the measurement. Light passes through a camera or display, reaches an eye and is interpreted under changing gaze, contrast and motion. This full XR foundation is integrated here before later camera and rendering algorithms. Source claims remain explicitly distinguished from measured or implemented results.
+
+---
+tags:
+  - continuous-notes
+  - xr
+  - independent-series
+series: XR Foundations
+source: XR01
+curriculum: outside-3000-part-plan
+---
+
+# XR: From Light to Perception - Seeing and Representing Reality
+
+> Independent XR series, outside the 3,000-part curriculum. Chunk 1 is accepted as XR01. Future sources will extend this same file. Main-curriculum coverage remains Parts 1–147 / M001–M009. Institutional provenance is discussed in the source record.
+
+## Prologue - A perfect scene can still make a poor experience
+
+Imagine a bright fence in a virtual world. Its geometry is correct, and the GPU draws every triangle. When you move your head, however, the thin bars shimmer. When you look at the fence, its detail takes a moment to become sharp. A filter reduces the noise but leaves a faint trail behind moving objects.
+
+These problems have different causes. Correct geometry is only the first step toward a convincing image.
+
+A virtual scene must pass through several systems:
+
+1. The renderer estimates the light coming from the scene.
+2. It stores those estimates as image samples.
+3. Reconstruction combines the samples into an output image.
+4. The display turns encoded values into emitted light.
+5. The headset's optics change where that light goes and how sharply it is focused.
+6. The eye and brain turn the received light into a visual experience.
+
+Eye tracking adds a feedback path. It tells the renderer where the user is looking, so the renderer can choose where to spend more work.
+
+**Extended reality**, or XR, is the umbrella term we use for virtual reality, augmented reality, and related mixed-reality systems. This chapter explains the visual foundations. Later sources will explain the complete system that produces an XR experience.
+
+### Figure X0 — A qualitative picture of the XR loop
+
+![[Visual Recall/xr_perception_pipeline.png]]
+
+**Read the illustration:** connect scene light, display, eye, and rendering decisions. The foveal inset suggests uneven detail sensitivity; the binocular inset reminds us that pointing and focusing are separate demands. This AI-generated teaching collage is qualitative: it is not a calibrated optical ray diagram or an anatomical measurement. Use Figures X1–X4 and their equations for the precise claims.
+
+[[Visual Recall/XR - Light, Vision and Perception - Visual Recall#Figure-linked short notes|Return to the compact XR notes]].
+
+## Light must become a quantity before it becomes a color
+
+Before asking what color a pixel should be, ask a simpler question: **what physical quantity are we trying to represent?**
+
+[[Light spectra and radiometry|Light]] is electromagnetic radiation. We use different models for different questions.
+
+- A wave model explains interference and diffraction.
+- A photon model describes individual energy exchanges.
+- A ray model simplifies the path of light when we do not need the full wave behavior.
+
+A ray is not a tiny RGB-colored particle. It is a way to describe a direction of propagation.
+
+For an ideal wave traveling along one coordinate, we can write:
+
+$$
+E(x,t)=E_0\cos(kx-\omega t+\phi).
+$$
+
+The equation describes an oscillation. Its symbols mean:
+
+| Symbol | Meaning | Unit |
+|---|---|---|
+| $E(x,t)$ | an electric-field component at position $x$ and time $t$ | volts per meter |
+| $E_0$ | the field's amplitude | volts per meter |
+| $k$ | angular wavenumber | radians per meter |
+| $\omega$ | angular frequency | radians per second |
+| $\phi$ | starting phase | radians |
+
+**Phase** tells us where the oscillation is within its cycle. Wavelength $\lambda$ is the distance over which the wave repeats. Frequency $\nu$ is the number of cycles per second.
+
+In a vacuum, the relationships are:
+
+$$
+c=\lambda\nu,\qquad
+k=\frac{2\pi}{\lambda},\qquad
+\omega=2\pi\nu.
+$$
+
+Here $c$ is the vacuum speed of light. In a material, the wave's wavelength and phase velocity can differ from their vacuum values.
+
+For green light with a wavelength of $550\,\mathrm{nm}$:
+
+$$
+\nu=\frac{c}{\lambda}
+\approx 5.45\times10^{14}\,\mathrm{Hz}.
+$$
+
+A photon at that wavelength carries energy:
+
+$$
+E_{\mathrm{photon}}=h\nu=\frac{hc}{\lambda}
+\approx 3.61\times10^{-19}\,\mathrm{J}
+\approx 2.25\,\mathrm{eV}.
+$$
+
+The symbol $h$ is Planck's constant. An electronvolt, written $\mathrm{eV}$, is an energy unit. It is not a measure of brightness.
+
+This very high frequency is the light wave's oscillation frequency. It is not the much slower flicker frequency of a display whose brightness changes over time.
+
+### Why three RGB values cannot describe a complete spectrum
+
+Most light contains many wavelengths. A **spectral distribution**, $S(\lambda)$, describes how the relevant light quantity varies with wavelength.
+
+A simplified receptor response is:
+
+$$
+R_i=\int S(\lambda)s_i(\lambda)\,d\lambda.
+$$
+
+Read this as: add the contribution from each wavelength, weighted by receptor $i$'s sensitivity $s_i(\lambda)$.
+
+Different spectra can give the same color-match responses. This is called **metamerism**. It explains how a display with three primaries can match many perceived colors without reproducing every wavelength in the original scene.
+
+The match has limits. It depends on the observer and viewing conditions. Matching color responses does not automatically match focus, adaptation, or binocular appearance.
+
+RGB values therefore need an [[Interpretation contract]]. We must know their primaries, white point, transfer function, and scale before we know what they mean.
+
+### Four light quantities that should not be confused
+
+**Radiometry** measures radiation as physical energy or power. **Photometry** weights visible radiation using a standardized visual-sensitivity convention.
+
+| Quantity | What to ask | Unit |
+|---|---|---|
+| Radiant energy | How much electromagnetic energy is present? | joule, $\mathrm{J}$ |
+| Radiant flux | How much energy passes per second? | watt, $\mathrm{W}$ |
+| Irradiance | How much radiant power arrives per unit surface area? | $\mathrm{W/m^2}$ |
+| Radiance | How much directional power passes per projected area and solid angle? | $\mathrm{W/(m^2\,sr)}$ |
+| Luminous flux | What is the photometrically weighted flux? | lumen, $\mathrm{lm}$ |
+| Illuminance | How much luminous flux arrives per unit area? | lux, $\mathrm{lx}$ |
+| Luminance | What is the photometric directional quantity? | $\mathrm{cd/m^2}$, also called nits |
+
+A **solid angle** measures angular extent in three dimensions. Its unit is the steradian, $\mathrm{sr}$. It is not the same as an ordinary angle measured in degrees.
+
+Radiance uses projected area:
+
+$$
+L=\frac{d^2\Phi}{dA\cos\theta\,d\Omega}.
+$$
+
+Here $\Phi$ is radiant flux, $A$ is surface area, $\theta$ is the angle to the surface normal, and $\Omega$ is solid angle. The factor $\cos\theta$ appears because a tilted surface presents less area to that direction.
+
+Photopic weighting uses the visual-sensitivity function $V(\lambda)$. The familiar luminous-efficacy convention uses $683\,\mathrm{lm/W}$ under its specified conditions.
+
+For an XR engineer, the practical distinction is this: **pixel values, emitted luminance, and electrical power are different quantities**. Reducing shader work does not prove an equal reduction in display power. Reducing display luminance does not prove that less geometry was processed.
+
+## Materials turn incoming light into outgoing light
+
+Once light reaches a material, several things can happen:
+
+- Reflection sends some light back from the surface.
+- Transmission lets some light pass through.
+- Absorption converts some energy into other forms.
+- Scattering redistributes light among directions.
+
+For a passive system with all relevant reflected, transmitted, and absorbed energy included:
+
+$$
+R+T+A=1.
+$$
+
+Here $R$, $T$, and $A$ are fractions of the incoming energy. Emission, fluorescence, or gain need additional accounting.
+
+[[Reflectance and rendering equation|A material's appearance]] depends on direction, not just on an RGB color. The **bidirectional reflectance distribution function**, or BRDF, describes how incoming illumination from one direction contributes to reflected light in another.
+
+An ideal Lambertian diffuse surface has:
+
+$$
+f_r=\frac{\rho}{\pi}.
+$$
+
+The symbol $\rho$ is diffuse reflectance. The factor $\pi$ normalizes the cosine-weighted contribution over the hemisphere. It is not an arbitrary graphics constant.
+
+For surface reflection, the rendering equation is:
+
+$$
+L_o(x,\omega_o)=L_e(x,\omega_o)+
+\int_{\Omega^+}
+f_r(x,\omega_i,\omega_o)L_i(x,\omega_i)
+\max(\mathbf n\cdot\omega_i,0)\,d\omega_i.
+$$
+
+Read it in two pieces:
+
+1. The surface may emit light: $L_e$.
+2. It may reflect incoming light: the integral.
+
+$L_o$ is outgoing radiance, $L_i$ is incoming radiance, and $f_r$ is the BRDF. The normal $\mathbf n$ determines which incoming directions lie above the surface. In this equation, $\omega_i$ and $\omega_o$ name directions; they are not the wave frequency used earlier.
+
+Visibility belongs to the incoming-light calculation. If an object blocks a light source, that blocked contribution must not be treated as visible illumination. Transmission and subsurface transport need models beyond this surface-reflection form.
+
+A renderer approximates these contributions through material evaluation, light sampling, visibility tests, and sometimes ray or path sampling.
+
+A **Monte Carlo estimator** estimates an integral from sampled contributions. Fewer samples can increase noise. A systematic approximation can also introduce bias.
+
+This gives us our first performance lesson: if we shade the full image and blur it afterward, we have not avoided the shading work.
+
+**Teaching checkpoint:** ask what a framebuffer channel represents, which rendering operation produced it, and how the display converts it into light.
+
+## The eye is an optical instrument with neural processing inside it
+
+The eye does more than focus light onto a surface.
+
+[[Optical focus and binocular conflict|The cornea]] and crystalline lens help focus incoming light. The iris changes the size of the pupil. The retina receives the focused light and begins neural processing.
+
+A few anatomical names are useful:
+
+| Term | Meaning |
+|---|---|
+| Macula | a central retinal region important for detailed vision |
+| Fovea | a specialized region within the macula |
+| Foveola | a smaller central region within the fovea |
+| Optic disc | the region where nerve fibers leave the eye; it lacks ordinary photoreceptor sampling |
+
+These names describe parts of the eye. They are not names for rendering-resolution tiers.
+
+[[Retinal encoding and receptive fields|Rods and cones]] are photoreceptors. Rods support sensitive low-light vision. Cones support daylight and color vision through overlapping spectral responses conventionally called L, M, and S.
+
+Those cone labels do not mean that the retina contains red, green, and blue framebuffer pixels.
+
+**Phototransduction** is the conversion of absorbed light into changes in electrical signaling. Neural stages then combine and process those signals.
+
+### Why a uniform patch and an edge produce different responses
+
+A **receptive field** is the input region that influences a cell's response.
+
+A useful center-surround model compares a narrow central region with a broader surrounding region:
+
+$$
+K(x,y)=A_cG_{\sigma_c}(x,y)-A_sG_{\sigma_s}(x,y),
+$$
+
+where a normalized Gaussian is:
+
+$$
+G_\sigma(x,y)=
+\frac{1}{2\pi\sigma^2}
+e^{-(x^2+y^2)/(2\sigma^2)}.
+$$
+
+$A_c$ and $A_s$ control the center and surround gains. The widths $\sigma_c$ and $\sigma_s$ set their spatial scales, with the center narrower than the surround.
+
+If the gains are equal and both Gaussians integrate to one, their responses to a uniform image cancel. An edge affects the center and surround differently, so it can produce a response.
+
+Unequal gains or finite, unnormalized kernels do not automatically cancel a constant input.
+
+This is a teaching model of spatial filtering. It is not a complete retina simulator.
+
+Central acuity also depends on optics, neural processing, adaptation, and the task. **Cortical magnification** describes the greater cortical representation devoted to some parts of the visual field. It helps explain why uniform rendering detail can be wasteful, but it does not uniquely determine a GPU sampling policy.
+
+## Angles connect display samples to a viewer
+
+A pixel count does not tell us how large the image appears. The same display looks different when viewed close up or from far away.
+
+[[Visual angle and calibrated rays|Visual angle]] connects physical size to viewing geometry.
+
+For a centered object of width $W$, viewed perpendicularly from distance $D$:
+
+$$
+\theta=2\tan^{-1}\left(\frac{W}{2D}\right).
+$$
+
+For a sufficiently small angle measured in radians:
+
+$$
+\theta\approx\frac{W}{D}.
+$$
+
+One degree contains 60 arcminutes. One arcminute contains 60 arcseconds. Pixels are image samples; these angular units describe how large those samples appear.
+
+Consider a display that is $0.53\,\mathrm{m}$ wide, viewed from $0.60\,\mathrm{m}$, with 1920 horizontal pixels. Its horizontal field of view is about $47.66^\circ$.
+
+Its average pixels per degree, or PPD, is:
+
+$$
+\mathrm{PPD}_{\mathrm{average}}
+=\frac{1920}{47.66}
+\approx40.29.
+$$
+
+### Why the center does not have that exact average density
+
+Equal distances on a flat screen do not correspond to equal angular distances across the whole view.
+
+Let pixel pitch be $p=W/N$, where $N$ is the number of pixel columns. For the planar projection:
+
+$$
+x=D\tan\theta.
+$$
+
+Differentiating gives:
+
+$$
+\frac{dx}{d\theta}=D\sec^2\theta.
+$$
+
+After converting from pixels per radian to pixels per degree:
+
+$$
+\mathrm{PPD}_{\mathrm{local}}(\theta)
+=\frac{D}{p}\sec^2\theta\frac{\pi}{180}.
+$$
+
+For our example, the center's local density is about 37.94 PPD. The average is about 40.29 PPD. Both are correct, but they answer different questions.
+
+We therefore should not call half the average PPD an exactly calibrated central Nyquist limit.
+
+### Measuring distance from gaze
+
+**Eccentricity** means angular distance from the gaze direction.
+
+For unit-length gaze and pixel directions, $\mathbf d_g$ and $\mathbf d_p$:
+
+$$
+e=\cos^{-1}\left(
+\operatorname{clamp}(\mathbf d_g\cdot\mathbf d_p,-1,1)
+\right).
+$$
+
+The dot product gives the cosine of their angular separation. Clamping prevents a small floating-point error from sending the input outside the valid range of inverse cosine.
+
+The result is in radians. Clamping does not fix a wrongly calibrated ray.
+
+A displacement of 0.3 in normalized UV coordinates is not automatically $0.3^\circ$. UV coordinates describe positions within an image. Their angular meaning depends on projection and optics.
+
+A pinhole camera maps directions using ratios such as $X/Z$ and $Y/Z$. Headset lenses can distort that mapping. Use calibrated rays, or a validated approximation, when sizing an angular quality region.
+
+## Focus and stereo can disagree even when the images are sharp
+
+A sharp image can still provide inconsistent depth cues. To understand why, separate refraction, accommodation, and vergence.
+
+### Refraction changes a ray's direction
+
+For an ideal interface, Snell's law is:
+
+$$
+n_1\sin\theta_1=n_2\sin\theta_2.
+$$
+
+$n_1$ and $n_2$ are the refractive indices of the two materials. The angles $\theta_1$ and $\theta_2$ are measured from the surface normal.
+
+Refractive index is related to phase velocity $v$ by:
+
+$$
+n=\frac{c}{v}.
+$$
+
+A ray entering glass with refractive index 1.5 from air at $30^\circ$ bends to about $19.47^\circ$ from the normal.
+
+When light travels from a higher-index material to a lower-index material, total internal reflection can occur beyond:
+
+$$
+\theta_c=\sin^{-1}\left(\frac{n_2}{n_1}\right),
+\qquad n_1>n_2.
+$$
+
+AR waveguides may also use diffraction and coupling structures. Snell's law alone does not explain their entire design.
+
+### Accommodation changes focus
+
+For an ideal converging thin lens, using positive distances for the real object and real image:
+
+$$
+\frac1f=\frac1{d_o}+\frac1{d_i}.
+$$
+
+$f$ is focal length, $d_o$ object distance, and $d_i$ image distance.
+
+Optical power is:
+
+$$
+P=\frac1f.
+$$
+
+With focal length measured in meters, the power is measured in diopters. A focal length of $0.25\,\mathrm{m}$ corresponds to 4 diopters.
+
+**Accommodation** is the eye's adjustment of focusing power. The thin-lens model gives useful intuition; it is not a complete anatomical model of the eye.
+
+### Vergence changes where the eyes point
+
+**Vergence** is the coordinated rotation of the eyes to look at a binocular target.
+
+For symmetric eyes separated by $b$, looking at a centered target at distance $z$, total convergence is:
+
+$$
+\gamma=2\tan^{-1}\left(\frac{b}{2z}\right).
+$$
+
+With $b=0.064\,\mathrm{m}$, convergence is about $3.67^\circ$ at one meter and $14.59^\circ$ at a quarter meter.
+
+Now consider a headset whose optical image plane appears two meters away. Its approximate accommodation demand is 0.5 diopters. A virtual object rendered at a quarter meter can instead suggest a vergence distance associated with a 4-diopter focus demand.
+
+The cues disagree. This is **vergence–accommodation conflict**.
+
+Adding more shading detail does not directly remove that mismatch.
+
+**Binocular fusion** combines corresponding information from the two eyes. **Stereoacuity** measures sensitivity to disparity in a defined task. **Panum's fusional area** describes a condition-dependent range of disparities that can be fused.
+
+These are not fixed universal comfort limits. Incompatible inputs can produce rivalry, suppression, or double vision. Visual-performance and comfort claims still need an appropriate experiment.
+
+### Figure X1 — Two simultaneous depth demands
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#16324f','primaryBorderColor':'#0284c7','lineColor':'#64748b','fontSize':'15px'},'flowchart':{'curve':'basis','nodeSpacing':20,'rankSpacing':28}}}%%
+flowchart LR
+  A["Stereo disparity<br/>virtual target at 0.25 m"] --> B["Vergence demand<br/>eyes point toward near target"]
+  C["Headset optical image<br/>appears at 2 m"] --> D["Accommodation demand<br/>focus near 0.5 diopters"]
+  B --> E["Different demanded distances<br/>vergence–accommodation conflict"]
+  D --> E
+  style E fill:#fff0d6,stroke:#d97706,color:#78350f
+```
+
+**Caption:** the two rows are simultaneous cues, not successive steps in a light ray. With the chapter's symmetric-eye model and $b=0.064\,\mathrm m$, the near target asks for about $14.59^\circ$ total convergence. A real target at that distance would have an approximate 4-diopter accommodation demand; the headset's 2-meter optical image instead asks for about 0.5 diopters. These are demands, not measurements of an observer's actual response or universal comfort limits. Increasing resolution does not directly reconcile them.
+
+**Recall:** vergence changes pointing; accommodation changes focusing power. [[Visual Recall/XR - Light, Vision and Perception - Visual Recall#Figure-linked short notes|Brief and figure index]].
+
+## Visibility is about contrast, conditions and tasks
+
+“Can the user see it?” is not one question. The answer depends on what we ask the user to do.
+
+[[Visual acuity and eccentricity|Visual acuity]] describes fine-detail performance under specified conditions. We should distinguish:
+
+| Task | Question |
+|---|---|
+| Detection | Is something present? |
+| Resolution | Can the separate features be distinguished? |
+| Vernier alignment | Are two features slightly misaligned? |
+| Recognition | Which letter or object is this? |
+
+Vernier alignment is a form of hyperacuity. It can reveal small positional differences that a simple receptor-spacing argument misses.
+
+Clinical 20/20 notation is not a universal pixel-resolution specification for the eye.
+
+### Acuity changes with eccentricity
+
+The **minimum angle of resolution**, or MAR, describes a resolvable angular feature under a chosen task.
+
+A full grating cycle, one bar, and a letter gap are not the same feature. State the convention before converting MAR into cycles per degree.
+
+A useful approximation is:
+
+$$
+\mathrm{MAR}(e)=\mathrm{MAR}_0+me.
+$$
+
+Here $e$ is eccentricity, $\mathrm{MAR}_0$ is the central value, and $m$ is a fitted slope. If the feature-size convention stays fixed, the corresponding frequency scale varies roughly as:
+
+$$
+f_{\max}(e)\propto\frac1{\mathrm{MAR}_0+me}.
+$$
+
+This model captures a useful trend: coarser detail can often be used farther from gaze. It does not describe every visual task.
+
+Use consistent angular units, and fit the model for the intended conditions. Do not treat its slope as a universal property of every observer.
+
+### Contrast describes a difference relative to its surroundings
+
+[[Contrast sensitivity adaptation and masking|Contrast]] tells us how strongly one intensity differs from another.
+
+For bright and dark grating bars, Michelson contrast is:
+
+$$
+C_M=\frac{L_{\max}-L_{\min}}{L_{\max}+L_{\min}}.
+$$
+
+The denominator must be positive. Bars with luminances of 120 and 40 nits give:
+
+$$
+C_M=\frac{120-40}{120+40}=0.5.
+$$
+
+For a target against a positive background, Weber contrast is:
+
+$$
+C_W=\frac{L_{\mathrm{target}}-L_{\mathrm{background}}}
+{L_{\mathrm{background}}}.
+$$
+
+A target at 110 nits against a 100-nit background gives $C_W=0.1$.
+
+These formulas describe different stimulus arrangements. Use the one that matches the experiment.
+
+A **contrast sensitivity function**, or CSF, describes sensitivity to patterns at different frequencies and under different conditions. It is not generally flat.
+
+An optical MTF asks how much contrast survives the optics. A visual CSF asks how sensitive the observer is to the received contrast. These describe different stages.
+
+### Adaptation, masking, crowding, and attention
+
+**Adaptation** changes sensitivity with illumination and viewing history. Photopic vision is broadly cone-dominated; scotopic vision is rod-dominated; mesopic vision lies between them. These are useful regimes, not sharp switches.
+
+A **just-noticeable difference**, or JND, is tied to a chosen discrimination criterion. Over some operating ranges, Weber's law approximates that threshold with:
+
+$$
+\frac{\Delta I}{I}=k.
+$$
+
+$I$ is the baseline stimulus, $\Delta I$ the threshold change, and $k$ a fitted fraction. The relation is not valid for all intensities and tasks.
+
+**Masking** changes a target's visibility because other structure is present. **Crowding** makes recognition harder because nearby features interfere. A peripheral letter that is easy to identify alone may be difficult to identify among other letters.
+
+**Attention** concerns what the observer prioritizes. **Gaze** concerns where the eyes point. **Saliency** describes features that tend to attract attention. These concepts are related, but one cannot stand in for another.
+
+Peripheral vision still supports motion, layout, recognition, and depth judgments. A blur level that is acceptable for one grating task may be unacceptable for a navigation or training task.
+
+The teaching lesson is simple: **define the user's task before deciding what detail can be removed.**
+
+## A gaze sample needs a time as well as a direction
+
+A gaze tracker gives more than a location. It gives an observation made at some time and delivered later.
+
+[[Eye movements and display-time gaze|Eye movements]] also differ:
+
+- A fixation is a period of relatively stable gaze, not complete stillness.
+- A saccade rapidly redirects gaze.
+- A microsaccade is a small fixation-related movement.
+- Smooth pursuit follows a moving target.
+- The vestibulo-ocular reflex helps compensate for head motion.
+
+These movements do not share one motion pattern.
+
+Suppose gaze moves steadily at $20^\circ/\mathrm{s}$. Predicting 30 milliseconds ahead with a constant-velocity model gives:
+
+$$
+\Delta\theta
+=(20^\circ/\mathrm{s})(0.030\,\mathrm{s})
+=0.6^\circ.
+$$
+
+That can be useful if the motion stays steady. It can fail during a saccade, where acceleration and braking change rapidly.
+
+**Saccadic suppression** changes visual sensitivity around rapid eye movements. It does not make arbitrary rendering errors invisible. A degraded frame may arrive after the suppression has weakened or after the eye has landed.
+
+### Sampling rate is not latency
+
+A 90 Hz gaze stream has nominal sample intervals of:
+
+$$
+T_s=\frac1{90}\,\mathrm{s}\approx11.11\,\mathrm{ms}.
+$$
+
+That interval does not tell us the age of the observation when it reaches the display.
+
+Follow the timing chain: acquisition, timestamping, delivery, scheduling, rendering, scanout, then pixel response. The quality region should cover the gaze relevant at visible display time.
+
+Evaluate prediction separately around fixation, pursuit, saccade onset, and gaze landing. A low mean error can hide occasional large errors at the moment they matter most.
+
+### Screen motion is not always retinal motion
+
+[[Spatiotemporal sampling and retinal motion|Retinal image velocity]] describes movement across the retina.
+
+In a simplified common angular coordinate frame:
+
+$$
+\omega_{\mathrm{retinal}}
+\approx\omega_{\mathrm{scene}}-\omega_{\mathrm{eye}}.
+$$
+
+During pursuit, the eye may follow a target closely enough that the target moves little on the retina, even while it moves across the screen.
+
+Motion also turns spatial variation into temporal variation. For a grating moving at velocity $v$:
+
+$$
+I(x,t)=\cos\!\left(2\pi f_x(x-vt)\right).
+$$
+
+At a fixed coordinate, its temporal frequency is:
+
+$$
+f_t=|v|f_x.
+$$
+
+A pattern at 10 cycles per degree moving at 20 degrees per second produces 200 cycles per second of variation at that coordinate.
+
+A 90 Hz frame sampler has a nominal Nyquist frequency of 45 Hz. This describes the samples, not a universal human flicker limit.
+
+Display persistence, emission waveform, eye motion, luminance, and contrast also affect what is seen. A screenshot cannot capture all of those effects.
+
+## Sampling is a question of what remains distinguishable
+
+[[Continuous signals and discrete samples|A signal]] is a function describing variation over a domain.
+
+An image $I(x,y)$ varies across position. A gaze trace $\mathbf g(t)$ varies over time. Both can be analyzed as signals, but their units and filtering requirements differ.
+
+**Sampling** chooses locations at which values are recorded. **Quantization** restricts the values we can store. The earlier [[Quantization and compressed weights]] notes develop that second process.
+
+For uniform time sampling:
+
+$$
+x[n]=x(nT_s),\qquad f_s=\frac1{T_s}.
+$$
+
+$T_s$ is the sample interval, $f_s$ the sampling frequency, and $n$ an integer sample index.
+
+More color bits cannot recover spatial observations that were never taken. More pixels do not automatically fix coarse amplitude quantization.
+
+For nearest uniform quantization with step $\Delta$, and no clipping:
+
+$$
+|e_q|\leq\frac{\Delta}{2}.
+$$
+
+Under an additional uniform-error and weak-correlation assumption:
+
+$$
+\operatorname{Var}(e_q)=\frac{\Delta^2}{12}.
+$$
+
+That statistical model is not exact for every image. Smooth gradients can produce structured banding. Dithering can make the error less coherent, but it does not restore missing original information.
+
+### Two different signals can give identical samples
+
+Sample a cosine at rate $f_s$:
+
+$$
+x[n]=\cos\left(2\pi\frac{f_0}{f_s}n\right).
+$$
+
+Now replace its frequency $f_0$ with $f_0+mf_s$, where $m$ is an integer:
+
+$$
+x_m[n]
+=\cos\left(2\pi\frac{f_0}{f_s}n+2\pi mn\right).
+$$
+
+For integer $m$ and $n$, the extra phase is a whole number of cycles. It changes no sample.
+
+This is [[Sampling aliasing and reconstruction|aliasing]]: different original signals become indistinguishable after sampling.
+
+![474](data:image/svg+xml;charset=utf-8,%3Csvg%20font-family%3D%22-apple-system-body%2C%20ui-sans-serif%2C%20-apple-system%2C%20system-ui%2C%20%26quot%3BSegoe%20UI%26quot%3B%2C%20Helvetica%2C%20%26quot%3BApple%20Color%20Emoji%26quot%3B%2C%20Arial%2C%20sans-serif%2C%20%26quot%3BSegoe%20UI%20Emoji%26quot%3B%2C%20%26quot%3BSegoe%20UI%20Symbol%26quot%3B%22%20font-weight%3D%22400%22%20data-d-component%3D%22svg%22%20fill%3D%22currentColor%22%20style%3D%22color%3Argb\(237%2C%20237%2C%20237\)%22%20viewBox%3D%220%200%20350%20165%22%20width%3D%22100%25%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cline%20x1%3D%2220%22%20x2%3D%22338%22%20y1%3D%2282%22%20y2%3D%2282%22%20stroke%3D%22currentColor%22%20stroke-opacity%3D%22.3%22%2F%3E%3Cline%20x1%3D%2220%22%20y1%3D%2237%22%20x2%3D%2220.79%22%20y2%3D%2237.93497352202054%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2220%22%20y1%3D%2237%22%20x2%3D%2220.79%22%20y2%3D%2237.04995562671135%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2220.79%22%20y1%3D%2237.93497352202054%22%20x2%3D%2221.58%22%20y2%3D%2240.701041844220846%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2220.79%22%20y1%3D%2237.04995562671135%22%20x2%3D%2221.58%22%20y2%3D%2237.1997115928614%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2221.58%22%20y1%3D%2240.701041844220846%22%20x2%3D%2222.37%22%20y2%3D%2245.183262715873944%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2221.58%22%20y1%3D%2237.1997115928614%22%20x2%3D%2222.37%22%20y2%3D%2237.44893540275491%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2222.37%22%20y1%3D%2245.183262715873944%22%20x2%3D%2223.16%22%20y2%3D%2251.19538023320901%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2222.37%22%20y1%3D%2237.44893540275491%22%20x2%3D%2223.16%22%20y2%3D%2237.79707371720901%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2223.16%22%20y1%3D%2251.19538023320901%22%20x2%3D%2223.95%22%20y2%3D%2258.4875645877823%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2223.16%22%20y1%3D%2237.79707371720901%22%20x2%3D%2223.95%22%20y2%3D%2238.243353582104554%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2223.95%22%20y1%3D%2258.4875645877823%22%20x2%3D%2224.740000000000002%22%20y2%3D%2266.7567935889619%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2223.95%22%20y1%3D%2238.243353582104554%22%20x2%3D%2224.740000000000002%22%20y2%3D%2238.78678414453756%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2224.740000000000002%22%20y1%3D%2266.7567935889619%22%20x2%3D%2225.53%22%20y2%3D%2275.6594445628088%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2224.740000000000002%22%20y1%3D%2238.78678414453756%22%20x2%3D%2225.53%22%20y2%3D%2239.42615885276046%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2225.53%22%20y1%3D%2275.6594445628088%22%20x2%3D%2226.32%22%20y2%3D%2284.8255733788191%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2225.53%22%20y1%3D%2239.42615885276046%22%20x2%3D%2226.32%22%20y2%3D%2240.160058135028684%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2226.32%22%20y1%3D%2284.8255733788191%22%20x2%3D%2227.11%22%20y2%3D%2293.87428724844177%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2226.32%22%20y1%3D%2240.160058135028684%22%20x2%3D%2227.11%22%20y2%3D%2240.986852551404965%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2227.11%22%20y1%3D%2293.87428724844177%22%20x2%3D%2227.9%22%20y2%3D%22102.4295724882796%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2227.11%22%20y1%3D%2240.986852551404965%22%20x2%3D%2227.9%22%20y2%3D%2241.90470641152344%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2227.9%22%20y1%3D%22102.4295724882796%22%20x2%3D%2228.69%22%20y2%3D%22110.13591953510674%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2227.9%22%20y1%3D%2241.90470641152344%22%20x2%3D%2228.69%22%20y2%3D%2242.911581850281394%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2228.69%22%20y1%3D%22110.13591953510674%22%20x2%3D%2229.48%22%20y2%3D%22116.67309592491051%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2228.69%22%20y1%3D%2242.911581850281394%22%20x2%3D%2229.48%22%20y2%3D%2244.00524335240932%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2229.48%22%20y1%3D%22116.67309592491051%22%20x2%3D%2230.27%22%20y2%3D%22121.7694533539912%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2229.48%22%20y1%3D%2244.00524335240932%22%20x2%3D%2230.27%22%20y2%3D%2245.183262715873944%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2230.27%22%20y1%3D%22121.7694533539912%22%20x2%3D%2231.060000000000002%22%20y2%3D%22125.21321585546245%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2230.27%22%20y1%3D%2245.183262715873944%22%20x2%3D%2231.060000000000002%22%20y2%3D%2246.44302444309394%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2231.060000000000002%22%20y1%3D%22125.21321585546245%22%20x2%3D%2231.85%22%20y2%3D%22126.86128001799077%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2231.060000000000002%22%20y1%3D%2246.44302444309394%22%20x2%3D%2231.85%22%20y2%3D%2247.78173154799861%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2231.85%22%20y1%3D%22126.86128001799077%22%20x2%3D%2232.64%22%20y2%3D%22126.6451615591515%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2231.85%22%20y1%3D%2247.78173154799861%22%20x2%3D%2232.64%22%20y2%3D%2249.19641176603648%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2232.64%22%20y1%3D%22126.6451615591515%22%20x2%3D%2233.43%22%20y2%3D%22124.57384114723953%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2232.64%22%20y1%3D%2249.19641176603648%22%20x2%3D%2233.43%22%20y2%3D%2250.683924153345856%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2233.43%22%20y1%3D%22124.57384114723953%22%20x2%3D%2234.22%22%20y2%3D%22120.73339121517746%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2233.43%22%20y1%3D%2250.683924153345856%22%20x2%3D%2234.22%22%20y2%3D%2252.24096606043567%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2234.22%22%20y1%3D%22120.73339121517746%22%20x2%3D%2235.010000000000005%22%20y2%3D%22115.28339927403744%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2234.22%22%20y1%3D%2252.24096606043567%22%20x2%3D%2235.010000000000005%22%20y2%3D%2253.86408046489326%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2235.010000000000005%22%20y1%3D%22115.28339927403744%22%20x2%3D%2235.8%22%20y2%3D%22108.4503363531613%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2235.010000000000005%22%20y1%3D%2253.86408046489326%22%20x2%3D%2235.8%22%20y2%3D%2255.5496636468387%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2235.8%22%20y1%3D%22108.4503363531613%22%20x2%3D%2236.59%22%20y2%3D%22100.51814613722988%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2235.8%22%20y1%3D%2255.5496636468387%22%20x2%3D%2236.59%22%20y2%3D%2257.293973190084074%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2236.59%22%20y1%3D%22100.51814613722988%22%20x2%3D%2237.38%22%20y2%3D%2291.8164458628444%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2236.59%22%20y1%3D%2257.293973190084074%22%20x2%3D%2237.38%22%20y2%3D%2259.09313629123329%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2237.38%22%20y1%3D%2291.8164458628444%22%20x2%3D%2238.17%22%20y2%3D%2282.7068292790319%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2237.38%22%20y1%3D%2259.09313629123329%22%20x2%3D%2238.17%22%20y2%3D%2260.943158358274204%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2238.17%22%20y1%3D%2282.7068292790319%22%20x2%3D%2238.96%22%20y2%3D%2273.56784084364237%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2238.17%22%20y1%3D%2260.943158358274204%22%20x2%3D%2238.96%22%20y2%3D%2262.83993187957173%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2238.96%22%20y1%3D%2273.56784084364237%22%20x2%3D%2239.75%22%20y2%3D%2264.77924554357095%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2238.96%22%20y1%3D%2262.83993187957173%22%20x2%3D%2239.75%22%20y2%3D%2264.77924554357097%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2239.75%22%20y1%3D%2264.77924554357095%22%20x2%3D%2240.54%22%20y2%3D%2256.70624799665413%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2239.75%22%20y1%3D%2264.77924554357097%22%20x2%3D%2240.54%22%20y2%3D%2266.75679358896188%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2240.54%22%20y1%3D%2256.70624799665413%22%20x2%3D%2241.33%22%20y2%3D%2249.684316600656516%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2240.54%22%20y1%3D%2266.75679358896188%22%20x2%3D%2241.33%22%20y2%3D%2268.76818536454631%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2241.33%22%20y1%3D%2249.684316600656516%22%20x2%3D%2242.120000000000005%22%20y2%3D%2244.005243352409295%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2241.33%22%20y1%3D%2268.76818536454631%22%20x2%3D%2242.120000000000005%22%20y2%3D%2270.80895507758154%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2242.120000000000005%22%20y1%3D%2244.005243352409295%22%20x2%3D%2242.91%22%20y2%3D%2239.90501861265596%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2242.120000000000005%22%20y1%3D%2270.80895507758154%22%20x2%3D%2242.91%22%20y2%3D%2272.87457170895692%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2242.91%22%20y1%3D%2239.90501861265596%22%20x2%3D%2243.7%22%20y2%3D%2237.5540246732188%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2242.91%22%20y1%3D%2272.87457170895692%22%20x2%3D%2243.7%22%20y2%3D%2274.96044907318961%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2243.7%22%20y1%3D%2237.5540246732188%22%20x2%3D%2244.49%22%20y2%3D%2237.04995562671135%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2243.7%22%20y1%3D%2274.96044907318961%22%20x2%3D%2244.49%22%20y2%3D%2277.06195600090295%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2244.49%22%20y1%3D%2237.04995562671135%22%20x2%3D%2245.28%22%20y2%3D%2238.4137577492116%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2244.49%22%20y1%3D%2277.06195600090295%22%20x2%3D%2245.28%22%20y2%3D%2279.17442662118088%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2245.28%22%20y1%3D%2238.4137577492116%22%20x2%3D%2246.07%22%20y2%3D%2241.58875909077229%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2245.28%22%20y1%3D%2279.17442662118088%22%20x2%3D%2246.07%22%20y2%3D%2281.29317072096806%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2246.07%22%20y1%3D%2241.58875909077229%22%20x2%3D%2246.86%22%20y2%3D%2246.44302444309395%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2246.07%22%20y1%3D%2281.29317072096806%22%20x2%3D%2246.86%22%20y2%3D%2283.41348415851577%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2246.86%22%20y1%3D%2246.44302444309395%22%20x2%3D%2247.650000000000006%22%20y2%3D%2252.774837825141745%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2246.86%22%20y1%3D%2283.41348415851577%22%20x2%3D%2247.650000000000006%22%20y2%3D%2285.53065930775301%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2247.650000000000006%22%20y1%3D%2252.774837825141745%22%20x2%3D%2248.44%22%20y2%3D%2260.32108466542281%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2247.650000000000006%22%20y1%3D%2285.53065930775301%22%20x2%3D%2248.44%22%20y2%3D%2287.63999551039369%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2248.44%22%20y1%3D%2260.32108466542281%22%20x2%3D%2249.230000000000004%22%20y2%3D%2268.76818536454634%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2248.44%22%20y1%3D%2287.63999551039369%22%20x2%3D%2249.230000000000004%22%20y2%3D%2289.73680951257343%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2249.230000000000004%22%20y1%3D%2268.76818536454634%22%20x2%3D%2250.02%22%20y2%3D%2277.76512590066686%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2249.230000000000004%22%20y1%3D%2289.73680951257343%22%20x2%3D%2250.02%22%20y2%3D%2291.8164458628444%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2250.02%22%20y1%3D%2277.76512590066686%22%20x2%3D%2250.81%22%20y2%3D%2286.93804399909708%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2250.02%22%20y1%3D%2291.8164458628444%22%20x2%3D%2250.81%22%20y2%3D%2293.87428724844177%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2250.81%22%20y1%3D%2286.93804399909708%22%20x2%3D%2251.6%22%20y2%3D%2295.90576474687262%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2250.81%22%20y1%3D%2293.87428724844177%22%20x2%3D%2251.6%22%20y2%3D%2295.90576474687262%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2251.6%22%20y1%3D%2295.90576474687262%22%20x2%3D%2252.39%22%20y2%3D%22104.29564007945831%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2251.6%22%20y1%3D%2295.90576474687262%22%20x2%3D%2252.39%22%20y2%3D%2297.90636797006657%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2252.39%22%20y1%3D%22104.29564007945831%22%20x2%3D%2253.18%22%20y2%3D%22111.75903393956438%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2252.39%22%20y1%3D%2297.90636797006657%22%20x2%3D%2253.18%22%20y2%3D%2299.87165507856513%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2253.18%22%20y1%3D%22111.75903393956438%22%20x2%3D%2253.97%22%20y2%3D%22117.9858096319191%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2253.18%22%20y1%3D%2299.87165507856513%22%20x2%3D%2253.97%22%20y2%3D%22101.79726264351618%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2253.97%22%20y1%3D%22117.9858096319191%22%20x2%3D%2254.760000000000005%22%20y2%3D%22122.71721736097089%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2253.97%22%20y1%3D%22101.79726264351618%22%20x2%3D%2254.760000000000005%22%20y2%3D%22103.6789153345772%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2254.760000000000005%22%20y1%3D%22122.71721736097089%22%20x2%3D%2255.550000000000004%22%20y2%3D%22125.75664641789545%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2254.760000000000005%22%20y1%3D%22103.6789153345772%22%20x2%3D%2255.550000000000004%22%20y2%3D%22105.5124354122177%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2255.550000000000004%22%20y1%3D%22125.75664641789545%22%20x2%3D%2256.34%22%20y2%3D%22126.97779521645792%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2255.550000000000004%22%20y1%3D%22105.5124354122177%22%20x2%3D%2256.34%22%20y2%3D%22107.29375200334587%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2256.34%22%20y1%3D%22126.97779521645792%22%20x2%3D%2257.13%22%20y2%3D%22126.3299196769648%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2256.34%22%20y1%3D%22107.29375200334587%22%20x2%3D%2257.13%22%20y2%3D%22109.01891013966477%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2257.13%22%20y1%3D%22126.3299196769648%22%20x2%3D%2257.92%22%20y2%3D%22123.8399418649713%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2257.13%22%20y1%3D%22109.01891013966477%22%20x2%3D%2257.92%22%20y2%3D%22110.68407953869104%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2257.92%22%20y1%3D%22123.8399418649713%22%20x2%3D%2258.71%22%20y2%3D%22119.61133126157213%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2257.92%22%20y1%3D%22110.68407953869104%22%20x2%3D%2258.71%22%20y2%3D%22112.28556310793981%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2258.71%22%20y1%3D%22119.61133126157213%22%20x2%3D%2259.5%22%20y2%3D%22113.81980515339463%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2258.71%22%20y1%3D%22112.28556310793981%22%20x2%3D%2259.5%22%20y2%3D%22113.81980515339464%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2259.5%22%20y1%3D%22113.81980515339463%22%20x2%3D%2260.29%22%20y2%3D%22106.70602680991585%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2259.5%22%20y1%3D%22113.81980515339464%22%20x2%3D%2260.29%22%20y2%3D%22115.28339927403744%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2260.29%22%20y1%3D%22106.70602680991585%22%20x2%3D%2261.08%22%20y2%3D%2298.56560487081052%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2260.29%22%20y1%3D%22115.28339927403744%22%20x2%3D%2261.08%22%20y2%3D%22116.67309592491051%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2261.08%22%20y1%3D%2298.56560487081052%22%20x2%3D%2261.870000000000005%22%20y2%3D%2289.73680951257336%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2261.08%22%20y1%3D%22116.67309592491051%22%20x2%3D%2261.870000000000005%22%20y2%3D%22117.98580963191907%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2261.870000000000005%22%20y1%3D%2289.73680951257336%22%20x2%3D%2262.660000000000004%22%20y2%3D%2280.58651584148426%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2261.870000000000005%22%20y1%3D%22117.98580963191907%22%20x2%3D%2262.660000000000004%22%20y2%3D%22119.21862584235528%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2262.660000000000004%22%20y1%3D%2280.58651584148426%22%20x2%3D%2263.45%22%20y2%3D%2271.49495862648422%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2262.660000000000004%22%20y1%3D%22119.21862584235528%22%20x2%3D%2263.45%22%20y2%3D%22120.36880739593414%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2263.45%22%20y1%3D%2271.49495862648422%22%20x2%3D%2264.24000000000001%22%20y2%3D%2262.83993187957164%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2263.45%22%20y1%3D%22120.36880739593414%22%20x2%3D%2264.24000000000001%22%20y2%3D%22121.43380060197387%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2264.24000000000001%22%20y1%3D%2262.83993187957164%22%20x2%3D%2265.03%22%20y2%3D%2254.9810898603352%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2264.24000000000001%22%20y1%3D%22121.43380060197387%22%20x2%3D%2265.03%22%20y2%3D%22122.4112409092277%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2265.03%22%20y1%3D%2254.9810898603352%22%20x2%3D%2265.82%22%20y2%3D%2248.245001866629266%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2265.03%22%20y1%3D%22122.4112409092277%22%20x2%3D%2265.82%22%20y2%3D%22123.29895815577913%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2265.82%22%20y1%3D%2248.245001866629266%22%20x2%3D%2266.61%22%20y2%3D%2242.911581850281394%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2265.82%22%20y1%3D%22123.29895815577913%22%20x2%3D%2266.61%22%20y2%3D%22124.09498138734403%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2266.61%22%20y1%3D%2242.911581850281394%22%20x2%3D%2267.4%22%20y2%3D%2239.20245676671807%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2266.61%22%20y1%3D%22124.09498138734403%22%20x2%3D%2267.4%22%20y2%3D%22124.79754323328191%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2267.4%22%20y1%3D%2239.20245676671807%22%20x2%3D%2268.19%22%20y2%3D%2237.27175700451692%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2267.4%22%20y1%3D%22124.79754323328191%22%20x2%3D%2268.19%22%20y2%3D%22125.40508383060092%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2268.19%22%20y1%3D%2237.27175700451692%22%20x2%3D%2268.98%22%20y2%3D%2237.1997115928614%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2268.19%22%20y1%3D%22125.40508383060092%22%20x2%3D%2268.98%22%20y2%3D%22125.91625428724363%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2268.98%22%20y1%3D%2237.1997115928614%22%20x2%3D%2269.77000000000001%22%20y2%3D%2238.98931433407515%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2268.98%22%20y1%3D%22125.91625428724363%22%20x2%3D%2269.77000000000001%22%20y2%3D%22126.32991967696482%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2269.77000000000001%22%20y1%3D%2238.98931433407515%22%20x2%3D%2270.56%22%20y2%3D%2242.56619939802614%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2269.77000000000001%22%20y1%3D%22126.32991967696482%22%20x2%3D%2270.56%22%20y2%3D%22126.64516155915149%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2270.56%22%20y1%3D%2242.56619939802614%22%20x2%3D%2271.35%22%20y2%3D%2247.78173154799866%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2270.56%22%20y1%3D%22126.64516155915149%22%20x2%3D%2271.35%22%20y2%3D%22126.86128001799077%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2271.35%22%20y1%3D%2247.78173154799866%22%20x2%3D%2272.14%22%20y2%3D%2254.41918258561604%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2271.35%22%20y1%3D%22126.86128001799077%22%20x2%3D%2272.14%22%20y2%3D%22126.97779521645792%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2272.14%22%20y1%3D%2254.41918258561604%22%20x2%3D%2272.93%22%20y2%3D%2262.202737356483865%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2272.14%22%20y1%3D%22126.97779521645792%22%20x2%3D%2272.93%22%20y2%3D%22126.99444846167472%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2272.93%22%20y1%3D%2262.202737356483865%22%20x2%3D%2273.72%22%20y2%3D%2270.80895507758157%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2272.93%22%20y1%3D%22126.99444846167472%22%20x2%3D%2273.72%22%20y2%3D%22126.91120277927223%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2273.72%22%20y1%3D%2270.80895507758157%22%20x2%3D%2274.51%22%20y2%3D%2279.88020971806611%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2273.72%22%20y1%3D%22126.91120277927223%22%20x2%3D%2274.51%22%20y2%3D%22126.72824299548309%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2274.51%22%20y1%3D%2279.88020971806611%22%20x2%3D%2275.30000000000001%22%20y2%3D%2289.0395509268104%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2274.51%22%20y1%3D%22126.72824299548309%22%20x2%3D%2275.30000000000001%22%20y2%3D%22126.4459753267812%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2275.30000000000001%22%20y1%3D%2289.0395509268104%22%20x2%3D%2276.09%22%20y2%3D%2297.90636797006657%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2275.30000000000001%22%20y1%3D%22126.4459753267812%22%20x2%3D%2276.09%22%20y2%3D%22126.06502647797946%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2276.09%22%20y1%3D%2297.90636797006657%22%20x2%3D%2276.88%22%20y2%3D%22106.11220577405484%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2276.09%22%20y1%3D%22126.06502647797946%22%20x2%3D%2276.88%22%20y2%3D%22125.5862422507884%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2276.88%22%20y1%3D%22106.11220577405484%22%20x2%3D%2277.67%22%20y2%3D%22113.31607584665419%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2276.88%22%20y1%3D%22125.5862422507884%22%20x2%3D%2277.67%22%20y2%3D%22125.01068566592485%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2277.67%22%20y1%3D%22113.31607584665419%22%20x2%3D%2278.46000000000001%22%20y2%3D%22119.21862584235531%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2277.67%22%20y1%3D%22125.01068566592485%22%20x2%3D%2278.46000000000001%22%20y2%3D%22124.33963460294015%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2278.46000000000001%22%20y1%3D%22119.21862584235531%22%20x2%3D%2279.25%22%20y2%3D%22123.57457896300792%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2278.46000000000001%22%20y1%3D%22124.33963460294015%22%20x2%3D%2279.25%22%20y2%3D%22123.57457896300791%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2279.25%22%20y1%3D%22123.57457896300792%22%20x2%3D%2280.04%22%20y2%3D%22126.202926282791%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2279.25%22%20y1%3D%22123.57457896300791%22%20x2%3D%2280.04%22%20y2%3D%22122.71721736097089%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2280.04%22%20y1%3D%22126.202926282791%22%20x2%3D%2280.83000000000001%22%20y2%3D%22126.99444846167472%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2280.04%22%20y1%3D%22122.71721736097089%22%20x2%3D%2280.83000000000001%22%20y2%3D%22121.7694533539912%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2280.83000000000001%22%20y1%3D%22126.99444846167472%22%20x2%3D%2281.62%22%20y2%3D%22125.91625428724362%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2280.83000000000001%22%20y1%3D%22121.7694533539912%22%20x2%3D%2281.62%22%20y2%3D%22120.73339121517746%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2281.62%22%20y1%3D%22125.91625428724362%22%20x2%3D%2282.41%22%20y2%3D%22123.01314744859505%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2281.62%22%20y1%3D%22120.73339121517746%22%20x2%3D%2282.41%22%20y2%3D%22119.61133126157216%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2282.41%22%20y1%3D%22123.01314744859505%22%20x2%3D%2283.2%22%20y2%3D%22118.40576474687265%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2282.41%22%20y1%3D%22119.61133126157216%22%20x2%3D%2283.2%22%20y2%3D%22118.40576474687265%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2283.2%22%20y1%3D%22118.40576474687265%22%20x2%3D%2283.99000000000001%22%20y2%3D%22112.28556310793971%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2283.2%22%20y1%3D%22118.40576474687265%22%20x2%3D%2283.99000000000001%22%20y2%3D%22117.11936833022483%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2283.99000000000001%22%20y1%3D%22112.28556310793971%22%20x2%3D%2284.78%22%20y2%3D%22104.90686370876675%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2283.99000000000001%22%20y1%3D%22117.11936833022483%22%20x2%3D%2284.78%22%20y2%3D%22115.75499813337069%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2284.78%22%20y1%3D%22104.90686370876675%22%20x2%3D%2285.57000000000001%22%20y2%3D%2296.57628381891664%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2284.78%22%20y1%3D%22115.75499813337069%22%20x2%3D%2285.57000000000001%22%20y2%3D%22114.31568339934351%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2285.57000000000001%22%20y1%3D%2296.57628381891664%22%20x2%3D%2286.36%22%20y2%3D%2287.63999551039362%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2285.57000000000001%22%20y1%3D%22114.31568339934351%22%20x2%3D%2286.36%22%20y2%3D%22112.80461976679099%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2286.36%22%20y1%3D%2287.63999551039362%22%20x2%3D%2287.15%22%20y2%3D%2278.4693406922469%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2286.36%22%20y1%3D%22112.80461976679099%22%20x2%3D%2287.15%22%20y2%3D%22111.22516217485826%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2287.15%22%20y1%3D%2278.4693406922469%22%20x2%3D%2287.94%22%20y2%3D%2269.44540022823463%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2287.15%22%20y1%3D%22111.22516217485826%22%20x2%3D%2287.94%22%20y2%3D%22109.58081741438394%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2287.94%22%20y1%3D%2269.44540022823463%22%20x2%3D%2288.73%22%20y2%3D%2260.94315835827416%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2287.94%22%20y1%3D%22109.58081741438394%22%20x2%3D%2288.73%22%20y2%3D%22107.87523634194754%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2288.73%22%20y1%3D%2260.94315835827416%22%20x2%3D%2289.52000000000001%22%20y2%3D%2253.315920461308934%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2288.73%22%20y1%3D%22107.87523634194754%22%20x2%3D%2289.52000000000001%22%20y2%3D%22106.11220577405484%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2289.52000000000001%22%20y1%3D%2253.315920461308934%22%20x2%3D%2290.31%22%20y2%3D%2246.88063166977515%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2289.52000000000001%22%20y1%3D%22106.11220577405484%22%20x2%3D%2290.31%22%20y2%3D%22104.29564007945834%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2290.31%22%20y1%3D%2246.88063166977515%22%20x2%3D%2291.10000000000001%22%20y2%3D%2241.90470641152344%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2290.31%22%20y1%3D%22104.29564007945834%22%20x2%3D%2291.10000000000001%22%20y2%3D%22102.4295724882796%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2291.10000000000001%22%20y1%3D%2241.90470641152344%22%20x2%3D%2291.89%22%20y2%3D%2238.594916169399085%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2291.10000000000001%22%20y1%3D%22102.4295724882796%22%20x2%3D%2291.89%22%20y2%3D%22100.51814613722988%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2291.89%22%20y1%3D%2238.594916169399085%22%20x2%3D%2292.68%22%20y2%3D%2237.08879722072777%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2291.89%22%20y1%3D%22100.51814613722988%22%20x2%3D%2292.68%22%20y2%3D%2298.5656048708105%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2292.68%22%20y1%3D%2237.08879722072777%22%20x2%3D%2293.47%22%20y2%3D%2237.448935402754906%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2292.68%22%20y1%3D%2298.5656048708105%22%20x2%3D%2293.47%22%20y2%3D%2296.57628381891672%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2293.47%22%20y1%3D%2237.448935402754906%22%20x2%3D%2294.26%22%20y2%3D%2239.66036539705989%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2293.47%22%20y1%3D%2296.57628381891672%22%20x2%3D%2294.26%22%20y2%3D%2294.55459977176534%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2294.26%22%20y1%3D%2239.66036539705989%22%20x2%3D%2295.05%22%20y2%3D%2243.631192604065824%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2294.26%22%20y1%3D%2294.55459977176534%22%20x2%3D%2295.05%22%20y2%3D%2292.50504137351572%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2295.05%22%20y1%3D%2243.631192604065824%22%20x2%3D%2295.84%22%20y2%3D%2249.19641176603655%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2295.05%22%20y1%3D%2292.50504137351572%22%20x2%3D%2295.84%22%20y2%3D%2290.43215915635761%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2295.84%22%20y1%3D%2249.19641176603655%22%20x2%3D%2296.63000000000001%22%20y2%3D%2256.12476365805253%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2295.84%22%20y1%3D%2290.43215915635761%22%20x2%3D%2296.63000000000001%22%20y2%3D%2288.34055543719123%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2296.63000000000001%22%20y1%3D%2256.12476365805253%22%20x2%3D%2297.42%22%20y2%3D%2264.12834492143493%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2296.63000000000001%22%20y1%3D%2288.34055543719123%22%20x2%3D%2297.42%22%20y2%3D%2286.23487409933313%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2297.42%22%20y1%3D%2264.12834492143493%22%20x2%3D%2298.21000000000001%22%20y2%3D%2272.87457170895699%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2297.42%22%20y1%3D%2286.23487409933313%22%20x2%3D%2298.21000000000001%22%20y2%3D%2284.11979028193392%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2298.21000000000001%22%20y1%3D%2272.87457170895699%22%20x2%3D%2299%22%20y2%3D%2282.00000000000004%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2298.21000000000001%22%20y1%3D%2284.11979028193392%22%20x2%3D%2299%22%20y2%3D%2282.00000000000001%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2299%22%20y1%3D%2282.00000000000004%22%20x2%3D%2299.79%22%20y2%3D%2291.1254282910431%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2299%22%20y1%3D%2282.00000000000001%22%20x2%3D%2299.79%22%20y2%3D%2279.8802097180661%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%2299.79%22%20y1%3D%2291.1254282910431%22%20x2%3D%22100.58%22%20y2%3D%2299.8716550785653%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%2299.79%22%20y1%3D%2279.8802097180661%22%20x2%3D%22100.58%22%20y2%3D%2277.76512590066685%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22100.58%22%20y1%3D%2299.8716550785653%22%20x2%3D%22101.37%22%20y2%3D%22107.87523634194754%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22100.58%22%20y1%3D%2277.76512590066685%22%20x2%3D%22101.37%22%20y2%3D%2275.65944456280879%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22101.37%22%20y1%3D%22107.87523634194754%22%20x2%3D%22102.16%22%20y2%3D%22114.80358823396352%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22101.37%22%20y1%3D%2275.65944456280879%22%20x2%3D%22102.16%22%20y2%3D%2273.56784084364241%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22102.16%22%20y1%3D%22114.80358823396352%22%20x2%3D%22102.95%22%20y2%3D%22120.36880739593423%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22102.16%22%20y1%3D%2273.56784084364241%22%20x2%3D%22102.95%22%20y2%3D%2271.49495862648425%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22102.95%22%20y1%3D%22120.36880739593423%22%20x2%3D%22103.74000000000001%22%20y2%3D%22124.3396346029402%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22102.95%22%20y1%3D%2271.49495862648425%22%20x2%3D%22103.74000000000001%22%20y2%3D%2269.44540022823469%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22103.74000000000001%22%20y1%3D%22124.3396346029402%22%20x2%3D%22104.53%22%20y2%3D%22126.55106459724509%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22103.74000000000001%22%20y1%3D%2269.44540022823469%22%20x2%3D%22104.53%22%20y2%3D%2267.4237161810833%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22104.53%22%20y1%3D%22126.55106459724509%22%20x2%3D%22105.32000000000001%22%20y2%3D%22126.91120277927223%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22104.53%22%20y1%3D%2267.4237161810833%22%20x2%3D%22105.32000000000001%22%20y2%3D%2265.43439512918951%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22105.32000000000001%22%20y1%3D%22126.91120277927223%22%20x2%3D%22106.11%22%20y2%3D%22125.40508383060089%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22105.32000000000001%22%20y1%3D%2265.43439512918951%22%20x2%3D%22106.11%22%20y2%3D%2263.4818538627701%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22106.11%22%20y1%3D%22125.40508383060089%22%20x2%3D%22106.9%22%20y2%3D%22122.09529358847652%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22106.11%22%20y1%3D%2263.4818538627701%22%20x2%3D%22106.9%22%20y2%3D%2261.57042751172044%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22106.9%22%20y1%3D%22122.09529358847652%22%20x2%3D%22107.69%22%20y2%3D%22117.1193683302248%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22106.9%22%20y1%3D%2261.57042751172044%22%20x2%3D%22107.69%22%20y2%3D%2259.70435992054168%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22107.69%22%20y1%3D%22117.1193683302248%22%20x2%3D%22108.48%22%20y2%3D%22110.68407953869087%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22107.69%22%20y1%3D%2259.70435992054168%22%20x2%3D%22108.48%22%20y2%3D%2257.88779422594514%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22108.48%22%20y1%3D%22110.68407953869087%22%20x2%3D%22109.27000000000001%22%20y2%3D%22103.05684164172577%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22108.48%22%20y1%3D%2257.88779422594514%22%20x2%3D%22109.27000000000001%22%20y2%3D%2256.1247636580525%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22109.27000000000001%22%20y1%3D%22103.05684164172577%22%20x2%3D%22110.06%22%20y2%3D%2294.55459977176528%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22109.27000000000001%22%20y1%3D%2256.1247636580525%22%20x2%3D%22110.06%22%20y2%3D%2254.41918258561607%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22110.06%22%20y1%3D%2294.55459977176528%22%20x2%3D%22110.85000000000001%22%20y2%3D%2285.530659307753%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22110.06%22%20y1%3D%2254.41918258561607%22%20x2%3D%22110.85000000000001%22%20y2%3D%2252.774837825141724%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22110.85000000000001%22%20y1%3D%2285.530659307753%22%20x2%3D%22111.64%22%20y2%3D%2276.36000448960614%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22110.85000000000001%22%20y1%3D%2252.774837825141724%22%20x2%3D%22111.64%22%20y2%3D%2251.19538023320904%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22111.64%22%20y1%3D%2276.36000448960614%22%20x2%3D%22112.43%22%20y2%3D%2267.42371618108328%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22111.64%22%20y1%3D%2251.19538023320904%22%20x2%3D%22112.43%22%20y2%3D%2249.684316600656516%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22112.43%22%20y1%3D%2267.42371618108328%22%20x2%3D%22113.22%22%20y2%3D%2259.09313629123331%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22112.43%22%20y1%3D%2249.684316600656516%22%20x2%3D%22113.22%22%20y2%3D%2248.245001866629316%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22113.22%22%20y1%3D%2259.09313629123331%22%20x2%3D%22114.01%22%20y2%3D%2251.71443689206022%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22113.22%22%20y1%3D%2248.245001866629316%22%20x2%3D%22114.01%22%20y2%3D%2246.880631669775184%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22114.01%22%20y1%3D%2251.71443689206022%22%20x2%3D%22114.80000000000001%22%20y2%3D%2245.594235253127295%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22114.01%22%20y1%3D%2246.880631669775184%22%20x2%3D%22114.80000000000001%22%20y2%3D%2245.59423525312737%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22114.80000000000001%22%20y1%3D%2245.594235253127295%22%20x2%3D%22115.59%22%20y2%3D%2240.98685255140492%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22114.80000000000001%22%20y1%3D%2245.59423525312737%22%20x2%3D%22115.59%22%20y2%3D%2244.388668738427825%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22115.59%22%20y1%3D%2240.98685255140492%22%20x2%3D%22116.38000000000001%22%20y2%3D%2238.08374571275638%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22115.59%22%20y1%3D%2244.388668738427825%22%20x2%3D%22116.38000000000001%22%20y2%3D%2243.26660878482256%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22116.38000000000001%22%20y1%3D%2238.08374571275638%22%20x2%3D%22117.17%22%20y2%3D%2237.00555153832527%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22116.38000000000001%22%20y1%3D%2243.26660878482256%22%20x2%3D%22117.17%22%20y2%3D%2242.2305466460088%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22117.17%22%20y1%3D%2237.00555153832527%22%20x2%3D%22117.96000000000001%22%20y2%3D%2237.797073717209024%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22117.17%22%20y1%3D%2242.2305466460088%22%20x2%3D%22117.96000000000001%22%20y2%3D%2241.28278263902913%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22117.96000000000001%22%20y1%3D%2237.797073717209024%22%20x2%3D%22118.75%22%20y2%3D%2240.42542103699212%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22117.96000000000001%22%20y1%3D%2241.28278263902913%22%20x2%3D%22118.75%22%20y2%3D%2240.425421036992105%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22118.75%22%20y1%3D%2240.42542103699212%22%20x2%3D%22119.54%22%20y2%3D%2244.78137415764474%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22118.75%22%20y1%3D%2240.425421036992105%22%20x2%3D%22119.54%22%20y2%3D%2239.660365397059856%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22119.54%22%20y1%3D%2244.78137415764474%22%20x2%3D%22120.33%22%20y2%3D%2250.68392415334599%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22119.54%22%20y1%3D%2239.660365397059856%22%20x2%3D%22120.33%22%20y2%3D%2238.98931433407515%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22120.33%22%20y1%3D%2250.68392415334599%22%20x2%3D%22121.12%22%20y2%3D%2257.887794225945164%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22120.33%22%20y1%3D%2238.98931433407515%22%20x2%3D%22121.12%22%20y2%3D%2238.413757749211605%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22121.12%22%20y1%3D%2257.887794225945164%22%20x2%3D%22121.91000000000001%22%20y2%3D%2266.09363202993343%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22121.12%22%20y1%3D%2238.413757749211605%22%20x2%3D%22121.91000000000001%22%20y2%3D%2237.93497352202054%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22121.91000000000001%22%20y1%3D%2266.09363202993343%22%20x2%3D%22122.7%22%20y2%3D%2274.96044907318976%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22121.91000000000001%22%20y1%3D%2237.93497352202054%22%20x2%3D%22122.7%22%20y2%3D%2237.554024673218805%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22122.7%22%20y1%3D%2274.96044907318976%22%20x2%3D%22123.49000000000001%22%20y2%3D%2284.11979028193406%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22122.7%22%20y1%3D%2237.554024673218805%22%20x2%3D%22123.49000000000001%22%20y2%3D%2237.27175700451692%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22123.49000000000001%22%20y1%3D%2284.11979028193406%22%20x2%3D%22124.28%22%20y2%3D%2293.19104492241843%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22123.49000000000001%22%20y1%3D%2237.27175700451692%22%20x2%3D%22124.28%22%20y2%3D%2237.08879722072778%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22124.28%22%20y1%3D%2293.19104492241843%22%20x2%3D%22125.07000000000001%22%20y2%3D%22101.79726264351615%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22124.28%22%20y1%3D%2237.08879722072778%22%20x2%3D%22125.07000000000001%22%20y2%3D%2237.00555153832527%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22125.07000000000001%22%20y1%3D%22101.79726264351615%22%20x2%3D%22125.86%22%20y2%3D%22109.58081741438403%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22125.07000000000001%22%20y1%3D%2237.00555153832527%22%20x2%3D%22125.86%22%20y2%3D%2237.02220478354208%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22125.86%22%20y1%3D%22109.58081741438403%22%20x2%3D%22126.65%22%20y2%3D%22116.21826845200145%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22125.86%22%20y1%3D%2237.02220478354208%22%20x2%3D%22126.65%22%20y2%3D%2237.138719982009235%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22126.65%22%20y1%3D%22116.21826845200145%22%20x2%3D%22127.44%22%20y2%3D%22121.4338006019739%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22126.65%22%20y1%3D%2237.138719982009235%22%20x2%3D%22127.44%22%20y2%3D%2237.354838440848496%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22127.44%22%20y1%3D%22121.4338006019739%22%20x2%3D%22128.23000000000002%22%20y2%3D%22125.01068566592491%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22127.44%22%20y1%3D%2237.354838440848496%22%20x2%3D%22128.23000000000002%22%20y2%3D%2237.67008032303517%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22128.23000000000002%22%20y1%3D%22125.01068566592491%22%20x2%3D%22129.02%22%20y2%3D%22126.8002884071386%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22128.23000000000002%22%20y1%3D%2237.67008032303517%22%20x2%3D%22129.02%22%20y2%3D%2238.08374571275636%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22129.02%22%20y1%3D%22126.8002884071386%22%20x2%3D%22129.81%22%20y2%3D%22126.72824299548307%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22129.02%22%20y1%3D%2238.08374571275636%22%20x2%3D%22129.81%22%20y2%3D%2238.594916169399085%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22129.81%22%20y1%3D%22126.72824299548307%22%20x2%3D%22130.60000000000002%22%20y2%3D%22124.79754323328191%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22129.81%22%20y1%3D%2238.594916169399085%22%20x2%3D%22130.60000000000002%22%20y2%3D%2239.202456766718086%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22130.60000000000002%22%20y1%3D%22124.79754323328191%22%20x2%3D%22131.39%22%20y2%3D%22121.08841814971852%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22130.60000000000002%22%20y1%3D%2239.202456766718086%22%20x2%3D%22131.39%22%20y2%3D%2239.905018612655965%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22131.39%22%20y1%3D%22121.08841814971852%22%20x2%3D%22132.18%22%20y2%3D%22115.75499813337068%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22131.39%22%20y1%3D%2239.905018612655965%22%20x2%3D%22132.18%22%20y2%3D%2240.701041844220846%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22132.18%22%20y1%3D%22115.75499813337068%22%20x2%3D%22132.97%22%20y2%3D%22109.01891013966478%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22132.18%22%20y1%3D%2240.701041844220846%22%20x2%3D%22132.97%22%20y2%3D%2241.58875909077229%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22132.97%22%20y1%3D%22109.01891013966478%22%20x2%3D%22133.76%22%20y2%3D%22101.16006812042829%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22132.97%22%20y1%3D%2241.58875909077229%22%20x2%3D%22133.76%22%20y2%3D%2242.56619939802613%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22133.76%22%20y1%3D%22101.16006812042829%22%20x2%3D%22134.55%22%20y2%3D%2292.50504137351562%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22133.76%22%20y1%3D%2242.56619939802613%22%20x2%3D%22134.55%22%20y2%3D%2243.63119260406585%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22134.55%22%20y1%3D%2292.50504137351562%22%20x2%3D%22135.34%22%20y2%3D%2283.41348415851566%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22134.55%22%20y1%3D%2243.63119260406585%22%20x2%3D%22135.34%22%20y2%3D%2244.78137415764472%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22135.34%22%20y1%3D%2283.41348415851566%22%20x2%3D%22136.13%22%20y2%3D%2274.26319048742663%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22135.34%22%20y1%3D%2244.78137415764472%22%20x2%3D%22136.13%22%20y2%3D%2246.01419036808091%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22136.13%22%20y1%3D%2274.26319048742663%22%20x2%3D%22136.92000000000002%22%20y2%3D%2265.43439512918941%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22136.13%22%20y1%3D%2246.01419036808091%22%20x2%3D%22136.92000000000002%22%20y2%3D%2247.326904075089494%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22136.92000000000002%22%20y1%3D%2265.43439512918941%22%20x2%3D%22137.71%22%20y2%3D%2257.293973190084%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22136.92000000000002%22%20y1%3D%2247.326904075089494%22%20x2%3D%22137.71%22%20y2%3D%2248.716600725962536%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22137.71%22%20y1%3D%2257.293973190084%22%20x2%3D%22138.5%22%20y2%3D%2250.18019484660532%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22137.71%22%20y1%3D%2248.716600725962536%22%20x2%3D%22138.5%22%20y2%3D%2250.18019484660535%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22138.5%22%20y1%3D%2250.18019484660532%22%20x2%3D%22139.29000000000002%22%20y2%3D%2244.388668738427896%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22138.5%22%20y1%3D%2250.18019484660535%22%20x2%3D%22139.29000000000002%22%20y2%3D%2251.714436892060206%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22139.29000000000002%22%20y1%3D%2244.388668738427896%22%20x2%3D%22140.08%22%20y2%3D%2240.16005813502867%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22139.29000000000002%22%20y1%3D%2251.714436892060206%22%20x2%3D%22140.08%22%20y2%3D%2253.315920461308934%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22140.08%22%20y1%3D%2240.16005813502867%22%20x2%3D%22140.87%22%20y2%3D%2237.67008032303517%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22140.08%22%20y1%3D%2253.315920461308934%22%20x2%3D%22140.87%22%20y2%3D%2254.98108986033521%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22140.87%22%20y1%3D%2237.67008032303517%22%20x2%3D%22141.66000000000003%22%20y2%3D%2237.02220478354208%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22140.87%22%20y1%3D%2254.98108986033521%22%20x2%3D%22141.66000000000003%22%20y2%3D%2256.70624799665414%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22141.66000000000003%22%20y1%3D%2237.02220478354208%22%20x2%3D%22142.45%22%20y2%3D%2238.24335358210459%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22141.66000000000003%22%20y1%3D%2256.70624799665414%22%20x2%3D%22142.45%22%20y2%3D%2258.48756458778227%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22142.45%22%20y1%3D%2238.24335358210459%22%20x2%3D%22143.24%22%20y2%3D%2241.282782639029186%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22142.45%22%20y1%3D%2258.48756458778227%22%20x2%3D%22143.24%22%20y2%3D%2260.32108466542281%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22143.24%22%20y1%3D%2241.282782639029186%22%20x2%3D%22144.03%22%20y2%3D%2246.01419036808101%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22143.24%22%20y1%3D%2260.32108466542281%22%20x2%3D%22144.03%22%20y2%3D%2262.20273735648384%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22144.03%22%20y1%3D%2246.01419036808101%22%20x2%3D%22144.82%22%20y2%3D%2252.24096606043564%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22144.03%22%20y1%3D%2262.20273735648384%22%20x2%3D%22144.82%22%20y2%3D%2264.12834492143485%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22144.82%22%20y1%3D%2252.24096606043564%22%20x2%3D%22145.61%22%20y2%3D%2259.70435992054176%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22144.82%22%20y1%3D%2264.12834492143485%22%20x2%3D%22145.61%22%20y2%3D%2266.09363202993343%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22145.61%22%20y1%3D%2259.70435992054176%22%20x2%3D%22146.4%22%20y2%3D%2268.09423525312731%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22145.61%22%20y1%3D%2266.09363202993343%22%20x2%3D%22146.4%22%20y2%3D%2268.09423525312731%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22146.4%22%20y1%3D%2268.09423525312731%22%20x2%3D%22147.19%22%20y2%3D%2277.06195600090305%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22146.4%22%20y1%3D%2268.09423525312731%22%20x2%3D%22147.19%22%20y2%3D%2270.1257127515582%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22147.19%22%20y1%3D%2277.06195600090305%22%20x2%3D%22147.98000000000002%22%20y2%3D%2286.23487409933338%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22147.19%22%20y1%3D%2270.1257127515582%22%20x2%3D%22147.98000000000002%22%20y2%3D%2272.18355413715558%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22147.98000000000002%22%20y1%3D%2286.23487409933338%22%20x2%3D%22148.77%22%20y2%3D%2295.23181463545374%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22147.98000000000002%22%20y1%3D%2272.18355413715558%22%20x2%3D%22148.77%22%20y2%3D%2274.26319048742653%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22148.77%22%20y1%3D%2295.23181463545374%22%20x2%3D%22149.56%22%20y2%3D%22103.6789153345771%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22148.77%22%20y1%3D%2274.26319048742653%22%20x2%3D%22149.56%22%20y2%3D%2276.36000448960628%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22149.56%22%20y1%3D%22103.6789153345771%22%20x2%3D%22150.35%22%20y2%3D%22111.2251621748583%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22149.56%22%20y1%3D%2276.36000448960628%22%20x2%3D%22150.35%22%20y2%3D%2278.46934069224699%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22150.35%22%20y1%3D%22111.2251621748583%22%20x2%3D%22151.14000000000001%22%20y2%3D%22117.55697555690618%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22150.35%22%20y1%3D%2278.46934069224699%22%20x2%3D%22151.14000000000001%22%20y2%3D%2280.58651584148419%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22151.14000000000001%22%20y1%3D%22117.55697555690618%22%20x2%3D%22151.93%22%20y2%3D%22122.4112409092277%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22151.14000000000001%22%20y1%3D%2280.58651584148419%22%20x2%3D%22151.93%22%20y2%3D%2282.70682927903191%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22151.93%22%20y1%3D%22122.4112409092277%22%20x2%3D%22152.72%22%20y2%3D%22125.58624225078844%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22151.93%22%20y1%3D%2282.70682927903191%22%20x2%3D%22152.72%22%20y2%3D%2284.82557337881912%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22152.72%22%20y1%3D%22125.58624225078844%22%20x2%3D%22153.51000000000002%22%20y2%3D%22126.95004437328866%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22152.72%22%20y1%3D%2284.82557337881912%22%20x2%3D%22153.51000000000002%22%20y2%3D%2286.93804399909699%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22153.51000000000002%22%20y1%3D%22126.95004437328866%22%20x2%3D%22154.3%22%20y2%3D%22126.44597532678117%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22153.51000000000002%22%20y1%3D%2286.93804399909699%22%20x2%3D%22154.3%22%20y2%3D%2289.03955092681042%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22154.3%22%20y1%3D%22126.44597532678117%22%20x2%3D%22155.09%22%20y2%3D%22124.09498138734403%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22154.3%22%20y1%3D%2289.03955092681042%22%20x2%3D%22155.09%22%20y2%3D%2291.12542829104304%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22155.09%22%20y1%3D%22124.09498138734403%22%20x2%3D%22155.88%22%20y2%3D%22119.99475664759062%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22155.09%22%20y1%3D%2291.12542829104304%22%20x2%3D%22155.88%22%20y2%3D%2293.19104492241847%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22155.88%22%20y1%3D%22119.99475664759062%22%20x2%3D%22156.67000000000002%22%20y2%3D%22114.31568339934331%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22155.88%22%20y1%3D%2293.19104492241847%22%20x2%3D%22156.67000000000002%22%20y2%3D%2295.2318146354537%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22156.67000000000002%22%20y1%3D%22114.31568339934331%22%20x2%3D%22157.46%22%20y2%3D%22107.2937520033458%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22156.67000000000002%22%20y1%3D%2295.2318146354537%22%20x2%3D%22157.46%22%20y2%3D%2297.24320641103809%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22157.46%22%20y1%3D%22107.2937520033458%22%20x2%3D%22158.25%22%20y2%3D%2299.22075445642912%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22157.46%22%20y1%3D%2297.24320641103809%22%20x2%3D%22158.25%22%20y2%3D%2299.22075445642905%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22158.25%22%20y1%3D%2299.22075445642912%22%20x2%3D%22159.04000000000002%22%20y2%3D%2290.43215915635754%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22158.25%22%20y1%3D%2299.22075445642905%22%20x2%3D%22159.04000000000002%22%20y2%3D%22101.16006812042829%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22159.04000000000002%22%20y1%3D%2290.43215915635754%22%20x2%3D%22159.83%22%20y2%3D%2281.29317072096785%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22159.04000000000002%22%20y1%3D%22101.16006812042829%22%20x2%3D%22159.83%22%20y2%3D%22103.05684164172578%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22159.83%22%20y1%3D%2281.29317072096785%22%20x2%3D%22160.62%22%20y2%3D%2272.18355413715554%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22159.83%22%20y1%3D%22103.05684164172578%22%20x2%3D%22160.62%22%20y2%3D%22104.9068637087667%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22160.62%22%20y1%3D%2272.18355413715554%22%20x2%3D%22161.41%22%20y2%3D%2263.48185386277022%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22160.62%22%20y1%3D%22104.9068637087667%22%20x2%3D%22161.41%22%20y2%3D%22106.70602680991595%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22161.41%22%20y1%3D%2263.48185386277022%22%20x2%3D%22162.20000000000002%22%20y2%3D%2255.549663646838695%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22161.41%22%20y1%3D%22106.70602680991595%22%20x2%3D%22162.20000000000002%22%20y2%3D%22108.45033635316128%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22162.20000000000002%22%20y1%3D%2255.549663646838695%22%20x2%3D%22162.99%22%20y2%3D%2248.71660072596246%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22162.20000000000002%22%20y1%3D%22108.45033635316128%22%20x2%3D%22162.99%22%20y2%3D%22110.13591953510675%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22162.99%22%20y1%3D%2248.71660072596246%22%20x2%3D%22163.78%22%20y2%3D%2243.266608784822544%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22162.99%22%20y1%3D%22110.13591953510675%22%20x2%3D%22163.78%22%20y2%3D%22111.75903393956438%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22163.78%22%20y1%3D%2243.266608784822544%22%20x2%3D%22164.57%22%20y2%3D%2239.426158852760416%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22163.78%22%20y1%3D%22111.75903393956438%22%20x2%3D%22164.57%22%20y2%3D%22113.31607584665414%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22164.57%22%20y1%3D%2239.426158852760416%22%20x2%3D%22165.36%22%20y2%3D%2237.35483844084846%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22164.57%22%20y1%3D%22113.31607584665414%22%20x2%3D%22165.36%22%20y2%3D%22114.80358823396352%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22165.36%22%20y1%3D%2237.35483844084846%22%20x2%3D%22166.15%22%20y2%3D%2237.13871998200925%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22165.36%22%20y1%3D%22114.80358823396352%22%20x2%3D%22166.15%22%20y2%3D%22116.21826845200142%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22166.15%22%20y1%3D%2237.13871998200925%22%20x2%3D%22166.94%22%20y2%3D%2238.78678414453755%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22166.15%22%20y1%3D%22116.21826845200142%22%20x2%3D%22166.94%22%20y2%3D%22117.55697555690605%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22166.94%22%20y1%3D%2238.78678414453755%22%20x2%3D%22167.73000000000002%22%20y2%3D%2242.23054664600884%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22166.94%22%20y1%3D%22117.55697555690605%22%20x2%3D%22167.73000000000002%22%20y2%3D%22118.81673728412608%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22167.73000000000002%22%20y1%3D%2242.23054664600884%22%20x2%3D%22168.52%22%20y2%3D%2247.32690407508964%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22167.73000000000002%22%20y1%3D%22118.81673728412608%22%20x2%3D%22168.52%22%20y2%3D%22119.99475664759066%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22168.52%22%20y1%3D%2247.32690407508964%22%20x2%3D%22169.31%22%20y2%3D%2253.86408046489332%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22168.52%22%20y1%3D%22119.99475664759066%22%20x2%3D%22169.31%22%20y2%3D%22121.0884181497186%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22169.31%22%20y1%3D%2253.86408046489332%22%20x2%3D%22170.1%22%20y2%3D%2261.5704275117203%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22169.31%22%20y1%3D%22121.0884181497186%22%20x2%3D%22170.1%22%20y2%3D%22122.09529358847657%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22170.1%22%20y1%3D%2261.5704275117203%22%20x2%3D%22170.89000000000001%22%20y2%3D%2270.12571275155825%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22170.1%22%20y1%3D%22122.09529358847657%22%20x2%3D%22170.89000000000001%22%20y2%3D%22123.01314744859502%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22170.89000000000001%22%20y1%3D%2270.12571275155825%22%20x2%3D%22171.68%22%20y2%3D%2279.17442662118108%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22170.89000000000001%22%20y1%3D%22123.01314744859502%22%20x2%3D%22171.68%22%20y2%3D%22123.83994186497131%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22171.68%22%20y1%3D%2279.17442662118108%22%20x2%3D%22172.47%22%20y2%3D%2288.34055543719124%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22171.68%22%20y1%3D%22123.83994186497131%22%20x2%3D%22172.47%22%20y2%3D%22124.57384114723955%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22172.47%22%20y1%3D%2288.34055543719124%22%20x2%3D%22173.26000000000002%22%20y2%3D%2297.24320641103826%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22172.47%22%20y1%3D%22124.57384114723955%22%20x2%3D%22173.26000000000002%22%20y2%3D%22125.21321585546244%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22173.26000000000002%22%20y1%3D%2297.24320641103826%22%20x2%3D%22174.05%22%20y2%3D%22105.51243541221768%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22173.26000000000002%22%20y1%3D%22125.21321585546244%22%20x2%3D%22174.05%22%20y2%3D%22125.75664641789545%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22174.05%22%20y1%3D%22105.51243541221768%22%20x2%3D%22174.84%22%20y2%3D%22112.80461976679109%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22174.05%22%20y1%3D%22125.75664641789545%22%20x2%3D%22174.84%22%20y2%3D%22126.202926282791%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22174.84%22%20y1%3D%22112.80461976679109%22%20x2%3D%22175.63%22%20y2%3D%22118.81673728412603%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22174.84%22%20y1%3D%22126.202926282791%22%20x2%3D%22175.63%22%20y2%3D%22126.55106459724509%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22175.63%22%20y1%3D%22118.81673728412603%22%20x2%3D%22176.42000000000002%22%20y2%3D%22123.29895815577919%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22175.63%22%20y1%3D%22126.55106459724509%22%20x2%3D%22176.42000000000002%22%20y2%3D%22126.8002884071386%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22176.42000000000002%22%20y1%3D%22123.29895815577919%22%20x2%3D%22177.21%22%20y2%3D%22126.06502647797944%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22176.42000000000002%22%20y1%3D%22126.8002884071386%22%20x2%3D%22177.21%22%20y2%3D%22126.95004437328865%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22177.21%22%20y1%3D%22126.06502647797944%22%20x2%3D%22178%22%20y2%3D%22127%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22177.21%22%20y1%3D%22126.95004437328865%22%20x2%3D%22178%22%20y2%3D%22127%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22178%22%20y1%3D%22127%22%20x2%3D%22178.79000000000002%22%20y2%3D%22126.06502647797942%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22178%22%20y1%3D%22127%22%20x2%3D%22178.79000000000002%22%20y2%3D%22126.95004437328865%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22178.79000000000002%22%20y1%3D%22126.06502647797942%22%20x2%3D%22179.58%22%20y2%3D%22123.29895815577913%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22178.79000000000002%22%20y1%3D%22126.95004437328865%22%20x2%3D%22179.58%22%20y2%3D%22126.8002884071386%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22179.58%22%20y1%3D%22123.29895815577913%22%20x2%3D%22180.37%22%20y2%3D%22118.81673728412594%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22179.58%22%20y1%3D%22126.8002884071386%22%20x2%3D%22180.37%22%20y2%3D%22126.5510645972451%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22180.37%22%20y1%3D%22118.81673728412594%22%20x2%3D%22181.16%22%20y2%3D%22112.80461976679072%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22180.37%22%20y1%3D%22126.5510645972451%22%20x2%3D%22181.16%22%20y2%3D%22126.202926282791%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22181.16%22%20y1%3D%22112.80461976679072%22%20x2%3D%22181.95000000000002%22%20y2%3D%22105.51243541221781%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22181.16%22%20y1%3D%22126.202926282791%22%20x2%3D%22181.95000000000002%22%20y2%3D%22125.75664641789545%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22181.95000000000002%22%20y1%3D%22105.51243541221781%22%20x2%3D%22182.74%22%20y2%3D%2297.2432064110381%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22181.95000000000002%22%20y1%3D%22125.75664641789545%22%20x2%3D%22182.74%22%20y2%3D%22125.21321585546244%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22182.74%22%20y1%3D%2297.2432064110381%22%20x2%3D%22183.53%22%20y2%3D%2288.34055543719106%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22182.74%22%20y1%3D%22125.21321585546244%22%20x2%3D%22183.53%22%20y2%3D%22124.57384114723953%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22183.53%22%20y1%3D%2288.34055543719106%22%20x2%3D%22184.32%22%20y2%3D%2279.17442662118091%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22183.53%22%20y1%3D%22124.57384114723953%22%20x2%3D%22184.32%22%20y2%3D%22123.83994186497132%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22184.32%22%20y1%3D%2279.17442662118091%22%20x2%3D%22185.11%22%20y2%3D%2270.12571275155808%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22184.32%22%20y1%3D%22123.83994186497132%22%20x2%3D%22185.11%22%20y2%3D%22123.01314744859503%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22185.11%22%20y1%3D%2270.12571275155808%22%20x2%3D%22185.9%22%20y2%3D%2261.57042751172014%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22185.11%22%20y1%3D%22123.01314744859503%22%20x2%3D%22185.9%22%20y2%3D%22122.09529358847655%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22185.9%22%20y1%3D%2261.57042751172014%22%20x2%3D%22186.69%22%20y2%3D%2253.86408046489318%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22185.9%22%20y1%3D%22122.09529358847655%22%20x2%3D%22186.69%22%20y2%3D%22121.08841814971862%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22186.69%22%20y1%3D%2253.86408046489318%22%20x2%3D%22187.48000000000002%22%20y2%3D%2247.32690407508932%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22186.69%22%20y1%3D%22121.08841814971862%22%20x2%3D%22187.48000000000002%22%20y2%3D%22119.99475664759068%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22187.48000000000002%22%20y1%3D%2247.32690407508932%22%20x2%3D%22188.27%22%20y2%3D%2242.230546646008904%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22187.48000000000002%22%20y1%3D%22119.99475664759068%22%20x2%3D%22188.27%22%20y2%3D%22118.81673728412608%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22188.27%22%20y1%3D%2242.230546646008904%22%20x2%3D%22189.06%22%20y2%3D%2238.786784144537584%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22188.27%22%20y1%3D%22118.81673728412608%22%20x2%3D%22189.06%22%20y2%3D%22117.55697555690608%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22189.06%22%20y1%3D%2238.786784144537584%22%20x2%3D%22189.85%22%20y2%3D%2237.138719982009235%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22189.06%22%20y1%3D%22117.55697555690608%22%20x2%3D%22189.85%22%20y2%3D%22116.21826845200138%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22189.85%22%20y1%3D%2237.138719982009235%22%20x2%3D%22190.64000000000001%22%20y2%3D%2237.35483844084848%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22189.85%22%20y1%3D%22116.21826845200138%22%20x2%3D%22190.64000000000001%22%20y2%3D%22114.80358823396355%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22190.64000000000001%22%20y1%3D%2237.35483844084848%22%20x2%3D%22191.43%22%20y2%3D%2239.42615885276047%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22190.64000000000001%22%20y1%3D%22114.80358823396355%22%20x2%3D%22191.43%22%20y2%3D%22113.31607584665416%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22191.43%22%20y1%3D%2239.42615885276047%22%20x2%3D%22192.22%22%20y2%3D%2243.26660878482263%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22191.43%22%20y1%3D%22113.31607584665416%22%20x2%3D%22192.22%22%20y2%3D%22111.75903393956433%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22192.22%22%20y1%3D%2243.26660878482263%22%20x2%3D%22193.01000000000002%22%20y2%3D%2248.71660072596257%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22192.22%22%20y1%3D%22111.75903393956433%22%20x2%3D%22193.01000000000002%22%20y2%3D%22110.13591953510671%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22193.01000000000002%22%20y1%3D%2248.71660072596257%22%20x2%3D%22193.8%22%20y2%3D%2255.54966364683884%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22193.01000000000002%22%20y1%3D%22110.13591953510671%22%20x2%3D%22193.8%22%20y2%3D%22108.45033635316138%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22193.8%22%20y1%3D%2255.54966364683884%22%20x2%3D%22194.59%22%20y2%3D%2263.481853862770386%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22193.8%22%20y1%3D%22108.45033635316138%22%20x2%3D%22194.59%22%20y2%3D%22106.70602680991598%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22194.59%22%20y1%3D%2263.481853862770386%22%20x2%3D%22195.38%22%20y2%3D%2272.18355413715572%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22194.59%22%20y1%3D%22106.70602680991598%22%20x2%3D%22195.38%22%20y2%3D%22104.90686370876674%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22195.38%22%20y1%3D%2272.18355413715572%22%20x2%3D%22196.17000000000002%22%20y2%3D%2281.29317072096835%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22195.38%22%20y1%3D%22104.90686370876674%22%20x2%3D%22196.17000000000002%22%20y2%3D%22103.05684164172581%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22196.17000000000002%22%20y1%3D%2281.29317072096835%22%20x2%3D%22196.96%22%20y2%3D%2290.43215915635803%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22196.17000000000002%22%20y1%3D%22103.05684164172581%22%20x2%3D%22196.96%22%20y2%3D%22101.16006812042826%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22196.96%22%20y1%3D%2290.43215915635803%22%20x2%3D%22197.75%22%20y2%3D%2299.22075445642898%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22196.96%22%20y1%3D%22101.16006812042826%22%20x2%3D%22197.75%22%20y2%3D%2299.220754456429%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22197.75%22%20y1%3D%2299.22075445642898%22%20x2%3D%22198.54000000000002%22%20y2%3D%22107.29375200334596%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22197.75%22%20y1%3D%2299.220754456429%22%20x2%3D%22198.54000000000002%22%20y2%3D%2297.2432064110382%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22198.54000000000002%22%20y1%3D%22107.29375200334596%22%20x2%3D%22199.33%22%20y2%3D%22114.31568339934344%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22198.54000000000002%22%20y1%3D%2297.2432064110382%22%20x2%3D%22199.33%22%20y2%3D%2295.23181463545373%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22199.33%22%20y1%3D%22114.31568339934344%22%20x2%3D%22200.12%22%20y2%3D%22119.99475664759072%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22199.33%22%20y1%3D%2295.23181463545373%22%20x2%3D%22200.12%22%20y2%3D%2293.1910449224185%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22200.12%22%20y1%3D%22119.99475664759072%22%20x2%3D%22200.91%22%20y2%3D%22124.09498138734409%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22200.12%22%20y1%3D%2293.1910449224185%22%20x2%3D%22200.91%22%20y2%3D%2291.12542829104306%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22200.91%22%20y1%3D%22124.09498138734409%22%20x2%3D%22201.70000000000002%22%20y2%3D%22126.4459753267812%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22200.91%22%20y1%3D%2291.12542829104306%22%20x2%3D%22201.70000000000002%22%20y2%3D%2289.03955092681036%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22201.70000000000002%22%20y1%3D%22126.4459753267812%22%20x2%3D%22202.49%22%20y2%3D%22126.95004437328865%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22201.70000000000002%22%20y1%3D%2289.03955092681036%22%20x2%3D%22202.49%22%20y2%3D%2286.93804399909706%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22202.49%22%20y1%3D%22126.95004437328865%22%20x2%3D%22203.28%22%20y2%3D%22125.58624225078832%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22202.49%22%20y1%3D%2286.93804399909706%22%20x2%3D%22203.28%22%20y2%3D%2284.82557337881919%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22203.28%22%20y1%3D%22125.58624225078832%22%20x2%3D%22204.07000000000002%22%20y2%3D%22122.41124090922777%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22203.28%22%20y1%3D%2284.82557337881919%22%20x2%3D%22204.07000000000002%22%20y2%3D%2282.70682927903198%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22204.07000000000002%22%20y1%3D%22122.41124090922777%22%20x2%3D%22204.86%22%20y2%3D%22117.55697555690608%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22204.07000000000002%22%20y1%3D%2282.70682927903198%22%20x2%3D%22204.86%22%20y2%3D%2280.58651584148426%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22204.86%22%20y1%3D%22117.55697555690608%22%20x2%3D%22205.65%22%20y2%3D%22111.22516217485816%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22204.86%22%20y1%3D%2280.58651584148426%22%20x2%3D%22205.65%22%20y2%3D%2278.46934069224697%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22205.65%22%20y1%3D%22111.22516217485816%22%20x2%3D%22206.44%22%20y2%3D%22103.67891533457723%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22205.65%22%20y1%3D%2278.46934069224697%22%20x2%3D%22206.44%22%20y2%3D%2276.36000448960628%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22206.44%22%20y1%3D%22103.67891533457723%22%20x2%3D%22207.23000000000002%22%20y2%3D%2295.23181463545357%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22206.44%22%20y1%3D%2276.36000448960628%22%20x2%3D%22207.23000000000002%22%20y2%3D%2274.2631904874266%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22207.23000000000002%22%20y1%3D%2295.23181463545357%22%20x2%3D%22208.02%22%20y2%3D%2286.23487409933321%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22207.23000000000002%22%20y1%3D%2274.2631904874266%22%20x2%3D%22208.02%22%20y2%3D%2272.18355413715565%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22208.02%22%20y1%3D%2286.23487409933321%22%20x2%3D%22208.81%22%20y2%3D%2277.06195600090288%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22208.02%22%20y1%3D%2272.18355413715565%22%20x2%3D%22208.81%22%20y2%3D%2270.12571275155827%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22208.81%22%20y1%3D%2277.06195600090288%22%20x2%3D%22209.60000000000002%22%20y2%3D%2268.09423525312714%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22208.81%22%20y1%3D%2270.12571275155827%22%20x2%3D%22209.60000000000002%22%20y2%3D%2268.09423525312738%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22209.60000000000002%22%20y1%3D%2268.09423525312714%22%20x2%3D%22210.39000000000001%22%20y2%3D%2259.704359920541606%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22209.60000000000002%22%20y1%3D%2268.09423525312738%22%20x2%3D%22210.39000000000001%22%20y2%3D%2266.09363202993342%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22210.39000000000001%22%20y1%3D%2259.704359920541606%22%20x2%3D%22211.18%22%20y2%3D%2252.24096606043551%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22210.39000000000001%22%20y1%3D%2266.09363202993342%22%20x2%3D%22211.18%22%20y2%3D%2264.12834492143483%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22211.18%22%20y1%3D%2252.24096606043551%22%20x2%3D%22211.97%22%20y2%3D%2246.01419036808071%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22211.18%22%20y1%3D%2264.12834492143483%22%20x2%3D%22211.97%22%20y2%3D%2262.20273735648384%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22211.97%22%20y1%3D%2246.01419036808071%22%20x2%3D%22212.76000000000002%22%20y2%3D%2241.28278263902918%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22211.97%22%20y1%3D%2262.20273735648384%22%20x2%3D%22212.76000000000002%22%20y2%3D%2260.32108466542287%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22212.76000000000002%22%20y1%3D%2241.28278263902918%22%20x2%3D%22213.55%22%20y2%3D%2238.24335358210455%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22212.76000000000002%22%20y1%3D%2260.32108466542287%22%20x2%3D%22213.55%22%20y2%3D%2258.48756458778233%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22213.55%22%20y1%3D%2238.24335358210455%22%20x2%3D%22214.34%22%20y2%3D%2237.02220478354207%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22213.55%22%20y1%3D%2258.48756458778233%22%20x2%3D%22214.34%22%20y2%3D%2256.706247996654135%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22214.34%22%20y1%3D%2237.02220478354207%22%20x2%3D%22215.13%22%20y2%3D%2237.67008032303517%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22214.34%22%20y1%3D%2256.706247996654135%22%20x2%3D%22215.13%22%20y2%3D%2254.9810898603352%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22215.13%22%20y1%3D%2237.67008032303517%22%20x2%3D%22215.92000000000002%22%20y2%3D%2240.160058135028734%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22215.13%22%20y1%3D%2254.9810898603352%22%20x2%3D%22215.92000000000002%22%20y2%3D%2253.31592046130899%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22215.92000000000002%22%20y1%3D%2240.160058135028734%22%20x2%3D%22216.71%22%20y2%3D%2244.388668738427995%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22215.92000000000002%22%20y1%3D%2253.31592046130899%22%20x2%3D%22216.71%22%20y2%3D%2251.714436892060206%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22216.71%22%20y1%3D%2244.388668738427995%22%20x2%3D%22217.5%22%20y2%3D%2250.18019484660544%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22216.71%22%20y1%3D%2251.714436892060206%22%20x2%3D%22217.5%22%20y2%3D%2250.1801948466054%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22217.5%22%20y1%3D%2250.18019484660544%22%20x2%3D%22218.29000000000002%22%20y2%3D%2257.29397319008429%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22217.5%22%20y1%3D%2250.1801948466054%22%20x2%3D%22218.29000000000002%22%20y2%3D%2248.716600725962586%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22218.29000000000002%22%20y1%3D%2257.29397319008429%22%20x2%3D%22219.08%22%20y2%3D%2265.43439512918957%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22218.29000000000002%22%20y1%3D%2248.716600725962586%22%20x2%3D%22219.08%22%20y2%3D%2247.32690407508949%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22219.08%22%20y1%3D%2265.43439512918957%22%20x2%3D%22219.87%22%20y2%3D%2274.2631904874268%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22219.08%22%20y1%3D%2247.32690407508949%22%20x2%3D%22219.87%22%20y2%3D%2246.01419036808091%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22219.87%22%20y1%3D%2274.2631904874268%22%20x2%3D%22220.66%22%20y2%3D%2283.41348415851616%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22219.87%22%20y1%3D%2246.01419036808091%22%20x2%3D%22220.66%22%20y2%3D%2244.781374157644734%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22220.66%22%20y1%3D%2283.41348415851616%22%20x2%3D%22221.45000000000002%22%20y2%3D%2292.50504137351564%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22220.66%22%20y1%3D%2244.781374157644734%22%20x2%3D%22221.45000000000002%22%20y2%3D%2243.63119260406585%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22221.45000000000002%22%20y1%3D%2292.50504137351564%22%20x2%3D%22222.24%22%20y2%3D%22101.1600681204283%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22221.45000000000002%22%20y1%3D%2243.63119260406585%22%20x2%3D%22222.24%22%20y2%3D%2242.566199398026164%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22222.24%22%20y1%3D%22101.1600681204283%22%20x2%3D%22223.03%22%20y2%3D%22109.01891013966494%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22222.24%22%20y1%3D%2242.566199398026164%22%20x2%3D%22223.03%22%20y2%3D%2241.58875909077231%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22223.03%22%20y1%3D%22109.01891013966494%22%20x2%3D%22223.82000000000002%22%20y2%3D%22115.75499813337069%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22223.03%22%20y1%3D%2241.58875909077231%22%20x2%3D%22223.82000000000002%22%20y2%3D%2240.701041844220846%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22223.82000000000002%22%20y1%3D%22115.75499813337069%22%20x2%3D%22224.61%22%20y2%3D%22121.08841814971868%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22223.82000000000002%22%20y1%3D%2240.701041844220846%22%20x2%3D%22224.61%22%20y2%3D%2239.90501861265599%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22224.61%22%20y1%3D%22121.08841814971868%22%20x2%3D%22225.4%22%20y2%3D%22124.797543233282%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22224.61%22%20y1%3D%2239.90501861265599%22%20x2%3D%22225.4%22%20y2%3D%2239.20245676671809%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22225.4%22%20y1%3D%22124.797543233282%22%20x2%3D%22226.19%22%20y2%3D%22126.7282429954831%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22225.4%22%20y1%3D%2239.20245676671809%22%20x2%3D%22226.19%22%20y2%3D%2238.594916169399085%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22226.19%22%20y1%3D%22126.7282429954831%22%20x2%3D%22226.98000000000002%22%20y2%3D%22126.80028840713857%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22226.19%22%20y1%3D%2238.594916169399085%22%20x2%3D%22226.98000000000002%22%20y2%3D%2238.083745712756375%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22226.98000000000002%22%20y1%3D%22126.80028840713857%22%20x2%3D%22227.77%22%20y2%3D%22125.01068566592491%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22226.98000000000002%22%20y1%3D%2238.083745712756375%22%20x2%3D%22227.77%22%20y2%3D%2237.67008032303518%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22227.77%22%20y1%3D%22125.01068566592491%22%20x2%3D%22228.56%22%20y2%3D%22121.4338006019739%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22227.77%22%20y1%3D%2237.67008032303518%22%20x2%3D%22228.56%22%20y2%3D%2237.354838440848496%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22228.56%22%20y1%3D%22121.4338006019739%22%20x2%3D%22229.35000000000002%22%20y2%3D%22116.21826845200134%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22228.56%22%20y1%3D%2237.354838440848496%22%20x2%3D%22229.35000000000002%22%20y2%3D%2237.13871998200925%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22229.35000000000002%22%20y1%3D%22116.21826845200134%22%20x2%3D%22230.14000000000001%22%20y2%3D%22109.58081741438401%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22229.35000000000002%22%20y1%3D%2237.13871998200925%22%20x2%3D%22230.14000000000001%22%20y2%3D%2237.02220478354208%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22230.14000000000001%22%20y1%3D%22109.58081741438401%22%20x2%3D%22230.93%22%20y2%3D%22101.79726264351612%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22230.14000000000001%22%20y1%3D%2237.02220478354208%22%20x2%3D%22230.93%22%20y2%3D%2237.00555153832527%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22230.93%22%20y1%3D%22101.79726264351612%22%20x2%3D%22231.72%22%20y2%3D%2293.19104492241826%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22230.93%22%20y1%3D%2237.00555153832527%22%20x2%3D%22231.72%22%20y2%3D%2237.08879722072778%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22231.72%22%20y1%3D%2293.19104492241826%22%20x2%3D%22232.51000000000002%22%20y2%3D%2284.11979028193389%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22231.72%22%20y1%3D%2237.08879722072778%22%20x2%3D%22232.51000000000002%22%20y2%3D%2237.271757004516914%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22232.51000000000002%22%20y1%3D%2284.11979028193389%22%20x2%3D%22233.3%22%20y2%3D%2274.96044907318944%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22232.51000000000002%22%20y1%3D%2237.271757004516914%22%20x2%3D%22233.3%22%20y2%3D%2237.55402467321879%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22233.3%22%20y1%3D%2274.96044907318944%22%20x2%3D%22234.09%22%20y2%3D%2266.09363202993312%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22233.3%22%20y1%3D%2237.55402467321879%22%20x2%3D%22234.09%22%20y2%3D%2237.934973522020535%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22234.09%22%20y1%3D%2266.09363202993312%22%20x2%3D%22234.88%22%20y2%3D%2257.88779422594502%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22234.09%22%20y1%3D%2237.934973522020535%22%20x2%3D%22234.88%22%20y2%3D%2238.4137577492116%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22234.88%22%20y1%3D%2257.88779422594502%22%20x2%3D%22235.67000000000002%22%20y2%3D%2250.683924153345636%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22234.88%22%20y1%3D%2238.4137577492116%22%20x2%3D%22235.67000000000002%22%20y2%3D%2238.98931433407515%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22235.67000000000002%22%20y1%3D%2250.683924153345636%22%20x2%3D%22236.46%22%20y2%3D%2244.781374157644464%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22235.67000000000002%22%20y1%3D%2238.98931433407515%22%20x2%3D%22236.46%22%20y2%3D%2239.66036539705984%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22236.46%22%20y1%3D%2244.781374157644464%22%20x2%3D%22237.25%22%20y2%3D%2240.42542103699211%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22236.46%22%20y1%3D%2239.66036539705984%22%20x2%3D%22237.25%22%20y2%3D%2240.4254210369921%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22237.25%22%20y1%3D%2240.42542103699211%22%20x2%3D%22238.04000000000002%22%20y2%3D%2237.79707371720899%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22237.25%22%20y1%3D%2240.4254210369921%22%20x2%3D%22238.04000000000002%22%20y2%3D%2241.2827826390291%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22238.04000000000002%22%20y1%3D%2237.79707371720899%22%20x2%3D%22238.83%22%20y2%3D%2237.00555153832527%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22238.04000000000002%22%20y1%3D%2241.2827826390291%22%20x2%3D%22238.83%22%20y2%3D%2242.23054664600878%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22238.83%22%20y1%3D%2237.00555153832527%22%20x2%3D%22239.62%22%20y2%3D%2238.08374571275638%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22238.83%22%20y1%3D%2242.23054664600878%22%20x2%3D%22239.62%22%20y2%3D%2243.26660878482254%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22239.62%22%20y1%3D%2238.08374571275638%22%20x2%3D%22240.41%22%20y2%3D%2240.98685255140506%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22239.62%22%20y1%3D%2243.26660878482254%22%20x2%3D%22240.41%22%20y2%3D%2244.38866873842785%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22240.41%22%20y1%3D%2240.98685255140506%22%20x2%3D%22241.20000000000002%22%20y2%3D%2245.5942352531274%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22240.41%22%20y1%3D%2244.38866873842785%22%20x2%3D%22241.20000000000002%22%20y2%3D%2245.59423525312735%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22241.20000000000002%22%20y1%3D%2245.5942352531274%22%20x2%3D%22241.99%22%20y2%3D%2251.71443689206035%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22241.20000000000002%22%20y1%3D%2245.59423525312735%22%20x2%3D%22241.99%22%20y2%3D%2246.88063166977516%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22241.99%22%20y1%3D%2251.71443689206035%22%20x2%3D%22242.78%22%20y2%3D%2259.09313629123359%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22241.99%22%20y1%3D%2246.88063166977516%22%20x2%3D%22242.78%22%20y2%3D%2248.24500186662929%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22242.78%22%20y1%3D%2259.09313629123359%22%20x2%3D%22243.57000000000002%22%20y2%3D%2267.42371618108315%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22242.78%22%20y1%3D%2248.24500186662929%22%20x2%3D%22243.57000000000002%22%20y2%3D%2249.68431660065649%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22243.57000000000002%22%20y1%3D%2267.42371618108315%22%20x2%3D%22244.36%22%20y2%3D%2276.36000448960633%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22243.57000000000002%22%20y1%3D%2249.68431660065649%22%20x2%3D%22244.36%22%20y2%3D%2251.19538023320902%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22244.36%22%20y1%3D%2276.36000448960633%22%20x2%3D%22245.15%22%20y2%3D%2285.53065930775318%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22244.36%22%20y1%3D%2251.19538023320902%22%20x2%3D%22245.15%22%20y2%3D%2252.774837825141766%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22245.15%22%20y1%3D%2285.53065930775318%22%20x2%3D%22245.94%22%20y2%3D%2294.5545997717653%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22245.15%22%20y1%3D%2252.774837825141766%22%20x2%3D%22245.94%22%20y2%3D%2254.41918258561604%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22245.94%22%20y1%3D%2294.5545997717653%22%20x2%3D%22246.73000000000002%22%20y2%3D%22103.05684164172592%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22245.94%22%20y1%3D%2254.41918258561604%22%20x2%3D%22246.73000000000002%22%20y2%3D%2256.12476365805241%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22246.73000000000002%22%20y1%3D%22103.05684164172592%22%20x2%3D%22247.52%22%20y2%3D%22110.68407953869101%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22246.73000000000002%22%20y1%3D%2256.12476365805241%22%20x2%3D%22247.52%22%20y2%3D%2257.88779422594512%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22247.52%22%20y1%3D%22110.68407953869101%22%20x2%3D%22248.31%22%20y2%3D%22117.11936833022492%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22247.52%22%20y1%3D%2257.88779422594512%22%20x2%3D%22248.31%22%20y2%3D%2259.70435992054165%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22248.31%22%20y1%3D%22117.11936833022492%22%20x2%3D%22249.10000000000002%22%20y2%3D%22122.09529358847666%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22248.31%22%20y1%3D%2259.70435992054165%22%20x2%3D%22249.10000000000002%22%20y2%3D%2261.57042751172041%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22249.10000000000002%22%20y1%3D%22122.09529358847666%22%20x2%3D%22249.89000000000001%22%20y2%3D%22125.40508383060094%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22249.10000000000002%22%20y1%3D%2261.57042751172041%22%20x2%3D%22249.89000000000001%22%20y2%3D%2263.481853862770144%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22249.89000000000001%22%20y1%3D%22125.40508383060094%22%20x2%3D%22250.68%22%20y2%3D%22126.91120277927223%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22249.89000000000001%22%20y1%3D%2263.481853862770144%22%20x2%3D%22250.68%22%20y2%3D%2265.43439512918948%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22250.68%22%20y1%3D%22126.91120277927223%22%20x2%3D%22251.47%22%20y2%3D%22126.55106459724504%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22250.68%22%20y1%3D%2265.43439512918948%22%20x2%3D%22251.47%22%20y2%3D%2267.42371618108322%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22251.47%22%20y1%3D%22126.55106459724504%22%20x2%3D%22252.26000000000002%22%20y2%3D%22124.33963460294018%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22251.47%22%20y1%3D%2267.42371618108322%22%20x2%3D%22252.26000000000002%22%20y2%3D%2269.44540022823465%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22252.26000000000002%22%20y1%3D%22124.33963460294018%22%20x2%3D%22253.05%22%20y2%3D%22120.36880739593414%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22252.26000000000002%22%20y1%3D%2269.44540022823465%22%20x2%3D%22253.05%22%20y2%3D%2271.49495862648425%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22253.05%22%20y1%3D%22120.36880739593414%22%20x2%3D%22253.84%22%20y2%3D%22114.8035882339634%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22253.05%22%20y1%3D%2271.49495862648425%22%20x2%3D%22253.84%22%20y2%3D%2273.56784084364241%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22253.84%22%20y1%3D%22114.8035882339634%22%20x2%3D%22254.63000000000002%22%20y2%3D%22107.87523634194753%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22253.84%22%20y1%3D%2273.56784084364241%22%20x2%3D%22254.63000000000002%22%20y2%3D%2275.65944456280883%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22254.63000000000002%22%20y1%3D%22107.87523634194753%22%20x2%3D%22255.42000000000002%22%20y2%3D%2299.87165507856498%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22254.63000000000002%22%20y1%3D%2275.65944456280883%22%20x2%3D%22255.42000000000002%22%20y2%3D%2277.76512590066677%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22255.42000000000002%22%20y1%3D%2299.87165507856498%22%20x2%3D%22256.21000000000004%22%20y2%3D%2291.12542829104277%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22255.42000000000002%22%20y1%3D%2277.76512590066677%22%20x2%3D%22256.21000000000004%22%20y2%3D%2279.88020971806603%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22256.21000000000004%22%20y1%3D%2291.12542829104277%22%20x2%3D%22257%22%20y2%3D%2281.99999999999987%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22256.21000000000004%22%20y1%3D%2279.88020971806603%22%20x2%3D%22257%22%20y2%3D%2281.99999999999997%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22257%22%20y1%3D%2281.99999999999987%22%20x2%3D%22257.79%22%20y2%3D%2272.87457170895667%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22257%22%20y1%3D%2281.99999999999997%22%20x2%3D%22257.79%22%20y2%3D%2284.11979028193392%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22257.79%22%20y1%3D%2272.87457170895667%22%20x2%3D%22258.58000000000004%22%20y2%3D%2264.12834492143506%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22257.79%22%20y1%3D%2284.11979028193392%22%20x2%3D%22258.58000000000004%22%20y2%3D%2286.23487409933317%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22258.58000000000004%22%20y1%3D%2264.12834492143506%22%20x2%3D%22259.37%22%20y2%3D%2256.124763658052515%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22258.58000000000004%22%20y1%3D%2286.23487409933317%22%20x2%3D%22259.37%22%20y2%3D%2288.34055543719128%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22259.37%22%20y1%3D%2256.124763658052515%22%20x2%3D%22260.16%22%20y2%3D%2249.19641176603643%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22259.37%22%20y1%3D%2288.34055543719128%22%20x2%3D%22260.16%22%20y2%3D%2290.43215915635754%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22260.16%22%20y1%3D%2249.19641176603643%22%20x2%3D%22260.95000000000005%22%20y2%3D%2243.631192604065895%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22260.16%22%20y1%3D%2290.43215915635754%22%20x2%3D%22260.95000000000005%22%20y2%3D%2292.5050413735157%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22260.95000000000005%22%20y1%3D%2243.631192604065895%22%20x2%3D%22261.74%22%20y2%3D%2239.660365397059834%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22260.95000000000005%22%20y1%3D%2292.5050413735157%22%20x2%3D%22261.74%22%20y2%3D%2294.5545997717653%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22261.74%22%20y1%3D%2239.660365397059834%22%20x2%3D%22262.53%22%20y2%3D%2237.448935402754884%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22261.74%22%20y1%3D%2294.5545997717653%22%20x2%3D%22262.53%22%20y2%3D%2296.57628381891674%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22262.53%22%20y1%3D%2237.448935402754884%22%20x2%3D%22263.32000000000005%22%20y2%3D%2237.08879722072778%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22262.53%22%20y1%3D%2296.57628381891674%22%20x2%3D%22263.32000000000005%22%20y2%3D%2298.56560487081055%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22263.32000000000005%22%20y1%3D%2237.08879722072778%22%20x2%3D%22264.11%22%20y2%3D%2238.594916169399134%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22263.32000000000005%22%20y1%3D%2298.56560487081055%22%20x2%3D%22264.11%22%20y2%3D%22100.5181461372298%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22264.11%22%20y1%3D%2238.594916169399134%22%20x2%3D%22264.9%22%20y2%3D%2241.90470641152359%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22264.11%22%20y1%3D%22100.5181461372298%22%20x2%3D%22264.9%22%20y2%3D%22102.42957248827955%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22264.9%22%20y1%3D%2241.90470641152359%22%20x2%3D%22265.69%22%20y2%3D%2246.88063166977526%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22264.9%22%20y1%3D%22102.42957248827955%22%20x2%3D%22265.69%22%20y2%3D%22104.29564007945831%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22265.69%22%20y1%3D%2246.88063166977526%22%20x2%3D%22266.48%22%20y2%3D%2253.3159204613092%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22265.69%22%20y1%3D%22104.29564007945831%22%20x2%3D%22266.48%22%20y2%3D%22106.11220577405484%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22266.48%22%20y1%3D%2253.3159204613092%22%20x2%3D%22267.27%22%20y2%3D%2260.9431583582746%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22266.48%22%20y1%3D%22106.11220577405484%22%20x2%3D%22267.27%22%20y2%3D%22107.87523634194756%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22267.27%22%20y1%3D%2260.9431583582746%22%20x2%3D%22268.06%22%20y2%3D%2269.44540022823494%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22267.27%22%20y1%3D%22107.87523634194756%22%20x2%3D%22268.06%22%20y2%3D%22109.58081741438397%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22268.06%22%20y1%3D%2269.44540022823494%22%20x2%3D%22268.85%22%20y2%3D%2278.4693406922474%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22268.06%22%20y1%3D%22109.58081741438397%22%20x2%3D%22268.85%22%20y2%3D%22111.2251621748582%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22268.85%22%20y1%3D%2278.4693406922474%22%20x2%3D%22269.64%22%20y2%3D%2287.63999551039363%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22268.85%22%20y1%3D%22111.2251621748582%22%20x2%3D%22269.64%22%20y2%3D%22112.80461976679095%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22269.64%22%20y1%3D%2287.63999551039363%22%20x2%3D%22270.43%22%20y2%3D%2296.5762838189168%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22269.64%22%20y1%3D%22112.80461976679095%22%20x2%3D%22270.43%22%20y2%3D%22114.31568339934347%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22270.43%22%20y1%3D%2296.5762838189168%22%20x2%3D%22271.22%22%20y2%3D%22104.9068637087669%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22270.43%22%20y1%3D%22114.31568339934347%22%20x2%3D%22271.22%22%20y2%3D%22115.75499813337068%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22271.22%22%20y1%3D%22104.9068637087669%22%20x2%3D%22272.01%22%20y2%3D%22112.28556310793961%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22271.22%22%20y1%3D%22115.75499813337068%22%20x2%3D%22272.01%22%20y2%3D%22117.11936833022486%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22272.01%22%20y1%3D%22112.28556310793961%22%20x2%3D%22272.8%22%20y2%3D%22118.40576474687256%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22272.01%22%20y1%3D%22117.11936833022486%22%20x2%3D%22272.8%22%20y2%3D%22118.40576474687256%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22272.8%22%20y1%3D%22118.40576474687256%22%20x2%3D%22273.59000000000003%22%20y2%3D%22123.01314744859505%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22272.8%22%20y1%3D%22118.40576474687256%22%20x2%3D%22273.59000000000003%22%20y2%3D%22119.61133126157212%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22273.59000000000003%22%20y1%3D%22123.01314744859505%22%20x2%3D%22274.38%22%20y2%3D%22125.91625428724367%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22273.59000000000003%22%20y1%3D%22119.61133126157212%22%20x2%3D%22274.38%22%20y2%3D%22120.73339121517745%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22274.38%22%20y1%3D%22125.91625428724367%22%20x2%3D%22275.17%22%20y2%3D%22126.99444846167472%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22274.38%22%20y1%3D%22120.73339121517745%22%20x2%3D%22275.17%22%20y2%3D%22121.7694533539912%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22275.17%22%20y1%3D%22126.99444846167472%22%20x2%3D%22275.96000000000004%22%20y2%3D%22126.20292628279091%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22275.17%22%20y1%3D%22121.7694533539912%22%20x2%3D%22275.96000000000004%22%20y2%3D%22122.71721736097088%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22275.96000000000004%22%20y1%3D%22126.20292628279091%22%20x2%3D%22276.75%22%20y2%3D%22123.57457896300791%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22275.96000000000004%22%20y1%3D%22122.71721736097088%22%20x2%3D%22276.75%22%20y2%3D%22123.57457896300792%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22276.75%22%20y1%3D%22123.57457896300791%22%20x2%3D%22277.54%22%20y2%3D%22119.21862584235521%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22276.75%22%20y1%3D%22123.57457896300792%22%20x2%3D%22277.54%22%20y2%3D%22124.33963460294011%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22277.54%22%20y1%3D%22119.21862584235521%22%20x2%3D%22278.33%22%20y2%3D%22113.3160758466544%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22277.54%22%20y1%3D%22124.33963460294011%22%20x2%3D%22278.33%22%20y2%3D%22125.01068566592483%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22278.33%22%20y1%3D%22113.3160758466544%22%20x2%3D%22279.12%22%20y2%3D%22106.11220577405503%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22278.33%22%20y1%3D%22125.01068566592483%22%20x2%3D%22279.12%22%20y2%3D%22125.58624225078839%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22279.12%22%20y1%3D%22106.11220577405503%22%20x2%3D%22279.91%22%20y2%3D%2297.90636797006663%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22279.12%22%20y1%3D%22125.58624225078839%22%20x2%3D%22279.91%22%20y2%3D%22126.06502647797946%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22279.91%22%20y1%3D%2297.90636797006663%22%20x2%3D%22280.7%22%20y2%3D%2289.0395509268103%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22279.91%22%20y1%3D%22126.06502647797946%22%20x2%3D%22280.7%22%20y2%3D%22126.4459753267812%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22280.7%22%20y1%3D%2289.0395509268103%22%20x2%3D%22281.49%22%20y2%3D%2279.88020971806586%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22280.7%22%20y1%3D%22126.4459753267812%22%20x2%3D%22281.49%22%20y2%3D%22126.7282429954831%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22281.49%22%20y1%3D%2279.88020971806586%22%20x2%3D%22282.28000000000003%22%20y2%3D%2270.80895507758117%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22281.49%22%20y1%3D%22126.7282429954831%22%20x2%3D%22282.28000000000003%22%20y2%3D%22126.91120277927222%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22282.28000000000003%22%20y1%3D%2270.80895507758117%22%20x2%3D%22283.07%22%20y2%3D%2262.20273735648392%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22282.28000000000003%22%20y1%3D%22126.91120277927222%22%20x2%3D%22283.07%22%20y2%3D%22126.99444846167472%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22283.07%22%20y1%3D%2262.20273735648392%22%20x2%3D%22283.86%22%20y2%3D%2254.419182585616035%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22283.07%22%20y1%3D%22126.99444846167472%22%20x2%3D%22283.86%22%20y2%3D%22126.97779521645792%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22283.86%22%20y1%3D%2254.419182585616035%22%20x2%3D%22284.65000000000003%22%20y2%3D%2247.78173154799849%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22283.86%22%20y1%3D%22126.97779521645792%22%20x2%3D%22284.65000000000003%22%20y2%3D%22126.86128001799077%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22284.65000000000003%22%20y1%3D%2247.78173154799849%22%20x2%3D%22285.44%22%20y2%3D%2242.56619939802598%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22284.65000000000003%22%20y1%3D%22126.86128001799077%22%20x2%3D%22285.44%22%20y2%3D%22126.64516155915149%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22285.44%22%20y1%3D%2242.56619939802598%22%20x2%3D%22286.23%22%20y2%3D%2238.989314334075004%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22285.44%22%20y1%3D%22126.64516155915149%22%20x2%3D%22286.23%22%20y2%3D%22126.32991967696483%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22286.23%22%20y1%3D%2238.989314334075004%22%20x2%3D%22287.02000000000004%22%20y2%3D%2237.19971159286134%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22286.23%22%20y1%3D%22126.32991967696483%22%20x2%3D%22287.02000000000004%22%20y2%3D%22125.91625428724365%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22287.02000000000004%22%20y1%3D%2237.19971159286134%22%20x2%3D%22287.81%22%20y2%3D%2237.27175700451693%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22287.02000000000004%22%20y1%3D%22125.91625428724365%22%20x2%3D%22287.81%22%20y2%3D%22125.40508383060093%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22287.81%22%20y1%3D%2237.27175700451693%22%20x2%3D%22288.6%22%20y2%3D%2239.20245676671818%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22287.81%22%20y1%3D%22125.40508383060093%22%20x2%3D%22288.6%22%20y2%3D%22124.79754323328189%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22288.6%22%20y1%3D%2239.20245676671818%22%20x2%3D%22289.39%22%20y2%3D%2242.91158185028129%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22288.6%22%20y1%3D%22124.79754323328189%22%20x2%3D%22289.39%22%20y2%3D%22124.09498138734403%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22289.39%22%20y1%3D%2242.91158185028129%22%20x2%3D%22290.18%22%20y2%3D%2248.24500186662928%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22289.39%22%20y1%3D%22124.09498138734403%22%20x2%3D%22290.18%22%20y2%3D%22123.29895815577916%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22290.18%22%20y1%3D%2248.24500186662928%22%20x2%3D%22290.97%22%20y2%3D%2254.98108986033529%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22290.18%22%20y1%3D%22123.29895815577916%22%20x2%3D%22290.97%22%20y2%3D%22122.41124090922776%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22290.97%22%20y1%3D%2254.98108986033529%22%20x2%3D%22291.76%22%20y2%3D%2262.839931879571935%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22290.97%22%20y1%3D%22122.41124090922776%22%20x2%3D%22291.76%22%20y2%3D%22121.43380060197387%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22291.76%22%20y1%3D%2262.839931879571935%22%20x2%3D%22292.55%22%20y2%3D%2271.49495862648462%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22291.76%22%20y1%3D%22121.43380060197387%22%20x2%3D%22292.55%22%20y2%3D%22120.36880739593417%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22292.55%22%20y1%3D%2271.49495862648462%22%20x2%3D%22293.34000000000003%22%20y2%3D%2280.58651584148475%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22292.55%22%20y1%3D%22120.36880739593417%22%20x2%3D%22293.34000000000003%22%20y2%3D%22119.21862584235524%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22293.34000000000003%22%20y1%3D%2280.58651584148475%22%20x2%3D%22294.13%22%20y2%3D%2289.73680951257346%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22293.34000000000003%22%20y1%3D%22119.21862584235524%22%20x2%3D%22294.13%22%20y2%3D%22117.98580963191907%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22294.13%22%20y1%3D%2289.73680951257346%22%20x2%3D%22294.92%22%20y2%3D%2298.56560487081067%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22294.13%22%20y1%3D%22117.98580963191907%22%20x2%3D%22294.92%22%20y2%3D%22116.67309592491054%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22294.92%22%20y1%3D%2298.56560487081067%22%20x2%3D%22295.71000000000004%22%20y2%3D%22106.7060268099162%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22294.92%22%20y1%3D%22116.67309592491054%22%20x2%3D%22295.71000000000004%22%20y2%3D%22115.28339927403749%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22295.71000000000004%22%20y1%3D%22106.7060268099162%22%20x2%3D%22296.5%22%20y2%3D%22113.81980515339453%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22295.71000000000004%22%20y1%3D%22115.28339927403749%22%20x2%3D%22296.5%22%20y2%3D%22113.81980515339463%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22296.5%22%20y1%3D%22113.81980515339453%22%20x2%3D%22297.29%22%20y2%3D%22119.61133126157216%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22296.5%22%20y1%3D%22113.81980515339463%22%20x2%3D%22297.29%22%20y2%3D%22112.28556310793982%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22297.29%22%20y1%3D%22119.61133126157216%22%20x2%3D%22298.08000000000004%22%20y2%3D%22123.83994186497137%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22297.29%22%20y1%3D%22112.28556310793982%22%20x2%3D%22298.08000000000004%22%20y2%3D%22110.68407953869098%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22298.08000000000004%22%20y1%3D%22123.83994186497137%22%20x2%3D%22298.87%22%20y2%3D%22126.32991967696488%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22298.08000000000004%22%20y1%3D%22110.68407953869098%22%20x2%3D%22298.87%22%20y2%3D%22109.01891013966477%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22298.87%22%20y1%3D%22126.32991967696488%22%20x2%3D%22299.66%22%20y2%3D%22126.9777952164579%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22298.87%22%20y1%3D%22109.01891013966477%22%20x2%3D%22299.66%22%20y2%3D%22107.2937520033459%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22299.66%22%20y1%3D%22126.9777952164579%22%20x2%3D%22300.45%22%20y2%3D%22125.75664641789547%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22299.66%22%20y1%3D%22107.2937520033459%22%20x2%3D%22300.45%22%20y2%3D%22105.51243541221777%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22300.45%22%20y1%3D%22125.75664641789547%22%20x2%3D%22301.24%22%20y2%3D%22122.71721736097085%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22300.45%22%20y1%3D%22105.51243541221777%22%20x2%3D%22301.24%22%20y2%3D%22103.67891533457717%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22301.24%22%20y1%3D%22122.71721736097085%22%20x2%3D%22302.03000000000003%22%20y2%3D%22117.98580963191893%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22301.24%22%20y1%3D%22103.67891533457717%22%20x2%3D%22302.03000000000003%22%20y2%3D%22101.7972626435162%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22302.03000000000003%22%20y1%3D%22117.98580963191893%22%20x2%3D%22302.82%22%20y2%3D%22111.75903393956453%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22302.03000000000003%22%20y1%3D%22101.7972626435162%22%20x2%3D%22302.82%22%20y2%3D%2299.87165507856506%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22302.82%22%20y1%3D%22111.75903393956453%22%20x2%3D%22303.61%22%20y2%3D%22104.29564007945844%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22302.82%22%20y1%3D%2299.87165507856506%22%20x2%3D%22303.61%22%20y2%3D%2297.9063679700667%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22303.61%22%20y1%3D%22104.29564007945844%22%20x2%3D%22304.40000000000003%22%20y2%3D%2295.9057647468726%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22303.61%22%20y1%3D%2297.9063679700667%22%20x2%3D%22304.40000000000003%22%20y2%3D%2295.90576474687266%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22304.40000000000003%22%20y1%3D%2295.9057647468726%22%20x2%3D%22305.19%22%20y2%3D%2286.93804399909686%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22304.40000000000003%22%20y1%3D%2295.90576474687266%22%20x2%3D%22305.19%22%20y2%3D%2293.87428724844186%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22305.19%22%20y1%3D%2286.93804399909686%22%20x2%3D%22305.98%22%20y2%3D%2277.76512590066653%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22305.19%22%20y1%3D%2293.87428724844186%22%20x2%3D%22305.98%22%20y2%3D%2291.81644586284439%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22305.98%22%20y1%3D%2277.76512590066653%22%20x2%3D%22306.77000000000004%22%20y2%3D%2268.76818536454587%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22305.98%22%20y1%3D%2291.81644586284439%22%20x2%3D%22306.77000000000004%22%20y2%3D%2289.73680951257346%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22306.77000000000004%22%20y1%3D%2268.76818536454587%22%20x2%3D%22307.56%22%20y2%3D%2260.32108466542283%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22306.77000000000004%22%20y1%3D%2289.73680951257346%22%20x2%3D%22307.56%22%20y2%3D%2287.63999551039362%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22307.56%22%20y1%3D%2260.32108466542283%22%20x2%3D%22308.35%22%20y2%3D%2252.77483782514163%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22307.56%22%20y1%3D%2287.63999551039362%22%20x2%3D%22308.35%22%20y2%3D%2285.53065930775315%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22308.35%22%20y1%3D%2252.77483782514163%22%20x2%3D%22309.14%22%20y2%3D%2246.44302444309377%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22308.35%22%20y1%3D%2285.53065930775315%22%20x2%3D%22309.14%22%20y2%3D%2283.4134841585158%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22309.14%22%20y1%3D%2246.44302444309377%22%20x2%3D%22309.93%22%20y2%3D%2241.58875909077211%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22309.14%22%20y1%3D%2283.4134841585158%22%20x2%3D%22309.93%22%20y2%3D%2281.29317072096815%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22309.93%22%20y1%3D%2241.58875909077211%22%20x2%3D%22310.72%22%20y2%3D%2238.413757749211456%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22309.93%22%20y1%3D%2281.29317072096815%22%20x2%3D%22310.72%22%20y2%3D%2279.17442662118087%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22310.72%22%20y1%3D%2238.413757749211456%22%20x2%3D%22311.51%22%20y2%3D%2237.04995562671135%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22310.72%22%20y1%3D%2279.17442662118087%22%20x2%3D%22311.51%22%20y2%3D%2277.06195600090298%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22311.51%22%20y1%3D%2237.04995562671135%22%20x2%3D%22312.3%22%20y2%3D%2237.55402467321884%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22311.51%22%20y1%3D%2277.06195600090298%22%20x2%3D%22312.3%22%20y2%3D%2274.96044907318952%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22312.3%22%20y1%3D%2237.55402467321884%22%20x2%3D%22313.09000000000003%22%20y2%3D%2239.9050186126561%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22312.3%22%20y1%3D%2274.96044907318952%22%20x2%3D%22313.09000000000003%22%20y2%3D%2272.87457170895706%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22313.09000000000003%22%20y1%3D%2239.9050186126561%22%20x2%3D%22313.88%22%20y2%3D%2244.00524335240926%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22313.09000000000003%22%20y1%3D%2272.87457170895706%22%20x2%3D%22313.88%22%20y2%3D%2270.80895507758154%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22313.88%22%20y1%3D%2244.00524335240926%22%20x2%3D%22314.67%22%20y2%3D%2249.68431660065652%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22313.88%22%20y1%3D%2270.80895507758154%22%20x2%3D%22314.67%22%20y2%3D%2268.76818536454638%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22314.67%22%20y1%3D%2249.68431660065652%22%20x2%3D%22315.46000000000004%22%20y2%3D%2256.70624799665427%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22314.67%22%20y1%3D%2268.76818536454638%22%20x2%3D%22315.46000000000004%22%20y2%3D%2266.75679358896184%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22315.46000000000004%22%20y1%3D%2256.70624799665427%22%20x2%3D%22316.25%22%20y2%3D%2264.77924554357126%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22315.46000000000004%22%20y1%3D%2266.75679358896184%22%20x2%3D%22316.25%22%20y2%3D%2264.77924554357097%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22316.25%22%20y1%3D%2264.77924554357126%22%20x2%3D%22317.04%22%20y2%3D%2273.56784084364286%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22316.25%22%20y1%3D%2264.77924554357097%22%20x2%3D%22317.04%22%20y2%3D%2262.839931879571786%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22317.04%22%20y1%3D%2273.56784084364286%22%20x2%3D%22317.83000000000004%22%20y2%3D%2282.70682927903255%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22317.04%22%20y1%3D%2262.839931879571786%22%20x2%3D%22317.83000000000004%22%20y2%3D%2260.9431583582743%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22317.83000000000004%22%20y1%3D%2282.70682927903255%22%20x2%3D%22318.62%22%20y2%3D%2291.81644586284455%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22317.83000000000004%22%20y1%3D%2260.9431583582743%22%20x2%3D%22318.62%22%20y2%3D%2259.09313629123329%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22318.62%22%20y1%3D%2291.81644586284455%22%20x2%3D%22319.41%22%20y2%3D%22100.51814613723015%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22318.62%22%20y1%3D%2259.09313629123329%22%20x2%3D%22319.41%22%20y2%3D%2257.29397319008412%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22319.41%22%20y1%3D%22100.51814613723015%22%20x2%3D%22320.2%22%20y2%3D%22108.45033635316112%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22319.41%22%20y1%3D%2257.29397319008412%22%20x2%3D%22320.2%22%20y2%3D%2255.54966364683867%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22320.2%22%20y1%3D%22108.45033635316112%22%20x2%3D%22320.99%22%20y2%3D%22115.2833992740374%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22320.2%22%20y1%3D%2255.54966364683867%22%20x2%3D%22320.99%22%20y2%3D%2253.86408046489327%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22320.99%22%20y1%3D%22115.2833992740374%22%20x2%3D%22321.78000000000003%22%20y2%3D%22120.7333912151775%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22320.99%22%20y1%3D%2253.86408046489327%22%20x2%3D%22321.78000000000003%22%20y2%3D%2252.24096606043571%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22321.78000000000003%22%20y1%3D%22120.7333912151775%22%20x2%3D%22322.57%22%20y2%3D%22124.57384114723962%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22321.78000000000003%22%20y1%3D%2252.24096606043571%22%20x2%3D%22322.57%22%20y2%3D%2250.68392415334593%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22322.57%22%20y1%3D%22124.57384114723962%22%20x2%3D%22323.36%22%20y2%3D%22126.64516155915155%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22322.57%22%20y1%3D%2250.68392415334593%22%20x2%3D%22323.36%22%20y2%3D%2249.19641176603648%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22323.36%22%20y1%3D%22126.64516155915155%22%20x2%3D%22324.15000000000003%22%20y2%3D%22126.86128001799071%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22323.36%22%20y1%3D%2249.19641176603648%22%20x2%3D%22324.15000000000003%22%20y2%3D%2247.781731547998646%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22324.15000000000003%22%20y1%3D%22126.86128001799071%22%20x2%3D%22324.94%22%20y2%3D%22125.21321585546244%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22324.15000000000003%22%20y1%3D%2247.781731547998646%22%20x2%3D%22324.94%22%20y2%3D%2246.443024443093904%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22324.94%22%20y1%3D%22125.21321585546244%22%20x2%3D%22325.73%22%20y2%3D%22121.76945335399111%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22324.94%22%20y1%3D%2246.443024443093904%22%20x2%3D%22325.73%22%20y2%3D%2245.18326271587404%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22325.73%22%20y1%3D%22121.76945335399111%22%20x2%3D%22326.52000000000004%22%20y2%3D%22116.67309592491031%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22325.73%22%20y1%3D%2245.18326271587404%22%20x2%3D%22326.52000000000004%22%20y2%3D%2244.005243352409344%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22326.52000000000004%22%20y1%3D%22116.67309592491031%22%20x2%3D%22327.31%22%20y2%3D%22110.13591953510686%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22326.52000000000004%22%20y1%3D%2244.005243352409344%22%20x2%3D%22327.31%22%20y2%3D%2242.91158185028144%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22327.31%22%20y1%3D%22110.13591953510686%22%20x2%3D%22328.1%22%20y2%3D%22102.42957248827963%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22327.31%22%20y1%3D%2242.91158185028144%22%20x2%3D%22328.1%22%20y2%3D%2241.90470641152344%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22328.1%22%20y1%3D%22102.42957248827963%22%20x2%3D%22328.89%22%20y2%3D%2293.87428724844166%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22328.1%22%20y1%3D%2241.90470641152344%22%20x2%3D%22328.89%22%20y2%3D%2240.98685255140498%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22328.89%22%20y1%3D%2293.87428724844166%22%20x2%3D%22329.68%22%20y2%3D%2284.82557337881883%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22328.89%22%20y1%3D%2240.98685255140498%22%20x2%3D%22329.68%22%20y2%3D%2240.16005813502866%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22329.68%22%20y1%3D%2284.82557337881883%22%20x2%3D%22330.47%22%20y2%3D%2275.65944456280836%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22329.68%22%20y1%3D%2240.16005813502866%22%20x2%3D%22330.47%22%20y2%3D%2239.42615885276051%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22330.47%22%20y1%3D%2275.65944456280836%22%20x2%3D%22331.26%22%20y2%3D%2266.75679358896195%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22330.47%22%20y1%3D%2239.42615885276051%22%20x2%3D%22331.26%22%20y2%3D%2238.78678414453757%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22331.26%22%20y1%3D%2266.75679358896195%22%20x2%3D%22332.05%22%20y2%3D%2258.48756458778223%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22331.26%22%20y1%3D%2238.78678414453757%22%20x2%3D%22332.05%22%20y2%3D%2238.243353582104575%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22332.05%22%20y1%3D%2258.48756458778223%22%20x2%3D%22332.84000000000003%22%20y2%3D%2251.19538023320885%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22332.05%22%20y1%3D%2238.243353582104575%22%20x2%3D%22332.84000000000003%22%20y2%3D%2237.79707371720901%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22332.84000000000003%22%20y1%3D%2251.19538023320885%22%20x2%3D%22333.63%22%20y2%3D%2245.18326271587409%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22332.84000000000003%22%20y1%3D%2237.79707371720901%22%20x2%3D%22333.63%22%20y2%3D%2237.44893540275491%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22333.63%22%20y1%3D%2245.18326271587409%22%20x2%3D%22334.42%22%20y2%3D%2240.701041844220896%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22333.63%22%20y1%3D%2237.44893540275491%22%20x2%3D%22334.42%22%20y2%3D%2237.19971159286141%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22334.42%22%20y1%3D%2240.701041844220896%22%20x2%3D%22335.21000000000004%22%20y2%3D%2237.934973522020535%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22334.42%22%20y1%3D%2237.19971159286141%22%20x2%3D%22335.21000000000004%22%20y2%3D%2237.04995562671136%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Cline%20x1%3D%22335.21000000000004%22%20y1%3D%2237.934973522020535%22%20x2%3D%22336%22%20y2%3D%2237%22%20stroke%3D%22%23C88445%22%20stroke-width%3D%221%22%20opacity%3D%22.72%22%2F%3E%3Cline%20x1%3D%22335.21000000000004%22%20y1%3D%2237.04995562671136%22%20x2%3D%22336%22%20y2%3D%2237%22%20stroke%3D%22%234F9F96%22%20stroke-width%3D%221.5%22%20opacity%3D%22.85%22%2F%3E%3Ccircle%20cx%3D%2220%22%20cy%3D%2237%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%2251.6%22%20cy%3D%2295.90576474687262%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%2283.2%22%20cy%3D%22118.40576474687265%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22114.80000000000001%22%20cy%3D%2245.594235253127295%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22146.4%22%20cy%3D%2268.09423525312731%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22178%22%20cy%3D%22127%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22209.60000000000002%22%20cy%3D%2268.09423525312714%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22241.20000000000002%22%20cy%3D%2245.59423525312759%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22272.8%22%20cy%3D%22118.40576474687256%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22304.40000000000003%22%20cy%3D%2295.9057647468726%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ccircle%20cx%3D%22336%22%20cy%3D%2237%22%20r%3D%223.5%22%20fill%3D%22%2329384A%22%20stroke%3D%22%23FFFFFF%22%20stroke-width%3D%221.2%22%2F%3E%3Ctext%20x%3D%2220%22%20y%3D%22151%22%20font-size%3D%2210%22%20fill%3D%22currentColor%22%3ESamples%20at%2010%20Hz%3B%20observation%20duration%201%20second%3C%2Ftext%3E%3Ctext%20x%3D%2220%22%20y%3D%2214%22%20font-size%3D%2210%22%20fill%3D%22%23C88445%22%3E13%20Hz%3C%2Ftext%3E%3Ctext%20x%3D%2283%22%20y%3D%2214%22%20font-size%3D%2210%22%20fill%3D%22%234F9F96%22%3E3%20Hz%3C%2Ftext%3E%3C%2Fsvg%3E)
+
+A 13 Hz cosine and a 3 Hz cosine give the same samples at 10 Hz. Storing those samples with more precision does not tell us which signal generated them.
+
+### Figure X2 — The samples cannot name their original
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#16324f','primaryBorderColor':'#0284c7','lineColor':'#64748b','fontSize':'15px'},'flowchart':{'curve':'basis','nodeSpacing':18,'rankSpacing':26}}}%%
+flowchart LR
+  A["13 Hz cosine"] --> C["Sample at 10 Hz<br/>integer sample index n"]
+  B["3 Hz cosine"] --> C
+  C --> D["Identical sample sequence"]
+  D --> E["More stored bits<br/>cannot distinguish origins"]
+  style D fill:#fff0d6,stroke:#d97706,color:#78350f
+```
+
+**Caption:** the phase difference at sample $n$ is $2\pi(13-3)n/10=2\pi n$, a whole number of cycles. Equality holds at every integer sample index; the continuous curves differ between samples. This is an exact cosine example, not a statement that all 13 Hz signals look like every 3 Hz signal. To retain a 13 Hz band limit under the ideal strict theorem, use $f_s>26\,\mathrm{Hz}$; for lower-rate output, filter away unsupported content before sampling. Quantization precision cannot undo aliasing.
+
+### What the sampling theorem guarantees
+
+A **band-limited** signal has no frequency content outside a stated bound.
+
+For the appropriate signal class, ideal uniform sampling can guarantee reconstruction when the highest frequency is strictly below half the sampling rate:
+
+$$
+f_s>2B.
+$$
+
+Here $B$ is the signal's highest frequency under the stated band-limit convention.
+
+The theorem also assumes the required mathematical conditions and ideal reconstruction. At exactly $f_s/2$, phase can cause a problem: the samples of a sine can all land at zero.
+
+Specialized methods or extra knowledge about the signal can change what is recoverable. That knowledge must be stated.
+
+The practical rule for reducing image resolution is: **filter before taking fewer samples**.
+
+After aliases have mixed high-frequency information into lower frequencies, an ordinary blur cannot generally separate them again. [MIT's sampling chapter](https://visionbook.mit.edu/sampling_and_aliasing.html) develops this principle. A finite Gaussian is a practical filter, not an exact ideal cutoff.
+
+## Fourier coordinates reveal what a filter removes
+
+Consider wide stripes and narrow stripes. Wide stripes change brightness slowly across space. Narrow stripes change it quickly.
+
+[[Fourier analysis and spectral phase|Spatial frequency]] measures that repetition rate.
+
+A sinusoidal pattern can be written as:
+
+$$
+I(x)=a+b\cos(2\pi fx+\phi).
+$$
+
+$a$ is its mean value, $b$ its amplitude, $f$ its frequency, and $\phi$ its phase. Phase positions the bright and dark parts.
+
+Two images can have the same frequency magnitudes but different phase relationships. They need not have the same edges or structures.
+
+### Why complex numbers help
+
+Euler's identity is:
+
+$$
+e^{i\theta}=\cos\theta+i\sin\theta,\qquad i^2=-1.
+$$
+
+It combines sine and cosine into one convenient representation. The complex values are analysis coordinates; they are not imaginary light emitted by the display.
+
+Using frequency measured in cycles per unit:
+
+$$
+X(f)=\int_{-\infty}^{\infty}x(t)e^{-i2\pi ft}\,dt,
+$$
+
+and:
+
+$$
+x(t)=\int_{-\infty}^{\infty}X(f)e^{i2\pi ft}\,df.
+$$
+
+The first equation analyzes the signal into frequencies. The second reconstructs it.
+
+These expressions require suitable mathematical conditions. Some ideal signals need a generalized-function interpretation rather than an ordinary integral.
+
+For a periodic signal, integer-frequency basis functions cancel against one another over a complete period. This property, called **orthogonality**, lets us isolate one coefficient by projecting onto its matching basis function.
+
+### The finite version: DFT and FFT
+
+For $N$ samples, the discrete Fourier transform is:
+
+$$
+X[k]=\sum_{n=0}^{N-1}x[n]e^{-i2\pi kn/N}.
+$$
+
+Its inverse is:
+
+$$
+x[n]=\frac1N\sum_{k=0}^{N-1}X[k]e^{i2\pi kn/N}.
+$$
+
+$n$ indexes samples, while $k$ indexes frequency bins. A **bin** is one discrete frequency position in the transform.
+
+For time samples, bin spacing is:
+
+$$
+\Delta f=\frac{f_s}{N}.
+$$
+
+An **FFT**, or fast Fourier transform, is an efficient algorithm for computing the DFT. It is not a different transform.
+
+A direct DFT needs roughly $O(N^2)$ work. Suitable FFT algorithms reduce this to $O(N\log N)$ by reusing structure. A radix-2 algorithm, for example, splits even and odd samples and combines the smaller transforms.
+
+### Read amplitudes using the stated normalization
+
+The zero-frequency component, called DC, represents the mean under the chosen normalization.
+
+For real input, positive and negative frequency components occur as conjugate pairs. A one-sided amplitude report combines those pairs. Interior bins therefore need a factor of two; DC and an even-length Nyquist bin do not.
+
+The laboratory below uses this convention to recover sine amplitudes. A normalized complex magnitude is not automatically the same number as a full one-sided sine amplitude.
+
+### Why a finite observation spreads a frequency across bins
+
+A DFT treats the finite block as one period of a repeating signal. If the block does not contain a whole number of cycles, joining its ends can create a discontinuity.
+
+The frequency energy then spreads across bins. This is **spectral leakage**.
+
+A window, such as Hann, tapers the endpoints. It reduces some leakage but changes peak width and amplitude scaling.
+
+Smaller bin spacing alone does not guarantee more accurate frequency estimation. Zero-padding gives a more finely sampled spectrum without extending the original observation.
+
+For an image, there are two spatial-frequency axes. Vertical stripes vary horizontally, so their main frequency direction is horizontal. This helps explain why an artifact may be strong in one orientation and weak in another.
+
+### Why spectral replicas give the sampling limit
+
+Ideal sampling multiplies the signal by an impulse train.
+
+A **Dirac delta** is a mathematical distribution with an integral sampling property. It is not an ordinary finite-valued spike.
+
+In frequency coordinates, sampling gives:
+
+$$
+X_s(f)=\frac1{T_s}
+\sum_{k=-\infty}^{\infty}X(f-kf_s).
+$$
+
+The original spectrum is repeated every $f_s$. If it occupies the interval $[-B,B]$, adjacent copies avoid overlap when $f_s>2B$ in this strict form.
+
+If the copies overlap, contributions are mixed. The samples cannot generally tell us how to separate them.
+
+Ideal reconstruction selects the central copy with the proper normalization. Its interpolation kernel is normalized sinc:
+
+$$
+\operatorname{sinc}(u)=
+\begin{cases}
+\dfrac{\sin(\pi u)}{\pi u},&u\ne0,\\
+1,&u=0.
+\end{cases}
+$$
+
+The reconstruction formula is:
+
+$$
+x(t)=\sum_n x[n]\,
+\operatorname{sinc}\left(\frac{t}{T_s}-n\right).
+$$
+
+At each sample position, one sinc contributes one and the others contribute zero. Between samples, their sum reconstructs the signal under the theorem's assumptions.
+
+An ideal sinc extends infinitely in both directions. Practical filters truncate or window it, so they trade accuracy, sharpness, cost, and artifacts.
+
+## A footprint is more meaningful than an isolated pixel center
+
+A pixel represents a region, not just a point. That region is its **footprint**.
+
+[[Convolution and filter footprints|Convolution]] combines input values using a weighting function called a kernel:
+
+$$
+y[n]=\sum_k x[k]h[n-k].
+$$
+
+$x[k]$ is the input, $h$ is the kernel, and $y[n]$ is the output.
+
+In frequency coordinates:
+
+$$
+\mathcal F\{x*h\}=XH.
+$$
+
+This means that convolution applies the filter's frequency response to the input spectrum.
+
+A low-pass filter favors low frequencies. A high-pass filter favors changes. A band-pass filter favors a range between them. Not every kernel is a blur.
+
+### A three-sample filter we can understand directly
+
+Take the neighbor weights:
+
+$$
+h[-1]=\frac14,\qquad h[0]=\frac12,\qquad h[1]=\frac14.
+$$
+
+The output is:
+
+$$
+y[n]=\frac14x[n-1]+\frac12x[n]+\frac14x[n+1].
+$$
+
+The weights sum to one, so a constant signal stays constant when the boundary rule also preserves constants.
+
+Its angular-frequency response is:
+
+$$
+H(\omega)=\frac{1+\cos\omega}{2}.
+$$
+
+At $\omega=0$, the gain is one. At $\omega=\pi$, it is zero. The filter preserves the mean and removes the alternating-sample component.
+
+Boundary handling still matters. Clamping, wrapping, and zero-padding can give different results near an image edge.
+
+FFT multiplication without appropriate padding computes circular convolution. Values can wrap around the boundary. For ordinary finite linear convolution of lengths $N$ and $M$, padding to at least $N+M-1$ avoids that wraparound.
+
+A two-dimensional Gaussian is separable: it can be applied as a horizontal pass followed by a vertical pass. A kernel of width $q$ then uses roughly $2q$ contributions per pixel instead of $q^2$, before accounting for overhead and memory costs.
+
+### What happens to a point of light?
+
+[[PSF OTF and MTF|A point-spread function]], or PSF, describes the image produced by an ideal point source.
+
+Under a local linear, shift-invariant model, the observed image is the ideal image convolved with the PSF, plus noise.
+
+**Shift-invariant** means the same response applies when the input moves. Real optics can change across the view, with wavelength, or with focus.
+
+The **optical transfer function**, or OTF, is the Fourier transform of the PSF. After the appropriate normalization, its magnitude is the **modulation transfer function**, or MTF. The OTF also contains phase information.
+
+For a normalized Gaussian PSF:
+
+$$
+\mathrm{MTF}(f)=e^{-2\pi^2\sigma^2f^2}.
+$$
+
+$\sigma$ is blur width in the chosen spatial units. Frequency $f$ must use the matching reciprocal units.
+
+With $\sigma=1$ pixel:
+
+| Frequency | Remaining contrast amplitude |
+|---|---|
+| $0.05$ cycles per pixel | about $0.952$ of the original |
+| $0.25$ cycles per pixel | about $0.291$ of the original |
+
+High-frequency contrast is reduced much more strongly.
+
+Trying to invert a small transfer value amplifies noise. If the transfer value is zero, that frequency's information has been removed under the model.
+
+### Diffraction is another source of blur
+
+An ideal circular aperture produces an Airy pattern, not an exact Gaussian. The angular radius to its first dark ring is approximately:
+
+$$
+\theta_{\mathrm{Airy}}\approx1.22\frac{\lambda}{D_a}.
+$$
+
+$\lambda$ is wavelength and $D_a$ is aperture diameter.
+
+For light at $550\,\mathrm{nm}$ through a $3\,\mathrm{mm}$ aperture, this is about 0.77 arcminutes.
+
+This is a diffraction-only estimate, not total human acuity. A smaller aperture can reduce some aberrations and increase depth of field, while also increasing diffraction blur.
+
+### A pixel value can be an average over an area
+
+A simplified ideal image-space target is:
+
+$$
+I_{ij}=\frac1{A_{ij}}\iint_{A_{ij}}L(x,y)\,dx\,dy.
+$$
+
+$A_{ij}$ is the area represented by pixel $(i,j)$, and $L(x,y)$ is the light-related signal being averaged.
+
+If a white triangle covers 25% of a pixel over black, its box-filtered value is 0.25 in linear light. Evaluating only the center may instead give zero or one.
+
+Real sensors and displays have additional responses. The area-average model gives us a clear target, not the whole physical system.
+
+## Multiresolution work must preserve the right information
+
+[[Multiscale texture filtering|A texel]] belongs to a texture. A pixel belongs to an output image. One output pixel may cover many texels.
+
+A **mipmap** stores filtered versions of a texture at progressively lower resolutions. Each level commonly halves the width and height.
+
+If the relevant footprint scale is $\rho$ texels, a simple level estimate is:
+
+$$
+\ell\approx\log_2\rho.
+$$
+
+A footprint scale of four texels suggests level two, because $2^2=4$.
+
+The actual footprint may be long and narrow, especially on a surface viewed at a grazing angle. **Anisotropic filtering** accounts for that unequal shape instead of treating it as square.
+
+### Pyramids separate broad structure from detail
+
+A Gaussian pyramid repeatedly filters and downsamples an image.
+
+A Laplacian pyramid stores the difference between a level and an expanded version of the next coarser level. The coarse image contains broad structure; the difference levels contain finer details.
+
+“Laplacian pyramid” does not simply mean applying the continuous Laplace differential operator. It is a multiscale construction used for reconstruction and analysis.
+
+### Reconstruction filters make different tradeoffs
+
+| Method | Basic idea | Main tradeoff |
+|---|---|---|
+| Nearest neighbor | choose the closest sample | cheap, but blocky |
+| Bilinear | blend four nearby samples | inexpensive and smooth, but can blur detail |
+| Bicubic | use a wider cubic interpolation | can look sharper, but may overshoot |
+| Lanczos | use a windowed-sinc kernel | preserves detail well in some cases, but can ring |
+| Learned reconstruction | infer output using a trained model | may produce plausible detail without faithful recovery |
+
+Bilinear weights are nonnegative and sum to one. They preserve constants but cannot recover arbitrary information that was never sampled.
+
+Sharp frequency cutoffs often give oscillating spatial kernels. Near an edge, these can produce bright or dark halos called **ringing**. The persistent overshoot near a discontinuity in Fourier approximations is associated with the **Gibbs phenomenon**.
+
+### Antialiasing methods do not all sample the same work
+
+[[Antialiasing and sample allocation|SSAA]] increases spatial sampling and combines the results at the target resolution. Doubling width and height gives about four times as many samples.
+
+MSAA mainly adds coverage, depth, and stencil sampling around geometry edges. It does not necessarily evaluate every shader independently at every sample. Sample-frequency shader behavior affects the result.
+
+MSAA therefore does not automatically remove all material or shading aliases.
+
+### Filtering before shading can differ from filtering afterward
+
+This matters because shading can be nonlinear.
+
+Take $F(x)=x^2$ and inputs zero and two. Filtering first, then shading, gives:
+
+$$
+F\left(\frac{0+2}{2}\right)=F(1)=1.
+$$
+
+Shading first, then filtering, gives:
+
+$$
+\frac{F(0)+F(2)}2=\frac{0+4}2=2.
+$$
+
+The two answers differ.
+
+Real shaders involve normals, BRDFs, lighting, and visibility. Their inputs need filtering that matches the intended footprint and statistics. Blurring the shaded image afterward does not automatically fix those earlier choices.
+
+Contrast enhancement can strengthen detail that remains. It cannot guarantee recovery of every removed frequency.
+
+## Temporal reconstruction is an inference about correspondence
+
+A previous frame can contain useful information. Before reusing it, however, we need to ask: **does this old sample still describe the surface we are seeing now?**
+
+[[Temporal reprojection and history validation|Temporal antialiasing]], or TAA, combines observations across frames.
+
+A simple update is:
+
+$$
+H_t=\alpha C_t+(1-\alpha)\widetilde H_{t-1},
+\qquad 0<\alpha\leq1.
+$$
+
+The symbols mean:
+
+- $C_t$ is the current observation.
+- $H_t$ is the updated history.
+- $\widetilde H_{t-1}$ is the old history mapped into the current frame.
+- $\alpha$ controls how strongly we favor the current observation.
+
+A small $\alpha$ gives more influence to older information. That can reduce noise, but it can also slow the response to change.
+
+For a stationary target, correct alignment, and independent equal-variance noise, the steady-state variance is:
+
+$$
+\operatorname{Var}(H)
+=\frac{\alpha}{2-\alpha}\operatorname{Var}(C).
+$$
+
+The mean age of the contributing information is:
+
+$$
+\operatorname{meanAge}=\frac{1-\alpha}{\alpha}
+\quad\text{frames}.
+$$
+
+These results explain the tradeoff. They do not prove that history is valid after an object moves or a new surface becomes visible.
+
+### Reprojection tries to find the same surface again
+
+**Reprojection** maps old information to the relevant current surface. It may use motion vectors, depth, and camera transforms.
+
+A motion vector must have a clear direction, unit, and jitter convention. Camera motion alone cannot correctly describe independently moving objects.
+
+**Disocclusion** occurs when a previously hidden surface becomes visible. Old history at that location may belong to the object that used to cover it.
+
+### History validation decides whether reuse is justified
+
+Depth, normals, material identity, object identity, motion consistency, and current color neighborhoods can help identify invalid history.
+
+For example, old character colors should not be accumulated into newly exposed background pixels.
+
+Rejecting too little history can create **ghosting**. Rejecting too much can increase noise and flicker. Neighborhood clipping can remove obvious mismatches, but it may also reject legitimate detail.
+
+No single threshold solves that tradeoff for every scene.
+
+### Jitter, TAA, and motion blur solve different problems
+
+**Sample jitter** deliberately changes subpixel positions across frames. This can gather complementary information. The projection and reprojection steps must account for it.
+
+Motion blur instead represents light integrated over an exposure interval. TAA usually tries to estimate an image at a defined frame time from aligned observations.
+
+A long, unvalidated temporal average is not automatically correct motion blur.
+
+Foveation creates another history problem: the sampling quality at a location can change when gaze moves. A low-resolution old sample does not become a high-resolution observation merely because the user now looks there.
+
+History may need to be reset or given less weight at those transitions.
+
+Finally, reducing noise variance does not necessarily remove bias. For an estimator $\hat x$ of a fixed scalar target:
+
+$$
+\operatorname{MSE}(\hat x)
+=\operatorname{Var}(\hat x)+\operatorname{Bias}(\hat x)^2.
+$$
+
+A result can be stable and still be consistently blurred or otherwise wrong.
+
+## Encoded RGB must not masquerade as linear light
+
+Suppose we average black and white. Should the result be the encoded number 0.5?
+
+Only if averaging encoded numbers is the operation we intend. Averaging physical light requires us to use the appropriate linear-light quantity.
+
+[[Color encoding and linear-light operations|A color space]] defines how coordinates relate to colors. Its primaries and white point are part of that definition.
+
+A **transfer function** describes how encoded values relate to a linear or display-related quantity. Linear-sRGB uses the sRGB primaries without the nonlinear sRGB encoding.
+
+Tone mapping, gamut mapping, and transfer encoding are separate operations.
+
+### Decode before physically meaningful averaging
+
+For a normalized sRGB component $C_s$ in the ordinary nonnegative range, the decoded linear component $C_l$ is:
+
+$$
+C_l=
+\begin{cases}
+C_s/12.92,&C_s\leq0.04045,\\
+\left(\dfrac{C_s+0.055}{1.055}\right)^{2.4},
+&C_s>0.04045.
+\end{cases}
+$$
+
+To encode it again:
+
+$$
+C_s=
+\begin{cases}
+12.92C_l,&C_l\leq0.0031308,\\
+1.055C_l^{1/2.4}-0.055,&C_l>0.0031308.
+\end{cases}
+$$
+
+These piecewise functions are not exactly a single gamma-2.2 power law.
+
+An equal-weight linear-light average of black and white is:
+
+$$
+\frac{0+1}{2}=0.5.
+$$
+
+Encoding that result gives approximately 0.735. Averaging the encoded black and white values instead gives 0.5 encoded, which decodes to only about 0.214 linear.
+
+The second result is darker because the arithmetic happened in a different representation.
+
+For physical filtering, use the appropriate linear quantity. For a metric defined in a particular encoded space, follow that metric's specification. “Always linearize everything” is not a complete rule either.
+
+### Figure X3 — Same endpoints, different averaging domain
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#16324f','primaryBorderColor':'#0284c7','lineColor':'#64748b','fontSize':'15px'},'flowchart':{'curve':'basis','nodeSpacing':18,'rankSpacing':24}}}%%
+flowchart LR
+  A["sRGB black 0<br/>and white 1"] --> B["Decode to linear<br/>0 and 1"]
+  B --> C["Mean light<br/>0.5 linear"]
+  C --> D["Encode for output<br/>about 0.735 sRGB"]
+  A --> E["Mean encoded values<br/>0.5 sRGB"]
+  E --> F["Decode result<br/>about 0.214 linear"]
+  style F fill:#fff0d6,stroke:#d97706,color:#78350f
+```
+
+**Caption:** both paths use equal weights and normalized nonnegative sRGB values, but only the upper path computes the linear-light average. The lower result is darker in linear light. The numbers are channel values, not measured nits; actual display luminance also needs calibration. Other encodings require their own transfer functions, and a metric defined in an encoded domain must follow its specification.
+
+### Relative luminance is not an absolute display measurement
+
+For linear RGB using the sRGB primaries and D65 reference-white convention:
+
+$$
+Y\approx0.2126R+0.7152G+0.0722B.
+$$
+
+$Y$ is relative luminance. D65 identifies the reference white. The result is not automatically a luminance in nits.
+
+CIE XYZ provides standardized tristimulus color-match coordinates. When $X+Y+Z$ is nonzero, chromaticity coordinates are:
+
+$$
+x=\frac{X}{X+Y+Z},
+\qquad y=\frac{Y}{X+Y+Z}.
+$$
+
+They describe color direction without retaining the overall scale.
+
+A **gamut** is the set of colors reproducible under a stated device or model. It is not simply the number of bits in each channel.
+
+### Tone mapping changes the relationship between errors
+
+HDR represents or displays a wider luminance range under specified conditions. Scene-linear values need not stop at one.
+
+A simple illustrative tone mapper is:
+
+$$
+T(L)=\frac{L}{1+L},
+\qquad L\geq0.
+$$
+
+It compresses the range, but it is not a universal appearance-preserving solution.
+
+Because tone mapping is nonlinear, equal errors before mapping need not have equal visible effects afterward. State which stage of the pipeline you evaluate.
+
+### Different kinds of noise need different models
+
+Ideal photon counts follow a Poisson model:
+
+$$
+N_\gamma\sim\operatorname{Poisson}(\mu),
+\qquad
+\mathbb E[N_\gamma]=\operatorname{Var}(N_\gamma)=\mu.
+$$
+
+Under that model, the count signal-to-noise ratio grows approximately as $\sqrt{\mu}$.
+
+Electronic read noise, quantization error, Monte Carlo noise, and correlated temporal rendering artifacts have different causes.
+
+Adding Gaussian angular noise can be a useful tracker stress test. It does not automatically reproduce a real eye-camera, exposure, processing, and tracking pipeline.
+
+## Quality numbers need a question they can actually answer
+
+[[Perceptual metrics and display calibration|A reference image]] is a declared comparison target. It is not automatically perfect physical ground truth.
+
+A high-sample offline rendering still assumes geometry, materials, lighting, and transport models.
+
+Keep three questions separate:
+
+1. How closely does the output match the reference?
+2. How good does it look to the observer?
+3. How well can the observer perform the task?
+
+### Numerical error measures compare values
+
+For $N$ scalar samples:
+
+$$
+\mathrm{MSE}=\frac1N\sum_i(I_i-R_i)^2.
+$$
+
+$I_i$ is an output value, and $R_i$ the corresponding reference value.
+
+Related measures are:
+
+$$
+\mathrm{RMSE}=\sqrt{\mathrm{MSE}},
+\qquad
+\mathrm{MAE}=\frac1N\sum_i|I_i-R_i|.
+$$
+
+State whether $N$ counts pixels, channels, or some other samples. Also state the encoding and domain of the comparison.
+
+Errors $[1,1,1,1]$ and $[0,0,0,2]$ both have $\mathrm{MSE}=1$. One spreads error across all samples; the other concentrates it. Their visual consequences need not be equal.
+
+PSNR is:
+
+$$
+\mathrm{PSNR}
+=10\log_{10}\left(\frac{P^2}{\mathrm{MSE}}\right).
+$$
+
+$P$ is the declared positive peak value, not an arbitrarily chosen maximum from each frame.
+
+With $P=1$, an MSE of 0.001 gives 30 dB. An MSE of 0.0001 gives 40 dB. Zero MSE gives formally infinite PSNR.
+
+These are numerical fidelity measures, not direct perceptual ratings.
+
+### Structural and gaze-aware comparisons add assumptions
+
+SSIM compares local means, variances, and covariance. It uses stabilizing constants and then combines local results. Window choice, color treatment, range, and implementation affect its score.
+
+MS-SSIM performs comparisons at multiple scales. Neither automatically captures all gaze, stereo, and temporal effects.
+
+A simple gaze-weighted error is:
+
+$$
+E_w=
+\frac{\sum_p w(e_p)\lVert I_p-R_p\rVert^2}
+{\sum_p w(e_p)}.
+$$
+
+One possible weight is:
+
+$$
+w(e)=\beta+e^{-e^2/(2\sigma_e^2)}.
+$$
+
+$e$ is eccentricity. $\sigma_e$ controls the angular width of the central emphasis, while $\beta$ supplies residual peripheral weight.
+
+Use matching angular units, nonnegative weights, a positive total weight, and a declared channel convention.
+
+This is an engineering proxy. Changing the weight schedule can change which algorithm wins, because we have changed the definition of quality.
+
+A temporal comparison should also consider correspondence. Comparing current error with warped previous error can be more meaningful than subtracting unrelated screen positions. It still needs validation before it becomes a perceptual predictor.
+
+FovVideoVDP models spatial, temporal, and peripheral factors using display and viewing information. Its JOD-related output is not MSE, PSNR, or a universal probability of detecting an artifact.
+
+Record its version, calibration, intensity convention, timing, and gaze configuration. Check whether it covers the binocular or task effects needed by the experiment. [FovVideoVDP project](https://www.cl.cam.ac.uk/research/rainbow/projects/fovvideovdp/)
+
+## A threshold is evidence from a procedure, not a universal border
+
+[[Psychophysics and threshold inference|Psychophysics]] measures how observers respond to controlled stimuli.
+
+If we say that a distortion is “invisible,” we need to say how we tested that claim.
+
+In a two-alternative forced-choice task, or 2AFC, chance correctness is 0.5 when the alternatives are equally likely.
+
+A **psychometric curve** relates stimulus strength to response probability. Its lower limit, lapse behavior, and slope affect the result. Probability of a correct forced choice is not automatically the same as probability of reporting detection.
+
+### A curve parameter is not always the threshold
+
+For a logistic illustration with guessing level $\gamma$ and lapse rate $\ell$, the value at its midpoint parameter $x_0$ is:
+
+$$
+P(x_0)=\gamma+\frac{1-\gamma-\ell}{2}.
+$$
+
+That is not always exactly 0.75.
+
+The source also uses this Weibull-like 2AFC form:
+
+$$
+F(x)=1-\frac12e^{-(x/\lambda)^k},
+\qquad \lambda>0,\quad k>0.
+$$
+
+Here $\lambda$ is a fitted scale and $k$ a shape parameter. This $\lambda$ is not the wavelength used in the light section.
+
+If we define threshold $T$ as 75% correct:
+
+$$
+F(T)=0.75.
+$$
+
+Then:
+
+$$
+e^{-(T/\lambda)^k}=\frac12,
+$$
+
+so:
+
+$$
+T=\lambda(\ln2)^{1/k}.
+$$
+
+The criterion determines the threshold. It is not enough to report a fitted parameter without explaining what it means.
+
+### Experimental design determines what the result supports
+
+A **staircase** changes stimulus difficulty in response to prior answers. It can help estimate thresholds efficiently.
+
+**Bootstrap resampling** estimates variability under stated sampling assumptions. It does not capture every systematic bias.
+
+For an equal-variance Gaussian signal-detection model, sensitivity is:
+
+$$
+d'=\frac{\mu_{\mathrm{signal}}-\mu_{\mathrm{noise}}}{\sigma}.
+$$
+
+This separates sensitivity from aspects of response bias under that model. The means and shared standard deviation refer to the evidence distributions.
+
+A statistically nonsignificant difference is not proof of equivalence. If equivalence is the claim, define an acceptable difference and use an analysis suited to that claim.
+
+Participants, trial counts, training, stimuli, randomization, viewing conditions, and uncertainty all matter.
+
+A software program can reproduce stimuli or check threshold algebra. It cannot independently reproduce a human threshold without human observations or a separately validated model.
+
+## Foveation is allocation under uncertain perception and timing
+
+[[Foveated rendering and uncertainty|Foveation]] changes where computational effort is spent.
+
+Fixed foveated rendering, or FFR, uses a fixed assumed viewing center. Dynamic foveated rendering, or DFR, follows measured or predicted gaze.
+
+Variable-rate shading, or VRS, changes shading evaluation rate through a graphics-pipeline mechanism. It does not necessarily reduce the resolution or cost of every pass.
+
+Other methods can change ray count, geometry detail, texture sampling, or reconstruction quality.
+
+### Smooth transitions help, but they do not restore missing detail
+
+Under a monotonic acuity model, the inner boundary of a peripheral layer is its most demanding location.
+
+A smooth transition can hide a hard boundary. One common blend function is:
+
+$$
+s(t)=3t^2-2t^3,\qquad 0\leq t\leq1.
+$$
+
+It starts at zero, ends at one, and has zero slope at both endpoints.
+
+It cannot recover frequencies missing from both layers. Gaze uncertainty and motion still matter.
+
+### The quality region must allow for prediction error
+
+If the predicted gaze can miss the display-time fixation by several degrees, a tiny high-quality region can land in the wrong place.
+
+A larger region is more conservative but costs more work. A probabilistic policy needs a calibrated error distribution and a loss measure matched to the task.
+
+A low mean angular error can conceal rare but noticeable errors just after a saccade. A predictor should therefore be evaluated at the moments when the quality allocation depends on it.
+
+### Figure X4 — Aim detail at visible time
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#e0f2fe','primaryTextColor':'#16324f','primaryBorderColor':'#0284c7','lineColor':'#64748b','fontSize':'15px'},'flowchart':{'curve':'basis','nodeSpacing':18,'rankSpacing':24}}}%%
+flowchart LR
+  A["Gaze observation<br/>timestamp t0"] --> B["Predict gaze<br/>for visible time tv"]
+  B --> C["Place sharp region<br/>add uncertainty margin"]
+  C --> D["Render and scan out<br/>light becomes visible"]
+  D --> E["Compare actual gaze<br/>with predicted center"]
+  E -. calibrate margin .-> C
+```
+
+**Caption:** acquisition, delivery, scheduling, rendering, scanout and pixel response separate observation from visible output. In the earlier steady-motion example, a 30 ms prediction horizon at $20^\circ/\mathrm{s}$ corresponds to $0.6^\circ$ displacement; that is not itself the prediction error or a universal margin. For a circular quality region, an illustrative worst-case policy is $r_{\mathrm{quality}}\geq r_{\mathrm{needed}}+\epsilon$, where $\epsilon$ bounds angular center error at visible time and both radii use the same angular units. This containment rule assumes a valid error bound and circular regions; empirical tail errors, calibration and task requirements determine whether that model is useful. Scanout may require time estimates that vary across the image.
+
+**Recall:** sampling interval tells when observations are taken; latency tells how old they are when used. Test gaze landing as well as average prediction error.
+
+### Less shading does not mean the whole frame becomes equally faster
+
+Suppose 40% of the original frame time benefits from an optimization. The other 60% does not.
+
+If the affected work becomes 70% cheaper:
+
+$$
+T_{\mathrm{new}}=0.60+0.40(0.30)=0.72.
+$$
+
+The frame-time reduction is 28%, not 70%. The speedup is:
+
+$$
+S=\frac1{0.72}\approx1.39.
+$$
+
+This is an additive, non-overlapping cost model. A real GPU also has overlap, synchronization, bandwidth, scheduling, and other bottlenecks.
+
+Sample-count savings, fewer shader invocations, lower frame time, and lower total energy use are different claims.
+
+## Read research as a chain of questions, methods and bounded conclusions
+
+For each paper, ask four questions:
+
+1. What problem did the authors study?
+2. What did they change or measure?
+3. What result did the evidence support?
+4. Under which conditions might that conclusion stop applying?
+
+The following are reading anchors, not completed replications. Detailed study numbers or model coefficients that were not independently checked remain marked as source-reported in the provenance record.
+
+### Making spatial allocation computationally useful
+
+Guenter and colleagues' 2012 method uses three image layers, reduced peripheral sampling and update rates, smooth composition, and antialiasing.
+
+Its full-scene table reports 27.9 ms for N2 and 4.9/5.9 ms for QA/QB. Those configurations imply about $5.69\times$ and $4.73\times$ speedup.
+
+Figure 5's complete timing paths are about 23–40 ms. The 15 ms label marks an intermediate stage, not final gaze-to-visible completion.
+
+These numbers describe that historical setup. They are not a universal headset budget. Ask which work was removed and which overhead remained. [Original Microsoft paper](https://www.microsoft.com/en-us/research/wp-content/uploads/2012/11/foveated_final15.pdf)
+
+### Keeping resolvable contrast rather than merely blurring the periphery
+
+Patney and colleagues' 2016 work treats contrast, filtering, and temporal stability as design requirements.
+
+Its project reports up to 70% fewer shading evaluations. That is not a claim of 70% lower full-system latency or energy use.
+
+Contrast enhancement strengthens surviving information; it does not prove perfect reconstruction. The earlier example comparing $F(\operatorname{mean}(x))$ with $\operatorname{mean}(F(x))$ explains why filtering stages must be considered separately. It is not the paper's complete shader.
+
+[NVIDIA publication](https://research.nvidia.com/publication/2016-12_towards-foveated-rendering-gaze-tracked-virtual-reality)
+
+### Organizing prior work without making a current novelty claim
+
+Wang, Shi, and Liu's 2023 survey reviews work from 1990–2021.
+
+Use it to classify what a method changes, which perceptual requirement controls the change, and which rendering architecture realizes the savings.
+
+The historical cutoff does not prove that a research gap remains open today. A survey organizes a body of evidence; it is not one new renderer's speed benchmark. [Open survey](https://link.springer.com/article/10.1007/s41095-022-0306-4)
+
+### Matching samples across time and predicting their visible error
+
+The source's Yang/Liu/Salvi 2020 TAA survey emphasizes two responsibilities: gather useful samples and validate historical correspondence. Its bibliographic claim remains source-reported here because the guessed publication URL did not resolve.
+
+FovVideoVDP addresses a different question: which remaining differences are predicted to matter under the stated display conditions?
+
+Together they remind us to check both correspondence and visibility. Implementing a temporal blend does not reproduce either complete publication.
+
+### Binocular depth changes the optimization question
+
+[[Stereoacuity and binocular foveation|Kergaßner, Tariq, and Didyk's 2025 work]] asks how peripheral filtering affects a stereoacuity task.
+
+The author project reports robustness under tested foveation conditions. It does not establish that every peripheral recognition, motion, or comfort task is unaffected.
+
+The source's fitted threshold surface changes with blur and eccentricity. Its exact displayed coefficients still need checking against the paper before implementation.
+
+We can check the 75%-threshold algebra without participants. We cannot reproduce the perceptual finding that way. [Author project](https://sophie-kergassner.github.io/depth-in-periphery.html)
+
+Jiménez Navarro and colleagues' 2026 project studies how each eye's contribution changes across location and viewing context. This is richer than assigning one permanent dominant-eye label.
+
+Eye-asymmetric rendering needs binocular evidence, not only two good monocular error scores. Inspect the model, dataset, and validation conditions before designing a policy. [Dynamic Visual Dominance project](https://dynamicvisualdominance.mpi-inf.mpg.de/)
+
+A measured outcome and an explanation proposed for that outcome are different claims. The result may be well supported even while its mechanism remains uncertain.
+
+## Make the mathematics operational without pretending to run a human study
+
+The laboratory below checks equations and builds a small image-space experiment.
+
+It creates horizontal and vertical sinusoidal patterns. It then computes pixel directions using a specified pinhole model, applies gaze-dependent blur, and compares fixed-center allocation with gaze-following allocation.
+
+The program first computes the full reference image. It therefore does **not** save the original shading work. Its purpose is to connect geometry, filtering, and measurement.
+
+Boundary clamping and the finite filter are explicit. The error scores measure differences from the synthetic reference, not perceptual invisibility.
+
+[[Research validity and ablation|An ablation]] changes or removes one component to examine its effect. For this program:
+
+1. Change the sharp-region radius while keeping blur and metric weights fixed.
+2. Change blur while keeping the other settings fixed.
+3. Change the metric weights without changing either output image.
+
+The third step is especially important. If it changes the winner, the rendering did not change. Our definition of quality changed.
+
+Later sources can add real tracking, prediction, GPU execution, and system timing. Those systems are not implemented by this toy experiment.
+
+### Diagnose a symptom by the quantity that failed
+
+| Symptom | Possible mechanism | What to check |
+|---|---|---|
+| A thin fence shimmers in motion | undersampling and changing sample phase | projected frequencies, prefiltering, and temporal behavior |
+| The periphery looks washed out | lost contrast or incorrect encoding | linear-light filtering and surviving frequency bands |
+| Detail pops after a gaze shift | late quality-region placement | acquisition-to-visible timing and gaze-landing errors |
+| A ghost follows a character | invalid history reuse | motion, depth, identity, and disocclusion |
+| Sample savings give little speedup | unchanged bottleneck or added overhead | actual shader work and whole-frame profiling |
+| A metric improves but the headset looks worse | the metric misses the relevant effect | contrast, flicker, binocular cues, and calibration |
+| Sharp stereo gives the wrong depth | disparity, focus, or fusion mismatch | per-eye calibration and a defined depth task |
+
+These are hypotheses to test, not automatic diagnoses. More than one mechanism can be present.
+
+### Complete numerical and image-space laboratory
+
+Save the following complete program and run it with Python 3 and assertions enabled. It uses only the standard library.
+
+Both allocation methods are evaluated using the same true gaze. Changing the metric's gaze as well as the rendering policy would mix two different changes into one comparison.
+
+```python
+"""XR01: numerical and image-space witnesses, not perceptual/GPU validation."""
+import cmath
+import math
+
+def close(a, b, tolerance=1e-10):
+    assert abs(a-b) <= tolerance, (a,b)
+
+def decode_srgb(c):
+    if not 0 <= c <= 1:
+        raise ValueError("laboratory uses normalized nonnegative sRGB")
+    return c/12.92 if c <= 0.04045 else ((c+0.055)/1.055)**2.4
+
+def encode_srgb(c):
+    if not 0 <= c <= 1:
+        raise ValueError("laboratory uses normalized nonnegative linear RGB")
+    return 12.92*c if c <= 0.0031308 else 1.055*c**(1/2.4)-0.055
+
+def dft(values):
+    n=len(values)
+    return [sum(v*cmath.exp(-2j*math.pi*k*i/n)
+                for i,v in enumerate(values)) for k in range(n)]
+
+def ray(x,y,width,height,hfov_degrees):
+    # Pixel centers; pinhole camera with square pixel pitch on its image plane.
+    scale=math.tan(math.radians(hfov_degrees)/2)
+    rx=(2*(x+0.5)/width-1)*scale
+    ry=(1-2*(y+0.5)/height)*scale*height/width
+    length=math.sqrt(rx*rx+ry*ry+1)
+    return (rx/length,ry/length,1/length)
+
+def angle(a,b):
+    # Inputs are unit directions in a common frame.
+    return math.degrees(math.acos(max(-1,min(1,sum(x*y for x,y in zip(a,b))))))
+
+def blur(image):
+    # Normalized 3x3 separable kernel, explicit clamped boundary policy.
+    height,width=len(image),len(image[0])
+    taps=(0.25,0.5,0.25)
+    return [[sum(taps[dy+1]*taps[dx+1] *
+                 image[min(height-1,max(0,y+dy))][min(width-1,max(0,x+dx))]
+                 for dy in (-1,0,1) for dx in (-1,0,1))
+             for x in range(width)] for y in range(height)]
+
+def allocate_quality(image, gaze_ray, radius=5):
+    # Full reference was computed first: this does NOT avoid original shading.
+    height,width=len(image),len(image[0])
+    low=blur(image)
+    output=[]
+    for y in range(height):
+        row=[]
+        for x in range(width):
+            e=angle(ray(x,y,width,height,60),gaze_ray)
+            t=max(0,min(1,(e-radius)/5))
+            blend=t*t*(3-2*t)
+            row.append((1-blend)*image[y][x]+blend*low[y][x])
+        output.append(row)
+    return output
+
+def metrics(reference, output, gaze_ray, sigma=5, floor=0.05):
+    # Scalar linear-light toy data; same true gaze used for all comparisons.
+    if sigma <= 0 or floor < 0:
+        raise ValueError("invalid metric weights")
+    height,width=len(reference),len(reference[0])
+    squares=[]
+    weighted=total_weight=0.0
+    for y in range(height):
+        for x in range(width):
+            error=(reference[y][x]-output[y][x])**2
+            e=angle(ray(x,y,width,height,60),gaze_ray)
+            weight=floor+math.exp(-e*e/(2*sigma*sigma))
+            squares.append(error)
+            weighted+=weight*error
+            total_weight+=weight
+    mse=sum(squares)/len(squares)
+    return mse,weighted/total_weight
+
+def main():
+    width,distance,pixels=0.53,0.60,1920
+    fov=math.degrees(2*math.atan(width/(2*distance)))
+    average_ppd=pixels/fov
+    center_ppd=distance/(width/pixels)*math.pi/180
+    assert center_ppd < average_ppd
+    print(f"planar FOV={fov:.6f} deg; average PPD={average_ppd:.6f}; "
+          f"center PPD={center_ppd:.6f}")
+
+    for n in range(30):
+        close(math.cos(2*math.pi*13*n/10),math.cos(2*math.pi*3*n/10))
+        close(math.sin(math.pi*n),0)
+    checker=[float(i%2) for i in range(16)]
+    wrong=checker[::2]
+    prefiltered=[(checker[i]+checker[i+1])/2 for i in range(0,16,2)]
+    assert all(v==0 for v in wrong) and all(v==0.5 for v in prefiltered)
+
+    n=128
+    values=[0.5+0.3*math.sin(2*math.pi*7*i/n)+
+            0.1*math.sin(2*math.pi*29*i/n) for i in range(n)]
+    spectrum=dft(values)
+    close(spectrum[0].real/n,0.5)
+    close(2*abs(spectrum[7])/n,0.3)
+    close(2*abs(spectrum[29])/n,0.1)
+    print("DFT interior one-sided amplitudes: bin7=0.3, bin29=0.1")
+    for f in (0.05,0.25):
+        print(f"Gaussian MTF at {f} cycles/pixel: "
+              f"{math.exp(-2*math.pi**2*f*f):.6f}")
+    close(decode_srgb(encode_srgb(0.5)),0.5,tolerance=1e-9)
+    print(f"linear black/white mean encoded={encode_srgb(0.5):.6f}; "
+          f"encoded 0.5 decodes={decode_srgb(0.5):.6f}")
+
+    scale,shape=2.0,3.0
+    threshold=scale*math.log(2)**(1/shape)
+    close(1-0.5*math.exp(-(threshold/scale)**shape),0.75)
+    alpha=0.2
+    squared_weight_sum=sum((alpha*(1-alpha)**j)**2 for j in range(1000))
+    close(squared_weight_sum,alpha/(2-alpha))
+    close(0.6+0.4*0.3,0.72)
+
+    w,h=32,24
+    image=[[0.5+0.25*math.sin(2*math.pi*7*x/w)+
+            0.15*math.sin(2*math.pi*5*y/h) for x in range(w)] for y in range(h)]
+    gaze=ray(23,12,w,h,60)
+    fixed=allocate_quality(image,ray(15.5,11.5,w,h,60))
+    dynamic=allocate_quality(image,gaze)
+    for label,output in (("fixed",fixed),("gaze-following",dynamic)):
+        assert all(math.isfinite(v) for row in output for v in row)
+        mse,weighted=metrics(image,output,gaze)
+        print(f"{label}: MSE={mse:.8f}; weighted MSE={weighted:.8f}")
+    flat=[[0.4]*w for _ in range(h)]
+    close(metrics(flat,allocate_quality(flat,gaze),gaze)[0],0)
+    print("XR01 numerical laboratory: all assertions passed")
+
+if __name__ == "__main__":
+    main()
+```
+
+The DFT uses 128 samples with frequencies aligned to its bins. This demonstrates the transform and amplitude convention, not a fast algorithm or a general frequency estimator.
+
+The downsampling example begins with alternating zero and one. Taking only even samples gives all zeros. Averaging each pair first gives 0.5. That makes the lost-information problem visible in a very small example.
+
+The image experiment uses a finite $3\times3$ filter and scalar linear-light data. It does not claim that one allocation wins for every image or that its error is invisible to people.
+
+Its basic filter check is that constant input remains constant under the stated boundary and weighting rules.
+
+## Teach the distinctions from a blank board
+
+Use these questions to test explanations, not memorized wording:
+
+1. How does a surface's radiance become display light and then receptor responses? Why is RGB not a wavelength?
+2. What distinguishes radiance from irradiance, and luminance from illuminance?
+3. How do average PPD and local center PPD differ? How would you obtain an angular direction from an image location?
+4. Why can focus and vergence ask for different distances in a headset?
+5. How do acuity, contrast sensitivity, masking, crowding, and attention differ?
+6. Which time should a gaze prediction describe? How does pursuit change retinal motion?
+7. Why do 13 Hz and 3 Hz give the same cosine samples at 10 Hz? What can fail at exactly the Nyquist boundary?
+8. What do Fourier magnitude and phase describe? Why does a one-sided amplitude report need a normalization convention?
+9. Why must filtering come before downsampling? What information can bilinear interpolation not recover?
+10. How are PSF, OTF, and MTF related? What assumptions make that relationship useful?
+11. What distinguishes coverage sampling, shading evaluations, reconstruction, and actual work saved?
+12. When does temporal accumulation reduce noise? When can its history instead be wrong?
+13. How should black and white be averaged in linear light and then encoded?
+14. Can equal MSE mean equal appearance? What extra assumptions does a perceptual model add?
+15. How is the 75%-correct threshold derived from the fitted curve?
+16. How does checking a paper's code differ from reproducing its human-study result?
+17. Why does 70% less work in one stage not mean a 70% faster frame?
+
+A few research terms are worth keeping close:
+
+| Term | Meaning |
+|---|---|
+| Calibration | establishing how measurements or coordinates relate to known references |
+| External validity | how far a conclusion applies beyond the tested conditions |
+| Uncertainty | what the evidence does and does not establish about an estimate |
+| Stereo disparity | a defined difference between corresponding binocular signals, not simply a depth-buffer value |
+| Ghosting | old content appearing where it no longer belongs |
+| Judder | uneven perceived progression of motion |
+| Bootstrap | estimating variability by resampling under stated assumptions |
+| Replication | repeating a clearly identified computational or perceptual test |
+
+The [[Keyword Index]] links to the reusable concepts. Their definitions support this chapter; they do not replace the explanations here.
+
+## What the next sources must add
+
+The source previews geometry, tracking, sensor fusion, display pipelines, GPU execution, Vulkan, OpenXR, and ILLIXR. It also previews prediction and replication experiments. Those inputs have not yet been received.
+
+**Six degrees of freedom** means three position components and three rotation components. It does not mean six arbitrary sensor readings.
+
+As the sources arrive, we will extend this same independent file. Later material will deepen earlier definitions and connect the foundations to actual systems.
+
+The 3,000-part curriculum's numbering remains unchanged.
+
+[[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent source coverage]] · [[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#XR - Sampling, contrast transfer and temporal evidence|Deeper reconstructions]] · [[Supplementary/Worked Traces#XR - From geometry to sample loss and evidence|Extended traces]] · [[Supplementary/Sources and Code Anchors#XR01 - Seeing and representing reality|Evidence, corrections and verification]] · [[Dependency Map]] · [[Visual Recall/XR - Light, Vision and Perception - Visual Recall|Visual-recall board]]
+
+
+## Recovered cumulative reconstruction proofs
+
+These complete proof sections are recovered from the retained pre-cleanup derivation snapshot. They restore the targets of stale navigation links and supplement the teaching already in this volume.
+
+## XR - Sampling, contrast transfer and temporal evidence
+
+### Why local pixels per degree is not the average
+
+Start with a flat screen. Let its width be $W$, its viewing distance $D$, and its number of pixel columns $N$. The viewer looks at the center.
+
+Pixel pitch is $p=W/N$. For a point at angle $\theta$:
+
+$$
+x=D\tan\theta.
+$$
+
+The angle is in radians. Differentiating gives the amount of screen distance per angular change:
+
+$$
+\frac{dx}{d\theta}=D\sec^2\theta.
+$$
+
+Divide by pixel pitch to get pixels per radian. Then multiply by $\pi/180$ to get pixels per degree.
+
+At the center:
+
+$$
+\mathrm{PPD}_0=\frac{DN}{W}\frac{\pi}{180}.
+$$
+
+The average density uses the entire field of view instead:
+
+$$
+\mathrm{PPD}_{\mathrm{average}}
+=\frac{N}{(360/\pi)\tan^{-1}(W/(2D))}.
+$$
+
+With $W=0.53\,\mathrm{m}$, $D=0.60\,\mathrm{m}$, and $N=1920$, the center has about 37.9362 PPD. The average is about 40.2863 PPD.
+
+These numbers answer different questions. They are not conflicting measurements. A different projection or lens distortion requires its own mapping. See [[Visual angle and calibrated rays]].
+
+### Sampling creates ambiguity before reconstruction begins
+
+Take sample index $n$ and change the original frequency from $f_0$ to $f_0+mf_s$, where $m$ is an integer.
+
+The extra phase is $2\pi mn$. At integer sample positions it is a whole number of cycles, so the samples do not change. For a real cosine, negative-frequency equivalence also matters.
+
+In frequency coordinates, sampling repeats the original spectrum every $f_s$. If that spectrum occupies $[-B,B]$, the copies stay separate when:
+
+$$
+f_s>2B.
+$$
+
+This is the strict band-limited form used here.
+
+Sinc reconstruction can select the original copy under the ideal assumptions. Once copies overlap, later smoothing cannot generally identify which part came from which original frequency.
+
+The boundary case also matters. At $f_s/2$, a sine can give:
+
+$$
+\sin(\pi n)=0
+$$
+
+for every integer $n$. The continuous signal is nonzero between those observations.
+
+### A normalized filter preserves constants, not arbitrary details
+
+For convolution:
+
+$$
+y[n]=\sum_k h[k]x[n-k],
+$$
+
+a constant input $x[n]=a$ gives:
+
+$$
+y[n]=a\sum_k h[k].
+$$
+
+The filter preserves the constant when its weights sum to one and its boundary rule also preserves constants.
+
+The weights $1/4$, $1/2$, and $1/4$ have frequency response:
+
+$$
+H(\omega)=\frac{1+\cos\omega}{2}.
+$$
+
+The gain is one at $\omega=0$ and zero at $\omega=\pi$.
+
+A balanced difference of two normalized Gaussians instead has zero DC response. Unequal gains do not necessarily cancel.
+
+For the stated continuous Gaussian blur model:
+
+$$
+\mathrm{MTF}(f)=e^{-2\pi^2\sigma^2f^2}.
+$$
+
+Use matching units for blur width $\sigma$ and frequency $f$. A finite discrete kernel need not have exactly this response.
+
+### Temporal variance and age are conditional results
+
+Assume a constant blend factor $\alpha$, a stationary target, correct alignment, and independent observations with equal noise variance.
+
+The weight given to an observation $j$ frames old is:
+
+$$
+w_j=\alpha(1-\alpha)^j.
+$$
+
+The weights sum to one. For independent noise, variance uses the sum of squared weights:
+
+$$
+\frac{\operatorname{Var}(H)}{\operatorname{Var}(C)}
+=\frac{\alpha^2}{1-(1-\alpha)^2}
+=\frac{\alpha}{2-\alpha}.
+$$
+
+The mean age is:
+
+$$
+\operatorname{meanAge}=\frac{1-\alpha}{\alpha}
+\quad\text{frames}.
+$$
+
+These formulas explain noise reduction and delayed response. They do not prove valid history after disocclusion or a changing target. Correlated errors add covariance terms, and reducing variance does not remove bias. See [[Temporal reprojection and history validation]].
+
+### Psychometric scale is not itself the chosen threshold
+
+Use the illustrative curve:
+
+$$
+F(x)=1-\frac12e^{-(x/\lambda)^k},
+\qquad \lambda>0,\quad k>0.
+$$
+
+Define the threshold $T$ as the stimulus level giving 75% correct:
+
+$$
+F(T)=0.75.
+$$
+
+Rearrange:
+
+$$
+e^{-(T/\lambda)^k}=\frac12.
+$$
+
+Taking logarithms gives:
+
+$$
+\left(\frac{T}{\lambda}\right)^k=\ln2.
+$$
+
+Therefore:
+
+$$
+T=\lambda(\ln2)^{1/k}.
+$$
+
+The numerical lab verifies $F(T)=0.75$ for illustrative parameters. It does not fit participant responses or validate a paper's fitted coefficients.
+
+
 ## Mathematical language: points, vectors, and derivatives
 
 Build a precise mathematical vocabulary before composing transformations or interpreting numerical results.
@@ -33655,6 +35497,9825 @@ Antialiasing is costly in a raster pipeline because shading can be much more exp
 Mipmapping stores a pyramid of prefiltered textures. Choosing only the nearest level can cause a discontinuity as an object moves through a level threshold. Trilinear filtering blends the two neighboring mip levels; each lookup is bilinear in UV, so a trilinear lookup conceptually combines eight texel values. For a tilted triangle, the screen pixel footprint maps to a stretched ellipse in UV. Let $J=\partial(u,v)/\partial(x,y)$; its four partial derivatives describe how one screen pixel expands and rotates in texture space. The [[Singular value decomposition|singular directions]] of $J$ estimate major and minor footprint axes. [[Convolution and filter footprints|Anisotropic filtering]] approximates this ellipse with several circular/mip samples, improving detail along the short axis without aliasing along the long one. [[#MITG-18 - Rasterization II|MITG-18]] (00:53:00–01:03:20)
 
 Transparency complicates a single nearest-depth buffer because multiple layers contribute. A simple approximation draws opaque geometry first, then transparent surfaces with depth testing enabled but depth writes disabled. This lets a transparent window be occluded by a nearer opaque object while allowing multiple transparent layers to blend, though overlapping transparent surfaces still require careful order or more elaborate per-pixel fragment storage. A deferred shading pass stores visible depth and material/BRDF parameters first, then shades only the surface that survived visibility. A pre-Z pass writes depth before expensive shading; tile-based rendering limits active buffers to screen regions, which is especially useful on memory-limited mobile hardware. [[#MITG-18 - Rasterization II|MITG-18]] (01:16:39–01:22:02)
+
+## From measured samples to parallel GPU execution
+
+The triangle pipeline needs an explicit shader-memory ABI and a model of parallel work before an API call is meaningful. This full existing teaching chapter connects alignment, buffers, invocation scheduling, synchronization, arithmetic intensity and reusable GPU algorithms to those pixel calculations.
+
+## Make a shader record an explicit binary contract
+
+The CPU writes bytes; the shader interprets them using offsets, strides, scalar widths and layout rules. A [[Concepts/Shader buffer ABI|shader ABI]], or application binary interface, is that agreement at the byte boundary. A C++ field name does not communicate its intended offset to a GPU. The same is true of a C++ `bool`: its representation is not an automatic portable shader representation. Prefer an explicit integer flag and verify the complete packed record.
+
+Alignment is the set of byte addresses at which a value may begin. Size is how much storage represents the value. Array stride is the distance from the start of one element to the next. These quantities can differ. Under ordinary extended-alignment `std140` rules, a `vec3` begins at a 16-byte-aligned offset but its three float components occupy 12 bytes. A following scalar can occupy the fourth slot when the layout rules permit it. Treating every `vec3` as an unconditional 16-byte payload gives wrong predictions for some legal structures. Inspect compiler-generated member offsets and array strides, and assert the corresponding CPU offsets.
+
+For the GLSL block `float exposure; vec3 color; float roughness; vec2 uvScale;`, the ordinary member offsets are $0,16,28,32$ and the block's rounded structure extent is 48 bytes. This is a layout calculation, not proof that an arbitrary C++ type has that representation. Arrays of floats have stride 16 under `std140` and stride 4 under ordinary base-alignment `std430`. Vulkan's permitted uniform-block layouts depend on enabled features; feature promotion to a core API version does not make every optional feature automatically enabled. [Khronos shader memory layout guide](https://docs.vulkan.org/guide/latest/shader_memory_layout.html)
+
+Texture descriptor indexing changes how a shader finds an image; it does not remove resource lifetime or synchronization obligations. A descriptor is a binding record. An index into a table is an identifier. Neither means the allocation remains alive until a pending draw finishes. Track generation, ownership and completion independently. The material-facing interpretation remains in [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Ask a surface where incoming energy can go]].
+
+## Let many invocations cooperate without inventing a global clock
+
+A GPU dispatch launches many invocations: individual executions of a kernel. A workgroup is a set of invocations that can use a common shared-memory region and workgroup synchronization. A subgroup is a smaller execution collective exposed by an API. NVIDIA often calls its hardware collective a warp, while other vendors use wave terminology. Width and supported operations must be queried or constrained; 32 lanes is an example, not a portable constant.
+
+SIMT means single instruction, multiple threads. Many logical invocations execute instructions through grouped hardware. If lanes disagree on a branch, hardware may execute different paths with different active-lane masks. This is divergence. Its cost depends on the actual paths, reconvergence, compiler lowering and hardware. Removing a useful branch can increase work, so measure the kernel rather than memorizing that every branch is expensive.
+
+Latency is how long an individual operation takes. Throughput is how much work completes per unit time. A GPU can hide a memory wait by issuing ready work from another resident group. Occupancy measures the fraction of a relevant hardware residency limit occupied by active work; it is not a direct measure of useful work completed. Registers, shared memory, group size and implementation-specific allocation granularity constrain residency. More occupancy can help a latency-bound kernel and still lose to a lower-occupancy kernel that performs less work.
+
+Coalescing combines suitable nearby lane accesses into fewer memory transactions. Shared-memory bank conflicts arise when concurrent accesses need conflicting service from the same hardware bank. These are different mechanisms. A padded transpose tile can remove a bank conflict while leaving global access unchanged. Texture caches and unified physical memory likewise do not remove the need to reason about access patterns.
+
+### Scan turns local counts into nonoverlapping output regions
+
+Suppose four visible objects emit $c=(2,0,3,1)$ records. The [[Concepts/Prefix scan and stream compaction|exclusive prefix sum]] is $o=(0,2,2,5)$. Object $i$ owns the interval $[o_i,o_i+c_i)$. These intervals do not overlap; their total output size is six. This explains why scan appears in visibility compaction, mesh generation, radix sorting and variable-length expansion. The mathematics is an allocation proof, not just a trick for adding numbers.
+
+For large arrays, first scan blocks locally, scan their totals, then add each block's offset. If all workgroups cannot synchronize within the dispatch, use separate dispatch phases with explicit dependencies. A dispatch boundary by itself is not a universal memory-visibility guarantee. The consumer must wait for the relevant producer writes in the API's execution and memory model. In Vulkan, stage and access scopes identify those producer and consumer operations. [Khronos synchronization specification](https://docs.vulkan.org/spec/latest/chapters/synchronization.html)
+
+```mermaid
+flowchart LR
+  A["Counts: 2, 0, 3, 1"] --> B["Exclusive scan: 0, 2, 2, 5"] --> C["Owned ranges: two, zero, three, one"] --> D["Scatter six records"]
+  classDef allocation fill:#fff1dc,stroke:#a46a24,color:#55340f;
+  class A,B,C,D allocation;
+```
+
+Atomicity, ordering and rendezvous answer different questions. An atomic addition prevents that counter update from being torn or lost. Memory ordering governs visibility and order of related operations. A workgroup barrier makes the participating invocations meet at a synchronization point and establishes the specified memory effects. An atomic counter does not by itself establish that unrelated payload writes are ready for a reader. A workgroup barrier does not make another workgroup finish.
+
+Consider a final partially filled group in a tiled matrix multiply. Some lanes represent out-of-range matrix elements. They should write neutral zero values into their assigned shared slots and still participate in every required group barrier. Returning before a barrier that the other lanes reach can violate the synchronization contract. After consuming a shared tile, another barrier may be needed before any lane overwrites it for the next iteration. The first barrier protects consumers from incomplete loads; the second protects slower consumers from premature reuse.
+
+### Load a partial matrix tile with two different bounds
+
+The supplied tiled multiplication excerpt uses a placeholder `valid` for both input loads. That placeholder is not a sufficient complete bounds rule. Let the left matrix have shape $M\times K$ and the right matrix shape $K\times N$. For tile width $T$, row $r$, column $c$, inner-dimension base $b$, and local coordinates $(l_x,l_y)$, the two legal-load predicates are
+
+$$
+\text{left valid}:\quad r<M\ \land\ b+l_x<K,
+\qquad
+\text{right valid}:\quad b+l_y<K\ \land\ c<N.
+$$
+
+A thread whose output column is out of range can still need to load a left-hand element for another thread's valid output. Similarly, an out-of-range output row does not by itself make its right-hand load unnecessary. Mask the two loads separately, write zero for each missing element, and let every participating thread reach both barriers. Finally store only when $r<M$ and $c<N$. A zero-padded last tile makes the full inner tile loop valid without reading past either input.
+
+```metal
+// Illustrative tile body, with T x T participating threads.
+// lhsTile and rhsTile are threadgroup arrays declared by the kernel.
+for (uint base = 0; base < K; base += T) {
+    lhsTile[local.y][local.x] =
+        (row < M && base + local.x < K)
+        ? lhs[row * K + base + local.x] : 0.0f;
+    rhsTile[local.y][local.x] =
+        (base + local.y < K && column < N)
+        ? rhs[(base + local.y) * N + column] : 0.0f;
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    for (uint j = 0; j < T; ++j)
+        sum += lhsTile[local.y][j] * rhsTile[j][local.x];
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+}
+if (row < M && column < N)
+    output[row * N + column] = sum;
+```
+
+This is a kernel fragment with explicit assumptions, not a standalone compiled Metal program. CPU emulation of its load masks and arithmetic is recorded separately; that check does not establish Metal compilation, GPU synchronization or device behavior.
+
+The following supplied GPU lessons retain implementation-specific examples as source observations. Their Kairo and Maveb claims describe the supplied snapshot; this integration has not established that they match today's repositories or tested their kernels on a GPU.
+
+
+Implementation-specific passages retain observations from the supplied Kairo/Maveb snapshot. They are not a fresh audit of those repositories. Source exercises and illustrative code are teaching material; only explicitly recorded checks have been executed here.
+
+**Material representation has several layers**
+
+A healthy engine should distinguish at least these domains:
+
+```text
+authoring/interchange material
+        ↓
+persistent engine artifact
+        ↓
+runtime renderer-neutral material
+        ↓
+GPU material record
+        ↓
+shader representation
+```
+
+These do **not** need to have identical C++ structs.
+
+For Kairo today:
+
+```text
+glTF material
+    ↓
+GltfMaterialData
+    ↓
+MakeGltfPBRMaterial()
+    ↓
+PBRMaterial
+    ↓
+MaterialUniform + descriptors
+    ↓
+GLSL MaterialData
+```
+
+That is already the correct broad layering.
+
+The danger begins when one layer's ABI accidentally leaks into another.
+
+---
+
+**GPU data layout is an ABI**
+
+Suppose C++ contains:
+
+```cpp
+struct Material
+{
+    Vec3 baseColor;
+    float roughness;
+    float metallic;
+};
+```
+
+and GLSL says:
+
+```glsl
+layout(std140) uniform Material
+{
+    vec3 baseColor;
+    float roughness;
+    float metallic;
+};
+```
+
+You cannot assume:
+
+```text
+same field names
+→ same bytes.
+```
+
+CPU and GPU must agree on:
+
+$$
+\text{offset},
+$$
+
+$$
+\text{alignment},
+$$
+
+$$
+\text{stride},
+$$
+
+$$
+\text{matrix order},
+$$
+
+$$
+\text{scalar size}.
+$$
+
+This is a binary ABI contract.
+
+---
+
+**Alignment versus size**
+
+These are different concepts.
+
+A scalar `float` has size:
+
+$$
+4
+$$
+
+bytes.
+
+Its alignment is typically:
+
+$$
+4.
+$$
+
+A `vec4` has:
+
+$$
+16\text{-byte size}
+$$
+
+and:
+
+$$
+16\text{-byte alignment}.
+$$
+
+A `vec3` contains 12 bytes of useful numeric data but frequently carries 16-byte alignment requirements in GPU interface layouts.
+
+That mismatch is where many CPU/GPU struct bugs begin.
+
+---
+
+**std140**
+
+`std140` is the traditional extended-alignment layout used especially for uniform blocks.
+
+The broad rules to internalize are:
+
+| Type | Typical std140 base alignment |
+|---|---:|
+| `float` / `int` | 4 |
+| `vec2` | 8 |
+| `vec3` | 16 |
+| `vec4` | 16 |
+| arrays | element alignment/stride rounded to vec4-like 16-byte boundaries |
+| structs | maximum member alignment, rounded to a 16-byte boundary |
+| matrices | treated essentially as aligned vector arrays |
+
+Vulkan documentation refers to std140 as **extended alignment**. [docs.vulkan.org](https://docs.vulkan.org/guide/latest/shader_memory_layout.html?utm_source=chatgpt.com)
+
+The primary characteristic is conservative 16-byte padding for aggregates such as arrays and structures.
+
+---
+
+**Example std140 struct**
+
+Consider:
+
+```glsl
+layout(std140) uniform Example
+{
+    float exposure;
+    vec3  color;
+    float roughness;
+    vec2  uvScale;
+};
+```
+
+Start offset:
+
+$$
+0.
+$$
+
+`exposure`:
+
+$$
+\text{offset}=0,\quad\text{size}=4.
+$$
+
+Next `vec3` requires:
+
+$$
+16\text{-byte alignment}.
+$$
+
+So we jump:
+
+$$
+4\rightarrow16.
+$$
+
+`color` begins at:
+
+$$
+16.
+$$
+
+This immediately introduces 12 bytes between the first float and the vector.
+
+Depending on exact member-layout rules and representation, relying on packing around `vec3` is notoriously error-prone.
+
+A much safer CPU-side shape is:
+
+```cpp
+struct alignas(16) MaterialGPU
+{
+    std::array<float, 4> colorAndExposure;
+    std::array<float, 4> params;
+};
+```
+
+which exactly mirrors:
+
+```glsl
+vec4 colorAndExposure;
+vec4 params;
+```
+
+---
+
+**Why Kairo's current material block is smart**
+
+Kairo shader:
+
+```glsl
+layout(set = 0, binding = 7) uniform MaterialData
+{
+    vec4 baseColorFactor;
+    vec4 emissiveAndNormalScale;
+    vec4 factors;
+    vec4 flags;
+} material;
+```
+
+That is:
+
+$$
+4\times16=64\text{ bytes}.
+$$
+
+CPU:
+
+```cpp
+struct MaterialUniform
+{
+    std::array<float, 16> Values{};
+};
+```
+
+also:
+
+$$
+16\times4=64\text{ bytes}.
+$$
+
+There are no:
+
+- `vec3` packing questions,
+- bool representation questions,
+- irregular offsets,
+- nested arrays.
+
+This is deliberately boring, which is excellent for an ABI.
+
+---
+
+**Kairo's actual 64-byte mapping**
+
+Current packing is essentially:
+
+$$
+\texttt{Values[0..3]}
+=
+(\text{baseRGB},\alpha).
+$$
+
+$$
+\texttt{Values[4..7]}
+=
+(\text{emissiveRGB},\text{normalScale}).
+$$
+
+$$
+\texttt{Values[8..11]}
+=
+(\text{metallic},
+\text{roughness},
+\text{AO},
+\text{alphaCutoff}).
+$$
+
+$$
+\texttt{Values[12..15]}
+=
+(\text{alphaMode},
+\text{doubleSided},
+\text{unused},\text{unused}).
+$$
+
+That maps exactly onto four shader `vec4`s.
+
+This is a very robust GPU-data layout.
+
+---
+
+**Why GPU-side booleans are awkward**
+
+A CPU `bool` may occupy:
+
+$$
+1\text{ byte}.
+$$
+
+A shader boolean in an interface block may obey entirely different representation/alignment requirements.
+
+Therefore sending:
+
+```cpp
+bool doubleSided;
+```
+
+directly into a raw GPU buffer is risky.
+
+Kairo instead converts:
+
+```cpp
+DoubleSided
+```
+
+into:
+
+$$
+0.0\text{ or }1.0
+$$
+
+inside a float slot.
+
+This is simple and portable.
+
+For packed material tables, integers/bitfields are also common.
+
+---
+
+**std430**
+
+`std430` is Vulkan/GLSL's **base alignment** layout.
+
+It relaxes some std140 aggregate padding.
+
+The biggest practical difference is arrays and structures of scalar/small-vector values.
+
+For example, under std140:
+
+```glsl
+float values[4];
+```
+
+commonly has:
+
+$$
+16\text{-byte stride}.
+$$
+
+Thus four floats may consume:
+
+$$
+64\text{ bytes}.
+$$
+
+Under std430:
+
+$$
+\text{stride}=4
+$$
+
+is possible, so the same array uses:
+
+$$
+16\text{ bytes}.
+$$
+
+Vulkan documents std430 as base alignment, and Vulkan 1.2's `uniformBufferStandardLayout` feature allows std430-style layout for uniform buffers as well; storage buffers commonly use it already. [docs.vulkan.org](https://docs.vulkan.org/guide/latest/shader_memory_layout.html?utm_source=chatgpt.com)
+
+---
+
+**Why std430 matters for large material arrays**
+
+Suppose you want:
+
+$$
+100,000
+$$
+
+materials.
+
+Each material contains many scalars.
+
+If every scalar/array element is unnecessarily promoted to 16-byte stride, memory waste becomes substantial.
+
+For huge structured material tables, std430 is much more appropriate.
+
+A modern material SSBO could look like:
+
+```glsl
+layout(std430, set = 1, binding = 0)
+readonly buffer MaterialTable
+{
+    MaterialGPU materials[];
+};
+```
+
+Then each draw carries:
+
+$$
+\texttt{materialIndex}
+$$
+
+instead of rebinding one UBO/descriptor set per material.
+
+That is a major architectural improvement toward GPU-driven rendering.
+
+---
+
+**Example production material GPU record**
+
+A scalable representation might be:
+
+```cpp
+struct alignas(16) MaterialGPU
+{
+    // 16 bytes
+    float BaseColorR;
+    float BaseColorG;
+    float BaseColorB;
+    float BaseColorA;
+
+    // 16 bytes
+    float EmissiveR;
+    float EmissiveG;
+    float EmissiveB;
+    float NormalScale;
+
+    // 16 bytes
+    float Metallic;
+    float Roughness;
+    float AO;
+    float AlphaCutoff;
+
+    // 16 bytes
+    uint32_t BaseColorTexture;
+    uint32_t NormalTexture;
+    uint32_t MetallicRoughnessTexture;
+    uint32_t EmissiveTexture;
+
+    // 16 bytes
+    uint32_t OcclusionTexture;
+    uint32_t Flags;
+    uint32_t TexCoordMask;
+    uint32_t Reserved;
+};
+```
+
+Total:
+
+$$
+80\text{ bytes}.
+$$
+
+The key change is that textures are no longer Vulkan handles inside the struct.
+
+They are **indices into a resource table**.
+
+That is the bridge to bindless rendering.
+
+---
+
+**Padding is part of the format**
+
+Suppose CPU believes:
+
+```text
+roughness offset = 12
+```
+
+but shader believes:
+
+```text
+roughness offset = 16.
+```
+
+Then the shader does not get a subtly inaccurate roughness.
+
+It reads **different bytes**.
+
+A float bit pattern from some unrelated field may become:
+
+$$
+-3.4\times10^{20}
+$$
+
+or:
+
+$$
+NaN.
+$$
+
+This can then propagate into:
+
+$$
+D_{\text{GGX}}
+$$
+
+and the entire framebuffer.
+
+So GPU layout mismatches are not “serialization bugs.”
+
+They are shader execution corruption.
+
+---
+
+**Compile-time layout defense**
+
+For explicit CPU GPU structures, use assertions:
+
+```cpp
+struct alignas(16) MaterialGPU
+{
+    float BaseColor[4];
+    float EmissiveNormal[4];
+    float Factors[4];
+    float Flags[4];
+};
+
+static_assert(
+    sizeof(MaterialGPU) == 64);
+
+static_assert(
+    alignof(MaterialGPU) == 16);
+
+static_assert(
+    offsetof(MaterialGPU, BaseColor) == 0);
+
+static_assert(
+    offsetof(MaterialGPU, EmissiveNormal) == 16);
+
+static_assert(
+    offsetof(MaterialGPU, Factors) == 32);
+
+static_assert(
+    offsetof(MaterialGPU, Flags) == 48);
+```
+
+That turns a silent rendering bug into a compile-time failure.
+
+Even better, generate CPU/shader layouts from one schema where possible.
+
+---
+
+**Why `std::array<float,16>` is robust but not expressive**
+
+Kairo currently avoids ABI mistakes with:
+
+```cpp
+std::array<float,16>
+```
+
+which is good.
+
+But:
+
+```cpp
+uniform.Values[10]
+```
+
+does not explain itself.
+
+The long-term better pattern is to retain both:
+
+$$
+\text{explicit semantic field names}
+$$
+
+and:
+
+$$
+\text{layout guarantees}.
+$$
+
+For example:
+
+```cpp
+struct alignas(16) MaterialGPU
+{
+    Vec4f BaseColorFactor;
+    Vec4f EmissiveNormalScale;
+    Vec4f Factors;
+    Vec4f Flags;
+};
+```
+
+provided `Vec4f` is explicitly guaranteed to be 16 bytes/aligned as needed.
+
+Then shader and CPU become mechanically readable.
+
+---
+
+**Bindless: what problem are we solving?**
+
+Current Kairo has approximately:
+
+```text
+draw 0
+→ bind descriptor set for material 0
+→ draw
+
+draw 1
+→ bind descriptor set for material 1
+→ draw
+
+draw 2
+→ bind descriptor set for material 2
+→ draw
+```
+
+Every set contains several texture descriptors plus material UBO state.
+
+This is perfectly reasonable for a compact renderer.
+
+But at very large scene scales, explicit per-material rebinding becomes expensive and complicates GPU-driven submission.
+
+Bindless-style rendering changes the model to:
+
+```text
+one large texture/resource table
++
+material contains integer indices
++
+shader dynamically chooses resources
+```
+
+---
+
+**Bindless conceptual model**
+
+Suppose:
+
+```glsl
+layout(set = 0, binding = 0)
+uniform sampler2D textures[];
+```
+
+Material record:
+
+```glsl
+struct MaterialGPU
+{
+    uint baseColorTexture;
+    uint normalTexture;
+    uint mrTexture;
+};
+```
+
+Then:
+
+```glsl
+MaterialGPU m =
+    materials[materialIndex];
+
+vec4 base =
+    texture(
+        textures[
+            nonuniformEXT(
+                m.baseColorTexture)],
+        uv);
+```
+
+Now thousands of materials can coexist without rebinding a different descriptor set for every draw.
+
+---
+
+**Why `nonuniformEXT` exists**
+
+Imagine one GPU wave processes fragments from different materials.
+
+Lane 0 chooses texture:
+
+$$
+17
+$$
+
+while lane 1 chooses:
+
+$$
+42.
+$$
+
+The descriptor index is not uniform across the wave.
+
+Vulkan descriptor indexing explicitly provides support for non-uniform dynamic indexing of descriptor arrays, along with runtime arrays, partially bound arrays and update-after-bind behavior. [docs.vulkan.org](https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html?utm_source=chatgpt.com)
+
+The shader/feature declarations must tell the implementation that indexing can differ across invocations.
+
+This is not merely syntax.
+
+It changes assumptions the compiler may make about descriptor selection.
+
+---
+
+**Descriptor indexing capabilities**
+
+A Vulkan bindless-like design may rely on capabilities such as:
+
+$$
+\texttt{runtimeDescriptorArray},
+$$
+
+$$
+\texttt{descriptorBindingPartiallyBound},
+$$
+
+$$
+\texttt{descriptorBindingVariableDescriptorCount},
+$$
+
+$$
+\texttt{shaderSampledImageArrayNonUniformIndexing},
+$$
+
+and possibly:
+
+$$
+\texttt{updateAfterBind}.
+$$
+
+These features must be queried and enabled; they are not magical properties of declaring `sampler2D[]`. [docs.vulkan.org](https://docs.vulkan.org/guide/latest/extensions/VK_EXT_descriptor_indexing.html?utm_source=chatgpt.com)
+
+---
+
+**Partially bound arrays**
+
+Suppose your shader declares capacity for:
+
+$$
+100,000
+$$
+
+textures.
+
+But currently only:
+
+$$
+11,000
+$$
+
+exist.
+
+Without suitable descriptor-indexing behavior, descriptor validity requirements can force every declared slot to be populated.
+
+With partially bound descriptors, unused dynamically unreferenced entries can remain invalid/unpopulated under the extension's rules. [docs.vulkan.org](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html?utm_source=chatgpt.com)
+
+That makes large resource tables practical.
+
+---
+
+**Update-after-bind**
+
+Ordinarily, descriptor contents are treated as stable while pending GPU work may use them.
+
+Update-after-bind relaxes some of those rules.
+
+This is useful for streaming:
+
+```text
+frame running
+    ↓
+new texture finishes loading
+    ↓
+descriptor table slot updated
+```
+
+without rebuilding every material.
+
+But this flexibility introduces strict lifetime/synchronization responsibilities. Vulkan's descriptor-indexing documentation emphasizes that descriptor updates and resource lifetime still need precise correctness rules. [docs.vulkan.org](https://docs.vulkan.org/tutorial/latest/Building_a_Simple_Engine/Advanced_Topics/Descriptor_Indexing_UpdateAfterBind.html?utm_source=chatgpt.com)
+
+“Bindless” does not mean “lifetime-less.”
+
+---
+
+**A bindless handle is not ownership**
+
+Suppose material stores:
+
+$$
+\text{textureIndex}=317.
+$$
+
+If texture 317 is destroyed while a command buffer still references that index, the integer remains 317.
+
+It has not become safe.
+
+A scalable renderer therefore needs some policy around:
+
+- descriptor-slot lifetime,
+- deferred destruction,
+- frame fences,
+- generation counters,
+- residency,
+- streaming.
+
+The hard part of bindless architecture is often resource lifetime, not shader syntax.
+
+---
+
+**Descriptor indexing and GPU-driven rendering fit together**
+
+From Pass 2:
+
+GPU-driven rendering wants the GPU to generate draw commands.
+
+If each generated draw requires the CPU to bind a unique material descriptor set, we lose much of the point.
+
+Instead:
+
+```text
+draw command
+contains materialID
+        ↓
+shader
+loads MaterialGPU[materialID]
+        ↓
+MaterialGPU
+contains texture indices
+        ↓
+descriptor table
+```
+
+Now the entire rendering decision can stay on GPU-visible data.
+
+This is why:
+
+$$
+\boxed{
+\text{bindless resources}
++
+\text{material tables}
++
+\text{indirect draws}
+}
+$$
+
+form such a common modern architecture.
+
+---
+
+
+
+### + M129
+
+Phase 22 begins by changing the question again.
+
+In Phase 21 we asked:
+
+$$
+\boxed{\text{How do I construct a correct Monte Carlo estimator?}}
+$$
+
+Now the question is:
+
+$$
+\boxed{\text{How do I make millions of copies of useful work execute efficiently on throughput hardware?}}
+$$
+
+
+The curriculum's own repository anchors are unusually useful here because Maveb already contains a real Metal Gaussian pipeline with **Blelloch scan, subgroup operations, threadgroup barriers, radix histograms, prefix sums and stable key/value scatter**. So this pass is not merely explaining textbook GPU algorithms—we can reverse-engineer code you already have.
+
+---
+
+### GPU EXECUTION ARCHITECTURE
+
+**CPU and GPU optimization start from different goals**
+
+A modern high-performance CPU is strongly optimized for **low latency on relatively few instruction streams**.
+
+It invests substantial silicon in things such as sophisticated branch prediction, speculative/out-of-order execution, large caches, powerful individual cores and mechanisms for extracting instruction-level parallelism from comparatively narrow serial programs.
+
+A GPU spends vastly more of its resources on arithmetic throughput.
+
+Instead of saying:
+
+> Make one thread finish this operation as soon as physically possible.
+
+the GPU philosophy is closer to:
+
+> Keep an enormous number of arithmetic lanes busy, and when some work stalls, immediately run other work.
+
+The distinction is:
+
+$$
+\boxed{
+\text{CPU}\approx\text{latency-oriented}
+}
+$$
+
+versus:
+
+$$
+\boxed{
+\text{GPU}\approx\text{throughput-oriented}.
+}
+$$
+
+Neither statement is absolute. CPUs have SIMD and many cores; GPUs have caches and sophisticated schedulers. It is the architectural emphasis that differs.
+
+---
+
+**A simple latency versus throughput example**
+
+Imagine a memory operation takes notionally:
+
+$$
+400
+$$
+
+cycles before the requested data is ready.
+
+A CPU might try to avoid waiting by using caches, prefetchers, out-of-order execution and other independent instructions from the same few threads.
+
+A GPU instead may have many groups of threads ready.
+
+Warp A issues a memory load and stalls.
+
+Rather than waiting 400 cycles, the scheduler can issue:
+
+$$
+B,\ C,\ D,\ E,\dots
+$$
+
+provided those groups are ready.
+
+Hence:
+
+$$
+\boxed{
+\text{GPU latency hiding is primarily achieved by having other independent execution groups resident}.
+}
+$$
+
+This is the origin of the occupancy discussion later.
+
+---
+
+**Compute unit / streaming multiprocessor concept**
+
+Different vendors use different terminology.
+
+NVIDIA commonly talks about an SM, or streaming multiprocessor.
+
+AMD commonly uses compute-unit/wave terminology.
+
+Apple exposes Metal execution abstractions rather than requiring you to reason in exact vendor-internal units.
+
+Generically, call it a **compute unit**.
+
+A compute unit contains some combination of execution lanes, warp/wave scheduling hardware, a large register file, fast shared/threadgroup memory, load/store hardware, special-function units and caches/interfaces to the wider GPU memory system.
+
+Many workgroups can potentially reside on one compute unit simultaneously.
+
+The central hierarchy is:
+
+```text id="5kw7e9"
+GPU
+    compute units
+        resident workgroups
+            subgroups / warps / waves
+                lanes / invocations
+```
+
+These levels are not interchangeable.
+
+---
+
+**SIMT**
+
+GPU shader programming exposes what appears to be many scalar threads:
+
+```cpp id="e937zu"
+kernel void Compute(uint id)
+{
+    output[id] =
+        input[id] * 2.0f;
+}
+```
+
+Each invocation appears independent.
+
+But hardware typically groups several invocations and issues the same instruction across their lanes.
+
+This is **Single Instruction, Multiple Threads**:
+
+$$
+\boxed{\text{SIMT}.}
+$$
+
+Each lane has its own logical registers and IDs, but the subgroup often shares instruction issue.
+
+---
+
+**SIMT versus CPU SIMD**
+
+This distinction matters.
+
+Your `KairoSIMD` implementation explicitly executes:
+
+$$
+8
+$$
+
+floats with AVX2:
+
+```cpp id="qpohrx"
+_mm256_add_ps(...)
+```
+
+and:
+
+$$
+16
+$$
+
+with AVX-512:
+
+```cpp id="6vk2sf"
+_mm512_add_ps(...)
+```
+
+There the programmer explicitly says:
+
+$$
+\boxed{\text{perform one vector operation across N lanes}.}
+$$
+
+On the GPU, you write something that appears scalar:
+
+```metal id="2o38s4"
+kernel void add(
+    device const float* a,
+    device const float* b,
+    device float* out,
+    uint id [[thread_position_in_grid]])
+{
+    out[id] =
+        a[id] + b[id];
+}
+```
+
+Hardware groups many such invocations.
+
+So:
+
+$$
+\boxed{
+\text{SIMD: vector lanes explicit in the programming model}
+}
+$$
+
+while:
+
+$$
+\boxed{
+\text{SIMT: scalar-looking invocations grouped by execution hardware}.
+}
+$$
+
+This distinction explains divergence.
+
+---
+
+**Warp, wavefront and subgroup**
+
+The hardware execution group has different names.
+
+Conceptually:
+
+$$
+\boxed{
+W=\{\text{lane}_0,\dots,\text{lane}_{S-1}\}.
+}
+$$
+
+The width:
+
+$$
+S
+$$
+
+is hardware/platform dependent.
+
+Do not write an engine assuming:
+
+$$
+S=32
+$$
+
+unless your target guarantees it.
+
+In cross-platform shader terminology, **subgroup** is the safest conceptual name.
+
+Metal calls corresponding operations `simdgroup` operations.
+
+Vulkan has subgroup operations.
+
+CUDA historically talks about warps.
+
+AMD literature commonly talks about wavefronts.
+
+---
+
+**Maveb already exposes this hierarchy explicitly**
+
+Your Gaussian shader takes:
+
+```metal id="z8wxwy"
+uint lane
+    [[thread_index_in_simdgroup]],
+
+uint simdGroup
+    [[simdgroup_index_in_threadgroup]],
+
+uint simdWidth
+    [[threads_per_simdgroup]],
+
+uint threadsPerGroup
+    [[threads_per_threadgroup]]
+```
+
+That means the shader can distinguish:
+
+$$
+\text{global invocation},
+$$
+
+$$
+\text{threadgroup-local invocation},
+$$
+
+$$
+\text{subgroup},
+$$
+
+$$
+\text{lane within subgroup}.
+$$
+
+That is the complete execution hierarchy M127 is trying to teach.
+
+---
+
+**Invocation IDs**
+
+For a one-dimensional dispatch, global index is conceptually:
+
+$$
+\boxed{
+i=
+gG+l
+}
+$$
+
+where:
+
+$$
+g=\text{workgroup index},
+$$
+
+$$
+G=\text{threads per workgroup},
+$$
+
+$$
+l=\text{local thread index}.
+$$
+
+GPU APIs usually provide this already as a global invocation ID.
+
+In Metal:
+
+```metal id="0x8pi8"
+uint index
+    [[thread_position_in_grid]]
+```
+
+is exactly that.
+
+---
+
+**KairoGPU's vector kernel is the canonical 1D mapping**
+
+Current KairoGPU:
+
+```metal id="v6nvzv"
+kernel void kairo_vector_multiply(
+    device const float* lhs,
+    device const float* rhs,
+    device float* output,
+    constant uint& count,
+    uint index [[thread_position_in_grid]])
+{
+    if (index < count)
+        output[index] =
+            lhs[index] * rhs[index];
+}
+```
+
+The mapping is perfect:
+
+$$
+\boxed{
+\text{one invocation}
+\leftrightarrow
+\text{one array element}.
+}
+$$
+
+No invocation communicates with another.
+
+This is the easiest class of GPU workload.
+
+---
+
+**Workgroups / threadgroups**
+
+Invocations are organized into workgroups.
+
+For one workgroup:
+
+$$
+T=
+T_xT_yT_z.
+$$
+
+All invocations in the group can generally:
+
+$$
+\text{share threadgroup/shared memory}
+$$
+
+and:
+
+$$
+\text{synchronize at workgroup barriers}.
+$$
+
+Different workgroups must be considered independent during one dispatch.
+
+There is no ordinary barrier inside a kernel that says:
+
+> Wait until every workgroup on the entire GPU reaches this point.
+
+That restriction drives many multi-dispatch algorithms.
+
+---
+
+**Why workgroups exist**
+
+Suppose 256 threads need to collaboratively reduce 256 values.
+
+If those threads belong to one workgroup, they can place values into fast threadgroup storage:
+
+```metal id="et2xom"
+threadgroup float scratch[256];
+```
+
+then synchronize:
+
+```metal id="yx8mk8"
+threadgroup_barrier(
+    mem_flags::mem_threadgroup);
+```
+
+and collaboratively operate on the array.
+
+Without workgroup locality, every intermediate exchange would need slower device memory plus more complicated synchronization.
+
+---
+
+**Dispatch grids**
+
+A dispatch consists of many workgroups or a requested grid of threads.
+
+For a 1D array of $N$ elements with workgroup width $G$, conventional APIs dispatch:
+
+$$
+\boxed{
+N_g=
+\left\lceil
+\frac NG
+\right\rceil
+}
+$$
+
+groups.
+
+For example:
+
+$$
+N=1000,
+\qquad
+G=256.
+$$
+
+Then:
+
+$$
+N_g=
+\lceil3.90625\rceil
+=
+4.
+$$
+
+Total threads:
+
+$$
+4\times256=1024.
+$$
+
+Therefore 24 invocations are outside valid input range and must perform:
+
+```cpp id="9wj2yb"
+if (id >= count)
+    return;
+```
+
+This is called **over-dispatch**.
+
+---
+
+**Metal's `dispatchThreads`**
+
+Metal also provides a dispatch interface where the requested logical thread-grid size is explicit:
+
+```objc id="d2ts06"
+dispatchThreads(
+    MTLSizeMake(count, 1, 1),
+    threadsPerThreadgroup);
+```
+
+KairoGPU uses exactly this for vector addition and multiplication.
+
+It still has:
+
+```metal id="ccmw1t"
+if (index < count)
+```
+
+which is harmless defensive correctness.
+
+---
+
+**Workgroup scheduling**
+
+A workgroup is assigned to some compute unit.
+
+Multiple workgroups may be resident on that unit.
+
+Within them, the hardware schedules subgroups.
+
+The essential scheduling object is usually the subgroup/warp/wave rather than an individual invocation.
+
+Conceptually:
+
+```text id="r4h73i"
+cycle:
+    choose ready warp
+    issue instruction
+
+later:
+    warp stalls on memory
+    choose another ready warp
+```
+
+This explains why GPU performance can remain excellent despite high individual memory latency.
+
+---
+
+**Latency hiding**
+
+Imagine each subgroup performs:
+
+```text id="6d38i1"
+load
+wait
+multiply
+store
+```
+
+If only one subgroup is resident, memory latency directly stalls the execution unit.
+
+If 16 are resident:
+
+```text id="bnfz56"
+warp 0 → load, stalls
+warp 1 → execute
+warp 2 → execute
+...
+```
+
+By the time the scheduler returns to warp 0, its load may be ready.
+
+Thus:
+
+$$
+\boxed{
+\text{latency hiding requires enough independent ready work}.
+}
+$$
+
+This is one major role of occupancy.
+
+---
+
+**GPU occupancy**
+
+Occupancy is roughly:
+
+$$
+\boxed{
+O=
+\frac{
+\text{resident active subgroups}
+}{
+\text{hardware maximum resident subgroups}
+}.
+}
+$$
+
+A workgroup consumes finite per-compute-unit resources.
+
+The number of simultaneously resident groups is constrained by the minimum of several limits:
+
+$$
+N_{\text{resident groups}}
+\le
+\min
+\left(
+N_{\text{thread limit}},
+N_{\text{register limit}},
+N_{\text{shared-memory limit}},
+N_{\text{group limit}}
+\right).
+$$
+
+Conceptually:
+
+$$
+N_{\text{reg}}
+=
+\left\lfloor
+\frac{
+R_{\text{CU}}
+}{
+R_{\text{thread}}
+T_{\text{group}}
+}
+\right\rfloor.
+$$
+
+And:
+
+$$
+N_{\text{shared}}
+=
+\left\lfloor
+\frac{
+S_{\text{CU}}
+}{
+S_{\text{group}}
+}
+\right\rfloor.
+$$
+
+Whichever is smallest can become the occupancy bottleneck.
+
+---
+
+**Occupancy example**
+
+Imagine a hypothetical compute unit with:
+
+$$
+65536
+$$
+
+register units available.
+
+A kernel uses:
+
+$$
+R_t=64
+$$
+
+registers/thread.
+
+Workgroup:
+
+$$
+T=256.
+$$
+
+Registers/group:
+
+$$
+64\times256=16384.
+$$
+
+Register limit allows:
+
+$$
+65536/16384=4
+$$
+
+resident groups.
+
+If the compiler increases register usage to:
+
+$$
+128
+$$
+
+per thread:
+
+$$
+128\times256=32768,
+$$
+
+so only:
+
+$$
+2
+$$
+
+groups fit.
+
+Without changing one line of dispatch code, occupancy has potentially halved.
+
+---
+
+**Occupancy is not synonymous with performance**
+
+A kernel at:
+
+$$
+100\%
+$$
+
+occupancy is not automatically faster than one at:
+
+$$
+50\%.
+$$
+
+Suppose lowering register usage to increase occupancy forces values to spill into memory.
+
+You gained resident warps but added expensive memory traffic.
+
+Or a compute-heavy kernel may already have enough instruction-level parallelism to hide latency with fewer warps.
+
+Thus:
+
+$$
+\boxed{
+\text{occupancy is a constraint/diagnostic, not a score to maximize blindly}.
+}
+$$
+
+M132 will return to this tradeoff in even more detail.
+
+---
+
+**Registers**
+
+Every invocation has logical private variables:
+
+```metal id="t9jsa8"
+float sum;
+float3 position;
+float4 color;
+```
+
+The compiler tries to place these in registers.
+
+Registers are extremely fast.
+
+But the physical register file is finite.
+
+That means a deceptively innocent shader variable has a system-level cost:
+
+$$
+\boxed{
+\text{registers/thread}
+\times
+\text{resident threads}
+\le
+\text{register-file capacity}.
+}
+$$
+
+---
+
+**Register pressure**
+
+Register pressure increases from long-lived values, large unrolled loops, large temporary expressions, complex material/path states and local arrays whose indexing cannot be optimized well.
+
+Consider:
+
+```cpp id="g2gruk"
+float a0, a1, a2, a3;
+float b0, b1, b2, b3;
+float c0, c1, c2, c3;
+```
+
+If all remain live simultaneously, compiler must retain them.
+
+If some can be recomputed or have shorter live ranges, registers can be released/reused.
+
+Shader optimization is therefore partly **lifetime engineering**.
+
+---
+
+**Register spilling**
+
+When register demand exceeds what the compiler/hardware can comfortably allocate, some values may spill into a thread-private address space that is physically backed by lower-level memory/cache.
+
+Instead of:
+
+```text id="i9imdl"
+register → ALU
+```
+
+you can get:
+
+```text id="x9gdnc"
+load spill
+ALU
+store spill
+```
+
+This is enormously slower.
+
+Hence a kernel can become slower when you “optimize” it by aggressively unrolling everything.
+
+---
+
+**Shared / threadgroup memory**
+
+Threadgroup memory is fast on-chip storage shared by all invocations of one workgroup.
+
+KairoGPU's tiled matrix multiplication uses:
+
+```metal id="mmlugb"
+threadgroup float lhs_tile[16][16];
+threadgroup float rhs_tile[16][16];
+```
+
+That is the canonical shared-memory use case.
+
+Why?
+
+Without tiling, computing:
+
+$$
+C_{ij}
+=
+\sum_{k=0}^{K-1}
+A_{ik}B_{kj}
+$$
+
+requires every output thread to repeatedly fetch rows and columns from device memory.
+
+With a:
+
+$$
+16\times16
+$$
+
+tile, each workgroup cooperatively loads chunks of $A$ and $B$ once, then reuses those values many times.
+
+---
+
+**KairoGPU matrix multiplication**
+
+Current kernel:
+
+```metal id="tun1bn"
+const uint row =
+    group.y * 16 + local.y;
+
+const uint column =
+    group.x * 16 + local.x;
+
+float sum = 0.0f;
+
+for (uint base = 0;
+     base < K;
+     base += 16)
+{
+    lhs_tile[local.y][local.x] =
+        valid
+        ? lhs[row * K +
+              base + local.x]
+        : 0.0f;
+
+    rhs_tile[local.y][local.x] =
+        valid
+        ? rhs[
+            (base + local.y) *
+            columns +
+            column]
+        : 0.0f;
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+
+    for (uint offset = 0;
+         offset < 16;
+         ++offset)
+    {
+        sum +=
+            lhs_tile[local.y][offset] *
+            rhs_tile[offset][local.x];
+    }
+
+    threadgroup_barrier(
+        mem_flags::mem_threadgroup);
+}
+```
+
+Each loaded tile element is reused by many threads.
+
+That increases arithmetic intensity dramatically.
+
+---
+
+**Why there are two barriers**
+
+The first:
+
+```metal id="lzwp5h"
+threadgroup_barrier(...)
+```
+
+guarantees every thread has finished loading its tile entries before any thread reads the shared tile.
+
+The second guarantees no thread begins overwriting the shared arrays for the next $K$-tile while another is still using the current one.
+
+Without either barrier, you have a race.
+
+---
+
+**Shared-memory bank conflicts**
+
+Shared/threadgroup memory is physically partitioned into banks so multiple lanes can access it simultaneously.
+
+Conceptually:
+
+$$
+\text{bank}(address)
+=
+(address/\text{wordSize})\bmod B
+$$
+
+for some hardware-dependent bank count $B$.
+
+If many lanes access different addresses mapping to the same bank, accesses can serialize.
+
+That is a **bank conflict**.
+
+If lanes access different banks, accesses can proceed in parallel.
+
+---
+
+**Why transpose-like accesses can create bank conflicts**
+
+Imagine a 2D shared array:
+
+```cpp id="32aupj"
+float tile[32][32];
+```
+
+and each lane reads:
+
+```cpp id="dov08i"
+tile[lane][constantColumn]
+```
+
+depending on bank mapping, stride:
+
+$$
+32\times4\text{ bytes}
+$$
+
+may align repeatedly to the same bank.
+
+A classic mitigation is padding:
+
+```cpp id="ucsz3u"
+float tile[32][33];
+```
+
+The extra column changes row stride and therefore bank mapping.
+
+Do not blindly apply CPU cache-line intuition here; shared-memory banks are a distinct hardware organization.
+
+---
+
+### MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING
+
+**Device/global memory**
+
+Device memory is the large memory space holding things such as:
+
+$$
+\text{vertex buffers},
+\text{textures},
+\text{material arrays},
+\text{Gaussian records},
+\text{BVHs},
+\text{scan buffers}.
+$$
+
+It is huge compared with registers/threadgroup storage.
+
+It is also much higher latency.
+
+GPU programming therefore revolves around:
+
+$$
+\boxed{
+\text{use device memory efficiently and reuse data closer to computation whenever possible}.
+}
+$$
+
+---
+
+**Unified memory does not remove GPU memory behavior**
+
+On Apple silicon, CPU and GPU can share physical system memory.
+
+That eliminates some discrete-GPU PCIe transfer problems.
+
+It does **not** mean:
+
+> GPU memory access patterns no longer matter.
+
+The GPU still has:
+
+- caches,
+- transaction widths,
+- load/store units,
+- coalescing behavior,
+- cache-line effects.
+
+A random gather remains far more expensive than a contiguous stream merely because CPU and GPU share DRAM.
+
+---
+
+**GPU caches**
+
+A simplified hierarchy might be conceptualized as:
+
+```text id="q2nq6h"
+registers
+    ↓
+threadgroup/shared memory
+    ↓
+local/on-chip cache
+    ↓
+larger shared cache
+    ↓
+device DRAM
+```
+
+Exact organizations vary heavily between GPUs.
+
+Therefore engine code should optimize for universal principles:
+
+$$
+\text{locality},
+$$
+
+$$
+\text{reuse},
+$$
+
+$$
+\text{coalesced transactions},
+$$
+
+rather than assuming one vendor's exact cache dimensions.
+
+---
+
+**Constant / uniform memory**
+
+Some shader data is identical across many lanes:
+
+```text id="xfh30n"
+camera matrix
+frame constants
+light count
+viewport size
+```
+
+GPU architectures and APIs provide read-only/uniform access mechanisms optimized for this use case.
+
+If every lane requests the same address, the hardware may broadcast/cached-deliver efficiently.
+
+Contrast that with:
+
+```cpp id="7e3tbt"
+constants[laneID]
+```
+
+where each lane accesses a different location.
+
+The first is genuinely uniform.
+
+The second merely happens to reside in a buffer named `constant`.
+
+---
+
+**Texture cache**
+
+Textures are usually sampled with strong 2D spatial locality.
+
+Neighboring fragment invocations tend to access neighboring texels.
+
+Texture hardware is therefore optimized around:
+
+- spatial locality,
+- dedicated caching,
+- address modes,
+- filtering.
+
+Texture cache behavior differs from a plain linear-buffer cache.
+
+This is why an image should often be represented as an actual texture when you need image-sampling semantics rather than manually implementing filtered random buffer reads.
+
+---
+
+**Memory coalescing**
+
+Suppose subgroup lanes read:
+
+$$
+A[i+\text{lane}].
+$$
+
+Addresses are contiguous:
+
+```text id="4d98r5"
+lane 0 → A[100]
+lane 1 → A[101]
+lane 2 → A[102]
+...
+```
+
+The memory system may service many lane requests with a small number of transactions.
+
+This is coalescing.
+
+Conceptually:
+
+$$
+\boxed{
+\text{many lane accesses}
+\rightarrow
+\text{few wide memory transactions}.
+}
+$$
+
+This is ideal.
+
+---
+
+**KairoGPU vector multiply has excellent access locality**
+
+Thread:
+
+$$
+i
+$$
+
+loads:
+
+$$
+lhs[i],
+\quad
+rhs[i]
+$$
+
+and writes:
+
+$$
+out[i].
+$$
+
+Adjacent threads use adjacent values.
+
+So memory traffic is approximately:
+
+```text id="r4zgcd"
+lane 0 → lhs[0]
+lane 1 → lhs[1]
+...
+```
+
+This is almost the ideal streaming GPU workload.
+
+It is a useful baseline against which irregular workloads can be compared.
+
+---
+
+**Alignment**
+
+Suppose a memory transaction naturally covers some aligned region.
+
+A contiguous access beginning exactly at the region boundary can require fewer transactions than one straddling boundaries.
+
+For example, conceptually:
+
+```text id="yfpnbu"
+aligned:
+|----------transaction----------|
+[ lane data .................... ]
+
+misaligned:
+|----------T0----------|
+               [ lane data ............ ]
+                    |----------T1----------|
+```
+
+The exact transaction width depends on hardware.
+
+The universal principle is:
+
+$$
+\boxed{
+\text{naturally aligned contiguous data makes coalescing easier}.
+}
+$$
+
+---
+
+**Strided access**
+
+Consider:
+
+$$
+A[\text{lane}\times32].
+$$
+
+Adjacent lanes now read values separated by:
+
+$$
+32
+$$
+
+elements.
+
+Instead of touching one compact cache region, a subgroup may touch dozens of cache lines.
+
+Bandwidth efficiency collapses.
+
+This is why a matrix should be tiled or transposed appropriately rather than having every thread walk a poorly oriented column directly from global memory.
+
+---
+
+**AoS versus SoA**
+
+Suppose:
+
+```cpp id="4azajn"
+struct Particle
+{
+    Vec3 Position;
+    Vec3 Velocity;
+    float Mass;
+    float Lifetime;
+};
+```
+
+Array of structures:
+
+```text id="9euomv"
+P0 V0 M0 L0
+P1 V1 M1 L1
+...
+```
+
+If a kernel only needs positions, it loads irrelevant fields or jumps with a large structure stride.
+
+Structure of arrays:
+
+```text id="atbpdt"
+Positions[]
+Velocities[]
+Masses[]
+Lifetimes[]
+```
+
+lets adjacent lanes stream only the required field.
+
+SoA often improves GPU bandwidth.
+
+But if every invocation uses the full record, AoS may be perfectly reasonable.
+
+Data layout must match access pattern.
+
+---
+
+**Gather-like access**
+
+Suppose:
+
+```cpp id="yx7r08"
+value =
+    objects[
+        indices[id]
+    ];
+```
+
+`indices[id]` may be arbitrary.
+
+Adjacent lanes might fetch completely unrelated addresses.
+
+That is a gather.
+
+Examples include:
+
+- BVH traversal,
+- indirect particle lists,
+- mesh adjacency,
+- sorted Gaussian references.
+
+These patterns are often cache-latency dominated.
+
+GPU algorithms therefore frequently **sort or bin data first** to make later gathers more coherent.
+
+This is exactly what your Gaussian pipeline is doing.
+
+---
+
+**Maveb Gaussian sorting is a locality transformation**
+
+The Gaussian pipeline generates entries keyed by:
+
+$$
+(\text{depth},\text{tile ID})
+$$
+
+and sorts them so entries for one tile become contiguous.
+
+Then the composite kernel can process one pixel/tile range without globally searching all Gaussians.
+
+So sorting is not merely:
+
+> I need things alphabetically ordered.
+
+It transforms an irregular gather problem into a locally traversable range problem.
+
+That is an important GPU-design pattern.
+
+---
+
+**Branch divergence**
+
+Suppose lanes encounter:
+
+```cpp id="86rlbx"
+if (material == Glass)
+    TraceGlass();
+else
+    TraceDiffuse();
+```
+
+If every lane selects Glass, subgroup runs one path efficiently.
+
+If half choose Glass and half Diffuse, hardware must execute both instruction paths with different active masks.
+
+Conceptually:
+
+```text id="c7d0fn"
+execute Glass:
+    lanes 0,2,5 active
+    others disabled
+
+execute Diffuse:
+    remaining lanes active
+```
+
+That is divergence.
+
+---
+
+**Divergence cost**
+
+A simple mental model is:
+
+$$
+T_{\text{divergent}}
+\approx
+T_A+T_B
+$$
+
+rather than:
+
+$$
+\max(T_A,T_B).
+$$
+
+Real hardware control flow is more sophisticated, but this captures the danger.
+
+If each lane enters a different deep path, SIMD/SIMT utilization can collapse.
+
+This is exactly why wavefront path tracing regrouped rays by material/event in Pass 8.
+
+---
+
+**Uniform branching is cheap**
+
+This:
+
+```cpp id="3mrjt7"
+if (frameDebugMode == 3)
+```
+
+is often uniform across an entire dispatch.
+
+Every lane chooses the same branch.
+
+Therefore:
+
+$$
+\boxed{
+\text{branch instruction}
+\neq
+\text{divergence}.
+}
+$$
+
+The expensive thing is differing control flow across lanes of one subgroup.
+
+---
+
+**Last-workgroup bounds divergence**
+
+A check like:
+
+```metal id="jynsrg"
+if (index >= count)
+    return;
+```
+
+typically diverges only in the final partially occupied subgroup/workgroup.
+
+For large arrays, this cost is tiny.
+
+Do not contort algorithms to eliminate a single tail bounds check.
+
+---
+
+**Reconvergence**
+
+After divergent branches:
+
+```cpp id="x2i0x6"
+if (condition)
+    A();
+else
+    B();
+
+C();
+```
+
+lanes eventually reconverge at `C()`.
+
+GPU control-flow hardware/compiler tracks active masks and reconvergence structure.
+
+The programmer mainly needs to understand that divergent branches consume execution time until reconvergence.
+
+---
+
+**Predication**
+
+For a tiny branch such as:
+
+```cpp id="whgcgz"
+if (x > 0)
+    y = a;
+else
+    y = b;
+```
+
+compiler may execute both simple possibilities and select with a predicate rather than actually branching.
+
+Conceptually:
+
+$$
+y=
+condition?a:b.
+$$
+
+Predication avoids branch-control overhead but executes some unnecessary instructions.
+
+It is excellent for short branches.
+
+Terrible for giant expensive branches.
+
+---
+
+**Subgroup vote operations**
+
+Subgroup operations let lanes cooperate without going through threadgroup memory.
+
+Examples conceptually:
+
+$$
+\operatorname{any}(predicate),
+$$
+
+$$
+\operatorname{all}(predicate),
+$$
+
+$$
+\operatorname{ballot}(predicate).
+$$
+
+Suppose a ray subgroup wants to know:
+
+> Does any ray remain active?
+
+A subgroup-wide `any` can answer quickly.
+
+Ballot returns an active-bit mask useful for compaction/ranking.
+
+---
+
+**Subgroup shuffle**
+
+Shuffle allows one lane to read a value held in another lane's register.
+
+Conceptually:
+
+```cpp id="kjzl1q"
+x =
+    shuffle(value, sourceLane);
+```
+
+No shared memory array.
+
+No ordinary load/store.
+
+This makes reductions and scans inside a subgroup extremely efficient.
+
+For example:
+
+$$
+x_i
+\leftarrow
+x_i+x_{i+16}
+$$
+
+then offsets 8,4,2,1 can reduce a subgroup.
+
+---
+
+**Cross-API subgroup terminology**
+
+Your codebase spans several worlds.
+
+`KairoSIMD` exposes explicit CPU vectors.
+
+Metal exposes `simdgroup` intrinsics.
+
+Vulkax's backend capability model already contains:
+
+```cpp id="1hu377"
+Feature::Subgroups
+```
+
+alongside:
+
+```cpp id="4aem6v"
+Compute
+StorageBuffers
+StorageImages
+Atomics
+Float16
+```
+
+That is the correct engine-level approach:
+
+$$
+\boxed{
+\text{treat subgroup capability as a backend capability, not as an assumption}.
+}
+$$
+
+---
+
+**Maveb uses real subgroup reductions**
+
+Its radix histogram performs:
+
+```metal id="z1r98r"
+const uint matches =
+    digit == bucket ? 1 : 0;
+
+const uint total =
+    simd_sum(matches);
+
+if (lane == 0)
+    simdCounts[
+        simdGroup][bucket] =
+        total;
+```
+
+This is beautiful.
+
+Instead of every thread performing a global atomic increment:
+
+```text id="nh6bpq"
+atomic histogram[bucket]++
+```
+
+each subgroup first aggregates:
+
+$$
+\boxed{
+\text{one count per bucket per subgroup}.
+}
+$$
+
+That drastically reduces contention.
+
+This single kernel demonstrates M128 parts 2128, 2130 and 2133 in real production-like code.
+
+---
+
+**Atomic operations**
+
+An atomic read-modify-write guarantees that competing threads do not lose updates.
+
+For example:
+
+```cpp id="xpapkm"
+atomic_fetch_add(counter, 1);
+```
+
+Two threads cannot both read 5 and both write 6.
+
+Atomic result becomes:
+
+$$
+7.
+$$
+
+Without atomicity:
+
+$$
+5\rightarrow6
+$$
+
+could occur twice with one increment lost.
+
+---
+
+**Atomics are not free serialization breakers**
+
+Suppose:
+
+$$
+1,000,000
+$$
+
+threads all increment one counter.
+
+The operation is correct.
+
+But all accesses contend on the same memory location.
+
+At some level they must serialize.
+
+Thus:
+
+$$
+\boxed{
+\text{atomics solve correctness, not scalability}.
+}
+$$
+
+The algorithm should reduce contention.
+
+---
+
+**Atomic contention**
+
+Compare:
+
+```cpp id="3nct9g"
+atomicAdd(globalCounter, 1);
+```
+
+executed by every thread,
+
+against:
+
+```text id="oah6qe"
+each subgroup counts locally
+one lane adds subgroup count
+```
+
+For subgroup size $S$:
+
+atomic count falls roughly from:
+
+$$
+N
+$$
+
+to:
+
+$$
+N/S.
+$$
+
+Aggregate at workgroup level and it may drop further to:
+
+$$
+N/T_{\text{group}}.
+$$
+
+This is a fundamental pattern:
+
+$$
+\boxed{
+\text{aggregate locally, atomically merge globally}.
+}
+$$
+
+---
+
+**Maveb does this explicitly**
+
+Its parallel radix histogram first computes:
+
+```metal id="l7udrw"
+simd_sum(matches)
+```
+
+then stores subgroup-level counts into:
+
+```metal id="af4u60"
+threadgroup uint
+simdCounts[32][16];
+```
+
+After a barrier, only a small set of threads combines subgroup counts into one group histogram.
+
+That avoids a global atomic for every key.
+
+Exactly what M128 asks you to understand.
+
+---
+
+**Atomic memory ordering**
+
+Atomicity and memory ordering are separate.
+
+Maveb often uses:
+
+```metal id="7dyn47"
+memory_order_relaxed
+```
+
+because it needs the counter update itself to be atomic but does not necessarily require that operation to impose ordering on unrelated memory writes.
+
+General rule:
+
+$$
+\boxed{
+\text{atomic operation}
+\neq
+\text{global synchronization barrier}.
+}
+$$
+
+If another memory dependency exists, it must be expressed separately.
+
+---
+
+**Workgroup barrier**
+
+Maveb's scan uses:
+
+```metal id="jow2md"
+threadgroup_barrier(
+    mem_flags::mem_threadgroup);
+```
+
+This provides a synchronization point for invocations of one threadgroup and visibility of relevant threadgroup-memory writes.
+
+It does **not** synchronize another workgroup somewhere else on the GPU.
+
+That is perhaps the most important synchronization boundary in compute programming.
+
+---
+
+**Barrier convergence requirement**
+
+Suppose:
+
+```cpp id="sp9bsz"
+if (localIndex < 10)
+{
+    threadgroup_barrier(...);
+}
+```
+
+but the workgroup contains 256 invocations.
+
+Only 10 reach the barrier.
+
+The others do not.
+
+That is fundamentally invalid synchronization logic.
+
+Workgroup barriers generally need to be reached coherently by all participating workgroup threads.
+
+This is why scan code places barriers outside conditional bodies even when only some lanes update data.
+
+Maveb does exactly this correctly.
+
+---
+
+**No device-wide barrier inside a normal workgroup kernel**
+
+Suppose group 0 computes a partial result and group 1 needs it.
+
+You cannot generally do:
+
+```cpp id="o1fakh"
+device_barrier_for_every_workgroup();
+```
+
+mid-dispatch.
+
+Workgroups can execute in any order and may not all be resident simultaneously.
+
+Trying to implement a global spin barrier can deadlock:
+
+resident groups wait for unscheduled groups that cannot start because the resident groups are occupying all resources.
+
+The correct structure is often:
+
+$$
+\boxed{
+\text{dispatch A}
+\rightarrow
+\text{global dependency}
+\rightarrow
+\text{dispatch B}.
+}
+$$
+
+---
+
+**Maveb's scan is a real multi-dispatch global synchronization algorithm**
+
+Its pipeline performs conceptually:
+
+```text id="0mnqgj"
+dispatch:
+    scan each 256-element block
+
+dispatch:
+    scan block sums
+
+dispatch:
+    add block offsets
+```
+
+No workgroup barrier could perform this entire global scan by itself because block 7 cannot safely synchronize with block 2.
+
+The dispatch boundary becomes the algorithmic phase boundary.
+
+On different graphics APIs, the precise execution/memory dependency mechanism differs, but the architecture remains:
+
+$$
+\boxed{
+\text{global synchronization}
+\Rightarrow
+\text{kernel/dispatch phase decomposition}.
+}
+$$
+
+---
+
+### GENERAL COMPUTE & PARALLEL ALGORITHMS
+
+**Compute shaders are general GPU kernels**
+
+A compute shader does not need:
+
+- vertices,
+- triangles,
+- rasterization,
+- framebuffer coverage.
+
+It says:
+
+$$
+\boxed{
+\text{run this kernel over a logical N-dimensional grid}.
+}
+$$
+
+That makes GPUs useful for:
+
+- image processing,
+- physics,
+- simulation,
+- sorting,
+- scans,
+- culling,
+- ML,
+- Gaussian splatting preprocessing.
+
+KairoGPU's vector operations and matrix multiply are already pure compute workloads.
+
+Maveb's Gaussian preparation is an entire compute pipeline.
+
+---
+
+**Workgroup size is an algorithmic choice**
+
+You cannot choose:
+
+$$
+T=256
+$$
+
+just because “256 is standard.”
+
+Workgroup size affects:
+
+$$
+\text{subgroup packing},
+$$
+
+$$
+\text{register consumption},
+$$
+
+$$
+\text{shared-memory consumption},
+$$
+
+$$
+\text{occupancy},
+$$
+
+$$
+\text{synchronization cost},
+$$
+
+$$
+\text{data locality}.
+$$
+
+The ideal size depends on the kernel.
+
+---
+
+**Current Kairo/Maveb dispatch policy**
+
+KairoGPU vector kernels choose:
+
+```objc id="ozt45h"
+width =
+    MIN(
+        pipeline.maxTotalThreadsPerThreadgroup,
+        256);
+```
+
+Maveb's generic `dispatch1D()` similarly caps at:
+
+$$
+256.
+$$
+
+This guarantees the group size does not exceed a pipeline limit.
+
+However, neither current code path queries:
+
+```text id="p4wrmn"
+threadExecutionWidth
+```
+
+when choosing the generic group width.
+
+So:
+
+$$
+\boxed{
+256\text{ is a valid cap, not yet an architecture-tuned choice}.
+}
+$$
+
+A more tuned Metal implementation would consider both maximum group size and execution-width/subgroup characteristics.
+
+---
+
+**1D decomposition**
+
+For:
+
+```text id="zugmms"
+vector length = N
+```
+
+map:
+
+$$
+\boxed{
+\text{thread }i
+\rightarrow
+\text{element }i.
+}
+$$
+
+Kairo's vector add/multiply are textbook examples.
+
+Global ID:
+
+$$
+i.
+$$
+
+Bounds:
+
+$$
+i<N.
+$$
+
+Memory:
+
+$$
+A[i],B[i],C[i].
+$$
+
+This has excellent coalescing and essentially no inter-thread communication.
+
+---
+
+**2D decomposition**
+
+For an image:
+
+$$
+W\times H
+$$
+
+thread:
+
+$$
+(x,y)
+$$
+
+handles pixel:
+
+$$
+(x,y).
+$$
+
+Linear index:
+
+$$
+\boxed{
+i=yW+x.
+}
+$$
+
+Typical group:
+
+$$
+16\times16,
+$$
+
+or:
+
+$$
+8\times8,
+$$
+
+depending on workload and hardware.
+
+KairoGPU's matrix multiplication uses:
+
+$$
+16\times16=256
+$$
+
+threads per group.
+
+---
+
+**Kairo matrix dispatch geometry**
+
+Host:
+
+```cpp id="dgqe6p"
+dispatchThreadgroups(
+    {
+        ceil(columns / 16),
+        ceil(rows / 16),
+        1
+    },
+
+    {
+        16,
+        16,
+        1
+    });
+```
+
+Shader:
+
+$$
+row=
+group_y16+local_y,
+$$
+
+$$
+column=
+group_x16+local_x.
+$$
+
+This is exact 2D decomposition.
+
+---
+
+**3D decomposition**
+
+A volume:
+
+$$
+W\times H\times D
+$$
+
+maps naturally to invocation coordinate:
+
+$$
+(x,y,z).
+$$
+
+Linear index:
+
+$$
+\boxed{
+i=
+x+
+yW+
+zWH.
+}
+$$
+
+This appears in:
+
+- voxel grids,
+- TSDF volumes,
+- fluid simulation,
+- 3D cellular grids,
+- volumetric lighting.
+
+A group might be:
+
+$$
+8\times8\times4
+=
+256
+$$
+
+threads, for example.
+
+But local neighborhood access pattern should determine the shape.
+
+---
+
+**Over-dispatch bounds**
+
+For arbitrary dimensions:
+
+$$
+G_x=
+\left\lceil\frac{W}{T_x}\right\rceil,
+$$
+
+$$
+G_y=
+\left\lceil\frac{H}{T_y}\right\rceil.
+$$
+
+Then shader:
+
+```cpp id="ivlz2y"
+if (x >= width ||
+    y >= height)
+{
+    return;
+}
+```
+
+Current Maveb Gaussian composite has exactly:
+
+```metal id="zvkv4c"
+if (pixel.x >= width ||
+    pixel.y >= height)
+{
+    return;
+}
+```
+
+This is standard and correct.
+
+---
+
+**Reduction**
+
+A reduction converts:
+
+$$
+x_0,x_1,\dots,x_{N-1}
+$$
+
+into one value:
+
+$$
+\boxed{
+R=
+x_0\oplus x_1\oplus\dots
+}
+$$
+
+where $\oplus$ is associative enough for the required application:
+
+$$
++,\min,\max,\dots
+$$
+
+Serial:
+
+$$
+O(N)
+$$
+
+latency.
+
+Parallel tree:
+
+$$
+O(\log N)
+$$
+
+dependency depth with:
+
+$$
+O(N)
+$$
+
+total work.
+
+---
+
+**Tree reduction**
+
+For eight values:
+
+```text id="uxlrwn"
+a b c d e f g h
+\ /   \ /   \ /
+ A     B     C     D
+   \ /         \ /
+    E           F
+         \ /
+          R
+```
+
+At each step active thread count halves.
+
+Mathematically:
+
+$$
+s^{(0)}_i=x_i
+$$
+
+then:
+
+$$
+s^{(k+1)}_i
+=
+s^{(k)}_{2i}
++
+s^{(k)}_{2i+1}.
+$$
+
+After:
+
+$$
+\log_2N
+$$
+
+steps:
+
+$$
+s^{(\log N)}_0
+=
+\sum_i x_i.
+$$
+
+---
+
+**Threadgroup reduction**
+
+```metal id="zq2h7f"
+threadgroup float scratch[256];
+
+scratch[local] =
+    value;
+
+threadgroup_barrier(...);
+
+for (uint stride = 128;
+     stride > 0;
+     stride >>= 1)
+{
+    if (local < stride)
+        scratch[local] +=
+            scratch[local + stride];
+
+    threadgroup_barrier(...);
+}
+
+if (local == 0)
+    blockSums[group] =
+        scratch[0];
+```
+
+This reduces 256 values into one block sum.
+
+Then another dispatch reduces block sums.
+
+---
+
+**Warp/subgroup-level reduction**
+
+Inside one subgroup, shared memory and barriers can often be avoided.
+
+Conceptually:
+
+```cpp id="ywrrrk"
+value +=
+    shuffle_down(value, 16);
+
+value +=
+    shuffle_down(value, 8);
+
+value +=
+    shuffle_down(value, 4);
+
+value +=
+    shuffle_down(value, 2);
+
+value +=
+    shuffle_down(value, 1);
+```
+
+or use a native collective:
+
+```metal id="jheza8"
+simd_sum(value)
+```
+
+Maveb uses `simd_sum()` in its histogram.
+
+This is exactly Part 2144 realized in code.
+
+---
+
+**Prefix sum / scan**
+
+Given:
+
+$$
+x=
+[3,1,4,0,2].
+$$
+
+Inclusive scan:
+
+$$
+[3,4,8,8,10].
+$$
+
+Exclusive scan:
+
+$$
+\boxed{
+[0,3,4,8,8].
+}
+$$
+
+Exclusive relation:
+
+$$
+y_i=
+\sum_{j<i}x_j.
+$$
+
+Why is this so powerful?
+
+Because $y_i$ tells element $i$ exactly how many preceding contributions exist.
+
+That converts local counts/predicates into globally unique output offsets.
+
+---
+
+**Scan is the allocator of parallel algorithms**
+
+Suppose every object emits:
+
+$$
+c_i
+$$
+
+output records.
+
+If:
+
+$$
+c=[2,0,3,1],
+$$
+
+exclusive scan:
+
+$$
+o=[0,2,2,5].
+$$
+
+Then:
+
+```text id="9j7ww5"
+object 0 writes [0,1]
+object 1 writes nothing
+object 2 writes [2,3,4]
+object 3 writes [5]
+```
+
+No atomics are required for each output record.
+
+This pattern appears everywhere:
+
+- compaction,
+- binning,
+- variable output generation,
+- mesh processing,
+- Gaussian tile expansion.
+
+---
+
+**Maveb Gaussian counts use exactly this pattern**
+
+A projected Gaussian overlaps some number of screen tiles.
+
+Gaussian $i$ computes:
+
+$$
+c_i=
+\text{number of tile entries it needs}.
+$$
+
+The scan produces:
+
+$$
+offset_i=
+\sum_{j<i}c_j.
+$$
+
+Then Gaussian $i$ writes its tile records starting at:
+
+$$
+offset_i.
+$$
+
+This gives each Gaussian a unique contiguous output region with no global append atomic for every tile.
+
+That is an extremely good real-world scan example.
+
+---
+
+**Blelloch exclusive scan**
+
+The Blelloch algorithm has two phases:
+
+$$
+\boxed{
+\text{upsweep}
+}
+$$
+
+and:
+
+$$
+\boxed{
+\text{downsweep}.
+}
+$$
+
+For power-of-two $N$.
+
+Upsweep constructs partial sums.
+
+For stride:
+
+$$
+1,2,4,\dots,N/2
+$$
+
+combine tree children.
+
+At the end root contains total sum.
+
+Then set root:
+
+$$
+0.
+$$
+
+Downsweep propagates exclusive prefixes toward leaves.
+
+Total work:
+
+$$
+O(N).
+$$
+
+Parallel depth:
+
+$$
+O(\log N).
+$$
+
+That makes it **work-efficient** compared with some simpler $O(N\log N)$ scan methods.
+
+---
+
+**Maveb implements Blelloch almost literally**
+
+Current `aetherGaussianScanBlocks`:
+
+```metal id="4ie3j5"
+threadgroup uint scratch[256];
+
+scratch[localIndex] =
+    valid
+    ? counts[index]
+    : 0;
+
+threadgroup_barrier(...);
+```
+
+Upsweep:
+
+```metal id="5188rr"
+for (uint stride = 1;
+     stride < 256;
+     stride <<= 1)
+{
+    const uint element =
+        (localIndex + 1) *
+        stride * 2 - 1;
+
+    if (element < 256)
+        scratch[element] +=
+            scratch[
+                element - stride];
+
+    threadgroup_barrier(...);
+}
+```
+
+Then:
+
+```metal id="sz0hjf"
+if (localIndex == 0)
+{
+    blockSums[groupIndex] =
+        scratch[255];
+
+    scratch[255] = 0;
+}
+```
+
+Then downsweep:
+
+```metal id="67v40p"
+for (uint stride = 128;
+     stride > 0;
+     stride >>= 1)
+{
+    ...
+}
+```
+
+This is not “scan-like.”
+
+It is recognizably a textbook work-efficient Blelloch exclusive scan.
+
+---
+
+**Why zeroing the root makes the scan exclusive**
+
+Before zeroing, root contains:
+
+$$
+\sum_i x_i.
+$$
+
+For exclusive scan, first output must be:
+
+$$
+0.
+$$
+
+By setting root to zero and distributing left-prefix values during downsweep, each leaf receives the sum of all values strictly before it.
+
+That is the mathematical purpose of:
+
+```metal id="t9o8ez"
+scratch[255] = 0;
+```
+
+---
+
+**Hierarchical scan**
+
+One workgroup can only scan a bounded number of elements.
+
+For arbitrary $N$:
+
+First scan each block independently.
+
+Store each block's total.
+
+Scan those block totals.
+
+Then add each block's prefix to every element in that block.
+
+Symbolically:
+
+$$
+\boxed{
+\text{local scan}
+\rightarrow
+\text{scan block sums}
+\rightarrow
+\text{add block offsets}.
+}
+$$
+
+This is Part 2147.
+
+---
+
+**Maveb's three stages**
+
+Maveb has kernels:
+
+```text id="r92vsu"
+aetherGaussianScanBlocks
+aetherGaussianScanBlockSums
+aetherGaussianAddBlockOffsets
+```
+
+This is exactly the hierarchical decomposition.
+
+But there is one scaling caveat.
+
+---
+
+**Current Maveb block-sum scan is serial**
+
+`aetherGaussianScanBlockSums` contains:
+
+```metal id="qa2bts"
+if (index != 0)
+    return;
+
+for (uint block = 0;
+     block < blockCount;
+     ++block)
+{
+    ...
+}
+```
+
+So one GPU invocation serially scans all block sums.
+
+For moderate Gaussian counts this may be perfectly adequate.
+
+For huge numbers of blocks, it becomes a bottleneck.
+
+A fully scalable scan recursively applies another parallel scan to the block-sums array.
+
+Thus Maveb currently has:
+
+$$
+\boxed{
+\text{parallel local scan}
++
+\text{serial second level}
++
+\text{parallel offset add}.
+}
+$$
+
+A useful optimization target if profiling shows the second stage mattering.
+
+---
+
+**Stream compaction**
+
+Given:
+
+$$
+x=[a,b,c,d,e]
+$$
+
+and keep predicate:
+
+$$
+p=[1,0,1,1,0].
+$$
+
+Wanted output:
+
+$$
+[a,c,d].
+$$
+
+We cannot have every surviving thread perform:
+
+```cpp id="ddkrn5"
+output[atomicAdd(counter,1)] =
+    value;
+```
+
+without contention.
+
+Instead scan predicate.
+
+Exclusive scan:
+
+$$
+s=
+[0,1,1,2,3].
+$$
+
+Then if:
+
+$$
+p_i=1,
+$$
+
+write:
+
+$$
+\boxed{
+output[s_i]=x_i.
+}
+$$
+
+Result:
+
+$$
+a\rightarrow0,
+$$
+
+$$
+c\rightarrow1,
+$$
+
+$$
+d\rightarrow2.
+$$
+
+No collisions.
+
+---
+
+**Predicate–scan–scatter**
+
+This is such an important general GPU pattern that it should be memorized structurally:
+
+$$
+\boxed{
+\text{predicate}
+\rightarrow
+\text{exclusive scan}
+\rightarrow
+\text{scatter}.
+}
+$$
+
+Predicate determines whether/how many outputs.
+
+Scan allocates unique positions.
+
+Scatter writes.
+
+For variable expansion, replace binary predicate:
+
+$$
+0/1
+$$
+
+with count:
+
+$$
+0,1,2,\dots
+$$
+
+which is exactly what Gaussian tile expansion does.
+
+---
+
+**Parallel histogram**
+
+Suppose every item has category:
+
+$$
+d_i\in[0,R).
+$$
+
+Histogram:
+
+$$
+H_b=
+|\{i:d_i=b\}|.
+$$
+
+Naive GPU implementation:
+
+```cpp id="mdso8e"
+atomicAdd(
+    histogram[digit],
+    1);
+```
+
+Correct.
+
+Potentially terrible.
+
+If many items fall in bucket 0:
+
+$$
+\text{everyone contends on }H_0.
+$$
+
+---
+
+**Histogram contention mitigation**
+
+Better hierarchy:
+
+$$
+\text{lane}
+\rightarrow
+\text{subgroup histogram}
+\rightarrow
+\text{workgroup histogram}
+\rightarrow
+\text{global histogram}.
+$$
+
+Each level reduces how frequently global memory must be updated.
+
+This is exactly what Maveb's radix histogram does.
+
+It has:
+
+```metal id="ctu20l"
+threadgroup uint
+simdCounts[32][16];
+```
+
+For each radix bucket, each subgroup computes:
+
+```metal id="6uv2yi"
+simd_sum(matches)
+```
+
+and lane 0 stores one result.
+
+Then a handful of local threads combine subgroup counts.
+
+Very little contention.
+
+---
+
+**Radix sort**
+
+Radix sort sorts integer-like keys by processing fixed-width digit groups.
+
+Suppose key has:
+
+$$
+K
+$$
+
+bits.
+
+Choose:
+
+$$
+b
+$$
+
+bits per pass.
+
+Radix:
+
+$$
+R=2^b.
+$$
+
+Number of passes:
+
+$$
+\boxed{
+P=
+\left\lceil
+\frac Kb
+\right\rceil.
+}
+$$
+
+For:
+
+$$
+b=4,
+$$
+
+radix:
+
+$$
+R=16.
+$$
+
+A 64-bit key requires:
+
+$$
+16
+$$
+
+passes.
+
+Exactly what Maveb's parallel radix path does.
+
+---
+
+**Radix digit extraction**
+
+For pass $p$:
+
+$$
+shift=bp.
+$$
+
+Digit:
+
+$$
+\boxed{
+d_p(key)
+=
+(key\gg shift)
+\&
+(R-1).
+}
+$$
+
+For four-bit digits:
+
+$$
+R-1=15=0xF.
+$$
+
+Maveb:
+
+```metal id="ugtp35"
+const uint component =
+    pass < 8
+    ? key.x
+    : key.y;
+
+return
+    (
+        component >>
+        ((pass & 7) * 4)
+    )
+    & 15;
+```
+
+That is literally Part 2153.
+
+---
+
+**One radix pass**
+
+A stable radix pass has three conceptual stages:
+
+$$
+\boxed{
+\text{histogram}
+\rightarrow
+\text{prefix offsets}
+\rightarrow
+\text{stable scatter}.
+}
+$$
+
+Histogram says how many values belong to each digit.
+
+Prefix tells where each bucket begins.
+
+Scatter places each item at:
+
+$$
+\text{bucketBase}
++
+\text{rankWithinBucket}.
+$$
+
+Stability is essential for least-significant-digit radix sorting.
+
+---
+
+**Why stability matters**
+
+Suppose first pass sorts lower digit.
+
+Second pass sorts next digit.
+
+If second pass arbitrarily scrambles values having equal second digit, it destroys ordering established by the lower digit.
+
+Stable sorting preserves earlier passes within equal current digit.
+
+Therefore after all passes:
+
+$$
+\boxed{\text{all digits collectively determine correct ordering}.}
+$$
+
+---
+
+**Maveb parallel radix histogram**
+
+Each item computes digit:
+
+$$
+d.
+$$
+
+For every bucket:
+
+```metal id="45mfzb"
+matches =
+    digit == bucket
+    ? 1
+    : 0;
+
+total =
+    simd_sum(matches);
+```
+
+So subgroup produces count of how many lanes belong to each of 16 buckets.
+
+After workgroup consolidation:
+
+$$
+H_{g,b}
+$$
+
+contains count for:
+
+$$
+\text{group }g,
+\text{ bucket }b.
+$$
+
+---
+
+**Radix offset stage**
+
+Maveb's current `aetherGaussianRadixOffsets` runs one invocation:
+
+```metal id="akbc8n"
+if (index != 0)
+    return;
+```
+
+then computes bucket/group prefix positions.
+
+Conceptually:
+
+$$
+offset[g,b]
+=
+\sum_{b'<b}
+\sum_{g'}H[g',b']
++
+\sum_{g'<g}H[g',b].
+$$
+
+This gives the global starting destination of group $g$'s entries in bucket $b$.
+
+Again, this stage is serial today.
+
+It is correct but eventually becomes a scalability candidate.
+
+---
+
+**Stable parallel scatter**
+
+Within a subgroup Maveb computes:
+
+```metal id="bypw71"
+prefix =
+    simd_prefix_exclusive_sum(
+        matches);
+```
+
+If current lane belongs to bucket $b$, `prefix` says:
+
+$$
+\text{number of earlier lanes in same subgroup with digit }b.
+$$
+
+Then it adds counts from earlier subgroups in the same workgroup:
+
+$$
+rank_{\text{local}}
+=
+rank_{\text{subgroup}}
++
+\sum_{s'<s}
+count[s',b].
+$$
+
+Final destination:
+
+$$
+\boxed{
+dst=
+groupOffset[g,b]
++
+rank_{\text{local}}.
+}
+$$
+
+This is a very elegant practical use of subgroup scan.
+
+---
+
+**Maveb's radix sort is a direct fusion of M128 and M129**
+
+One kernel uses:
+
+$$
+\text{SIMT lanes},
+$$
+
+$$
+\text{subgroup IDs},
+$$
+
+$$
+\text{subgroup reduction},
+$$
+
+$$
+\text{subgroup exclusive scan},
+$$
+
+$$
+\text{threadgroup memory},
+$$
+
+$$
+\text{threadgroup barrier},
+$$
+
+$$
+\text{coalesced buffers},
+$$
+
+$$
+\text{histogram},
+$$
+
+$$
+\text{stable scatter}.
+$$
+
+This is exactly why these curriculum topics belong in one phase.
+
+They are not isolated tricks.
+
+They compose into real algorithms.
+
+---
+
+**Maveb's 64-bit logical sorting key**
+
+`GenerateKeys` creates:
+
+```metal id="e9dtbb"
+keys[destination] =
+    uint2(
+        as_type<uint>(
+            gaussianDepth),
+        tileID);
+```
+
+So:
+
+$$
+key.x=\text{depth bits},
+$$
+
+$$
+key.y=\text{tile ID}.
+$$
+
+The parallel radix algorithm processes:
+
+$$
+key.x
+$$
+
+for passes:
+
+$$
+0\dots7
+$$
+
+and then:
+
+$$
+key.y
+$$
+
+for passes:
+
+$$
+8\dots15.
+$$
+
+Because it is stable least-significant-digit sorting, the final major key is:
+
+$$
+\boxed{\text{tile ID}}
+$$
+
+while previously established depth order remains inside equal tile IDs.
+
+Therefore final ordering is effectively:
+
+$$
+\boxed{
+\text{tile-major, depth-ordered within tile}.
+}
+$$
+
+That is precisely what Gaussian compositing needs.
+
+This is a beautiful architecture.
+
+---
+
+**Why reinterpreting positive float depth as uint works here**
+
+IEEE-754 positive finite floats have bit patterns whose unsigned integer ordering preserves numerical ordering.
+
+So for positive depth:
+
+$$
+d_1<d_2
+$$
+
+corresponds to:
+
+$$
+bits(d_1)<bits(d_2).
+$$
+
+That makes:
+
+```metal id="brslup"
+as_type<uint>(depth)
+```
+
+usable as a sortable depth key.
+
+This trick would not directly work for arbitrary signed floating-point values without a sign-aware key transform.
+
+The assumption that valid projected depth is positive matters.
+
+---
+
+**Key–value sorting**
+
+Sorting geometry usually needs to retain identity.
+
+If:
+
+$$
+key_i=\text{sorting key},
+$$
+
+and:
+
+$$
+value_i=\text{Gaussian index},
+$$
+
+then sorting keys alone destroys the mapping.
+
+Therefore every scatter writes both:
+
+```metal id="oxmxax"
+outputKeys[destination] =
+    inputKeys[index];
+
+outputValues[destination] =
+    inputValues[index];
+```
+
+This is key-value sorting.
+
+After sort:
+
+$$
+\boxed{
+(\text{sorted key},\text{original payload identity})
+}
+$$
+
+remain paired.
+
+Maveb's `keysA/keysB` and `valuesA/valuesB` buffers implement exactly this double-buffered key-value radix architecture.
+
+---
+
+**Ping-pong sorting buffers**
+
+A radix pass cannot generally overwrite its input while arbitrary entries are being scattered.
+
+So use:
+
+$$
+A\rightarrow B
+$$
+
+on pass 0,
+
+$$
+B\rightarrow A
+$$
+
+on pass 1,
+
+and alternate.
+
+Maveb:
+
+```cpp id="w6g26n"
+even
+    ? input = keysA
+    : input = keysB;
+
+even
+    ? output = keysB
+    : output = keysA;
+```
+
+This is another standard GPU pattern.
+
+#### First-use completion — a stable radix pass is a permutation, not an in-place edit
+
+Ping-pong storage is not only a pattern for alternating GPU kernels. Here it is a **correctness requirement** of a scatter algorithm. A radix pass examines one digit of each key, counts how many entries belong to each digit value, computes each digit's starting output offset, and distributes records into distinct destinations. If the output aliases the input, an early thread may overwrite a record another thread has not yet read. A barrier at the end of the scatter cannot undo that overwrite. The input snapshot must remain readable until *every* output index has been assigned and its value written.
+
+For a least-significant-digit (LSD) radix sort, stability makes successive passes compose correctly. A pass on bit 0 preserves input order among all zeros and separately among all ones. The following pass on bit 1 must preserve the preceding bit-0 ordering within its own zero/one groups. That is why simply partitioning without a stable scatter does not produce a correctly sorted multi-bit key. For four labeled records in arrival order
+$$
+[3_A,\ 1_B,\ 2_C,\ 0_D],
+$$
+the bit-0 pass writes $[2_C,0_D,3_A,1_B]$. The bit-1 pass writes $[0_D,1_B,2_C,3_A]$. If the original array also contained $2_E$ after $2_C$, the final sorted order must still put $2_C$ before $2_E$. The stable property is observable independently of whether the integer keys look sorted.
+
+For an exclusive scan on the binary pass, let $z_i=1$ if key $i$ has a zero in the selected bit, and $0$ otherwise; let $Z=\sum_i z_i$. For a zero-bit item, its destination is $\sum_{j<i}z_j$. For a one-bit item, its destination is $Z+\sum_{j<i}(1-z_j)$. Both formulas are exclusive prefixes, so no two records receive the same destination and the within-group order is preserved. A GPU implementation normally computes block-local histograms and prefixes, scans the block totals, then scatters with the block prefix added to the local rank. The scan of block totals needs its own inter-dispatch or globally coordinated synchronization; a threadgroup barrier only orders threads within one group.
+
+```cpp
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+
+// Each record carries an identity, so we can verify stability for equal keys.
+struct SortRecord {
+    std::uint32_t key;
+    std::uint32_t identity;
+};
+
+// Two stable one-bit passes sort a two-bit key into ascending order.
+template <std::size_t N>
+std::array<SortRecord, N> sort_two_bits(std::array<SortRecord, N> input)
+{
+    std::array<SortRecord, N> scratch{};
+    auto* read = &input;
+    auto* write = &scratch;
+
+    for (unsigned bit = 0; bit != 2; ++bit) {
+        std::size_t zeroCount = 0;
+        for (const SortRecord& record : *read)
+            zeroCount += ((record.key >> bit) & 1u) == 0u;
+
+        std::size_t zeroOut = 0;
+        std::size_t oneOut = zeroCount;
+        for (const SortRecord& record : *read) {
+            // Exclusive ranks: disjoint destinations, stable in each group.
+            const bool one = ((record.key >> bit) & 1u) != 0u;
+            (*write)[one ? oneOut++ : zeroOut++] = record;
+        }
+
+        // Swap the roles, not the contents of the two allocations.
+        std::swap(read, write);
+    }
+    return *read; // May be either allocation when pass count changes.
+}
+```
+
+The code intentionally exposes the scan's simple serial reference implementation: counting zeros plus per-group running offsets is equivalent to exclusive prefix ranks in input order. It is **not** pretending to be an efficient GPU parallel scan. The GPU version must provide disjoint outputs at every level, global offsets that are ready before scatter, correct device memory visibility between dispatches, and allocation lifetimes extending through the final consumer. Histogram, scan, scatter and indirect consumption are distinct phases even if a backend fuses some operations.
+
+**Buffer parity is part of the API contract.** After an even number of complete passes, the final records are back in the original allocation; after an odd number, they reside in scratch. Returning the original pointer unconditionally can silently return stale data. If a later renderer pass expects one fixed buffer, either expose the actual final-buffer handle or perform an explicit copy after an odd pass and account for its cost. A frame allocator must not recycle the scratch range merely because its CPU-side pointer was swapped: the GPU may still be reading it. The same two-buffer idea is used for Jacobi-style iterative updates, where each iteration must read the previous state rather than partially updated neighbors, but the *reason* for alternation is the dependency of the particular algorithm, not the mere existence of two resources.
+
+A reproducible regression sorts repeated keys with distinct identities and checks both ascending keys and stable identity order; the [first-use C++ witness](../tools/labs/first_use_contract_lab.cpp) contains that check. GPU performance must be assessed separately: record histogram throughput, scan cost, scatter bandwidth, allocation pressure, command dependencies, and the amount of synchronization. A serial fallback can be correct without being fast; a parallel path can be fast and still be wrong if one prefix or visibility edge is missing. We do not need another teaching pass to establish these properties.
+
+---
+
+**Parallel versus serial radix fallback in Maveb**
+
+Current Maveb has two paths.
+
+When relevant compute pipelines support at least:
+
+$$
+256
+$$
+
+threads/group, it runs:
+
+$$
+16
+$$
+
+parallel 4-bit passes.
+
+Otherwise it uses a one-thread serial fallback with:
+
+$$
+8
+$$
+
+8-bit passes.
+
+Parallel path:
+
+$$
+R=16,
+\quad
+P=16.
+$$
+
+Serial fallback:
+
+$$
+R=256,
+\quad
+P=8.
+$$
+
+This makes sense because a huge 256-bin local histogram is acceptable in one serial invocation but much more expensive to parallelize per workgroup.
+
+---
+
+**Bitonic sort**
+
+Bitonic sort is a comparison network rather than digit-based sort.
+
+It creates bitonic sequences—sequences that monotonically increase then decrease—and repeatedly merges them.
+
+A common compare-exchange condition uses:
+
+$$
+partner=i\oplus j.
+$$
+
+Each stage compares:
+
+$$
+a_i
+$$
+
+against:
+
+$$
+a_{i\oplus j}.
+$$
+
+The network topology is deterministic.
+
+Complexity:
+
+$$
+\boxed{
+O(N\log^2N)
+}
+$$
+
+comparisons.
+
+---
+
+**Why bitonic sort is still useful on GPUs**
+
+Radix sort is usually preferable for large integer keys.
+
+Bitonic sort remains useful when:
+
+- arrays are small,
+- size is bounded,
+- data fits in threadgroup memory,
+- deterministic comparison structure is desirable,
+- arbitrary comparable keys are required.
+
+Its fixed communication pattern maps well to SIMD/SIMT.
+
+For sorting millions of simple integer keys, radix generally wins.
+
+For 32 or 64 values inside one workgroup, bitonic can be beautifully simple.
+
+---
+
+**Parallel algorithm design principle**
+
+There is a recurring transformation:
+
+Serial:
+
+```cpp id="x1rcxl"
+for each item:
+    if useful:
+        output.push_back(item);
+```
+
+GPU-naive:
+
+```cpp id="di1gjk"
+if useful:
+    output[
+        atomicAdd(counter,1)
+    ] = item;
+```
+
+GPU-scalable:
+
+```text id="0aznm5"
+predicate/count
+    ↓
+parallel scan
+    ↓
+unique offsets
+    ↓
+scatter
+```
+
+This transition appears in:
+
+- compaction,
+- particle spawning,
+- Gaussian tile entry generation,
+- visible-object lists,
+- clustered lighting,
+- meshlet generation.
+
+Once scan becomes intuitive, a huge amount of GPU algorithm design becomes intuitive.
+
+---
+
+**KairoGPU matrix multiplication also illustrates arithmetic intensity**
+
+Naive matrix multiplication repeatedly reads global memory.
+
+For each output element:
+
+$$
+C_{ij}
+=
+\sum_k A_{ik}B_{kj}.
+$$
+
+Naively approximately:
+
+$$
+2K
+$$
+
+global loads for:
+
+$$
+2K
+$$
+
+floating operations.
+
+With a $16\times16$ tile, each workgroup loads:
+
+$$
+256
+$$
+
+A values and:
+
+$$
+256
+$$
+
+B values for a tile step.
+
+Those values feed:
+
+$$
+256\times16
+$$
+
+multiply-add pairs.
+
+Global memory bytes are reused across many arithmetic operations.
+
+Thus shared-memory tiling increases:
+
+$$
+\boxed{
+\text{arithmetic intensity}
+=
+\frac{
+\text{operations}
+}{
+\text{bytes transferred}
+}.
+}
+$$
+
+That will become a central roofline-model concept in Pass 10/M132.
+
+---
+
+**One major KairoGPU improvement: execution-width-aware group selection**
+
+Current vector kernels use:
+
+$$
+\min(
+\texttt{maxTotalThreadsPerThreadgroup},
+256
+).
+$$
+
+A more informed Metal setup can consider:
+
+$$
+W=
+\texttt{threadExecutionWidth}.
+$$
+
+Then choose group size:
+
+$$
+T=kW
+$$
+
+for integer $k$, while satisfying register/threadgroup-memory constraints.
+
+You still benchmark.
+
+But this reduces the chance of dispatching groups that leave an awkward partial SIMD group.
+
+---
+
+**One major Maveb scan improvement: fully parallel second level**
+
+Current pipeline:
+
+$$
+N
+\rightarrow
+N/256
+$$
+
+block sums.
+
+Then a single thread scans those block sums.
+
+For:
+
+$$
+N=1,000,000,
+$$
+
+block count is around:
+
+$$
+3907.
+$$
+
+A single thread looping over 3907 entries may not dominate the whole frame.
+
+For:
+
+$$
+N=100,000,000,
+$$
+
+block count:
+
+$$
+390625.
+$$
+
+Now the serial second level becomes serious.
+
+A recursive hierarchical scan would process block sums in parallel:
+
+$$
+390625
+\rightarrow
+1526
+\rightarrow
+6
+\rightarrow
+1.
+$$
+
+Then propagate offsets downward.
+
+That is the general scalable version.
+
+---
+
+**One major Maveb radix improvement: parallel global bucket-prefix stage**
+
+Similarly, current `aetherGaussianRadixOffsets` performs the entire group/bucket prefix with one thread.
+
+The parallel histogram and scatter scale well; the prefix stage eventually becomes the serial fraction.
+
+A fully scalable implementation can scan per-bucket group counts in parallel and then compute bucket bases.
+
+This is a classic manifestation of Amdahl's law:
+
+$$
+\boxed{
+\text{parallelizing 99% does not make the remaining serial 1% disappear}.
+}
+$$
+
+We will revisit that logic when discussing GPU performance modeling.
+
+---
+
+**Why Maveb's local subgroup logic is already strong**
+
+The interesting point is that you do **not** need to rewrite the entire pipeline.
+
+The local mechanics are already sophisticated:
+
+$$
+\texttt{simd_sum},
+$$
+
+$$
+\texttt{simd_prefix_exclusive_sum},
+$$
+
+$$
+\text{threadgroup-local aggregation},
+$$
+
+$$
+\text{stable scatter}.
+$$
+
+The scalability bottleneck is now in global phase construction.
+
+That is exactly the sort of distinction GPU performance work requires:
+
+$$
+\boxed{
+\text{find the actual serial/global bottleneck instead of optimizing already-fast local math}.
+}
+$$
+
+---
+
+**GPU algorithm correctness invariant**
+
+Parallel algorithms are easiest to trust when you can write down ownership.
+
+For scan-based allocation:
+
+$$
+output_i
+=
+[offset_i,\ offset_i+count_i).
+$$
+
+For any:
+
+$$
+i<j,
+$$
+
+exclusive scan guarantees:
+
+$$
+offset_i+count_i
+\le
+offset_j.
+$$
+
+Therefore output intervals do not overlap.
+
+That is the proof of race freedom.
+
+Do not merely say:
+
+> Threads probably write different locations.
+
+Derive why.
+
+---
+
+**Histogram race-freedom**
+
+If many threads update shared histogram bins nonatomically:
+
+$$
+H[d_i]++,
+$$
+
+there is a race.
+
+Maveb avoids that within each subgroup by using:
+
+$$
+\operatorname{simd\_sum}(digit==bucket).
+$$
+
+Only one lane writes the subgroup count:
+
+```metal id="yjtusl"
+if (lane == 0)
+    simdCounts[...] = total;
+```
+
+Distinct subgroups write distinct rows.
+
+No collision.
+
+After barrier, a small set of threads reads those rows.
+
+That is explicit ownership again.
+
+---
+
+**Radix scatter race-freedom**
+
+Every element receives:
+
+$$
+destination=
+groupOffset[g,b]
++
+rankWithinGroup.
+$$
+
+`groupOffset` assigns disjoint bucket/group ranges.
+
+`rankWithinGroup` is unique among items in that group/bucket because it comes from prefix counts.
+
+Therefore:
+
+$$
+destination_i
+\neq
+destination_j
+$$
+
+for distinct elements.
+
+No atomic is needed.
+
+That is what good GPU algorithms do:
+
+$$
+\boxed{
+\text{replace synchronization with mathematically unique ownership whenever possible}.
+}
+$$
+
+---
+
+**Why atomics are sometimes still best**
+
+Scan requires multiple phases and temporary buffers.
+
+If only 20 threads occasionally append something, one atomic append may be much cheaper.
+
+If 50 million threads append, scan becomes attractive.
+
+Thus:
+
+$$
+\boxed{
+\text{atomics versus scan is a workload-scale/contention tradeoff}.
+}
+$$
+
+Pass 10's M130 starts precisely with this decision for append buffers and spatial bins.
+
+---
+
+**GPU architecture audit of your current code**
+
+| Topic | Current repository evidence |
+|---|---|
+| Simple 1D compute | KairoGPU vector add/multiply |
+| Global invocation ID | `thread_position_in_grid` |
+| 2D workgroup decomposition | KairoGPU 16×16 matrix multiply |
+| Threadgroup memory | matrix tiles + Gaussian scan scratch |
+| Workgroup barriers | matrix multiply + Blelloch scan |
+| Max group-size query | `maxTotalThreadsPerThreadgroup` |
+| Execution-width-aware sizing | not currently used |
+| Subgroup IDs/lane IDs | Maveb Gaussian radix kernels |
+| Subgroup reduction | `simd_sum` |
+| Subgroup scan | `simd_prefix_exclusive_sum` |
+| Device-memory buffers | extensive Kairo/Maveb use |
+| Storage capability abstraction | Vulkax backend features |
+| Atomics | Gaussian counters |
+| Local-before-global aggregation | radix histogram |
+| Blelloch scan | `aetherGaussianScanBlocks` |
+| Hierarchical scan | block scan + block sums + add offsets |
+| Fully parallel higher scan level | not yet; second stage serial |
+| Variable-output allocation | Gaussian tile counts → scan → offsets |
+| Histogram | radix group histogram |
+| Radix sort | 16 parallel 4-bit passes |
+| Stable scatter | yes |
+| Key-value sorting | `uint2` keys + Gaussian index values |
+| Ping-pong buffers | keysA/B + valuesA/B |
+| Large global prefix | currently serial offset kernel |
+| Bitonic sort | conceptual curriculum topic, not needed in current Gaussian path |
+
+That is a very meaningful implementation baseline.
+
+---
+
+**Reconstruct the Maveb Gaussian GPU pipeline as a parallel algorithm**
+
+The pipeline can now be understood without looking at code names.
+
+Each Gaussian is projected.
+
+For Gaussian $i$, determine how many screen tiles it overlaps:
+
+$$
+c_i.
+$$
+
+Exclusive scan:
+
+$$
+o_i=
+\sum_{j<i}c_j.
+$$
+
+Now Gaussian $i$ owns:
+
+$$
+[o_i,o_i+c_i).
+$$
+
+It generates one key/value entry per overlapped tile.
+
+Key:
+
+$$
+(\text{depth bits},\text{tile ID}).
+$$
+
+Value:
+
+$$
+\text{Gaussian index}.
+$$
+
+Stable LSD radix sort first resolves all depth digits and then all tile digits.
+
+Result:
+
+```text id="387b66"
+tile 0:
+    nearest/farthest ordered Gaussians
+
+tile 1:
+    ordered Gaussians
+
+...
+```
+
+Range construction records:
+
+$$
+[start_t,end_t)
+$$
+
+for each tile.
+
+Composite kernel for each pixel reads only the Gaussian range relevant to its tile and blends in sorted order.
+
+That is a complete GPU pipeline built from:
+
+$$
+\boxed{
+\text{map}
+\rightarrow
+\text{count}
+\rightarrow
+\text{scan}
+\rightarrow
+\text{expand}
+\rightarrow
+\text{radix sort}
+\rightarrow
+\text{range construction}
+\rightarrow
+\text{parallel composite}.
+}
+$$
+
+This is exactly what the abstract parallel-algorithm curriculum is preparing you to build.
+
+---
+
+**The fundamental GPU thinking shift**
+
+CPU programmer often asks:
+
+> What is the next operation?
+
+GPU programmer must increasingly ask:
+
+> What is the data-parallel ownership structure?
+
+Instead of:
+
+```cpp id="yllozt"
+for each Gaussian:
+    for each tile:
+        append()
+```
+
+you derive:
+
+$$
+count_i,
+$$
+
+$$
+offset_i,
+$$
+
+$$
+\text{scatter region}_i.
+$$
+
+Instead of:
+
+```cpp id="qfd2y3"
+for each key:
+    insert into sorted vector
+```
+
+you derive:
+
+$$
+digit,
+$$
+
+$$
+histogram,
+$$
+
+$$
+prefix,
+$$
+
+$$
+rank,
+$$
+
+$$
+scatter.
+$$
+
+The important GPU skill is not syntax.
+
+It is:
+
+$$
+\boxed{
+\text{turning dependency-heavy serial ownership into explicit parallel ownership}.
+}
+$$
+
+---
+
+**PASS 9 RECONSTRUCTION SHEET**
+
+| Concept | Reconstruction |
+|---|---|
+| CPU emphasis | low-latency powerful threads |
+| GPU emphasis | throughput across massive parallel work |
+| Compute unit | scheduling + ALUs + register file + shared memory |
+| SIMT | scalar-looking invocations execute in groups |
+| Subgroup | hardware execution group |
+| Lane | invocation inside subgroup |
+| Workgroup | collaboration/synchronization domain |
+| Global ID | group × group-size + local ID |
+| Latency hiding | issue another ready subgroup while one stalls |
+| Occupancy | resident subgroups / hardware maximum |
+| Register pressure | live per-thread state consumes register file |
+| Spill | logical register moved to slower private memory |
+| Threadgroup memory | fast group-local explicitly managed storage |
+| Bank conflict | simultaneous accesses collide on same shared-memory bank |
+| Device memory | large high-latency storage |
+| Coalescing | adjacent lane accesses collapse into few memory transactions |
+| Stride | spreads lanes across transactions/cache lines |
+| Gather | indirect/random addresses |
+| Divergence | subgroup lanes take different control paths |
+| Reconvergence | lanes regroup after branch |
+| Predication | execute/select small branches without full control divergence |
+| Vote | subgroup-wide any/all/ballot |
+| Shuffle | register exchange between subgroup lanes |
+| Atomic | indivisible RMW operation |
+| Contention | many lanes serialize on same atomic location |
+| Local aggregation | reduce locally before one global update |
+| Workgroup barrier | synchronize one group, not entire GPU |
+| Device-wide phase | separate dispatch + appropriate API dependency |
+| 1D decomposition | one thread per linear element |
+| 2D decomposition | one thread per pixel/matrix coordinate |
+| 3D decomposition | one thread per voxel |
+| Reduction | many values → one |
+| Scan | every element gets prefix aggregate |
+| Blelloch | upsweep + root zero + downsweep |
+| Hierarchical scan | block scan → block-sum scan → offset add |
+| Compaction | predicate → scan → scatter |
+| Histogram | count items per bucket |
+| Radix digit | $(key>>shift)\&(R-1)$ |
+| Radix pass | histogram → prefix → stable scatter |
+| LSD stability | preserves previous less-significant ordering |
+| Bitonic | deterministic $O(N\log^2N)$ comparison network |
+| Key-value sort | reorder key and payload together |
+| Maveb key | depth bits + tile ID |
+| Maveb final order | tile-major, depth-ordered within tile |
+
+---
+
+**Blank-page mastery gate**
+
+Start with this innocent kernel:
+
+```cpp id="d6k0c3"
+output[id] =
+    input[id] * 2;
+```
+
+and explain all of the invisible hardware underneath it: invocation, local ID, workgroup, subgroup, lane, scheduler, resident warps, register allocation, device-memory transaction and eventual store.
+
+Then explain why a 400-cycle memory load does not necessarily stall the entire GPU for 400 cycles.
+
+Derive conceptual occupancy from register and shared-memory limits, and explain why maximum occupancy is not equivalent to maximum performance.
+
+Then compare:
+
+$$
+A[i]
+$$
+
+against:
+
+$$
+A[32i]
+$$
+
+for a subgroup of lanes and explain why the second can produce far more memory transactions.
+
+Then distinguish:
+
+$$
+\text{CPU SIMD}
+$$
+
+from:
+
+$$
+\text{GPU SIMT}.
+$$
+
+Then explain why this is cheap:
+
+```cpp id="lgnm0f"
+if (id < count)
+```
+
+at only the dispatch tail, while this can be catastrophic:
+
+```cpp id="nhzbj0"
+if (material[id] == Glass)
+    LongGlassPath();
+else
+    LongDiffusePath();
+```
+
+when mixed inside one subgroup.
+
+Then explain why:
+
+```cpp id="hbs55l"
+threadgroup_barrier()
+```
+
+cannot implement a device-wide barrier.
+
+Then take:
+
+$$
+[2,0,3,1]
+$$
+
+and derive exclusive scan:
+
+$$
+[0,2,2,5].
+$$
+
+Use those offsets to allocate unique variable-size output regions without atomics.
+
+Then reconstruct Blelloch scan from the upsweep and downsweep trees.
+
+Then derive stream compaction:
+
+$$
+predicate
+\rightarrow
+scan
+\rightarrow
+scatter.
+$$
+
+Then derive one radix pass:
+
+$$
+digit
+\rightarrow
+histogram
+\rightarrow
+bucket prefix
+\rightarrow
+local rank
+\rightarrow
+stable scatter.
+$$
+
+Finally reconstruct your own Maveb Gaussian pipeline:
+
+$$
+\text{project Gaussian}
+\rightarrow
+\text{tile-overlap count}
+\rightarrow
+\text{exclusive scan}
+\rightarrow
+\text{generate depth/tile key-value entries}
+\rightarrow
+\text{stable radix sort}
+\rightarrow
+\text{tile ranges}
+\rightarrow
+\text{sorted compositing}.
+$$
+
+If you can explain why the current radix histogram uses `simd_sum`, why the scatter uses `simd_prefix_exclusive_sum`, why a threadgroup barrier is required between subgroup-count publication and group aggregation, why the final destination addresses are race-free, and why processing depth digits before tile digits produces **tile-major/depth-minor final ordering**, then you are no longer just writing compute shaders.
+
+You are reasoning in **parallel algorithm structure**.
+
+
+### Next — Pass 10: M130 + M131 + M132, Parts 2157–2200
+
+That finishes Phase 22: **GPU hash tables and spatial binning, atomic append versus scan construction, indirect buffers and GPU-driven frustum/Hi-Z/LOD pipelines, particle free lists/compaction/sorting, ping-pong and multi-buffering, CPU–GPU pipelining, command processors and asynchronous compute, transfer/upload/readback behavior, persistent/ring buffers and suballocation, transient aliasing, timestamps/profiling zones, then occupancy-versus-throughput, arithmetic intensity and roofline analysis, bandwidth/compute bottlenecks, fast math, FP16, subgroup matrix concepts, race debugging and principled GPU algorithm redesign.**
+
+
+Once the program has several modules, each module must provide enough information for its consumers to compile and link. A **[[Concepts/Build graph usage requirements|usage requirement]]** is build information a consumer needs because it uses a target: an include directory, a required language feature, a compile definition, or another dependency exposed through the interface.
+
+This is why a build system should express relationships between targets. If `Renderer` exposes a public header that includes a public `Math` header, the consumer must be able to find that header through the build interface. Hiding every relationship in global include paths makes the project appear healthy until a clean build or an independent consumer exposes the missing dependency.
+
+In CMake, `PUBLIC`, `PRIVATE`, and `INTERFACE` describe how requirements apply to the target and its consumers. They are not C++ access specifiers and do not hide header declarations from a determined reader. Exact propagation also depends on the command, target kind, and linking situation; static-library implementation dependencies deserve particular attention when following the final link. Use the [current command documentation](https://cmake.org/cmake/help/latest/command/target_link_libraries.html) when checking a specific build.
+
+A clean experiment is to create a tiny consumer that includes one public engine header and links the advertised target, without adding the engine's internal directories by hand. If that consumer fails, the public build contract is incomplete even when the engine's own tests happen to compile. The later build-tool chapter develops the target graph, presets, toolchain inputs, reproducibility, profiling, and the complete path from source content to a runtime package.
+
+The recurring lesson is that a working program is an agreement across time and boundaries. Bytes need an interpretation. Objects need valid lifetimes. Handles need identities and validity intervals. Asynchronous results need publication rules. Modules need build requirements. Once those agreements are explicit, the graphics and engine stories can depend on them without repeatedly rediscovering the same hidden assumptions.
+
+
+## Build, document, measure, and reproduce the program
+
+Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.
+
+### CMake Target Semantics, Usage Requirements, Presets, Ninja DAGs, Toolchains, Clang/MSVC Portability, C++ Modules, Repository Pinning, Reproducible Superbuilds, CI Matrices, Test Architecture, Crash/Logging/Profiling Hooks, Portable Engine Boundaries, and the Complete Source→Editor→Package→Runtime Ownership Graph
+
+This pass **closes Phase 16**.
+
+
+Pass 14 ended with something like:
+
+$$
+\text{correct source code}
++
+\text{correct persistent data}.
+$$
+
+Pass 15 asks a much nastier question:
+
+$$
+\boxed{
+\text{Can another machine, OS, compiler and CI worker actually reconstruct the same engine correctly?}
+}
+$$
+
+Because an architecture that only builds on one developer's machine is not yet an architecture.
+
+The other core question is:
+
+$$
+\boxed{
+\text{How do we prove that the thing we built is actually the thing we intended to build?}
+}
+$$
+
+That is why CMake, repository pinning, tests, CI, diagnostics and ownership diagrams belong in the same phase. They are all parts of **reproducibility**.
+
+---
+
+### THE BUILD GRAPH ITSELF
+
+**The CMake target model**
+
+The most important conceptual correction is this:
+
+> Modern CMake should be thought of primarily as a **target graph generator**, not as a collection of global compiler flags.
+
+Suppose the project has:
+
+```text
+KairoMath
+KairoGeometry
+KairoSpatial
+KairoPhysicsEngine
+KairoAssets
+KairoRenderer
+KairoEngineCore
+KairoPlayer
+```
+
+The real build model is a graph:
+
+$$
+G=(V,E)
+$$
+
+where a vertex is a CMake target and an edge means one target has a usage/build/link relationship with another.
+
+For example:
+
+$$
+KairoGeometry\rightarrow KairoMath
+$$
+
+$$
+KairoSpatial\rightarrow KairoGeometry
+$$
+
+$$
+KairoPhysicsEngine\rightarrow KairoSpatial
+$$
+
+$$
+KairoPlayer\rightarrow KairoRenderer.
+$$
+
+That graph is what CMake eventually lowers into Ninja, Make, Visual Studio or another generator's rules.
+
+The crucial mental shift is that a target is not merely:
+
+```text
+"a library file."
+```
+
+A target is a structured bundle of:
+
+```text
+sources
+compile features
+compile definitions
+include requirements
+link requirements
+generated sources
+module interfaces
+platform-specific properties
+transitive usage requirements.
+```
+
+---
+
+**Target-local state beats global state**
+
+Old-school CMake often looks like:
+
+```cmake
+include_directories(...)
+add_definitions(...)
+link_libraries(...)
+set(CMAKE_CXX_FLAGS ...)
+```
+
+These mutate directory/global state.
+
+Now imagine you add:
+
+```text
+KairoEditor
+KairoPlayer
+KairoTools
+```
+
+and only one target needs some definition.
+
+Global state leaks it into all of them.
+
+Modern target style instead:
+
+```cmake
+add_library(KairoRenderer)
+
+target_compile_features(
+    KairoRenderer
+    PUBLIC cxx_std_23
+)
+
+target_compile_definitions(
+    KairoRenderer
+    PRIVATE
+        KAIRO_RENDERER_INTERNAL_DIAGNOSTICS=1
+)
+
+target_link_libraries(
+    KairoRenderer
+    PUBLIC
+        KairoMath
+        KairoAssets
+)
+```
+
+Everything is attached to the owning target.
+
+This gives you locality:
+
+$$
+\boxed{
+\text{the build specification follows architectural ownership}.
+}
+$$
+
+---
+
+**Build graph versus source architecture**
+
+A CMake graph can expose architectural mistakes.
+
+Suppose low-level:
+
+```text
+KairoMath
+```
+
+links:
+
+```text
+KairoRenderer.
+```
+
+You should immediately ask why.
+
+Likewise if:
+
+```text
+KairoAssets
+```
+
+requires:
+
+```text
+KairoEditor.
+```
+
+your dependency direction is probably broken.
+
+The build graph therefore acts as an **executable architecture document**.
+
+If a dependency is absent from CMake, the code ideally cannot quietly use it.
+
+---
+
+**Current Kairo superbuild**
+
+Your top-level `KairoGameEngine` CMake explicitly treats the project as a **sibling-repository workspace**.
+
+It expects something like:
+
+```text
+Kairo/
+├── KairoGameEngine/
+├── KairoMath/
+├── KairoGeometry/
+├── KairoSpatial/
+├── KairoPhysicsEngine/
+├── KairoAssets/
+├── KairoECS/
+├── KairoReflection/
+├── KairoEngineCore/
+├── KairoRenderer/
+└── ...
+```
+
+Then the integration repository calls:
+
+```cmake
+add_subdirectory(...)
+```
+
+for those sibling source trees.
+
+This is important because there is only one physical checkout of each component in the integration workspace.
+
+You explicitly migrated away from nested duplicated submodules.
+
+That substantially simplifies local development.
+
+---
+
+**`add_library()` does not necessarily mean an archive**
+
+CMake targets may represent:
+
+```text
+STATIC
+SHARED
+MODULE
+OBJECT
+INTERFACE
+IMPORTED
+ALIAS.
+```
+
+An `INTERFACE` target does not produce a library binary; it exists to carry usage requirements. Official CMake documentation describes interface libraries precisely as linkable usage-requirement targets rather than ordinary compiled artifacts. [cmake.org](https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com)
+
+Your current:
+
+```cmake
+add_library(
+    KairoGameEngine
+    INTERFACE
+)
+```
+
+is therefore not supposed to create:
+
+```text
+libKairoGameEngine.a.
+```
+
+It creates a convenience architectural umbrella.
+
+---
+
+**Current Kairo umbrella target**
+
+You have conceptually:
+
+```cmake
+target_link_libraries(
+    KairoGameEngine
+    INTERFACE
+        KairoAssets
+        KairoECS
+        KairoReflection
+        KairoEngineCore
+        KairoSceneECSBridge
+        KairoRenderer
+        KairoPhysicsEngine
+)
+```
+
+This says:
+
+> A consumer linking the KairoGameEngine umbrella inherits this engine integration surface.
+
+That is reasonable **at the top boundary**.
+
+But low-level targets should not link `KairoGameEngine` just because it is convenient.
+
+Otherwise:
+
+```text
+KairoSpatial
+```
+
+would transitively gain visibility into:
+
+```text
+Renderer
+Assets
+ECS
+EngineCore
+Physics.
+```
+
+That destroys architectural discipline.
+
+The umbrella belongs at the composition edge.
+
+---
+
+**Target properties are the build-system equivalent of component metadata**
+
+Think of:
+
+```cmake
+target_compile_features
+target_compile_definitions
+target_link_libraries
+target_sources
+```
+
+as assigning structured properties to a target.
+
+CMake then computes the transitive closure of those properties.
+
+This is similar to our ECS/system dependency thinking:
+
+$$
+Target_A
+\rightarrow
+Target_B
+$$
+
+can imply:
+
+$$
+Requirements(B)
+\rightarrow
+A.
+$$
+
+The difference is build-time rather than runtime.
+
+---
+
+**PUBLIC, PRIVATE and INTERFACE**
+
+This is probably the most important modern-CMake concept to know perfectly.
+
+For a target A depending on B:
+
+```cmake
+target_link_libraries(
+    A
+    PRIVATE B
+)
+```
+
+means:
+
+$$
+A\ uses\ B
+$$
+
+but:
+
+$$
+Consumers(A)
+$$
+
+do **not** automatically inherit B as part of A's usage requirements.
+
+---
+
+**PRIVATE dependency**
+
+Imagine:
+
+```cpp
+// A.cpp
+
+#include <zstd.h>
+
+void InternalCompression()
+{
+    ...
+}
+```
+
+but A's public API exposes no zstd concepts.
+
+Then:
+
+```cmake
+target_link_libraries(
+    A
+    PRIVATE zstd
+)
+```
+
+makes sense.
+
+B is implementation detail.
+
+---
+
+**PUBLIC dependency**
+
+Suppose A's public interface exposes B:
+
+```cpp
+// exported API
+
+MeshBounds ComputeBounds(
+    const kairo::math::Vec3f* vertices);
+```
+
+If consumers of A must also satisfy B's usage requirements to compile/use A correctly, B is effectively part of A's public contract.
+
+Then:
+
+```cmake
+target_link_libraries(
+    A
+    PUBLIC KairoMath
+)
+```
+
+is appropriate.
+
+CMake propagates PUBLIC and INTERFACE usage requirements transitively to consumers. That is how `INTERFACE_LINK_LIBRARIES`, include requirements, definitions, and compile features flow through the target graph. [cmake.org](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_LINK_LIBRARIES.html?utm_source=chatgpt.com)
+
+---
+
+**INTERFACE dependency**
+
+Suppose target A itself does not need B to build, but users of A do.
+
+An `INTERFACE` library is the clearest example:
+
+```cmake
+add_library(
+    KairoGameEngine
+    INTERFACE
+)
+
+target_link_libraries(
+    KairoGameEngine
+    INTERFACE
+        KairoRenderer
+        KairoPhysicsEngine
+)
+```
+
+There is no KairoGameEngine object code needing those libraries.
+
+The **consumers** do.
+
+So:
+
+$$
+INTERFACE
+=
+\text{consumer requirement only}.
+$$
+
+---
+
+**Truth table**
+
+The easiest way to remember scope is:
+
+| Scope | Used to build target itself? | Propagated to consumers? |
+|---|---:|---:|
+| PRIVATE | yes | no |
+| PUBLIC | yes | yes |
+| INTERFACE | no | yes |
+
+This applies conceptually to:
+
+```text
+link libraries
+include directories
+compile definitions
+compile features
+source/interface sets.
+```
+
+The exact property plumbing differs, but this mental model is excellent.
+
+---
+
+**Why incorrect PUBLIC creates dependency contagion**
+
+Suppose:
+
+```text
+Renderer PUBLIC Physics
+```
+
+even though Physics is needed only inside one `.cpp`.
+
+Then:
+
+```text
+Editor
+→ Renderer
+→ Physics
+```
+
+inherits Physics.
+
+Later some editor code casually uses Physics because it "just works."
+
+Now a build-system mistake created architectural coupling.
+
+Therefore:
+
+$$
+\boxed{
+PUBLIC\ is\ architectural\ API.
+}
+$$
+
+Do not use PUBLIC because linking failed and you want the error to disappear.
+
+---
+
+**Why incorrect PRIVATE also fails**
+
+Opposite problem:
+
+```text
+A's public interface genuinely exposes B
+```
+
+but B is marked PRIVATE.
+
+A's own build succeeds.
+
+A downstream consumer may fail because it lacks B's includes, module BMIs, compile definitions or link requirements.
+
+Therefore scope describes **semantic ownership**.
+
+Not "whatever gets today's build green."
+
+---
+
+**Current Kairo example: native framework transitivity**
+
+`KairoRenderer` contains Objective-C++ Metal implementation code on macOS.
+
+The final executable may be pure C++.
+
+If the renderer's static archive requires:
+
+```text
+Foundation.framework
+Metal.framework
+AppKit.framework
+QuartzCore.framework
+libobjc
+```
+
+those final-link requirements have to reach consumers.
+
+Your renderer marks the native link contract PUBLIC.
+
+That is appropriate because:
+
+$$
+\text{consumer linking KairoRenderer}
+$$
+
+must satisfy that final link environment.
+
+Even though the consumer does not call Objective-C directly.
+
+---
+
+**Public compile definitions**
+
+Current renderer exports backend capability definitions such as:
+
+```text
+KAIRO_RENDERER_HAS_VULKAN_BACKEND
+KAIRO_RENDERER_HAS_OPENGL_BACKEND
+```
+
+and platform-specific capabilities.
+
+If public headers/module interfaces use these definitions to alter exposed contract, PUBLIC may make sense.
+
+If a definition only changes `.cpp` internals, it should be PRIVATE.
+
+Again:
+
+$$
+\text{Does the consumer need this to interpret the target's interface?}
+$$
+
+That is the test.
+
+---
+
+**Imported and alias targets**
+
+An imported target represents something CMake does **not build here**.
+
+Example:
+
+```cmake
+find_package(Vulkan REQUIRED)
+```
+
+might provide:
+
+```text
+Vulkan::Vulkan.
+```
+
+That is effectively an imported target.
+
+It carries:
+
+```text
+library location
+include requirements
+link requirements
+possibly per-config locations.
+```
+
+CMake documentation explicitly treats IMPORTED targets as externally provided targets with `IMPORTED_*` and `INTERFACE_*` properties. [cmake.org](https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com)
+
+---
+
+**Why imported targets beat raw library paths**
+
+Bad:
+
+```cmake
+target_link_libraries(
+    Renderer
+    PRIVATE
+    "/usr/local/lib/libvulkan.so"
+)
+```
+
+This bakes in:
+
+```text
+one machine
+one filesystem
+one platform.
+```
+
+Better:
+
+```cmake
+target_link_libraries(
+    Renderer
+    PRIVATE
+    Vulkan::Vulkan
+)
+```
+
+Now the package finder/toolchain determines actual location.
+
+The consuming target expresses a semantic dependency.
+
+---
+
+**Alias targets**
+
+Alias:
+
+```cmake
+add_library(
+    Kairo::SceneECSBridge
+    ALIAS
+    KairoSceneECSBridge
+)
+```
+
+does not create another library.
+
+It gives another stable target name.
+
+Common convention:
+
+```text
+Namespace::Target.
+```
+
+Benefits include:
+
+```text
+clear ownership
+package-like naming
+easy typo detection
+consistent consumer syntax.
+```
+
+Official CMake treats alias targets as alternate target names rather than separate build artifacts. [cmake.org](https://cmake.org/cmake/help/latest/command/add_library.html?utm_source=chatgpt.com)
+
+---
+
+**Alias naming is useful even internally**
+
+Instead of:
+
+```cmake
+target_link_libraries(
+    Game
+    PRIVATE KairoRenderer
+)
+```
+
+a future installed/exported API might prefer:
+
+```cmake
+target_link_libraries(
+    Game
+    PRIVATE Kairo::Renderer
+)
+```
+
+This visually communicates:
+
+> this is a CMake target contract, not a raw linker filename.
+
+---
+
+**CMake presets**
+
+A preset is a versioned named build configuration.
+
+Instead of telling every developer:
+
+```bash
+cmake -S . -B build/foo \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DBUILD_TESTING=ON \
+  -DKAIRO_GAME_ENGINE_BUILD_EDITOR=ON \
+  -DKAIRO_GAME_ENGINE_BUILD_RAYTRACER=ON \
+  ...
+```
+
+you write:
+
+```bash
+cmake --preset dev-clang
+```
+
+Official CMake distinguishes checked-in `CMakePresets.json` for project-wide shared configuration from `CMakeUserPresets.json` for developer-local settings that generally should not be committed. [cmake.org](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html?utm_source=chatgpt.com)
+
+---
+
+**Current Kairo presets**
+
+Your current file defines profiles including roughly:
+
+```text
+dev
+dev-clang
+release
+ci-clang
+ci-sanitized
+ci-msvc
+compute-stack-clang.
+```
+
+This is good because each name describes an **intent**.
+
+`ci-sanitized` means:
+
+```text
+Debug
+ASan + UBSan
+no heavyweight editor/raytracer paths
+```
+
+while:
+
+```text
+release
+```
+
+turns testing/validation features down appropriately.
+
+---
+
+**Preset inheritance**
+
+Current:
+
+```text
+dev-clang
+```
+
+inherits:
+
+```text
+dev
+```
+
+then adds:
+
+```text
+Clang toolchain
+separate binary directory.
+```
+
+This avoids duplicating 20 settings.
+
+Conceptually:
+
+$$
+P_{child}
+=
+P_{parent}
++
+Overrides.
+$$
+
+---
+
+**Why binary directories should differ**
+
+Do not use one build directory for:
+
+```text
+GCC Debug
+Clang Release
+MSVC
+ASan.
+```
+
+Compiler and configuration-specific artifacts are not interchangeable.
+
+Current Kairo uses:
+
+```text
+build/dev
+build/dev-clang
+build/release
+build/ci-clang
+...
+```
+
+which is correct.
+
+---
+
+**Developer-local compiler path**
+
+You do **not** want this in checked-in presets:
+
+```text
+/opt/homebrew/Cellar/llvm/23.1.4/bin/clang++.
+```
+
+That path belongs to one machine.
+
+Instead Kairo's toolchain accepts:
+
+```text
+KAIRO_CXX_COMPILER
+```
+
+from environment or locates Homebrew LLVM dynamically.
+
+This cleanly separates:
+
+$$
+\text{shared build intent}
+$$
+
+from:
+
+$$
+\text{machine-local toolchain location}.
+$$
+
+---
+
+**Command-line override**
+
+Presets are defaults, not absolute prison.
+
+You can do:
+
+```bash
+cmake --preset ci-clang \
+  -DKAIRO_GAME_ENGINE_BUILD_RAYTRACER=OFF
+```
+
+CMake permits command-line settings to override preset variables. [cmake.org](https://cmake.org/cmake/help/git-stage/guide/tutorial/Configuration%20and%20Cache%20Variables.html?utm_source=chatgpt.com)
+
+Your CI does this on macOS for a known current Clang/frontend limitation.
+
+That is a legitimate targeted override.
+
+---
+
+**Ninja build scheduling**
+
+CMake does not generally compile source files itself.
+
+With Ninja generator:
+
+```text
+CMake
+  |
+  | generates
+  v
+build.ninja
+  |
+  v
+Ninja
+  |
+  v
+compiler/linker/custom commands.
+```
+
+Ninja is intentionally a low-level dependency-graph executor. It tries to do the minimum work needed and executes independent edges in parallel. [ninja-build.org](https://ninja-build.org/manual.html?utm_source=chatgpt.com)
+
+---
+
+**Build edge model**
+
+A simple compile relationship:
+
+```text
+foo.cpp
+  |
+  v
+foo.o
+```
+
+and:
+
+```text
+bar.cpp
+  |
+  v
+bar.o
+```
+
+then:
+
+```text
+foo.o + bar.o
+      |
+      v
+   executable.
+```
+
+Ninja can compile `foo.cpp` and `bar.cpp` concurrently because neither depends on the other.
+
+Graph:
+
+$$
+foo.cpp\rightarrow foo.o
+$$
+
+$$
+bar.cpp\rightarrow bar.o
+$$
+
+$$
+(foo.o,bar.o)\rightarrow Game.
+$$
+
+---
+
+**Parallelism is graph-limited**
+
+Suppose 100 translation units are independent.
+
+Ninja can run many simultaneously.
+
+But if:
+
+```text
+GeneratedHeader
+      ↓
+A.cpp
+      ↓
+B.cpp
+      ↓
+C.cpp
+```
+
+the dependency chain constrains parallelism.
+
+Critical-path build time approximately depends on:
+
+$$
+\boxed{
+\max_{\text{path}}
+\sum_i Cost(edge_i)
+}
+$$
+
+rather than only total work.
+
+This is why build architecture matters.
+
+---
+
+**Incorrect dependency declaration causes flaky clean builds**
+
+Suppose shader code generation creates:
+
+```text
+generated_shader.hpp
+```
+
+but consumer target does not depend on generator.
+
+Incremental build may succeed because stale generated file exists.
+
+Fresh CI build fails.
+
+This is a classic underspecified build DAG.
+
+Ninja is deliberately strict: missing dependency edges can lead to incorrect concurrent scheduling. Its manual even provides `missingdeps` diagnostics for generated-file dependency problems. [ninja-build.org](https://ninja-build.org/manual.html?utm_source=chatgpt.com)
+
+---
+
+**Current Kairo shader build edges**
+
+Renderer uses explicit:
+
+```cmake
+add_custom_command(
+    OUTPUT ...
+    COMMAND glslangValidator ...
+    DEPENDS shader-source
+)
+```
+
+then:
+
+```cmake
+add_custom_target(
+    KairoRendererShaders
+    DEPENDS generated SPIR-V files
+)
+```
+
+and:
+
+```cmake
+add_dependencies(
+    KairoRenderer
+    KairoRendererShaders
+)
+```
+
+That explicitly represents:
+
+$$
+ShaderSource
+\rightarrow
+SPIRV
+\rightarrow
+RendererTarget.
+$$
+
+Correct build graph thinking.
+
+---
+
+**Over-serialization of build graph**
+
+The opposite mistake is:
+
+```cmake
+add_dependencies(A B)
+```
+
+when no true ordering exists.
+
+That prevents parallelism.
+
+If:
+
+```text
+A and B are independent
+```
+
+but build graph says:
+
+$$
+B\rightarrow A,
+$$
+
+Ninja must wait.
+
+Use dependency edges only when correctness requires them.
+
+---
+
+**C++ modules change build scheduling**
+
+Headers permit:
+
+```text
+A.cpp
+B.cpp
+C.cpp
+```
+
+to compile independently after preprocessing dependencies are known.
+
+C++ modules introduce BMIs.
+
+If:
+
+```cpp
+// B.cppm
+export module B;
+```
+
+and:
+
+```cpp
+// A.cppm
+export module A;
+import B;
+```
+
+then:
+
+$$
+BMI_B
+$$
+
+must exist before A can compile.
+
+CMake scans module imports and communicates dynamic ordering to the underlying build tool. CMake's C++ module support was introduced in 3.28 specifically because module compilation requires build-order discovery that ordinary header workflows do not. [cmake.org](https://cmake.org/cmake/help/git-stage/manual/cmake-cxxmodules.7.html?utm_source=chatgpt.com)
+
+---
+
+**Compiler toolchains**
+
+A toolchain is more than:
+
+```text
+clang++.
+```
+
+It includes some combination of:
+
+```text
+C compiler
+C++ compiler
+linker
+archiver
+standard library
+target triple
+sysroot
+SDK
+platform frameworks
+runtime libraries.
+```
+
+CMake's toolchain abstraction exists so these choices can be established early, especially for non-default or cross-compilation builds. [cmake.org](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html?highlight=toolchains\&utm_source=chatgpt.com)
+
+---
+
+**Why compiler selection must happen early**
+
+CMake interrogates the compiler during configuration.
+
+It learns:
+
+```text
+compiler ID
+compiler version
+ABI
+supported features
+platform defaults.
+```
+
+Changing compiler after a build directory is configured is unsafe.
+
+That is why:
+
+```text
+one build dir per toolchain
+```
+
+is a strong rule.
+
+---
+
+**Current Kairo Clang toolchain**
+
+Your toolchain does several good things.
+
+It first checks:
+
+```text
+KAIRO_CXX_COMPILER
+```
+
+environment override.
+
+On macOS it can discover Homebrew LLVM without hard-coding:
+
+```text
+/opt/homebrew
+```
+
+or:
+
+```text
+/usr/local.
+```
+
+Then it derives matching:
+
+```text
+clang
+clang++
+Objective-C++ driver
+```
+
+from one LLVM installation.
+
+That avoids an ugly mixed toolchain such as:
+
+```text
+Homebrew clang++ compile
+Apple clang Objective-C++
+different linker assumptions.
+```
+
+---
+
+**SDK/toolchain consistency**
+
+A C++ object is not compiled in isolation.
+
+Especially on macOS:
+
+```text
+compiler frontend
+SDK headers
+libc++
+linker
+Objective-C runtime
+frameworks
+debug info format
+```
+
+must cooperate.
+
+Your current toolchain even pins Debug DWARF behavior because newer upstream Clang output can trigger diagnostic incompatibilities with Apple's linker.
+
+This is exactly what "toolchain portability" means in practice.
+
+Not just:
+
+> install clang.
+
+---
+
+**Cross compilation**
+
+Suppose host:
+
+$$
+x86_64\ Linux
+$$
+
+target:
+
+$$
+ARM64\ Linux.
+$$
+
+Compiler must use:
+
+```text
+target triple
+target sysroot
+target libraries.
+```
+
+CMake toolchain can define:
+
+```cmake
+set(
+    CMAKE_SYSTEM_NAME
+    Linux
+)
+
+set(
+    CMAKE_SYSTEM_PROCESSOR
+    arm64
+)
+
+set(
+    CMAKE_CXX_COMPILER
+    clang++
+)
+
+set(
+    CMAKE_CXX_COMPILER_TARGET
+    aarch64-linux-gnu
+)
+```
+
+The target architecture is part of the build identity.
+
+---
+
+**Toolchain fingerprints matter for reproducibility**
+
+Two developers can build the same source SHA using:
+
+```text
+Clang 18
+Clang 23
+```
+
+and get different:
+
+```text
+warnings
+code generation
+module behavior
+debug info
+optimizer behavior.
+```
+
+Therefore a truly reproducible build record should capture:
+
+```text
+compiler
+version
+standard library
+CMake
+Ninja
+dependency SHAs
+configuration.
+```
+
+Source commit alone is not complete provenance.
+
+---
+
+**Clang versus MSVC compatibility**
+
+"Valid C++23" is not enough to guarantee both toolchains compile the same code today.
+
+Differences arise from:
+
+```text
+feature implementation maturity
+diagnostics
+extensions
+preprocessor
+module implementation
+warning policy
+linker behavior
+runtime library
+Windows ABI.
+```
+
+This is why CI must actually build with multiple compilers.
+
+---
+
+**Warning syntax differs**
+
+Clang/GCC:
+
+```cmake
+-Wall
+-Wextra
+-Wpedantic
+```
+
+MSVC:
+
+```cmake
+/W4
+```
+
+Kairo's CMake selects appropriate warning options by compiler ID.
+
+That is correct.
+
+Do not feed:
+
+```text
+-Wall
+```
+
+to MSVC and assume CMake will translate it.
+
+---
+
+**Diagnostic suppression should be narrow**
+
+Current renderer has an excellent example.
+
+D3D12 implementation intentionally uses explicit alignment that produces MSVC warning:
+
+```text
+C4324
+```
+
+for padding.
+
+Rather than disabling C4324 globally:
+
+```cmake
+add_compile_options(/wd4324)
+```
+
+you apply it only to:
+
+```text
+detail/Direct3D12Backend.cpp.
+```
+
+That preserves the warning everywhere else.
+
+Principle:
+
+$$
+\boxed{
+\text{suppress the warning at the narrowest justified scope}.
+}
+$$
+
+---
+
+**Vendor/compiler quirks need explicit gates**
+
+Current Kairo also contains a very specific macOS LLVM 23 workaround for source-location exhaustion in a massive module graph.
+
+It disables one host integration route only for:
+
+```text
+Apple platform
+Clang
+version >=23 and <24.
+```
+
+Other compilers/platforms retain the path.
+
+That is vastly better than:
+
+```text
+disable feature everywhere.
+```
+
+This is how portability should work:
+
+$$
+\text{smallest capability-conditioned deviation}.
+$$
+
+---
+
+**Never use compiler name as a substitute for capability forever**
+
+Initially:
+
+```cmake
+if(MSVC)
+...
+endif()
+```
+
+is often necessary.
+
+But when possible, test actual capability.
+
+For example:
+
+```text
+supports feature?
+library available?
+header available?
+backend available?
+```
+
+because compilers evolve.
+
+The long-term abstraction should be:
+
+$$
+Capability
+$$
+
+rather than:
+
+$$
+VendorName.
+$$
+
+---
+
+**C++ modules in multi-target builds**
+
+Now we combine:
+
+```text
+targets
+PUBLIC/PRIVATE
+Ninja
+compiler differences
+dependency ordering.
+```
+
+A C++ module interface:
+
+```cpp
+export module Kairo.Math;
+
+export struct Vec3
+{
+    ...
+};
+```
+
+produces a compiled module interface/BMI.
+
+If another target imports:
+
+```cpp
+import Kairo.Math;
+```
+
+the build system must know:
+
+1. which target provides it,
+2. how that target is compiled,
+3. which BMI belongs to the current compiler/configuration,
+4. that provider must be available before consumer module compiles.
+
+---
+
+**CMake `FILE_SET CXX_MODULES`**
+
+Current Kairo uses patterns like:
+
+```cmake
+target_sources(
+    KairoSceneECSBridge
+    PUBLIC
+    FILE_SET CXX_MODULES
+    BASE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/Runtime
+    FILES
+        Runtime/KairoSceneECSBridge.cppm
+)
+```
+
+CMake 3.28 added module dependency scanning support; files in `CXX_MODULES` file sets participate in module scanning and ordering. [cmake.org](https://cmake.org/cmake/help/git-stage/manual/cmake-cxxmodules.7.html?utm_source=chatgpt.com)
+
+This is exactly why your root requires:
+
+```cmake
+cmake_minimum_required(
+    VERSION 3.28
+)
+```
+
+rather than an older version.
+
+---
+
+**Module BMI is compiler-specific**
+
+Do not treat a Clang BMI as a portable artifact consumable by MSVC.
+
+In general:
+
+$$
+BMI=
+F(
+Compiler,
+CompilerVersion,
+Flags,
+Source,
+Dependencies,
+Configuration
+).
+$$
+
+This means BMI should live in build tree/cache, not be checked into source control as universal binaries.
+
+---
+
+**Modules reduce textual inclusion but introduce stronger build dependencies**
+
+Header model:
+
+```text
+A.cpp preprocesses header B
+```
+
+Module model:
+
+```text
+B must compile to BMI
+then A consumes BMI.
+```
+
+This can improve compile isolation but creates more explicit graph ordering.
+
+Large chains:
+
+```text
+M1 → M2 → M3 → M4 → M5
+```
+
+reduce available parallelism.
+
+So module architecture still benefits from shallow dependency layering.
+
+---
+
+**Module cycles remain architectural cycles**
+
+If:
+
+```cpp
+module A;
+import B;
+```
+
+and:
+
+```cpp
+module B;
+import A;
+```
+
+you have not found a "modules problem."
+
+You have an architectural cycle.
+
+Fix by:
+
+```text
+extracting shared contracts
+moving bridge upward
+splitting responsibility.
+```
+
+Exactly the same principles from M091.
+
+---
+
+**Public modules and target dependencies**
+
+If an exported module interface exposes types or requirements from another target, that dependency is generally part of the consumer-facing contract.
+
+For example:
+
+```cpp
+export module Renderer.Scene;
+
+export import Kairo.Math;
+```
+
+is obviously public.
+
+Even without `export import`, if exported signatures use types whose definitions/usage requirements are required downstream, the target dependency must be modeled accordingly.
+
+PUBLIC/PRIVATE remains architectural even with modules.
+
+Modules do not remove transitive dependency design.
+
+---
+
+### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW
+
+**Git submodule commit pinning**
+
+A Git submodule fundamentally records:
+
+```text
+path
+repository URL/config
+exact commit object.
+```
+
+The important part for reproducibility is the commit.
+
+Not:
+
+```text
+"main branch."
+```
+
+Because:
+
+$$
+main(t_1)
+\neq
+main(t_2).
+$$
+
+If your integration project says:
+
+```text
+KairoRenderer main
+```
+
+two clones at different dates may build different engines.
+
+Pin:
+
+$$
+KairoRenderer@SHA.
+$$
+
+---
+
+**Why commit pinning matters**
+
+Suppose EngineCore expects renderer API:
+
+```cpp
+SubmitScene(
+    RenderScene&);
+```
+
+Renderer main changes tomorrow to:
+
+```cpp
+SubmitFrame(
+    FrameDescription&);
+```
+
+A fresh CI clone now fails despite GameEngine source being unchanged.
+
+The integration state was never fully specified.
+
+A reproducible workspace must define:
+
+$$
+\boxed{
+EngineState=
+\{Repo_i,SHA_i\}_{i=1}^{N}.
+}
+$$
+
+---
+
+**Current Kairo has moved beyond ordinary submodules**
+
+Your repository includes a migration script explicitly removing old nested component submodules.
+
+Current architecture instead uses sibling repositories plus:
+
+```text
+workspace.lock.
+```
+
+This is important.
+
+The curriculum atom says "Git submodule commit pinning," but the underlying principle is **commit-pinned multi-repository composition**.
+
+Kairo currently implements the principle without using active nested submodules.
+
+---
+
+**Current `workspace.lock`**
+
+It records exact full 40-hex SHAs:
+
+```text
+KairoMath          <SHA>
+KairoGeometry      <SHA>
+KairoSpatial       <SHA>
+KairoPhysicsEngine <SHA>
+...
+```
+
+This is functionally the same integration guarantee as submodule gitlinks:
+
+$$
+RepoName
+\rightarrow
+ExactCommit.
+$$
+
+In some ways it is easier to reason about in your sibling-workspace model.
+
+---
+
+**Why full SHA, not short SHA**
+
+Short SHAs are contextual prefixes.
+
+They may become ambiguous as repository history grows.
+
+A reproducibility lock should use full commit ID.
+
+Current Kairo validates:
+
+```text
+40 lowercase hex characters.
+```
+
+That is good.
+
+---
+
+**Lock verification must also detect dirty trees**
+
+Suppose repository HEAD exactly matches locked SHA but developer modified one file.
+
+Then:
+
+$$
+HEAD=LockedSHA
+$$
+
+yet actual source is different.
+
+So reproducible state requires:
+
+$$
+HEAD_i=LockedSHA_i
+$$
+
+and:
+
+$$
+WorkingTree_i=Clean.
+$$
+
+Your `verify_workspace_lock.sh` checks both.
+
+This is an important detail many "reproducible" scripts miss.
+
+---
+
+**Materialization algorithm**
+
+Your materializer roughly performs:
+
+```text
+read lock entry
+      ↓
+repo exists?
+  no → clone
+  yes → reject meaningful dirty changes
+      ↓
+fetch commit
+      ↓
+verify commit object exists
+      ↓
+checkout --detach exact SHA
+      ↓
+verify HEAD == expected SHA.
+```
+
+This is much stronger than:
+
+```bash
+git clone repo
+git checkout main
+```
+
+---
+
+**Detached HEAD is desirable in CI**
+
+CI does not need to accidentally track a branch tip.
+
+It wants exactly:
+
+```text
+commit X.
+```
+
+Detached HEAD communicates:
+
+> this checkout represents immutable integration input.
+
+That is appropriate for build workers.
+
+---
+
+**Reproducible superbuilds**
+
+A **superbuild** composes many projects into one coordinated build.
+
+Your KairoGameEngine root is effectively a superbuild.
+
+It:
+
+```text
+materializes component repos
+sets component options
+adds component subdirectories
+builds integration bridges
+builds player/editor/samples
+runs cross-component tests.
+```
+
+The key property is:
+
+$$
+\boxed{
+\text{one configuration creates one coherent component graph}.
+}
+$$
+
+---
+
+**Why standalone CI is not enough**
+
+Suppose:
+
+```text
+KairoRenderer tests pass.
+KairoEngineCore tests pass.
+```
+
+But Renderer changed a public module contract that EngineCore integration bridge expects.
+
+Each repo independently green.
+
+Combined engine broken.
+
+Therefore you need:
+
+```text
+component CI
++
+superbuild CI.
+```
+
+They test different boundaries.
+
+---
+
+**Current dual strategy**
+
+Your repositories do both.
+
+Examples:
+
+```text
+KairoECS CI
+KairoRenderer CI
+KairoEngineCore CI
+```
+
+test standalone component correctness.
+
+Then:
+
+```text
+KairoGameEngine Build, Test, and Package
+```
+
+materializes locked component versions and tests the integrated stack.
+
+Excellent architecture.
+
+---
+
+**Immutable dependency fallback**
+
+KairoRenderer also defines pinned commit SHAs for standalone dependencies.
+
+If it is built inside superbuild:
+
+```text
+TARGET KairoMath already exists
+```
+
+so reuse.
+
+If standalone:
+
+```text
+local source path?
+sibling?
+otherwise FetchContent exact pinned SHA.
+```
+
+This allows:
+
+$$
+StandaloneRenderer
+$$
+
+and:
+
+$$
+IntegratedRenderer
+$$
+
+without tracking dependency branch heads.
+
+That is good reproducibility.
+
+---
+
+**Reproducibility has levels**
+
+A useful hierarchy is:
+
+**Source reproducibility**
+
+Exact source SHAs known.
+
+**Dependency reproducibility**
+
+Third-party versions pinned.
+
+**Toolchain reproducibility**
+
+Compiler/CMake/Ninja/SDK known.
+
+**Configuration reproducibility**
+
+Preset/options known.
+
+**Artifact reproducibility**
+
+Same bytes produced.
+
+Kairo is strong on the first four.
+
+Bit-for-bit artifact reproducibility is a further bar and may require eliminating timestamps, absolute paths, nondeterministic archive ordering, linker build IDs, etc.
+
+Do not claim more than you prove.
+
+---
+
+**Build provenance record**
+
+A strong release could emit:
+
+```text
+KairoGameEngine SHA
+workspace.lock hash
+CMake version
+Ninja version
+compiler ID/version
+platform/SDK
+preset
+configuration flags
+dependency package versions.
+```
+
+Then any artifact can be traced to its exact build recipe.
+
+This is extremely valuable for research reproducibility too.
+
+---
+
+**Continuous-integration matrices**
+
+A CI matrix answers:
+
+> Which combinations of environment do we prove?
+
+Current top-level superbuild matrix includes approximately:
+
+```text
+Ubuntu + Clang
+Ubuntu + Clang + ASan/UBSan
+macOS + upstream/Homebrew Clang
+Windows + MSVC.
+```
+
+This is meaningful coverage.
+
+It is not simply four duplicate jobs.
+
+Each axis catches different defects.
+
+---
+
+**Why Linux Clang matters**
+
+It catches:
+
+```text
+POSIX assumptions
+Clang diagnostics
+Linux linker behavior
+case-sensitive filesystem behavior
+OpenGL/Vulkan Linux runtime issues.
+```
+
+---
+
+**Why macOS LLVM matters**
+
+It catches:
+
+```text
+Apple frameworks
+Objective-C++
+Metal
+MoltenVK
+Darwin linker semantics
+macOS module/toolchain behavior.
+```
+
+---
+
+**Why Windows MSVC matters**
+
+It catches:
+
+```text
+MSVC language conformance differences
+Windows filesystem/path behavior
+D3D12
+Windows linker/import-library semantics
+different standard library implementation.
+```
+
+A project that compiles only with Clang has not proven portable C++.
+
+---
+
+**Sanitizer lane**
+
+ASan:
+
+```text
+heap buffer overflow
+use-after-free
+stack errors
+```
+
+UBSan:
+
+```text
+undefined shifts
+bad casts
+signed overflow classes
+alignment violations
+```
+
+depending on instrumentation.
+
+These are orthogonal to normal Release build tests.
+
+Current `ci-sanitized` removes some heavyweight targets to keep the sanitizer lane focused and tractable.
+
+That is reasonable.
+
+---
+
+**CI matrix explosion**
+
+Suppose you test:
+
+$$
+3\ OS
+\times
+3\ compilers
+\times
+3\ build\ modes
+\times
+4\ backends
+=
+108
+$$
+
+jobs.
+
+That becomes expensive.
+
+Choose representative combinations.
+
+You do not need full Cartesian product every commit.
+
+You can have:
+
+```text
+PR matrix
+nightly extended matrix
+release matrix.
+```
+
+Optimization problem:
+
+$$
+\max Coverage
+$$
+
+subject to:
+
+$$
+CI\ Cost\le Budget.
+$$
+
+---
+
+**Fail-fast false**
+
+Your main matrix uses:
+
+```yaml
+fail-fast: false
+```
+
+That is useful.
+
+If Linux fails, still learn whether Windows/macOS pass.
+
+One CI run produces a cross-platform failure map.
+
+For portability work, that diagnostic value is often worth extra runner time.
+
+---
+
+**CI dependency installation is part of the test**
+
+Current CI explicitly installs:
+
+```text
+Ninja
+Clang
+GLFW
+Vulkan SDK/libraries
+glslang
+Xvfb
+etc.
+```
+
+A clean runner therefore exercises bootstrap assumptions.
+
+A developer machine may accidentally have hidden dependencies installed.
+
+CI reveals them.
+
+---
+
+**Unit tests versus integration tests**
+
+A unit test tries to isolate a small behavior.
+
+Example ECS:
+
+```cpp
+TEST_CASE(
+    "destroyed entity handle is stale")
+{
+    Registry registry;
+
+    Entity a =
+        registry.Create();
+
+    registry.Destroy(a);
+
+    REQUIRE_FALSE(
+        registry.IsAlive(a));
+}
+```
+
+No renderer.
+
+No window.
+
+No project loading.
+
+No GPU.
+
+This is a unit-level invariant test.
+
+---
+
+**Unit tests should localize failures**
+
+If sparse-set invariant breaks, you want:
+
+```text
+KairoECS tests fail.
+```
+
+Not:
+
+```text
+KairoPlayer cannot render sample project.
+```
+
+The latter is too far from cause.
+
+Unit tests provide fault localization.
+
+---
+
+**Integration tests**
+
+An integration test deliberately crosses boundaries.
+
+Example:
+
+```text
+Scene
+    ↓
+SceneECSBridge
+    ↓
+ECS
+```
+
+Current:
+
+```text
+KairoSceneECSBridgeTests
+```
+
+does exactly this class of test.
+
+Another:
+
+```text
+Physics debug data
+    ↓
+Renderer bridge
+```
+
+is integration.
+
+---
+
+**Integration tests validate contracts, not implementation details**
+
+Suppose:
+
+```text
+AssetRegistry
++
+SceneLoader
++
+RendererAdapter.
+```
+
+An integration test should verify:
+
+```text
+the same stable asset reaches renderer correctly.
+```
+
+It should not assert internal vector capacities unless those are contract.
+
+This keeps tests robust during refactoring.
+
+---
+
+**Test pyramid for engine code**
+
+A practical distribution:
+
+```text
+many fast unit tests
+
+fewer subsystem integration tests
+
+fewer full player/editor smoke tests
+
+very few expensive hardware/content acceptance tests.
+```
+
+Why?
+
+Fast unit tests run continuously.
+
+Full GPU tests are slower and more environment-sensitive.
+
+Every test layer has a role.
+
+---
+
+**Smoke tests**
+
+A smoke test asks:
+
+$$
+\boxed{
+\text{Does the major path basically start and function?}
+}
+$$
+
+It does not prove every detail.
+
+Example:
+
+```text
+launch KairoPlayer
+load project
+initialize renderer
+execute one/few frames
+exit successfully.
+```
+
+That is much broader than a unit test.
+
+---
+
+**Current shared-content smoke**
+
+Your superbuild uses:
+
+```text
+KairoSharedContentPlayerSmoke.
+```
+
+It chooses a deterministic backend by platform rather than letting `auto` choose unpredictably.
+
+Linux/macOS CI window constraints are handled explicitly.
+
+This is good smoke-test design.
+
+---
+
+**Why smoke tests may legitimately skip**
+
+Renderer smoke tests use:
+
+```text
+SKIP_RETURN_CODE 77.
+```
+
+Suppose a CI machine lacks required GPU/display capability.
+
+That is not necessarily:
+
+```text
+test passed.
+```
+
+Nor necessarily:
+
+```text
+engine code failed.
+```
+
+It may be:
+
+```text
+environment cannot execute this test.
+```
+
+A distinct skip state is honest.
+
+Never report unavailable-hardware tests as passes.
+
+---
+
+**Validation test versus smoke test**
+
+Current Kairo distinguishes:
+
+```text
+KairoSharedContentProjectValidation
+```
+
+from:
+
+```text
+KairoSharedContentPlayerSmoke.
+```
+
+Validation asks:
+
+> Is project structurally valid?
+
+Smoke asks:
+
+> Can runtime execute it?
+
+This separation is excellent.
+
+One can run headlessly even when GPU/window tests cannot.
+
+---
+
+**Deterministic test fixtures**
+
+A deterministic fixture should behave identically across runs.
+
+Avoid:
+
+```text
+download current latest model
+use current time
+random unseeded values
+depend on user's home directory
+depend on current network response.
+```
+
+Prefer:
+
+```text
+committed fixture
+exact checksum
+seeded PRNG
+fixed paths
+known expected outputs.
+```
+
+---
+
+**Current Kairo content fixtures**
+
+Your repository has:
+
+```text
+TestContent/Compatibility/committed/
+```
+
+containing known assets such as glTF/HDR fixtures and malformed input.
+
+It also has checksum verification scripts.
+
+This is exactly the correct strategy for deterministic compatibility tests.
+
+---
+
+**Why checksums matter for test content**
+
+Imagine fixture file silently changes.
+
+Tests may begin producing different results.
+
+Without provenance you may think:
+
+> engine regression.
+
+But actual change was fixture.
+
+Checksum gate verifies:
+
+$$
+FixtureBytes=
+ExpectedFixtureBytes.
+$$
+
+Thus the input itself is controlled.
+
+---
+
+**Malformed fixtures are first-class test assets**
+
+A good test corpus includes not only happy data.
+
+Examples:
+
+```text
+invalid JSON
+truncated binary
+missing dependency
+unsupported schema version
+out-of-range count
+path traversal
+cycle.
+```
+
+A robust engine must prove:
+
+$$
+\text{invalid input}
+\rightarrow
+\text{controlled failure}.
+$$
+
+Not:
+
+$$
+\text{crash/UB}.
+$$
+
+Your compatibility tree includes malformed content, which is good.
+
+---
+
+**Randomness in deterministic tests**
+
+If algorithm needs randomness:
+
+```cpp
+std::mt19937 rng(
+    0x12345678);
+```
+
+Record seed.
+
+On failure:
+
+```text
+seed=0x12345678
+```
+
+allows exact replay.
+
+Property-based tests can use many seeds, but failing seed must be reported.
+
+---
+
+**Time**
+
+Avoid:
+
+```cpp
+auto now =
+    system_clock::now();
+```
+
+inside deterministic test semantics.
+
+Inject:
+
+```cpp
+FakeClock.
+```
+
+Your logger's monotonic sequence numbers rather than wall-clock timestamps are a nice example of making diagnostics testable and deterministic.
+
+---
+
+**Crash reporting and structured logging**
+
+These are related but distinct.
+
+Structured logging answers:
+
+> What happened before the failure?
+
+Crash reporting answers:
+
+> What failed at process level, where, and in what environment?
+
+A serious engine eventually wants both.
+
+---
+
+**Structured logging**
+
+Bad log:
+
+```text
+failed
+```
+
+Better:
+
+```text
+severity=error
+category=assets.import
+asset=f03b...
+importer=kairo.texture.stb
+message="invalid mip payload"
+```
+
+Structure lets tooling filter/search.
+
+A log record can conceptually be:
+
+```cpp
+struct LogRecord
+{
+    Severity Severity;
+    StringID Category;
+    uint64_t Sequence;
+    std::string Message;
+
+    // optional fields
+    std::vector<Field>
+        Fields;
+};
+```
+
+---
+
+**Current Kairo Logger**
+
+Current `EngineCore::Logger` has:
+
+```text
+Trace
+Debug
+Info
+Warning
+Error
+Critical
+```
+
+and stores:
+
+```text
+Sequence
+Severity
+Category
+Message.
+```
+
+It is:
+
+```text
+thread-safe
+bounded
+backend-neutral.
+```
+
+Very sensible foundation.
+
+It deliberately does not force:
+
+```text
+stdout
+file
+network telemetry.
+```
+
+The host can snapshot and forward records.
+
+---
+
+**Deterministic sequence numbers**
+
+Instead of attaching wall-clock timestamp as primary identity, Kairo increments:
+
+$$
+Sequence=1,2,3,\dots
+$$
+
+This gives deterministic event ordering per logger instance.
+
+For runtime production you may additionally attach:
+
+```text
+monotonic timestamp
+wall-clock timestamp
+thread ID
+frame number
+run ID.
+```
+
+But sequence is a strong ordering key.
+
+---
+
+**Bounded logging**
+
+Unbounded logger:
+
+```text
+runs 8 hours
+writes millions of messages
+memory grows indefinitely.
+```
+
+Kairo evicts oldest record when capacity is reached.
+
+That is appropriate for in-memory diagnostic history.
+
+Persistent sinks may use rolling files.
+
+---
+
+**Crash reporting**
+
+No dedicated `CrashReporter`/`CoreDiagnostics.cppm` equivalent was found in the inspected current repositories even though the curriculum lab card names a `CoreDiagnostics.cppm` target concept.
+
+So for Part 1597, this is partly **target architecture**, not a claim about current implementation.
+
+A crash system generally needs platform-specific hooks:
+
+```text
+Windows:
+unhandled exception / minidump
+
+Linux:
+signals + external dump tooling
+
+macOS:
+Mach/CrashReporter integration or external service.
+```
+
+Be extremely careful doing complex work inside POSIX signal handlers.
+
+---
+
+**Crash-report payload**
+
+Useful crash metadata:
+
+```text
+build ID
+workspace.lock hash
+Git SHA
+platform
+compiler
+exception/signal
+thread
+stack
+recent structured log ring
+active scene
+last frame number
+renderer backend
+GPU/driver info
+possibly recent profiler breadcrumbs.
+```
+
+The crash artifact becomes reproducibility evidence.
+
+---
+
+**Do not allocate wildly in a crash handler**
+
+At crash time:
+
+```text
+heap may be corrupted
+locks may be held
+threads may be suspended.
+```
+
+Calling arbitrary engine code can deadlock or crash again.
+
+A robust crash architecture pre-allocates/minimizes in-process work and delegates symbolization/upload to a safer postmortem helper where possible.
+
+---
+
+**Breadcrumbs**
+
+Before risky transitions:
+
+```text
+"loading scene X"
+"submitting frame 731"
+"reloading shader Y"
+```
+
+record lightweight breadcrumbs.
+
+Crash report can reveal the last known logical path even when stack is low-level.
+
+This is particularly useful for asynchronous engines.
+
+---
+
+**Runtime profiling hooks**
+
+Logging tells:
+
+```text
+what happened.
+```
+
+Profiling tells:
+
+```text
+where time/resources went.
+```
+
+A profiling hook should have extremely low overhead when disabled.
+
+Typical API:
+
+```cpp
+ProfileScope scope{
+    "Physics.Broadphase"
+};
+```
+
+or macro:
+
+```cpp
+KAIRO_PROFILE_SCOPE(
+    "Physics.Broadphase");
+```
+
+---
+
+**RAII profile scope**
+
+```cpp
+class ProfileScope
+{
+public:
+    ProfileScope(
+        Profiler& profiler,
+        StringID name)
+        : m_Profiler(&profiler),
+          m_Name(name),
+          m_Start(
+              Clock::now())
+    {}
+
+    ~ProfileScope() noexcept
+    {
+        m_Profiler->Record(
+            m_Name,
+            Clock::now() -
+                m_Start);
+    }
+
+private:
+    Profiler* m_Profiler;
+    StringID m_Name;
+    TimePoint m_Start;
+};
+```
+
+Then:
+
+```cpp
+void PhysicsWorld::Step(...)
+{
+    ProfileScope profile{
+        profiler,
+        "Physics.Step"
+    };
+
+    ...
+}
+```
+
+No forgotten end marker.
+
+---
+
+**Current Kairo has subsystem profiling but no unified profiler abstraction**
+
+Current PhysicsWorld exposes:
+
+```text
+PhysicsStepProfile
+```
+
+with timing for:
+
+```text
+whole step
+broadphase
+narrowphase
+solver.
+```
+
+RenderGraph exposes:
+
+```text
+RenderPassProfile
+RenderGraphExecutionProfile
+```
+
+with per-pass and total milliseconds.
+
+BVH exposes:
+
+```text
+BuildMilliseconds.
+```
+
+So profiling instrumentation exists in important subsystems.
+
+But no single cross-engine tracing/profiler API was found in the inspected Core/integration repos.
+
+That is the next architectural step.
+
+---
+
+**CPU profiling clocks**
+
+Use:
+
+```cpp
+std::chrono::steady_clock
+```
+
+for durations.
+
+Not:
+
+```cpp
+system_clock
+```
+
+because wall clock can jump due to:
+
+```text
+NTP
+manual adjustment
+timezone
+daylight saving.
+```
+
+Duration measurement requires monotonic time.
+
+Your PhysicsWorld and RenderGraph already use `steady_clock`.
+
+Good.
+
+---
+
+**GPU profiling is different**
+
+CPU timing:
+
+```text
+submit command buffer
+```
+
+does not measure actual GPU execution.
+
+For GPU passes you need backend timestamp queries.
+
+Conceptually:
+
+```text
+write GPU timestamp before pass
+execute pass
+write GPU timestamp after pass
+resolve after GPU completion.
+```
+
+Then:
+
+$$
+T_{GPU}
+=
+(T_{end}-T_{begin})
+\times TimestampPeriod.
+$$
+
+CPU and GPU timelines are separate.
+
+---
+
+**Profiling spans need hierarchy**
+
+Frame:
+
+```text
+Frame
+├── Input
+├── Physics
+│   ├── Broadphase
+│   ├── Narrowphase
+│   └── Solver
+├── Animation
+├── RenderExtract
+└── Render
+    ├── Shadow
+    ├── GBuffer
+    └── Lighting
+```
+
+A span model lets tools reconstruct nesting and thread activity.
+
+Record:
+
+```text
+span ID
+parent span ID
+thread
+start
+end
+category.
+```
+
+---
+
+**Multithreaded profiling**
+
+With jobs:
+
+```text
+thread A runs physics chunk
+thread B runs animation chunk
+thread C builds render commands.
+```
+
+Per-thread scopes need a shared monotonic clock domain.
+
+Then visualization can show:
+
+```text
+worker0 █████
+worker1   ███████
+worker2 ███   ███
+```
+
+and expose:
+
+```text
+idle gaps
+contention
+critical path.
+```
+
+---
+
+**Profiling should not become global hidden dependency**
+
+Avoid every module directly calling:
+
+```cpp
+GlobalProfiler::Get().
+```
+
+A lightweight hook interface or compile-time macro layer can keep foundational modules independent.
+
+Example:
+
+```cpp
+struct ProfileSink
+{
+    virtual void Record(
+        const ProfileEvent&) = 0;
+};
+```
+
+or a no-op backend.
+
+Again:
+
+$$
+\text{instrumentation mechanism}
+\neq
+\text{telemetry product}.
+$$
+
+---
+
+**Portable boundaries without lowest-common-denominator design**
+
+This atom is extremely important.
+
+A common portability mistake is:
+
+> Vulkan, Metal and D3D12 differ. Therefore expose only the tiny intersection of all three.
+
+You end up with:
+
+```text
+Renderer API from 2005
+```
+
+unable to use modern capabilities.
+
+That is **lowest-common-denominator abstraction**.
+
+Do not do this.
+
+---
+
+**Another portability mistake**
+
+The opposite failure:
+
+```cpp
+if (backend == Vulkan)
+{
+    use VkImage...
+}
+else if (backend == Metal)
+{
+    use id<MTLTexture>...
+}
+```
+
+through every higher-level subsystem.
+
+Now no abstraction exists.
+
+You need a middle path.
+
+---
+
+**Separate semantic intent from backend capability**
+
+High-level rendering API can express intent:
+
+```cpp
+struct TextureDesc
+{
+    TextureDimension Dimension;
+    PixelFormat Format;
+    TextureUsage Usage;
+    uint32_t Width;
+    uint32_t Height;
+};
+```
+
+Then backend maps to:
+
+```text
+VkImage
+MTLTexture
+ID3D12Resource.
+```
+
+The semantic model should be rich enough for modern hardware.
+
+---
+
+**Capabilities instead of pretending equality**
+
+Expose:
+
+```cpp
+struct RenderCapabilities
+{
+    bool RayTracing = false;
+    bool MeshShaders = false;
+    bool VariableRateShading = false;
+
+    uint32_t MaxBindlessTextures = 0;
+};
+```
+
+Then high-level renderer chooses algorithm:
+
+```cpp
+if (caps.MeshShaders)
+{
+    UseMeshletPath();
+}
+else
+{
+    UseIndexedDrawPath();
+}
+```
+
+Portable architecture does **not** mean identical algorithm everywhere.
+
+It means capability-sensitive policy above clean backend mechanisms.
+
+---
+
+**Feature tiers**
+
+Instead of dozens of backend checks:
+
+```text
+Tier 0:
+basic rasterization
+
+Tier 1:
+compute + modern descriptors
+
+Tier 2:
+bindless
+
+Tier 3:
+ray tracing.
+```
+
+Then game/rendering policy can target tiers.
+
+Backend maps hardware/API capabilities to tier.
+
+This reduces conditional complexity.
+
+---
+
+**Backend-specific escape hatches**
+
+Sometimes you genuinely need a platform-specific extension.
+
+A portable engine can expose:
+
+```text
+generic core
++
+optional extension interfaces.
+```
+
+For example:
+
+```cpp
+IRenderDevice
+```
+
+plus:
+
+```cpp
+IMetalRenderDeviceExtensions
+```
+
+accessible only where appropriate.
+
+This is better than polluting every generic API with Metal-only fields.
+
+---
+
+**Portability applies beyond rendering**
+
+Filesystem:
+
+```text
+project-relative semantic path
+```
+
+above:
+
+```text
+Windows/Unix filesystem mechanics.
+```
+
+Threading:
+
+```text
+JobSystem
+```
+
+above:
+
+```text
+OS thread primitives.
+```
+
+Input:
+
+```text
+gameplay actions
+```
+
+above:
+
+```text
+keyboard/gamepad APIs.
+```
+
+Assets:
+
+```text
+AssetID
+```
+
+above:
+
+```text
+filesystem path.
+```
+
+The repeated pattern is:
+
+$$
+\boxed{
+SemanticContract
++
+CapabilityModel
++
+BackendAdapter.
+}
+$$
+
+---
+
+**Current Kairo renderer demonstrates this direction**
+
+You have high-level:
+
+```text
+RenderScene
+MeshDraw
+TextureHandle
+GraphicsBackend
+RenderGraph
+```
+
+and backend-specific:
+
+```text
+VulkanRenderer
+MetalRenderer
+Direct3D12Renderer
+OpenGLRenderer.
+```
+
+Compilation includes Metal only on Apple, D3D12 only on Windows, while Vulkan/OpenGL remain broad.
+
+Backend capability definitions are exported.
+
+That is a good basis for portable-not-neutered architecture.
+
+---
+
+**Current Kairo M095/M096 audit**
+
+| Topic | Current state |
+|---|---|
+| Target-oriented CMake | Strongly implemented |
+| Modern PUBLIC/PRIVATE/INTERFACE use | Implemented |
+| Integration INTERFACE umbrella | Implemented |
+| Alias targets | Present |
+| Imported package targets | Used through find_package dependencies |
+| Presets | Implemented |
+| Ninja | Standard Kairo preset generator |
+| Toolchain file | Implemented for Clang |
+| MSVC CI | Implemented |
+| macOS upstream LLVM CI | Implemented |
+| C++23 modules | Heavily implemented |
+| CMake CXX_MODULES file sets | Implemented |
+| Module/compiler quirks | Explicitly handled |
+| Old nested submodules | Migrated away |
+| Exact repository commit pinning | Implemented via `workspace.lock` |
+| Dirty-tree verification | Implemented |
+| Workspace materialization | Implemented |
+| Component CI | Implemented across repos |
+| Integration superbuild CI | Implemented |
+| Linux/macOS/Windows matrix | Implemented |
+| Sanitizer lane | Implemented |
+| Unit tests | Extensive |
+| Integration tests | Extensive |
+| Runtime smoke tests | Implemented |
+| Content checksum fixtures | Implemented |
+| Malformed-content fixtures | Present |
+| Structured in-memory logging | Implemented |
+| Dedicated crash-report subsystem | Not found |
+| Physics profiling | Implemented |
+| RenderGraph profiling | Implemented |
+| BVH build timing | Implemented |
+| Unified cross-engine profiler/tracing | Not found |
+| Portable multi-backend renderer | Strongly implemented |
+| Full source→package→runtime boundary | Present and increasingly explicit |
+
+---
+
+**One important CMake improvement**
+
+Your top-level root uses some global:
+
+```cmake
+add_compile_options(...)
+add_link_options(...)
+```
+
+for sanitizer enablement.
+
+That is understandable for a superbuild because sanitizers intentionally need broad coverage.
+
+But a more target-oriented architecture can define:
+
+```cmake
+add_library(
+    KairoSanitizers
+    INTERFACE
+)
+
+target_compile_options(
+    KairoSanitizers
+    INTERFACE
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+)
+
+target_link_options(
+    KairoSanitizers
+    INTERFACE
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+)
+```
+
+then link participating targets:
+
+```cmake
+target_link_libraries(
+    KairoEngineCore
+    PRIVATE
+    KairoSanitizers
+)
+```
+
+Why?
+
+Because the sanitizer configuration becomes a named usage requirement instead of ambient global state.
+
+For a whole-engine sanitizer build your current global approach is functional; the interface-target pattern scales better when you need selective instrumentation.
+
+---
+
+**One reproducibility improvement**
+
+`workspace.lock` records source SHAs.
+
+A next-level lock could also record third-party/toolchain provenance, for example:
+
+```text
+cmake minimum 3.28
+ninja minimum 1.11
+glad v0.1.36
+Catch2 v3.5.4
+compiler-family expectations
+Vulkan SDK compatibility range.
+```
+
+Not necessarily in the same file.
+
+But a release provenance artifact should capture the whole input closure.
+
+Because:
+
+$$
+\text{Repo SHAs}
+$$
+
+alone do not uniquely define:
+
+$$
+\text{Binary Artifact}.
+$$
+
+---
+
+**One module-build improvement**
+
+As the module graph grows, measure:
+
+```text
+number of BMI edges
+module critical path
+module fan-in
+module fan-out.
+```
+
+A target can become a build bottleneck even if runtime architecture is clean.
+
+For example:
+
+```text
+CoreHugeModule
+```
+
+imported by 80 modules means every change can rebuild enormous portions of the tree.
+
+Module architecture should minimize unnecessary re-exporting and keep foundational interfaces stable.
+
+---
+
+**One diagnostics improvement**
+
+You already have:
+
+```text
+Logger
+PhysicsStepProfile
+RenderGraphExecutionProfile
+BVHBuildStats.
+```
+
+A natural next layer is one common diagnostics transport.
+
+For example:
+
+```cpp
+struct ProfileEvent
+{
+    std::string_view Category;
+    std::string_view Name;
+
+    uint64_t Thread;
+    uint64_t Frame;
+
+    TimePoint Begin;
+    TimePoint End;
+};
+```
+
+Subsystems emit to a sink.
+
+Then editor can show:
+
+```text
+CPU timeline
+physics phases
+render passes
+jobs
+asset loads.
+```
+
+without making every subsystem depend on ImGui or one third-party profiler.
+
+---
+
+**One crash-reporting improvement**
+
+Add a thin Core diagnostics layer that captures:
+
+```text
+build provenance
+current project
+run ID
+recent Logger ring
+last frame
+last profile breadcrumbs.
+```
+
+Platform backend creates:
+
+```text
+minidump / crash artifact.
+```
+
+Postmortem helper performs:
+
+```text
+symbolization
+compression
+optional upload.
+```
+
+Keep crash implementation platform-specific while crash metadata format remains portable.
+
+---
+
+**Reconstruction challenge — CMake scope**
+
+Suppose:
+
+```text
+A.cpp internally uses B
+A's public module API never exposes B.
+```
+
+Use:
+
+```cmake
+PRIVATE B.
+```
+
+Suppose A's exported API requires B's public types/usage requirements.
+
+Use:
+
+```cmake
+PUBLIC B.
+```
+
+Suppose A is an INTERFACE convenience target forwarding B.
+
+Use:
+
+```cmake
+INTERFACE B.
+```
+
+If you cannot justify the scope from architectural semantics, do not choose it based on linker error experimentation.
+
+---
+
+**Reconstruction challenge — Ninja DAG**
+
+Given:
+
+```text
+shader.vert
+shader.frag
+Renderer.cppm
+Player.cpp
+```
+
+and:
+
+```text
+Renderer imports compiled shader artifacts
+Player depends on Renderer
+```
+
+derive:
+
+$$
+shader.vert
+\rightarrow
+vert.spv
+$$
+
+$$
+shader.frag
+\rightarrow
+frag.spv
+$$
+
+$$
+(vert.spv,frag.spv)
+\rightarrow
+Renderer
+$$
+
+$$
+Renderer
+\rightarrow
+Player.
+$$
+
+Then explain which edges can execute concurrently and where critical path lies.
+
+---
+
+**Reconstruction challenge — modules**
+
+Given:
+
+```cpp
+export module A;
+import B;
+```
+
+explain why:
+
+$$
+BMI_B
+$$
+
+must exist before A compilation.
+
+Explain why BMIs are compiler/configuration specific.
+
+Explain why checked-in universal BMIs are a bad idea.
+
+Explain why module dependency cycle is architecture problem rather than an include-guard problem.
+
+That is Part 1590.
+
+---
+
+**Reconstruction challenge — reproducible workspace**
+
+State the invariant:
+
+$$
+\forall R_i:
+HEAD(R_i)=LockSHA(R_i)
+$$
+
+and:
+
+$$
+WorkingTree(R_i)=Clean.
+$$
+
+Then add:
+
+$$
+Toolchain
+=
+ExpectedToolchain
+$$
+
+and:
+
+$$
+Configuration
+=
+ExpectedPreset.
+$$
+
+Only then can you accurately call a build:
+
+```text
+the locked integration state.
+```
+
+Your verify script actually enforces the first two conditions.
+
+---
+
+**Reconstruction challenge — test types**
+
+Given an ECS generation bug:
+
+```text
+unit test.
+```
+
+Given Scene→ECS conversion:
+
+```text
+integration test.
+```
+
+Given startup sample project through KairoPlayer:
+
+```text
+smoke test.
+```
+
+Given known glTF with checksum:
+
+```text
+deterministic fixture.
+```
+
+Given Vulkan test unavailable on a CI worker:
+
+```text
+skip/unavailable
+```
+
+not fake success.
+
+The terminology matters because each test answers a different question.
+
+---
+
+**Reconstruction challenge — portable renderer**
+
+Explain why both are wrong:
+
+```text
+generic API exposes only 1990s OpenGL-level features
+```
+
+and:
+
+```text
+engine logic directly manipulates VkImage/MTLTexture everywhere.
+```
+
+Correct model:
+
+$$
+SemanticAPI
++
+Capabilities
++
+BackendAdapters.
+$$
+
+The high-level algorithm may differ per capability.
+
+Portability does not require identical execution path.
+
+---
+
+**Reconstruction challenge — complete ownership**
+
+Take one texture and state the owner at each step:
+
+$$
+PNG
+$$
+
+owned by project filesystem.
+
+$$
+AssetID
+$$
+
+owned by asset metadata model.
+
+$$
+DerivedArtifact
+$$
+
+owned/cached by DDC/import layer.
+
+$$
+TextureAssetHandle
+$$
+
+stored by persistent scene/material.
+
+$$
+TextureHandle
+$$
+
+owned by renderer runtime table.
+
+$$
+VkImage/MTLTexture
+$$
+
+owned by concrete backend.
+
+$$
+InFlightGPUUse
+$$
+
+owned logically by submitted work until completion.
+
+If you can trace that without conflating any identities, you have understood Phase 16.
+
+---
+
+**Exact coverage — M095 + M096**
+
+| Part | Topic | Covered |
+|---:|---|---|
+| 1583 | CMake target model | ✓ |
+| 1584 | PUBLIC, PRIVATE, INTERFACE dependencies | ✓ |
+| 1585 | Imported and alias targets | ✓ |
+| 1586 | CMake presets | ✓ |
+| 1587 | Ninja build scheduling | ✓ |
+| 1588 | Compiler toolchains | ✓ |
+| 1589 | Clang versus MSVC compatibility | ✓ |
+| 1590 | C++ modules in multi-target builds | ✓ |
+| 1591 | Git submodule commit pinning | ✓ |
+| 1592 | Reproducible superbuilds | ✓ |
+| 1593 | Continuous-integration matrices | ✓ |
+| 1594 | Unit versus integration tests | ✓ |
+| 1595 | Smoke tests | ✓ |
+| 1596 | Deterministic test fixtures | ✓ |
+| 1597 | Crash reporting and structured logging | ✓ |
+| 1598 | Runtime profiling hooks | ✓ |
+| 1599 | Portable boundary without lowest-common-denominator abstraction | ✓ |
+| 1600 | Complete source→editor→packaged-runtime ownership/data flow | ✓ |
+
+
+At this point the entire engine architecture from Parts 1501–1600 can be compressed into two invariants.
+
+The first is the **dependency invariant**:
+
+$$
+\boxed{
+Foundation
+\leftarrow
+Subsystems
+\leftarrow
+Bridges
+\leftarrow
+Player/Editor/Game
+}
+$$
+
+with the build system enforcing that direction through target dependencies, modules, CMake usage requirements and composition roots.
+
+The second is the **identity/lifetime invariant**:
+
+$$
+\boxed{
+PersistentIdentity
+\neq
+RuntimeHandle
+\neq
+StorageAddress
+\neq
+BackendResource
+}
+$$
+
+with explicit bridges connecting them.
+
+And now we can append the reproducibility invariant:
+
+$$
+\boxed{
+BuildArtifact
+=
+F(
+ExactSourceCommits,
+Dependencies,
+Toolchain,
+Configuration,
+GeneratedInputs
+).
+}
+$$
+
+If any input to $F$ is implicit, the build is not fully reproducible.
+
+Your current Kairo ecosystem is already quite mature at this boundary: it has an exact sibling-workspace lock, clean-tree verification, component CI plus superbuild CI, Clang/MSVC/macOS coverage, sanitizer lanes, deterministic content fixtures, C++ module file sets, explicit platform backend compilation, structured logging, and several subsystem-level profiling instruments. The two clearest missing production layers are **one unified profiling/tracing transport and a dedicated crash-report pipeline tied to build provenance and recent structured diagnostics**.
+
+**Pass 16 starts Phase 17 at Part 1601: rigid-body dynamics from first principles.** We leave engine/tooling architecture and go directly into the physics mathematics: particles versus rigid bodies, translational/rotational state, center of mass, mass/inverse mass, density, momentum, Newton's laws, forces, torques, inertia tensors, coordinate-space transformation of inertia, and the numerical integration machinery that turns those laws into an actual physics engine.
+
+
+## Reconstruct the representation and lifetime proofs
+
+## C++ - Assignment as a resource transaction
+
+The [[Assignment and exception guarantees|strong guarantee]] requires a defined observable state before the operation and an unchanged promised state if preparation fails. Let D0 be the destination's original owned allocation/value and S the source. The teaching byte owner's copy assignment follows:
+
+1. Construct replacement R from S without changing D0. Allocation failure propagates while D0 and S retain their original state.
+2. Non-throwing swap transfers R's value into the destination and D0 into the temporary. This is the commit point: no remaining step can fail under the stated byte-copy/release contract.
+3. Destroy R, releasing the former destination D0 exactly once.
+
+Self-copy is explicitly guarded; an alternative copy-and-swap without that guard could still be safe but allocate unnecessarily. This proof assumes a non-throwing swap, safe release, and copy preparation that does not mutate its source. It does not establish whole-object strong guarantees for arbitrary memberwise assignment or a copy operation with external side effects.
+
+For the failure-injection witness, initial owners A/B each hold one allocation. An injected exception before the new allocation succeeds leaves two owners/two live allocations and B's old byte9. Moving A into C then leaves A empty while C owns A's allocation. Moving C into B releases B's previous allocation before adoption, leaving one allocation. Destroying/resetting its final owner leaves zero. The source remains a live empty object throughout its moved-from interval.
+
+### Why no-throw properties matter to growth
+
+Suppose source element0 is moved and changed, then moving element1 throws. The partially populated new buffer can be cleaned up, but cleanup alone does not restore element0's old value. Copying that preserves source state can support rollback where available; a genuinely non-throwing move avoids that transfer failure. If copying is unavailable and moving may throw, consult the exact operation's exceptional-effects contract. move_if_noexcept encodes the relevant construction-expression choice, not a universal rollback theorem.
+
+### Isolating sink counts from growth
+
+With spare destination capacity and a Probe type whose copy/move constructors are instrumented: lvalue→value parameter→element gives one copy/one move; xvalue→parameter→element gives two moves; same-type prvalue→parameter→element gives direct parameter construction/one move. Cache growth would add transfer of old elements. Optional named-result NRVO is independent of these parameter routes, so record it separately instead of silently adding it to a fixed portable count.
+
+## C++ - Qualification safety and borrow intervals
+
+### Why nested const needs an intermediate guard
+
+This is a hypothetical proof by contradiction, not legal code to run. Suppose `int**` could convert to `const int**`:
+
+```cpp
+const int immutable = 7;
+int* mutable_path = nullptr;
+int** outer = &mutable_path;
+// const int** injected = outer; // actual C++ rejects this
+// *injected = &immutable;       // hypothetical mutation of mutable_path
+// *mutable_path = 9;            // would write an actually const object
+```
+
+Step one establishes a const object. Step two gives the mutable pointer a mutable type. The hypothetical conversion lets a const-object address enter that mutable pointer through an alias. The final write would violate the first promise without an explicit cast. Therefore adding const only at the deepest level is not safe. `const int* const*` makes the intermediate pointer read-only through that path, rejecting the injection assignment. This explains the safety requirement; the general language rule is qualification decomposition, not a special ban against double pointers. See [[Multilevel pointer qualification]].
+
+### A borrow's access interval is an intersection
+
+Let $L_o$ denote times at which the referent is live, $L_s$ times at which its storage/access relationship is valid, and $L_i$ times at which the path still names the intended logical entity. Under the API's mutation and synchronization contract, the admissible access times satisfy:
+
+$$
+L_{\mathrm{access}}\subseteq L_o\cap L_s\cap L_i.
+$$
+
+These are sets of times, not byte counts or durations to add. Const/type/bounds/permissions still add independent obligations. Reallocation can end the old storage relationship; destruction ends the old object's live interval; slot assignment can preserve the live object while ending its association with a logical entity. A non-null bit pattern establishes none of those intervals.
+
+For an epoch witness, save $e_b$ when borrowing and compare with the live pool epoch $e_p$ before access. Acceptance requires $e_b=e_p$, but that test is meaningful only if the epoch owner remains live, every invalidating mutation advances the counter, equality cannot falsely recur through wrap, and mutation cannot race between check and use. A single-threaded epoch implements a conservative API contract, not a proof of ownership or lock-free safety. See [[Borrow contracts and pool epochs]] and the inline [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When a valid borrow stops naming the intended thing|slot trace]].
+
+### Forwarding reconstructed from collapsing
+
+For an lvalue argument of type int to deduced `T&&`, deduction chooses `T=int&`; applying `&&` to that substituted reference collapses to `int&`. For an int prvalue, deduction chooses `T=int`; the parameter is `int&&`. In the body the parameter's name is an lvalue in both cases. `std::forward<T>` uses the deduced T to restore the original category; unconditional move discards that distinction. This derivation requires the forwarding pattern, not merely any spelling containing two ampersands.
+
+## C++ - Conventional record layout and identity horizon
+
+This proof extends [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Bringing the object model back to bytes|the inline layout explanation]], not a universal class-layout algorithm. Assume an ordinary ABI with member size/alignment pairs, no bases, virtual machinery, overlap, packing or stronger requested alignment. For nonnegative offset x and positive required alignment a:
+
+$$
+\operatorname{roundUp}(x,a)=a\left\lceil\frac{x}{a}\right\rceil.
+$$
+
+Place each member at its rounded-up offset, advance by its size, then round the complete extent to the ABI's class alignment. For char/double/char with sizes 1/8/1 and alignments 1/8/1: first offset0; double roundUp(1,8)=8; final char offset16; extent17; size roundUp(17,8)=24. Reordering double/char/char gives offsets0/8/9, extent10 and size16. Adjacent array elements then begin at aligned multiples of the complete size. This is a target model to measure, not the meaning of standard-layout.
+
+A generation counter of G bits has 2^G possible bit patterns. If one slot is reused r times per second, a wrap horizon under steady reuse is:
+
+$$
+T=\frac{2^G}{r}.
+$$
+
+T is in seconds when r is reuses/second. This predicts counter wrap, not guaranteed collision freedom: a retained old handle may match again after wrap, and a handle from another registry can match sooner. Reserve invalid states, width choice and reuse/quarantine policy can change the horizon. A validity check must include the owning registry and live slot state.
+
+Neither proof makes a C++ object's physical address its semantic identity. Neither grants pointer arithmetic across adjacent non-array members.
+
+Extended mathematical and logical derivations live here under durable concept headings. Update an existing derivation when a later chunk adds assumptions, a more general form, limiting cases, or corrections.
+
+Each derivation records:
+
+- the main-note chunk that first requires it;
+- definitions, domains, units, conventions, and assumptions;
+- every non-obvious step;
+- dimensional, sign, boundary, and limiting-case checks;
+- links to later chunks that deepen or reuse it.
+
+## M001 - Positional value, masks, fields, and De Morgan
+
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a signal to an interpretation|C001 / M001]]
+
+### Unsigned positional value and base conversion
+
+For bits $b_i\in\{0,1\}$, an unsigned $N$-bit pattern means
+
+$$
+V=\sum_{i=0}^{N-1}b_i2^i.
+$$
+
+Euclidean division gives $n=2q+r$, with $r\in\{0,1\}$. Therefore $r=b_0$; repeating on $q$ exposes $b_1,b_2,\ldots$, so remainders arrive LSB-first. Decoding left-to-right uses the Horner recurrence $v\leftarrow2v+b$.
+
+Check for `10101101`: $128+32+8+4+1=173$. Repeated division of 173 returns remainders `1,0,1,1,0,1,0,1`, whose reverse is `10101101`.
+
+### Contiguous masks, extraction, and insertion
+
+A width-$w$ low mask is
+
+$$
+L_w=2^w-1
+$$
+
+because $2^w$ is `1` followed by $w$ zeros and subtracting one borrows through them to produce $w$ ones. Moving the field to offset $s$ gives $M=L_w\ll s$.
+
+Extraction first normalizes, then isolates:
+
+$$
+extract(x,s,w)=(x\gg s)\land L_w.
+$$
+
+Insertion must preserve every position outside $M$. The term $x\land\neg M$ clears exactly the destination; $(v\land L_w)\ll s$ encodes only values representable by the field. Since their 1-bits cannot overlap outside the destination,
+
+$$
+insert(x,v,s,w)=(x\land\neg M)\lor((v\land L_w)\ll s).
+$$
+
+Implementation checks: $w>0$, $s+w\le N$, shifts are smaller than the carrier width, and complement is evaluated at carrier width. A semantic API must choose whether an oversized $v$ is rejected or truncated.
+
+### De Morgan by exhaustive truth assignment
+
+For two Boolean inputs there are only four assignments. Evaluating both sides on `(0,0)`, `(0,1)`, `(1,0)`, and `(1,1)` yields identical result columns:
+
+| A | B | not (A and B) | (not A) or (not B) | not (A or B) | (not A) and (not B) |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 0 | 1 | 1 | 1 | 1 |
+| 0 | 1 | 1 | 1 | 0 | 0 |
+| 1 | 0 | 1 | 1 | 0 | 0 |
+| 1 | 1 | 0 | 0 | 0 | 0 |
+
+Thus
+
+$$
+\neg(A\land B)=\neg A\lor\neg B,
+\qquad
+\neg(A\lor B)=\neg A\land\neg B.
+$$
+
+The same identities apply lane-by-lane to fixed-width bit vectors, provided the complement width is fixed.
+
+## M002 - Signed representations, adders, and arithmetic policies
+
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 / M002]]
+
+### Finite ranges and signed encodings
+
+An $N$-bit carrier has $2^N$ patterns. Unsigned positional interpretation maps them bijectively to $[0,2^N-1]$. Signed magnitude and one's complement each reserve separate positive and negative zero patterns, leaving range
+
+$$
+-(2^{N-1}-1)\le x\le2^{N-1}-1.
+$$
+
+Two's complement instead interprets the high bit with weight $-2^{N-1}$, producing
+
+$$
+-2^{N-1}\le x\le2^{N-1}-1.
+$$
+
+Zero occupies one pattern, so the recovered pattern becomes the extra negative endpoint. Consequently, the positive counterpart of $-2^{N-1}$ cannot fit in the same signed type.
+
+### Two's-complement negation and subtraction
+
+In the residue ring modulo $2^N$, $-x$ is represented by $2^N-x$. Since the all-ones word is $2^N-1$,
+
+$$
+2^N-x=(2^N-1-x)+1=\sim x+1.
+$$
+
+Therefore
+
+$$
+A-B=A+(-B)=A+\sim B+1.
+$$
+
+The low $N$ result bits are identical whether interpreted as the unsigned residue or an in-range signed result; flags and the chosen type supply the interpretation.
+
+### Full adder, carry, and signed overflow
+
+For inputs $A,B,C_{in}$, the sum bit is
+
+$$
+S=A\oplus B\oplus C_{in}.
+$$
+
+Carry occurs when at least two inputs are 1:
+
+$$
+C_{out}=(A\land B)\lor(C_{in}\land(A\oplus B)).
+$$
+
+For bit position $i$, define generate $G_i=A_i\land B_i$ and propagate $P_i=A_i\oplus B_i$. Then
+
+$$
+C_{i+1}=G_i\lor(P_i\land C_i).
+$$
+
+Ripple carry evaluates this recurrence sequentially across positions; carry-lookahead or prefix networks expand and combine the terms in parallel.
+
+Signed addition overflows precisely when operand signs match and the result sign differs:
+
+$$
+V=\neg(A\oplus B)\land(A\oplus R)\land signBit.
+$$
+
+Carry and overflow may disagree because they answer unsigned and signed representability questions about the same result bits.
+
+### Multiplication, division, and policy choices
+
+Binary multiplication decomposes into selected partial products:
+
+$$
+A\times B=\sum_i B_i(A\ll i).
+$$
+
+Unsigned long division maintains
+
+$$
+D=Qd+R,\qquad 0\le R<d,
+$$
+
+by shifting each dividend bit into $R$, subtracting $d$ when possible, and setting the corresponding quotient bit.
+
+When a result cannot fit, the correct response is a semantic choice: modulo residue, explicit checked failure, wider intermediate, boundary saturation, or arbitrary precision. Saturation is not generally associative, so parallel reordering can change results.
+
+## Definitions and proof steps behind the compact equations
+
+### Why an N-bit complement subtracts from all ones
+
+Each bit of x contributes either 0 or its weight $2^i$. Complementing replaces that contribution by $2^i-b_i2^i$. Summing over all positions gives:
+
+$$
+\operatorname{NOT}_N(x)=\sum_{i=0}^{N-1}(1-b_i)2^i
+=\left(\sum_{i=0}^{N-1}2^i\right)-x=(2^N-1)-x.
+$$
+
+Adding one produces the residue representing negation. For x=0, the intermediate is $2^N$, so reducing modulo $2^N$ returns zero. This is why the equality for negation must specify modular width instead of pretending every signed positive counterpart fits.
+
+### Why insertion preserves all other bits
+
+Consider one position i. If mask bit $M_i=0$, then $(x\land\operatorname{NOT}_N(M))_i=x_i$ and the encoded new field contributes zero there. The output is therefore $x_i$. If $M_i=1$, clearing contributes zero and the encoded new field supplies its bit. These two cases cover every position, proving preservation outside the field and replacement inside it.
+
+### How two half adders make a full adder
+
+First compute $t=A\oplus B$ and $g=A\land B$. Then add incoming carry c to t: $S=t\oplus c$ and $h=t\land c$. The outgoing carry is $g\lor h$, so:
+
+$$
+S=A\oplus B\oplus c,\qquad c'=(A\land B)\lor(c\land(A\oplus B)).
+$$
+
+If A and B are both 1, g already supplies carry. If exactly one is 1, c determines whether the total reaches two. If both are 0, a single c cannot create carry. This explains the majority rule without treating the formula as a memorized symbol string.
+
+### C++ common-type decision after promotion
+
+For signed type S and unsigned type U: if U has at least S's rank, use U; otherwise use S only if S represents every U value; otherwise use the unsigned counterpart of S. Integer rank orders conversion preference; it is not merely a count of storage bytes. Consequently, int −1 versus unsigned int 1 usually converts −1 to unsigned, while a sufficiently wide signed long long can retain −1 when compared with unsigned int.
+
+These decisions occur before arithmetic or comparison. They also explain why casting the final result cannot repair an earlier signed overflow. A wider destination is useful only if the operation itself was performed safely.
+
+## M003 - Byte order, layout, and translation
+
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 / M003]].
+
+### Base-256 decomposition and codec inverse
+
+Assume n octets, unsigned $0\le x<256^n$, and digits $0\le d_i<256$. Euclidean division by 256 yields a low digit and quotient. Repeating produces:
+
+$$
+d_i=\left\lfloor x/256^i\right\rfloor\bmod256,\qquad
+x=\sum_{i=0}^{n-1}d_i256^i.
+$$
+
+Little-endian stream element i is $d_i$; big-endian element i is $d_{n-1-i}$. Decoding LE attaches weight $256^i$ to byte i. Decoding BE starts at zero and applies $v_{j+1}=256v_j+b_j$; after j bytes it equals the weighted sum of the prefix. After n bytes, both recover x under their matching order. Fixed n preserves leading zero bytes.
+
+For four octets, swapping sends digit i to position 3−i:
+
+$$
+\operatorname{swap}_{32}(x)=\sum_{i=0}^{3}d_i256^{3-i},\qquad
+\operatorname{swap}_{32}(\operatorname{swap}_{32}(x))=x.
+$$
+
+This is a byte permutation, not intra-byte bit reversal. Host-to-wire conversion is conditional on the format contract.
+
+### Alignment rounding without hiding overflow
+
+Let p be a nonnegative byte offset and A a positive alignment. Write $p=qA+r$, $0\le r<A$. If r=0, p is aligned; otherwise the minimal larger multiple is $(q+1)A$. Define padding $\delta$:
+
+$$
+\delta=(A-(p\bmod A))\bmod A,\qquad
+\operatorname{alignUp}(p,A)=p+\delta,\qquad 0\le\delta<A.
+$$
+
+This proves minimality and idempotence. At finite unsigned maximum M, require $\delta\le M-p$ before adding. For $A=2^k$, the bottom k bits encode r. Adding A−1 and clearing those bits gives:
+
+$$
+\operatorname{alignUp}(p,A)=(p+A-1)\mathbin{\&}\operatorname{NOT}_N(A-1).
+$$
+
+The mask formula requires nonzero power-of-two A and an addition fitting the N-bit carrier. The delta method can accept a highest aligned p even when p+A−1 would overflow. An aligned numeric offset neither allocates storage nor establishes pointer validity.
+
+### Member offsets and tail padding
+
+For an illustrative record with member sizes $s_j$, alignments $a_j$, no special overlap/base rules, and stated ABI placement convention, let $e_0=0$ be the first unused offset:
+
+$$
+o_j=\operatorname{alignUp}(e_j,a_j),\qquad
+e_{j+1}=o_j+s_j,\qquad
+\text{internal padding}_j=o_j-e_j.
+$$
+
+For complete-record alignment A and final member end E:
+
+$$
+S=\operatorname{alignUp}(E,A),\qquad
+\text{tail padding}=S-E.
+$$
+
+Sizes/alignments 1/4/1 give offsets 0/4/8, E=9, A=4, S=12. Array element i starts at base+iS; if base and S are multiples of A, every element remains aligned. This models specified ABI assumptions, not a rule overriding compiler layout. Observe standard-layout records with sizeof, alignof, and offsetof.
+
+### Page decomposition and offset preservation
+
+For page size $P=2^k$, Euclidean division gives a unique quotient VPN and remainder o:
+
+$$
+VA=VPN\,P+o,\qquad VPN=\lfloor VA/P\rfloor,\qquad 0\le o<P.
+$$
+
+A process-specific valid mapping supplies physical frame PFN and permissions:
+
+$$
+PA=PFN\,P+o.
+$$
+
+PFN×P has zero low k bits, so addition is equivalently OR after shifting. Offset is unchanged; only page identity changes. Mapping need not be invertible: several virtual pages can share one frame. Width, permissions, residence, and legality require separate checks.
+
+For positive access length L, bytes starting at VA cross the page boundary iff $L>P-o$, assuming a representable address range. At o=4094 and L=4 with P=4096, two bytes occupy each page. Both mappings must permit access.
+
+### Translation reach and record footprint
+
+T TLB entries for page size P have illustrative reach T×P bytes; real hierarchy, associativity, and mixed page sizes complicate that bound. One GiB requires $2^{30}/2^{12}=262144$ pages at 4 KiB, or $2^{30}/2^{21}=512$ at 2 MiB.
+
+Shrinking N records saves $N(S_{\mathrm{old}}-S_{\mathrm{new}})$ bytes. A 24→16 byte change saves eight million bytes for one million records. This is footprint arithmetic, not measured throughput: hot fields, cache boundaries, prefetching, and access patterns still matter.
+
+[[Alignment and padding]] · [[Pages and page offsets]] · [[TLB]] · [[Serialization]]
+
+## M004 - Floating-point fields, spacing, and rounding
+
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A stretching ruler for real-valued quantities|M004, Parts 61–76]].
+
+### Normal value from fraction positions
+
+Let $t$ be the stored fraction width, $f_j$ the digit at fractional position $j$ (weight $2^{-j}$), and $F$ the unsigned integer represented by those digits. Multiplying their fractional sum by $2^t$ gives the integer field:
+
+$$
+\sum_{j=1}^{t}f_j2^{-j}=\frac{F}{2^t}.
+$$
+
+Normalization contributes the implicit leading one. Stored exponent $E$ and bias $B$ give $e=E-B$. Thus $x=(-1)^S(1+F/2^t)2^e$. For binary32, $t=23,B=127$, valid normal fields $1\le E\le254$ imply $-126\le e\le127$. For binary64, $t=52,B=1023$ and $1\le E\le2046$ imply $-1022\le e\le1023$.
+
+Minimum normal uses $F=0,e=e_{\min}$; maximum finite uses $F=2^t-1,e=e_{\max}$:
+
+$$
+x_{\min,\mathrm{normal}}=2^{e_{\min}},\qquad
+x_{\max}=(2-2^{-t})2^{e_{\max}}.
+$$
+
+These are mathematical format values, not a promise about every C++ floating type.
+
+### Subnormal lattice and boundary continuity
+
+For $E=0$, use effective exponent $e_{\min}$ and leading zero, not one:
+
+$$
+x=(-1)^S(F/2^t)2^{e_{\min}}=(-1)^S F\,2^{e_{\min}-t}.
+$$
+
+A lattice here means values occur at integer multiples of a common step. Binary32 step is $2^{-126-23}=2^{-149}$; binary64 step is $2^{-1022-52}=2^{-1074}$.
+
+At $F=2^t-1$, the largest positive subnormal is $2^{e_{\min}}-2^{e_{\min}-t}$. The next value is the smallest normal $2^{e_{\min}}$. Their gap is exactly the same subnormal step. The next normal also increments its $F$ by one, so its gap is the same. This proves boundary continuity without calling every tiny result an underflow exception.
+
+### Spacing, epsilon, and nearest-rounding error
+
+In normal binade $[2^e,2^{e+1})$, consecutive values differ only by $F\to F+1$ (except the last transition to the next binade). Subtract their formulas:
+
+$$
+\Delta(e)=\left(\frac{F+1-F}{2^t}\right)2^e=2^{e-t}.
+$$
+
+Since $p=t+1$, $\Delta(e)=2^{e-(p-1)}$. At $e=0$ this is epsilon $2^{-t}$. At an ordinary power-of-two boundary above the minimum-normal edge, the lower gap belongs to exponent $e-1$ and is half the upper gap.
+
+For an exact positive value $z$ in a normal binade, nearest rounding has absolute error at most $\Delta(e)/2$. Since $z\ge2^e$:
+
+$$
+\frac{|\operatorname{fl}(z)-z|}{|z|}
+\le\frac{2^{e-t-1}}{2^e}=2^{-p}=u.
+$$
+
+Here $\operatorname{fl}$ denotes rounding to the destination format. Scope: no overflow, normal-range nearest rounding; subnormal relative precision needs separate treatment. “Machine epsilon” in this vault means upward spacing at 1, while unit roundoff $u$ is its half. Literature sometimes uses different epsilon conventions, so name the definition.
+
+### Guard, round, sticky and even ties
+
+Let retained significand integer be $q$. Guard $G$ is first discarded bit, round $R$ second, sticky $T$ ORs all later bits, and $L=q\bmod2$. If $G=0$, the discarded tail is below half a retained step. If $G=1$ and $R$ or $T$ is 1, it is above half. If $G=1,R=T=0$, it is exactly half: increment odd $q$, retain even $q$.
+
+$$
+\operatorname{increment}=G\land(R\lor T\lor L).
+$$
+
+The increment is on retained magnitude; sign/direction logic is additionally required for directed rounding. A carry can renormalize the significand and increase exponent. The toy midpoint 1.875 at three significant bits rounds to 2, not to an unnormalized stored significand.
+
+### A zero-collapsed representation key
+
+For a finite binary32 raw word $b$, let $m=b\mathbin{\&}\texttt{0x7FFFFFFF}$ and $C=2^{31}$. Define key $K=C-m$ for negative patterns, $K=C+m$ otherwise. Both zeros map to $C$. Larger magnitudes on the negative side decrease the key; larger positive values increase it. Distance is the unsigned absolute key difference.
+
+Check: negative minimum subnormal has key $C-1$, zero $C$, positive minimum subnormal $C+1$: distance across the two nonzero neighbors is 2. Reject NaNs/infinities rather than assigning a misleading numerical metric. This is a defined testing convention, not the only possible ULP convention.
+
+### Scaling a norm and a determinant
+
+For finite vector components with $m=\max(|x|,|y|)>0$, factor $m^2$ before squaring:
+
+$$
+\sqrt{x^2+y^2}=m\sqrt{(x/m)^2+(y/m)^2}.
+$$
+
+The ratios have magnitude at most one. Intermediate overflow from $x^2$ is avoided; final overflow and other accuracy issues remain possible. Zero and non-finite inputs require explicit branches. Do not treat a teaching identity as a fully specified library implementation.
+
+For an invertible 2×2 matrix $A$, $\det(cA)=c^2\det(A)$. For a consistent induced norm, $\kappa(A)=\|A\|\|A^{-1}\|$, and nonzero scalar $c$ gives $\kappa(cA)=|c|\|A\|\cdot|c|^{-1}\|A^{-1}\|=\kappa(A)$. An absolute determinant cutoff changes with scale even though this conditioning measure does not. General singularity/conditioning methods await later mathematics.
+
+### Representation equality versus numerical equality
+
+Binary32 zeros differ only by sign, but numerical equality identifies them. NaN ordinary equality identifies neither itself nor another NaN, even when raw words are equal. A raw-bit serializer, a numeric comparison, a hash policy, and a canonical format must therefore state separate contracts. Mapping every NaN to one quiet pattern loses payload/signaling information deliberately; it is not a lossless representation conversion.
+
+## M005 - Representation error, cancellation, and rounding graphs
+
+**Introduced by:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#When arithmetic meets uncertainty|M005]].
+
+### Termination in a base and exact one-tenth error
+
+A finite fractional base-$B$ expansion has value $m/B^k$. Reducing $p/q$ means $q$ must divide $B^k$. Conversely, if every prime in $q$ divides $B$, choose $k$ large enough that $q$ divides $B^k$; multiply numerator and denominator to get a finite expansion. In binary this means $q=2^j$.
+
+For binary32 word 3DCCCCCD: stored exponent 123 gives $e=-4$; fraction is 4CCCCD, and the hidden-one integer is $2^{23}+F=13421773$. Thus value is $13421773\,2^{-27}$. Subtract exact one tenth with a common denominator:
+
+$$
+\frac{13421773}{134217728}-\frac1{10}
+=\frac{10(13421773)-134217728}{10(134217728)}
+=\frac{2}{1342177280}=\frac1{671088640}.
+$$
+
+This is an exact rational calculation; computing both sides with rounded 0.1 is not the same reference.
+
+### Cancellation bound and exact subtraction
+
+For intended values $a,b$ and relative operand errors bounded by $\eta$, expansion gives perturbed difference $a-b+a\delta_a-b\delta_b$. Triangle inequality gives absolute error at most $\eta(|a|+|b|)$. Divide by $|a-b|$ only when nonzero. Additional final subtraction rounding must be analyzed separately.
+
+Sterbenz's exact-difference lemma concerns nearby stored values in a suitable radix format with gradual underflow. For nonnegative $x,y$ with $x/2\le y\le2x$, the difference is representable. The appropriate common-exponent integer significands have enough trailing-zero/range structure after cancellation to fit the smaller result. It says nothing about the unknown real operands' initial rounding errors; changing subnormal semantics can remove its assumptions.
+
+The attachment's binary pair is 1753/1024 and 1751/1024, hence difference $2^{-9}$, not its stated longer pattern. For desired decimal 1.00000006, the nearest binary32 word is 3F800001, so subtracting stored 1 is exactly $2^{-23}$ although the desired difference is $6\times10^{-8}$.
+
+### Rounding products and summation bounds
+
+Let local factors satisfy $|\delta_i|\le u$, with $nu<1$. The standard product-of-factors bound writes a relevant product (and supported inverse-factor variant) as $1+\theta_n$, $|\theta_n|\le\gamma_n=nu/(1-nu)$. The denominator accounts for interaction terms; for small $nu$ it approximates $nu$. It is a tool applied to dependency paths, not a universal bound obtained solely by counting source operators.
+
+For sequential sum $s=\sum_i x_i$, each input travels through at most $n-1$ rounded additions. Expanding the computed expression attaches factors to terms; triangle inequality yields:
+
+$$
+|\widehat s-s|\le\gamma_{n-1}\sum_i|x_i|.
+$$
+
+Assume nearest normal-range arithmetic and no range failure. The ratio $\sum_i|x_i|/|s|$ exposes sensitivity when terms cancel. Balanced trees reduce maximum path length; they do not eliminate input uncertainty or promise the smallest error on every example.
+
+### FMA witness and distributive witness
+
+Put $p=2^{-23}$, $a=b=1+p$, $c=-(1+2p)$. The exact product is $1+2p+p^2$. Separate binary32 product rounding removes $p^2$, so the next addition gives zero. A fused operation subtracts before that rounding and produces representable $p^2=2^{-46}$.
+
+For $a=10^{10},b=1+2^{-23},c=-1$, $b+c=2^{-23}$ exactly. The factored path gives representable $10^{10}2^{-23}=1192.0928955078125$. The separately rounded product $ab$ lies on a 1024-spaced grid and rounds to $10^{10}+1024$; $ac=-10^{10}$, leaving 1024. Compiler contraction changes the graph and must be controlled.
+
+### Capped history is mathematically order-dependent
+
+For positive cap $M$ and observation weight $w>0$, define $W'=\min(M,W+w)$, $c=\min(w,W')$, $r=W'-c$. Then $D'=(Dr+dc)/W'$. Without the cap and with exact totals, induction recovers $D=\sum_iw_id_i/\sum_iw_i$.
+
+With $M=2,w=1$, ordering 0,1,−1 gives after three observations $D=-1/4$; ordering 0,−1,1 gives $D=+1/4$. All values are dyadic and exact. Thus a cap changes history influence even without roundoff. Batch exact averaging is not an equivalent replacement.
+
+### Tolerance is not an equivalence relation
+
+Absolute closeness at threshold 1 links 0 to 0.75 and 0.75 to 1.5, but not 0 to 1.5. Nontransitivity prevents treating this predicate as mathematical equality for arbitrary grouping/hashing. Numeric equality and bit identity also differ at signed zero/NaNs. Choose contracts independently.
+
+## Representation choice - Fixed grids, codebooks and low-precision fields
+
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choosing what information to keep|Continuous explanation]] supplies the motivation and examples. This companion reconstructs the constraints.
+
+### A scale is an interpretation, not an integer operation
+
+Let signed N-bit raw I range from -2^(N-1) through 2^(N-1)-1, and choose positive S=2^F. Dividing both endpoints by S gives the exact decoded interval. Adjacent raw integers differ by one, hence decoded step is 1/S.
+
+Nearest rounding selects q with |xS-q|≤1/2 when no clipping occurs. Divide by positive S:
+
+$$
+\left|x-\frac qS\right|\le\frac1{2S}.
+$$
+
+The symmetric range requirement M must fit the positive endpoint, which is one raw unit smaller in magnitude than the negative endpoint. Thus require M·2^F≤2^(N-1)-1. Taking base-two logarithms yields the scale feasibility interval in the story, with integer floor/ceiling and F≥0. A requested maximum error e can instead require 1/(2S)≤e; a requested step and a requested error are not the same condition.
+
+At F=16, raw minimum −2147483648 decodes to −32768; maximum2147483647 decodes to32768−2^-16. Using an approximate endpoint32768 in a conversion check incorrectly accepts a value whose raw code cannot fit.
+
+### Different operand scales require an explicit output scale
+
+For decoded a=A/S_a and b=B/S_b, desired output scale S_o gives:
+
+$$
+I_{\mathrm{mul}}=\operatorname{roundPolicy}
+  \left(\frac{AB\,S_o}{S_aS_b}\right),
+\qquad
+I_{\mathrm{div}}=\operatorname{roundPolicy}
+  \left(\frac{A\,S_bS_o}{B\,S_a}\right),\quad B\ne0.
+$$
+
+With all scales equal S, these reduce to AB/S and AS/B. Intermediate products in the general formula can overflow even when the simplified answer fits; simplify factors carefully or use a proved wider domain. The lab implements only the bounded same-scale case.
+
+For signed nearest-even division, separate sign from unsigned magnitude. Write n=qd+r with 0≤r<d, d>0. Increment q if r>d−r, or if r=d−r and q is odd. Comparing with d−r avoids overflowing 2r. Apply the sign after checking the destination magnitude, including the asymmetric signed minimum. For −5/2, q=2,r=1: tie keeps even2, then sign gives−2. For−7/2, q=3,r=1: tie increments to4, then sign gives−4.
+
+### Affine codebook error and endpoint constraints
+
+Let s>0 and integer zero point z define reconstruction s(q−z). Without clipping, q−z=round(x/s), so multiplication of the nearest-code bound by s gives:
+
+$$
+\left|x-s(q-z)\right|\le s/2.
+$$
+
+This derivation assumes an ideal scale and rounding operation. Finite scale storage and evaluation add error; clipping invalidates the half-step bound.
+
+An 8-bit unsigned endpoint fit from−1 to1 has s=2/255 and ideal zero point127.5. An integer zero point cannot equal127.5. Choosing128 makes zero exact but reconstructs endpoints−256/255 and254/255. Choosing127 shifts the interval oppositely. Rounding an affine zero point changes endpoint fit; one cannot declare all three targets exact under this uniform grid.
+
+### Metadata changes the compression ratio
+
+For N>0 samples and G>0, code bytes are ceil(N/2), and float32 scales cost4·ceil(N/G). For full groups and even N, divide payload bits by N to get4+32/G bits/sample. Partial groups and odd code counts require the ceiling form.
+
+At N=5,G=32, payload is3+4=7 bytes, versus20 FP32 bytes: approximately2.86× reduction, not6.4×. At large divisible N andG=32, payload approaches0.625 bytes/sample, giving4/0.625=6.4×. Neither figure includes the header.
+
+For a one-bit row with C samples and two binary32 centroids, a separately packed row costs ceil(C/8)+8 bytes before its other metadata. The approximation1+64/C bits/sample ignores final-byte padding.
+
+### Low precision changes the grid, not the decoding principle
+
+A normal binary format with t fraction bits has p=t+1 precision and binade spacing2^(e−t). Binary16 uses t=10,e_min=−14, giving minimum subnormal2^(−14−10)=2^-24. BF16 uses t=7,e_min=−126, giving2^-133 in the ideal interchange format.
+
+Maximum finite uses the largest finite exponent and fraction1−2^-t, so (2−2^-t)2^e_max. This derives65504 for binary16 and(2−2^-7)2^127 for BF16.
+
+In binary32→BF16 nearest-even conversion, the discarded low word d is compared with halfway0x8000. If d is above halfway, increment the high word; at equality, increment only if its low bit is odd. The finite-word bias0x7FFF+L expresses this decision. Classify NaNs first, or a payload only in discarded bits can turn into an infinity encoding.
+
+## External bytes - Bounds, identity and error detection
+
+### Bounds belong to the arithmetic domain of the parser
+
+For unsigned maximum U, a nonzero factor a permits multiplication a·b only when b≤floor(U/a). Do this before evaluating the product. For a span length L and read length n at offset o, require o≤L and n≤L−o; the first comparison protects subtraction.
+
+After a validated header length H, exact payload length P requires P=L−H. This avoids computing H+P before proving it fits. File-schema uint64 values also need representation/resource checks before converting to host size_t or allocating.
+
+### CRC polynomial toy trace
+
+This is a toy unreflected CRC with zero initialization and no final XOR, not the laboratory's CRC-32 parameters. Let message bits1101 mean polynomial x³+x²+1 and generator1011 mean x³+x+1. Append three zero positions and divide with XOR:
+
+```text
+1101000 xor 1011000 = 0110000
+0110000 xor 0101100 = 0011100
+0011100 xor 0010110 = 0001010
+0001010 xor 0001011 = 0000001
+```
+
+Remainder001 is appended to the original message, giving1101001. Dividing that codeword by1011 yields remainder zero. This works because coefficients lie in GF(2): subtracting a polynomial is XOR, with no borrow. Real named CRC parameters must additionally declare reflection, initialization, final XOR and the message coverage.
+
+### A digest cannot be injective on unrestricted messages
+
+An h-bit digest has2^h outputs. Choose2^h+1 distinct messages. At least two must share an output by the pigeonhole principle. Cryptographic strength concerns difficulty of finding certain collisions/preimages, not mathematical nonexistence.
+
+A changed file and a recomputed untrusted digest can agree. Authentication needs a trusted reference or keyed/signature mechanism; a polynomial remainder alone provides neither identity nor authorization.
+
+[[Supplementary/Code Snippets#Representation codecs and bounded file laboratory|Executable bounded codecs]] · [[Supplementary/Sources and Code Anchors|Verification scope]]
+
+
+
+## Source trail for the combined foundations
+
+The original bits and C++ notes are retained as recovery sources. This combined reading volume also includes general API contracts, build/tooling material and recovered inline proofs. See [[Supplementary/Manual Integration - Sources and Verification]] for source boundaries and verification.
+
+
+---
+
+
 
 ### GPU pipeline, vertex data, and API state
 
