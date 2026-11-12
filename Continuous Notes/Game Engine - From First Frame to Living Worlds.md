@@ -112833,3 +112833,18 @@ For an engine and design team, the useful distinction is between the visible ass
 The chapter also calls for a critical vocabulary shared by designers, developers, and readers. That is practical when a review moves from “it feels bad” to an account of what players can do, what rules constrain them, what state changes, what feedback appears, and whose goals the system serves. Naming the interaction makes disagreement concrete: one reviewer may value strategic control, another spectacle, another accessibility. The vocabulary helps expose those values instead of hiding them behind the word “quality.”
 
 The source's claims that this is the “first serious attempt” at an aesthetic theory of interactive systems and that mainstream games are too conservative are its authors' argument about the field at that time, not neutral field surveys. Preserve the useful design lens while attributing those judgments. The pages introduce a program for critical analysis; they do not establish that one aesthetic standard fits every game. (*Rules of Play*, PDF pp. 13–24, source `src-e893f2660cc9ce34f5d1`.)
+
+---
+
+## Depth-repair checkpoint — runtime systems now have executable boundary witnesses
+
+Several engine mechanisms that previously existed mostly as narrative now have independent reference witnesses.
+
+`tools/labs/ecs_scheduler_hierarchy_lab.cpp` adds component read/write conflict classification, deterministic conflict-free system batches, parent-first world-transform evaluation and subtree-only dirty invalidation to the earlier generational/sparse/archetype reconstruction. This still does not claim lock-free structural mutation or current KairoECS parity.
+
+`tools/labs/bvh_sah_refit_lab.cpp` continues the median-BVH query oracle with surface-area split costs, Morton interleaving and parent-bound refit after motion. A true binned SAH builder, LBVH range construction, dynamic-tree rotations and measured production workload selection remain separate gates.
+
+`tools/labs/constraint_friction_island_lab.cpp` extends contact response through unilateral normal impulses, a Coulomb tangent clamp, repeated sequential sweeps in a tiny stack and union-find contact islands. Rotational Jacobians, warm starting, multidirectional friction, large 3D stack stability and production parity are not silently inferred.
+
+The native backend gate is stronger as well. Vulkan now has both the basic synchronization2 smoke and a resource-specific buffer/timeline witness; Metal has a compiled MSL artifact plus a runtime compute witness that executes when the CI host exposes a Metal device. A host without a Metal device reports a skip, not fabricated native proof. Image layouts, queue-family transfers, heap aliasing, capture-derived hazards and live Kairo/Maveb backend parity remain explicit future evidence.
+

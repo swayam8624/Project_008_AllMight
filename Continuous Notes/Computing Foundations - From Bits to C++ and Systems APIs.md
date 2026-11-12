@@ -98059,3 +98059,15 @@ The accompanying [standalone C++20 impulse witness](../tools/labs/rigid_body_con
 
 We have now obtained a physically meaningful state, derived the effects of an off-centre contact, and specified an iterative constraint update. The remaining engine-design challenge is not another isolated vocabulary item: it is how to preserve these invariants as contacts are created, persist or disappear across frames while rendering, networking, editing and gameplay all observe a coherent world. Those ownership and synchronization questions arise because the physical model now requires a stateful, reproducible execution pipeline.
 
+---
+
+## Depth-repair checkpoint — execution evidence behind the foundations
+
+The canonical story now has a stricter companion contract: [[Supplementary/Mastery Evidence Ledger - 2026-11-12|the evidence ledger]] distinguishes explained/derived/reference/native/production/reconstructed levels, while `Supplementary/mastery_chunk_evidence.csv` names every M001–M180 chunk and its exact original-part interval.
+
+For CPU scheduling, `tools/labs/work_stealing_scheduler_lab.cpp` continues the shared-queue job-pool discussion with owner-LIFO/thief-FIFO local queues, forced load imbalance, cross-worker steals, exactly-once execution and a deterministic integer payload oracle. It remains a mutex-protected semantic reference rather than a claim of lock-free Chase–Lev ordering or NUMA-optimal scheduling.
+
+For GPU algorithms, `tools/labs/gpu_parallel_primitives_lab.cpp` turns scan/compaction/sort terminology into an independent CPU oracle: hierarchical exclusive scan must match a serial scan across many block sizes; predicate-scan-scatter preserves stable compaction order; byte histograms feed a stable four-pass 32-bit LSD radix sort checked against the standard numeric order. GPU barriers, subgroup implementations, occupancy and bank-conflict behavior still require native device evidence.
+
+For compressed inference, the earlier Phase 29 reference is now joined by `tools/labs/gguf_metadata_tensor_lab.cpp`, which advances GGUF validation beyond the prefix into typed metadata, alignment and tensor descriptors. The boundary remains explicit: full metadata arrays/type catalogs, every quantized block, tokenizer semantics, ONNX protobuf/opset execution, SIMD/Metal kernels and trusted-model parity are later evidence levels rather than implied by a successful subset parser.
+

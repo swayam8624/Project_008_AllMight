@@ -99868,3 +99868,19 @@ $$
 
 The numerical lab verifies $F(T)=0.75$ for illustrative parameters. It does not fit participant responses or validate a paper's fitted coefficients.
 
+---
+
+## Depth-repair checkpoint — raster, transport, splats, and mesh operations as reference programs
+
+The rendering narrative now points to executable oracles for several areas that were previously stronger in prose than in reconstruction.
+
+`tools/labs/raster_reference_lab.cpp` owns top-left edge ownership, barycentrics, perspective-correct interpolation and depth ordering. `tools/labs/raster_pipeline_state_lab.cpp` continues the path through homogeneous clipping, explicit four-sample coverage, stencil state and premultiplied source-over blending. Exact API sample locations, all clip planes, conservative rasterization and GPU parity remain higher layers.
+
+`tools/labs/pbr_reference_lab.cpp` verifies isotropic GGX normalization, Fresnel endpoints and reciprocity; `tools/labs/pbr_extended_reference_lab.cpp` adds anisotropic projected normalization, exact dielectric Fresnel, Snell refraction/total internal reflection and a Lambertian white-furnace integral. Rough transmission, multiple-scattering compensation and measured/material-import parity remain deliberately unclaimed.
+
+`tools/labs/path_transport_scene_lab.cpp` connects camera intersection, Lambertian throughput, uniform-hemisphere and cosine-BSDF proposals, balance MIS and convergence to an analytic constant-environment pixel value. It is a scene-level estimator reference, not yet a complete multibounce emissive-geometry/media renderer.
+
+For captured worlds, `tools/labs/gaussian_projection_reference_lab.cpp` and `tools/labs/gaussian_tile_conic_lab.cpp` now span projection Jacobian/covariance through conic inversion, footprint bounds, tile duplication, depth ordering and front-to-back transmittance. Native GPU radix/binning/rasterization, higher-order SH and current Maveb/Vulkax parity remain separate gates.
+
+For mesh processing, `tools/labs/mesh_topology_lab.cpp`, `tools/labs/qem_edge_collapse_lab.cpp` and `tools/labs/dual_quaternion_skinning_lab.cpp` provide topology, QEM candidate/validity and rigid-blend witnesses. Optimal QEM solve/link-condition remeshing, attributes and production import/GPU skinning still require their own proof.
+
