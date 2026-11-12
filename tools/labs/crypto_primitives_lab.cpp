@@ -1,7 +1,9 @@
 // PROJECTALLMIGHT Phase 28 educational cryptographic-primitives witness.
 // Known-answer tests make the bit-level implementation inspectable.
 // Production systems should use vetted cryptographic libraries and key-management protocols.
+#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
