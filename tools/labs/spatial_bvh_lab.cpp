@@ -14,6 +14,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef assert
+#undef assert
+#endif
+#define ALLMIGHT_REQUIRE(expr) do { if (!(expr)) throw std::runtime_error("check failed: " #expr); } while (false)
+#define assert(expr) ALLMIGHT_REQUIRE(expr)
+
 namespace allmight {
 
 struct Vec3 {
@@ -256,8 +262,8 @@ private:
 
 Aabb box(float x, float y, float z, float r) {
     Aabb b;
-    b.expand({x-r,y-r,z-r});
-    b.expand({x+r,y+r,z+r});
+    b.expand(Vec3{x-r,y-r,z-r});
+    b.expand(Vec3{x+r,y+r,z+r});
     return b;
 }
 
