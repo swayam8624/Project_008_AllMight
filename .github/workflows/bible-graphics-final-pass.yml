@@ -1,0 +1,56 @@
+name: Bible graphics final pass
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - allmight/closure-and-narrative-20261112
+    paths:
+      - 'tools/patches/apply_graphics_final_pass.py'
+      - 'tools/labs/xr_3d_imu_preintegration_lab.py'
+      - 'tools/labs/nerf_volume_rendering_lab.py'
+      - '.github/workflows/bible-graphics-final-pass.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: allmight/closure-and-narrative-20261112
+          fetch-depth: 0
+
+      - name: Apply graphics final-pass patch
+        run: python3 tools/patches/apply_graphics_final_pass.py
+
+      - name: Audit readability of the full graphics note
+        run: python3 tools/audit_note_readability.py "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
+
+      - name: Run 3-D IMU witness
+        run: python3 tools/labs/xr_3d_imu_preintegration_lab.py
+
+      - name: Run neural volume-rendering witness
+        run: python3 tools/labs/nerf_volume_rendering_lab.py
+
+      - name: Verify patch idempotence
+        run: |
+          sha256sum "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md" > /tmp/before
+          python3 tools/patches/apply_graphics_final_pass.py
+          sha256sum "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md" > /tmp/after
+          diff /tmp/before /tmp/after
+
+      - name: Commit canonical graphics update
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Finalize graphics XR and neural-rendering Bible seams"
+            git push origin HEAD:allmight/closure-and-narrative-20261112
+          fi
