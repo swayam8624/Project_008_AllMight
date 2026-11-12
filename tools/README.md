@@ -217,3 +217,10 @@ The smoke source set included 33 selected PDF pages imported and classified as s
 ## Check selected M018 note examples
 
 Run `bash tools/m018/build_m018_lab.sh` from the repository root for the multi-translation-unit lab, release/strict/sanitizer modes, assembly-symbol checks and the selected saved-note compilation. `python3 tools/m018/check_note_examples.py --compiler clang++` runs only the note check. It uses Python's standard library and the chosen C++20 compiler, builds in a temporary directory, and checks the three-component result. Missing/ambiguous blocks, compiler failures and wrong results fail the command. Other narrative fragments are outside this check. Identify the actual compiler behind g++ on macOS before reporting GNU GCC coverage.
+
+
+## Canonical continuous-note checks
+
+`python3 tools/check_three_volume_consolidation.py` checks retained source inclusion and the historical ordered-line contract. `python3 tools/check_continuous_code_sync.py` checks the nine declared standalone programs against their complete inline versions. `python3 tools/m018/check_note_examples.py --compiler clang++` compiles the selected examples from the canonical Game Engine book, rather than its archival Foundations source. These are distinct checks; none certifies every sentence or every code fragment in the volumes.
+
+The new `spring_generator_lab.cpp` checks signed force laws and an integration-order counterexample; `contact_penetration_refresh_lab.cpp` checks a planar first-order depth update. Both use runtime checks that survive NDEBUG. They remain bounded CPU models, not production solvers.

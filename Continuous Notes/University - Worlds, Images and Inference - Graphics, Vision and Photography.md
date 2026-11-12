@@ -3130,6 +3130,172 @@ The mass matrix connects per-vertex samples to surface area. A diagonal lumped m
 
 The stiffness matrix also has an energy interpretation. Define $w_{ij}=(\cot\alpha_{ij}+\cot\beta_{ij})/2$, use one incident angle on a boundary edge, and define the stiffness matrix by $S_{ij}=-w_{ij}$ off the diagonal and $S_{ii}=\sum_j w_{ij}$. Then the piecewise-linear finite-element Dirichlet energy is $E(f)=\frac12 f^T S f=\frac12\sum_{\{i,j\}\in E}w_{ij}(f_i-f_j)^2$, with each undirected edge counted once. Minimizing it makes neighboring values vary less. Applied to vertex positions, it pulls the shape toward a fairer surface. That is the source of the intuitive “move toward the average” behavior, but the precise average depends on the weights and area normalization.
 
+#### Nonnegative energy and nonnegative weights are different promises
+
+In [[PDE fields and discrete Laplacians|mesh-field calculations]], the negative-weight warning raises a fair question: if an edge contributes a negative term, how can the assembled stiffness matrix still have nonnegative energy? Return to one triangle before trusting the matrix.
+
+On a nondegenerate triangle $T$, use three linear basis functions $\phi_a,\phi_b,\phi_c$. Each is one at its own vertex and zero at the other two; between vertices they interpolate linearly. A sampled scalar field becomes $f_h=f_a\phi_a+f_b\phi_b+f_c\phi_c$. Its gradient is constant inside this flat triangle. With positive triangle area $A_T$, define the local stiffness entries by
+
+$$
+(S_T)_{ij}=A_T\,\nabla\phi_i\cdot\nabla\phi_j.
+$$
+
+Consequently,
+
+$$
+f_T^{\mathsf T}S_Tf_T
+=A_T\left\|\sum_i f_i\nabla\phi_i\right\|^2\geq0,
+\qquad E_T(f)=\tfrac12f_T^{\mathsf T}S_Tf_T.
+$$
+
+This is a squared gradient, so its sign does not depend on whether the triangle is acute. Assembling a mesh adds these triangle energies. The usual piecewise-linear finite-element stiffness therefore remains **positive semidefinite**—every field has nonnegative quadratic energy—on nondegenerate triangles even when some cotangent edge weights are negative. A constant field has zero gradient, which explains the zero mode. On a connected mesh, remove or constrain that mode before expecting the stiffness system to be positive definite.
+
+The edge-sum expression above is another way to write the same assembled energy. Its edge terms are not independent knobs: their cotangents come from shared triangle geometry. A negative term can be outweighed by other terms while the full quadratic form stays nonnegative. Arbitrary signed graph weights do not inherit this finite-element guarantee.
+
+Here is an original numerical example. Use coordinates in metres:
+
+$$
+a=(0,0),\quad b=(2,0),\quad c=(0.5,0.5),\quad A_T=0.5\,\mathrm{m^2}.
+$$
+
+The angle at $c$ is obtuse. For this single triangle, each boundary edge has one opposite cotangent, giving $w_{ab}=-0.25$, $w_{ac}=1.5$, and $w_{bc}=0.5$. The gradients and matrix are
+
+$$
+\nabla\phi_a=(-0.5,-1.5),\quad
+\nabla\phi_b=(0.5,-0.5),\quad
+\nabla\phi_c=(0,2)\quad[\mathrm{m^{-1}}],
+$$
+
+$$
+S_T=
+\begin{bmatrix}
+1.25&0.25&-1.5\\
+0.25&0.25&-0.5\\
+-1.5&-0.5&2
+\end{bmatrix}.
+$$
+
+Notice the positive off-diagonal entry $S_{ab}=0.25=-w_{ab}$. For $f=(0,1,0)$, the energy is still $E_T=0.125$. The independent gradient check is $\tfrac12(0.5)\|(0.5,-0.5)\|^2=0.125$. Zero row sums also make the matrix annihilate a constant field.
+
+![[Visual Recall/University Graphics and Vision/cotan-energy-positivity.png]]
+
+**Figure — energy and value range are different promises.** The left panel shows the negative boundary-edge weight. The right shows the step derived next: its energy falls even though one sample becomes negative. Both panels use the same triangle and matrix. This is a constructed numerical witness, not a measured mesh-processing benchmark.
+
+#### A stable heat step can still create a negative sample
+
+Evolve the field with $M\dot f=-\kappa Sf$, using a positive diagonal area mass matrix. Here the barycentric lumped choice is $M=(A_T/3)I=(1/6)I\,\mathrm{m^2}$. Take diffusivity $\kappa=1\,\mathrm{m^2/s}$ and timestep $h=0.01\,\mathrm s$. Explicit Euler gives
+
+$$
+f^{n+1}=f^n-h\kappa M^{-1}Sf^n,\qquad
+Sf^n=(0.25,0.25,-0.5)^{\mathsf T},
+$$
+
+$$
+f^n=(0,1,0)^{\mathsf T}
+\quad\Longrightarrow\quad
+f^{n+1}=(-0.015,0.985,0.030)^{\mathsf T}.
+$$
+
+The initial samples were nonnegative, but the first updated sample is negative. Decreasing this positive timestep does not change the sign of that first increment: it comes from a negative neighbor coefficient in the update matrix.
+
+The example did not use an energy-unstable step. The eigenvalues of $S_T$ are $0$ and $(7\pm\sqrt{37})/4$. Since $M^{-1}=6I$, the largest decay rate of $\kappa M^{-1}S_T$ is about $19.6241\,\mathrm{s^{-1}}$. Explicit Euler's modal bound is $0<h<2/19.6241\approx0.1019\,\mathrm s$ for contraction of nonconstant modes. Our $0.01\,\mathrm s$ step is inside that interval, and its energy decreases from $0.125$ to $0.104525$.
+
+Here **energy stability** means that the selected energy does not grow under the update. **Positivity preservation** means that nonnegative input values stay nonnegative. A **discrete maximum principle** is a related value-range guarantee; for an averaging update it prevents new values outside the old range. With lumped mass and nonnegative edge weights, explicit diffusion is a convex combination if $h\kappa S_{ii}/M_{ii}\leq1$ at every vertex: neighbor coefficients are nonnegative, the diagonal coefficient is nonnegative, and the row sums to one. A negative edge weight breaks this sufficient averaging argument.
+
+The isolated triangle here has free, natural boundary conditions; its boundary samples can evolve. Pinning all three values would eliminate its dynamics. This demonstrates transient positivity failure, not an interior harmonic maximum on a boundary-only mesh. Zero row sums also conserve total mass-weighted field value in this exact explicit update. Conservation still does not constrain individual signs.
+
+An implicit linear solve can improve the energy-stability restriction without automatically restoring positivity, preserving mesh volume, or preventing flipped triangles. Dissipating an energy, keeping a density nonnegative, maintaining a valid parameterization, and preserving a shape are different tests.
+
+The supplied *Polygon Mesh Processing* develops basis gradients and the cotangent operator in physical PDF pp. 55–60 / printed pp. 43–48; physical p. 58 / printed p. 46 explicitly discusses negative weights. Its smoothing chapter supplies the flow context. The triangle, proof and trace here are an original teaching derivation. For integration, [libigl's cotmatrix documentation](https://github.com/libigl/libigl/blob/main/include/igl/cotmatrix.h) uses the opposite, negative-semidefinite convention: negate that matrix to obtain the positive stiffness $S$ used here.
+
+There is a research reason to keep these properties separate. Wardetzky and colleagues prove a tradeoff between locality, symmetry, linear precision and positive weights for discrete Laplace operators on general triangle meshes in their framework. Their result concerns a stated family and collection of properties; it does not say every useful discretization is unstable. Read the property definitions before choosing a substitute. [*Discrete Laplace Operators: No Free Lunch*](https://www.cs.columbia.edu/cg/pdfs/1180993110-laplacian.pdf).
+
+##### Complete single-triangle energy witness
+
+This standard-library Python program builds the matrix from basis gradients, checks it against the independent matrix above, and reproduces the negative sample with decreasing energy. It also checks the constant mode, orientation relabeling, uniform scaling and rejection of a degenerate triangle. Its selected energy vectors are numerical witnesses; the squared-gradient derivation establishes the general semidefinite claim. This is a planar element laboratory, not a mesh loader, sparse solver or production smoother.
+
+```python
+#!/usr/bin/env python3
+"""One planar P1 triangle: energy stability does not imply positivity.
+
+Original teaching witness, not a full mesh solver. Standard library only.
+"""
+import json
+import math
+
+
+def triangle_stiffness(points):
+    """Return positive-convention stiffness and area for a finite 2D triangle."""
+    if len(points) != 3 or any(len(p) != 2 for p in points):
+        raise ValueError("expected three planar vertices")
+    if not all(math.isfinite(v) for p in points for v in p):
+        raise ValueError("nonfinite coordinate")
+    (x0, y0), (x1, y1), (x2, y2) = points
+    det = (x1-x0)*(y2-y0) - (x2-x0)*(y1-y0)
+    if not math.isfinite(det) or det == 0:
+        raise ValueError("unrepresentable or degenerate triangle")
+    area = abs(det)/2
+    gradients = [((y1-y2)/det, (x2-x1)/det),
+                 ((y2-y0)/det, (x0-x2)/det),
+                 ((y0-y1)/det, (x1-x0)/det)]
+    stiffness = [[area*sum(a*b for a, b in zip(gi, gj))
+                  for gj in gradients] for gi in gradients]
+    if area == 0 or not all(math.isfinite(v) for row in stiffness for v in row):
+        raise ValueError("unrepresentable area or stiffness")
+    return stiffness, area
+
+
+def multiply(matrix, vector):
+    return [sum(a*b for a, b in zip(row, vector)) for row in matrix]
+
+
+def energy(matrix, vector):
+    return sum(a*b for a, b in zip(vector, multiply(matrix, vector)))/2
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def main():
+    vertices = [(0., 0.), (2., 0.), (.5, .5)]
+    stiffness, area = triangle_stiffness(vertices)
+    expected = [[1.25, .25, -1.5], [.25, .25, -.5], [-1.5, -.5, 2.]]
+    require(stiffness == expected and area == .5, "independent matrix trace")
+    require(multiply(stiffness, [1., 1., 1.]) == [0., 0., 0.], "constant mode")
+    for field in ([1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [1., -2., 3.]):
+        require(energy(stiffness, field) >= 0, "selected energy witnesses")
+    # Uniform scaling leaves 2D P1 stiffness unchanged but scales mass as area.
+    scaled, scaled_area = triangle_stiffness([(3*x, 3*y) for x, y in vertices])
+    require(all(math.isclose(a, b) for r, s in zip(stiffness, scaled)
+                for a, b in zip(r, s)) and scaled_area == 9*area, "scale law")
+    reversed_s, _ = triangle_stiffness([vertices[i] for i in [0, 2, 1]])
+    require(reversed_s == [[expected[i][j] for j in [0, 2, 1]]
+                          for i in [0, 2, 1]], "orientation permutation")
+    try:
+        triangle_stiffness([(0., 0.), (1., 0.), (2., 0.)])
+    except ValueError:
+        pass
+    else:
+        raise RuntimeError("degenerate triangle accepted")
+    old = [0., 1., 0.]
+    mass, step = area/3, .01  # diffusivity = 1 m^2/s; step in seconds
+    new = [u-step*su/mass for u, su in zip(old, multiply(stiffness, old))]
+    expected_new = [-.015, .985, .03]
+    require(all(math.isclose(a, b) for a, b in zip(new, expected_new)), "step trace")
+    require(min(new) < 0 and energy(stiffness, new) < energy(stiffness, old),
+            "energy decrease with positivity violation")
+    require(math.isclose(sum(new), sum(old)), "mass-weighted mean conservation")
+    print(json.dumps({"stiffness": stiffness, "area": area, "new": new,
+                      "energy_before": energy(stiffness, old),
+                      "energy_after": energy(stiffness, new), "result": "PASS"}))
+
+
+if __name__ == "__main__":
+    main()
+```
+
 #### Smoothing is a flow with side effects
 
 A diffusion equation evolves a scalar field by $\partial f/\partial t=\lambda\Delta f$. The same equation applied to mesh positions gives a discrete Laplacian smoothing flow. Explicit Euler with step $h$ updates $X^{n+1}=X^n+h\lambda\Delta X^n$. It is simple, but stability demands a sufficiently small step relative to the mesh and weights. An implicit step solves a sparse system, commonly $(M+h\lambda S)X^{n+1}=MX^n$, which is stable for much larger steps for this linear diffusion model. That numerical stability does not guarantee shape preservation: the mesh can shrink, lose volume, cross itself, or flip triangles.

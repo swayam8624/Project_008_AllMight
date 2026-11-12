@@ -29,3 +29,5 @@ A partial differential equation constrains a field through spatial and temporal 
 
 
 Expanded direct teaching: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A triangle turns a differential into a concrete field calculation]].
+
+A valid finite-element cotangent stiffness can have negative edge weights while retaining nonnegative quadratic energy. Energy contraction, conservation and positivity of the evolving samples are separate requirements. [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Nonnegative energy and nonnegative weights are different promises|The single-triangle derivation]] shows the distinction; [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A stable heat step can still create a negative sample|the heat-step trace]] gives a negative sample while energy decreases.

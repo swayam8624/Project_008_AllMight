@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Compile three selected M018 note blocks, including their saved spelling.
 
-This checks the displayed vector declaration, expression kernel and local
-materialization example. It does not claim to compile every book fragment.
+This checks the canonical Game Engine volume's displayed vector declaration,
+expression kernel and local materialization example. It does not claim to
+compile every book fragment or to validate the archival source copies.
 """
 import argparse
 from pathlib import Path
@@ -17,7 +18,7 @@ def main():
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     note = root / "Continuous Notes" / (
-        "Computing Foundations - From Bits to C++ and Systems APIs.md"
+        "Game Engine - From First Frame to Living Worlds.md"
     )
     text = note.read_text(encoding="utf-8")
     title = "## A registry crosses its last C++ boundary:"

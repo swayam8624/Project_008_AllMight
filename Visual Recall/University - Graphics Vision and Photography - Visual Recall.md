@@ -227,3 +227,12 @@ Reconstruct without looking: show why the screen midpoint gives $u=0.2$ for $w=(
 | Largest matrix column bounds every stretch? | No under shear: a 1.414 guess misses a 1.618 stretch. Frobenius radius multiplier 2 is safe here. | [[Visual Recall/Game Engine/corridor-and-shear.svg|Editable figure]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A line corridor can be a cheap prefilter for shadow-caster work|Proof and failure case]] |
 
 **Reconstruct:** prove the distance formula by parallelogram area; explain why an enclosing receiver corridor matters for directional shadows; show what breaks if scale or animation escapes the cached object bound.
+
+
+## Mesh energy and value range
+
+| Recall prompt | Short answer | Return to the teaching |
+|---|---|---|
+| Can a negative cotangent edge weight coexist with nonnegative energy? | Yes. Valid element energies are squared gradients; individual signed edge terms are coupled by geometry. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Nonnegative energy and nonnegative weights are different promises|Proof and triangle matrix]] |
+| Does a stable heat step preserve nonnegative values? | Not necessarily: the worked step produces −0.015 while energy falls from 0.125 to 0.104525. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A stable heat step can still create a negative sample|Step derivation and limits]] · [[Visual Recall/University Graphics and Vision/cotan-energy-positivity.png|Figure]] |
+| What makes an explicit diffusion update a convex average? | Nonnegative edge weights, positive lumped masses, and a step small enough to keep every diagonal update coefficient nonnegative. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Complete single-triangle energy witness|Executable reference and failure witness]] |

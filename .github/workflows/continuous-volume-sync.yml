@@ -7,12 +7,14 @@ on:
       - 'Continuous Notes/**'
       - 'tools/labs/**'
       - 'tools/check_continuous_code_sync.py'
+      - 'tools/m018/check_note_examples.py'
       - '.github/workflows/continuous-volume-sync.yml'
   pull_request:
     paths:
       - 'Continuous Notes/**'
       - 'tools/labs/**'
       - 'tools/check_continuous_code_sync.py'
+      - 'tools/m018/check_note_examples.py'
       - '.github/workflows/continuous-volume-sync.yml'
   workflow_dispatch:
 
@@ -25,5 +27,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Compare all seven embedded C++ labs and formatting boundaries
+      - name: Compare declared embedded C++ labs and formatting boundaries
         run: python3 tools/check_continuous_code_sync.py
+      - name: Compile selected examples from the canonical engine volume
+        run: python3 tools/m018/check_note_examples.py --compiler g++

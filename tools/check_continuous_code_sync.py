@@ -31,6 +31,8 @@ EMBEDDED = {
         "persistent_contact_lab.cpp",
         "contact_cache_lab.cpp",
         "disk_event_broadphase_differential_lab.cpp",
+        "spring_generator_lab.cpp",
+        "contact_penetration_refresh_lab.cpp",
     ),
 }
 

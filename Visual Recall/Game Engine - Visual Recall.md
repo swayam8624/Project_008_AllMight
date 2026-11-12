@@ -89,3 +89,31 @@ flowchart LR
 | Slow directory result arrives after navigation? | Check project, path and request generation; the old folder's result does not own the new active panel. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Keep filesystem work out of the editor’s frame loop|Refresh trace and failure policy]] |
 | Gizmo drawn above a wall but cannot be clicked? | Its input precedence disagrees with its displayed depth policy. Keep rendering and picking consistent. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#An editor manipulator can stay in world space while drawing above the scene|World position, depth and interaction]] |
 | Overlay means skip clipping? | No. Valid projection and viewport inputs still apply even when scene depth cannot hide the handle. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#An editor manipulator can stay in world space while drawing above the scene|Depth example and limits]] |
+
+
+## Signed forces and changing contacts
+
+| Prompt | Short answer | Return to the narrative / figure |
+|---|---|---|
+| Compressed ordinary spring versus slack bungee? | Ordinary spring pushes apart; bungee has zero compression force. With k=8 N/m and rest length1m, half-length spring gives +4N outward. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#A spring law is signed, not just a magnitude|Force law and source-code audit]] · [[Visual Recall/Game Engine/spring-force-law.png|Signed force plots]] |
+| Can a current force fix a position-first Euler endpoint? | No. That position update already uses old velocity; derive the target force for the actual integrator. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#The analytic “fake stiff spring” has two separate caveats|Dimensional and integration-order checks]] |
+| What happens to neighboring contact depths? | Translation and small rotation shift shared points; project their relative shift onto the frozen normal and search severity again. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Refresh neighboring penetrations after position correction|Three-contact ranking trace]] |
+| Is the shared-point calculation executable? | The full planar witness checks body-order signs, 2/10/13mm depths, unchanged unrelated contact and tangential motion. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#A planar penetration refresh witness|Complete C++20 reference]] |
+| Which kind of game correctness did a test establish? | Separate formal rules, participant perception/coordination and community expectations; use the matching evidence. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Read a game feature at three nested scales|Medical-kit worked example and four interaction modes]] |
+
+
+## Model choices before tuning
+
+| Prompt | Short answer | Full explanation |
+|---|---|---|
+| Is static friction always at its limit? | No: a 45 N push needs 45 N, below a 60 N limit. The coefficient describes the material pair. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#A friction coefficient describes a pair, not a timestep|Crate trace and kinetic friction]] |
+| Does an energy-preserving slow projectile preserve impact momentum? | No: the 2 kg proxy keeps 625 J but multiplies momentum by twenty. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Slow a projectile only after choosing what to preserve|Energy, momentum and trajectory comparison]] |
+| What preserves drop at fixed horizontal range when speed falls twentyfold? | Under the stated drag-free horizontal-launch model, gravity must fall four hundredfold. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Slow a projectile only after choosing what to preserve|Derive flight time and drop]] |
+
+
+## Context and lifecycle
+
+| Prompt | Short answer | Full teaching |
+|---|---|---|
+| Does a successful thread-status query mean the job succeeded? | No. Query success, final worker status, and handle lifetime are separate states. Closing a handle does not stop its worker. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Query success, worker completion and handle lifetime are separate states|Shutdown and buffer-lifetime trace]] |
+| Does identifying a reward prove its effect on every player? | No. Observe the rule, state the cultural interpretation, then test actual behavior. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Ask what the game makes valuable|Cultural rhetoric and medical-kit comparison]] |

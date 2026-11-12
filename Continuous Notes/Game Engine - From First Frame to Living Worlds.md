@@ -10876,6 +10876,83 @@ A reusable engine system exists to make repeated game work cheaper. If a helper 
 One useful test is to ask whether two independent game features would otherwise solve the same problem differently. If both need to draw a textured quad, a renderer API can provide common behavior. If only one game needs a custom dialogue graph, forcing it into a generic node framework may be overdesign. Engine design is the repeated choice between a local solution and an abstraction whose future value is uncertain. Hazel’s public series is valuable here because many episodes show the discussion and implementation as a progression, not just a polished list of completed components.
 
 
+
+### Read a game feature at three nested scales
+
+A game system is a set of interacting parts that forms a larger whole. To inspect one, name four things: its **objects** (the parts), their **attributes** (properties and state), their **internal relationships** (how the parts affect one another), and the **environment** (the context around the system). These labels depend on the question being asked; they are a lens for analysis, not a required software architecture. Salen and Zimmerman’s chess example shows why the lens matters: the same board game can be examined as a formal rule system, as an experience between players, or as a cultural object. The book describes these systems as nested: rules are experienced through play, and play sits in a wider cultural context. (Rules of Play, PDF pp. 63–68.)
+
+Consider a co-op game in which one player marks a medical kit and another chooses to use it. At the **formal** level, objects include the two characters and the kit; attributes include each character’s health and the kit’s remaining charges; relationships include who can activate it and how much health it restores; the environment is the modeled game state. Here we can check a precise rule: if the player has 40 health, the kit restores 25, and maximum health is 100, the result is 65 and one charge is consumed. If two players activate the final charge simultaneously, the rule must define which operation wins or whether the actions serialize. These are questions for implementation and tests.
+
+At the **experiential** level, the objects become the players interacting with the game. Their attributes include not only health and inventory but also what each person knows. Their relationships include coordination, trust, and competition over scarce resources; the environment includes the screen layout, controls, voice chat, and the physical setting in which they play. A formally correct 25-point heal may still be confusing if the charge counter updates late or the interaction prompt is hidden beneath another player’s marker. Conversely, a visible but inaccurate counter teaches a false rule. The relevant check now includes whether the players can predict the result and coordinate around it.
+
+At the **cultural** level, the game itself is the object. Its designed elements and history are attributes; its relationships include how players connect it to genre conventions, community practices, and other media; the environment is the surrounding culture. A community may treat the last kit as a shared emergency resource, or develop a house rule that the player who finds it may claim it. Neither convention is automatically encoded by the health system. A designer can decide whether to support that practice with a ping, a shared-resource rule, or no special feature, but should not mistake a popular convention for a universal player expectation.
+
+```mermaid
+flowchart LR
+    K["One shared-kit interaction"] --> F["Formal: health, charges, accepted action"]
+    K --> E["Experiential: feedback and coordination"]
+    K --> C["Cultural: community expectations"]
+    style F fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
+    style E fill:#dcfce7,stroke:#15803d,color:#14532d
+    style C fill:#fef3c7,stroke:#b45309,color:#78350f
+```
+
+**Read the figure:** start with the same interaction. Each branch asks a different question and calls for different evidence: a state transition, participants’ understanding, or the surrounding practice.
+
+The three levels answer different questions and remain connected. An engineer can fix the simultaneous-use race at the formal level, then test whether the interface communicates the result at the experiential level. If a community consistently adopts a house rule because the shipped mechanic feels unfair, that cultural evidence may motivate a design change. Treating one level as the whole game creates blind spots: a unit test cannot establish that the prompt is legible, and one playtest cannot prove the formal update is race-free. The source presents the levels as an analytical framework; the medical-kit example and its test plan are an applied teaching example.
+
+The same separation helps make “interactive” precise. The book distinguishes **cognitive interactivity** (a player’s interpretive, emotional, or intellectual engagement), **functional interactivity** (the usability and material behavior of controls and display), **explicit interactivity** (choices and procedures designed into the system), and **beyond-the-object interactivity** (participation in the surrounding culture, such as fan interpretation). A game interaction can involve several at once. When the player uses the kit, interpreting its icon is cognitive, getting a prompt to respond is functional, choosing to spend a charge is explicit, and debating the team’s house rule afterward is beyond the current match. For defining the game’s input-and-outcome contract, explicit interactivity is the most direct focus; the other modes still affect whether that choice is understandable and meaningful. (Rules of Play, PDF pp. 69–72.)
+
+A practical failure trace shows why this distinction matters. Suppose the server correctly accepts one player’s use of the last kit and reduces its charges from one to zero. The formal rule is satisfied. But if the other player’s UI continues to show one charge for half a second, the second player may press Use and see nothing happen. The controls technically registered, yet the functional feedback made the system look unresponsive; the explicit choice produced no expected outcome from that player’s perspective. If the team has learned a different house rule, the result may also feel socially unfair. Diagnose each layer separately: log the authoritative state transition and tick; measure the UI update delay; show a consumed/contested response to the rejected action; then observe whether teams understand the shared-resource rule. Choose the remedy after locating the fault: unclear rules may need better feedback, while delayed state may need a synchronization or notification change. A correct network trace alone does not establish a good player experience.
+
+Open and closed systems provide a related boundary check. In the book’s terminology, a closed system does not exchange with its environment; an open system does. A formal rule model can be treated as closed when all relevant state and transitions are inside the rule set. A cultural analysis is open because it examines exchange with history and community. An experiential system may be framed either way depending on whether the question includes only in-game actions or also the players’ social and physical context. State the chosen boundary before using “open” or “closed”; otherwise the label hides which inputs and consequences the analysis includes. (Rules of Play, PDF pp. 67–68.)
+
+**Use the framework as a review prompt, not a player taxonomy.** For a proposed engine feature, write one formal state transition, one experiential question about what participants can perceive or coordinate, and one cultural assumption that should be checked rather than baked in. Then choose a separate verification method for each. This keeps technical correctness, interaction quality, and community meaning in the same design conversation without claiming they can be reduced to one metric.
+
+
+
+
+### Ask what the game makes valuable
+
+A game is made and played inside a culture. Its meaning therefore depends on more than the state transitions inside its rules: the people who make and play it bring shared habits, histories, values, institutions, physical places, and media with them. The *Rules of Play* chapter calls these surrounding conditions the game’s **cultural context** and treats games as cultural objects that can be read in relation to that context. The context is analytically outside the game’s designed rules, but it is not irrelevant to play: it can shape what a rule or representation means to participants.
+
+The book deliberately offers several ways to define culture rather than one universal definition. Pick the scope before making a design claim. These eight readings ask different questions about the same game:
+
+| Reading | What it studies | A concrete question |
+|---|---|---|
+| Topical | Areas of life such as work, religion or economics | Which parts of everyday life does the game represent? |
+| Historical | Traditions passed between generations | Which inherited story or convention is being reused? |
+| Behavioral | Shared, learned ways of acting | What do experienced players teach newcomers to do? |
+| Normative | Ideals and expectations about how people should act | What does the group call fair, generous or unacceptable? |
+| Functional | Ways people solve shared problems | How does the game help people coordinate or compete? |
+| Mental | Learned ideas and habits of thought | What does the game assume players already understand? |
+| Structural | Patterns connecting roles, ideas and practices | Who has authority, and how do the roles depend on each other? |
+| Symbolic | Shared meanings assigned to signs and objects | What does a uniform, badge or scarce item mean to this group? |
+
+For example, a medical kit can be a resource in the rules, a sign of a support role, and an object governed by an unwritten sharing convention. Those descriptions answer different questions; naming the scope prevents an interpretation about one group from quietly becoming a claim about every player. The eight readings come from the book’s discussion on physical PDF p. 498; the questions are teaching applications.
+
+The chapter’s **Games as Cultural Rhetoric** framework asks how a game expresses or carries values. Here, **rhetoric** means a way of expressing or promoting beliefs, sometimes through an unstated story. The book takes this use of the word from Brian Sutton-Smith. The book argues that games can do more than mirror their culture: their rules, goals, symbols, and representations may reproduce, reinforce, or sometimes transform cultural beliefs. This is an interpretive lens. It does not mean that every player reads the same message, that designer intent controls interpretation, or that a game causes a particular social outcome.
+
+Consider the book’s American Dream example. Lotteries marketed with the promise that anyone might become a millionaire and the game show *Who Wants to Be a Millionaire?* frame wealth as an attainable prize. The chapter reads that framing as a cultural rhetoric of individual success, shortcuts, and chance. To use the example carefully, separate the observable design choice (a prize organized around becoming rich) from the book’s interpretation of the values that choice expresses. A design review can then ask: Which outcomes does the game reward? What effort, luck, cooperation, or ownership does it make visible? Which assumptions become part of the player’s route to success?
+
+The book’s Chaturanga discussion makes a related point through changing formal structure. It describes the game’s pieces as modeled on an ancient Indian army and reads their hierarchy as reflecting the social order of that military context. As the game moved between cultures, pieces changed; the chapter interprets additions such as the queen and bishop as changes that affected both the rules and player experience, not merely the names or appearance of pieces. These are the chapter’s historical account and interpretation, relayed through its cited sources; this review did not independently verify that history. The useful design question is how a change in represented roles also changes movement, power, and strategic choice.
+
+The pages also place this lens alongside other situated examples: Scrabble can carry different meanings for different groups; basketball is shaped by its institutions, arena, economics, and media; and games can draw on subcultures or stereotypes. These examples should remain attributed readings, not universal labels. A game may be read differently across communities and over time.
+
+A practical cultural-rhetoric review can trace four things:
+
+1. **Formal choices:** What does the game make players do, accumulate, protect, exchange, or compete over?
+2. **Expressive choices:** Which identities, symbols, histories, places, and groups does it represent, and how?
+3. **Context:** Which social, historical, economic, physical, or media conditions could shape how those choices are understood?
+4. **Interpretation boundary:** Which conclusions are observed in the design, which are the book’s or reviewer’s interpretation, and which would require evidence from players or the relevant communities?
+
+This complements analysis of rules and play. Rules describe the formal actions and outcomes; play concerns how participants act and experience them; cultural analysis asks how those actions and meanings connect to life beyond the designed system. A game can be technically consistent while communicating an unintended priority, and a critic can identify a possible reading without proving that every participant experiences it. Keep those claims separate when designing, documenting, or evaluating a game.
+
+For an original design check, return to the shared medical kit. Suppose the rules award a personal score bonus to whoever consumes its last charge, even when a teammate needs it more. The bonus is an observable incentive in the formal rules. Reading that incentive as a preference for individual gain is an interpretation; saying it makes every player selfish would require evidence. Change the rule to reward keeping the whole team alive and inspect what choices now earn points. Then observe play before claiming that the intended cooperation actually occurs. This connects the cultural question to a rule you can implement and a behavior you can test.
+
+Source: Salen and Zimmerman, *Rules of Play*, physical PDF pp. 496–504, especially the context definition on p. 498 and the rhetoric discussion on pp. 503–504. The medical-kit comparison is an original teaching example.
+
+
 ## Make a change cross the engine without breaking its promises
 
 Repository-specific passages below describe the supplied Kairo snapshot. They have not been revalidated against a current checkout; code fragments retain their stated surrounding context and are not all standalone tested programs. Numerical and contract explanations are taught independently of those implementation observations.
@@ -23869,6 +23946,21 @@ A mutex wrapper must preserve the operating system's ownership rules. For Window
 Collapsing the last case into a plain false result can conceal acquired ownership. Define recovery and release behavior explicitly. A result type can carry both ownership and recovery status instead of forcing callers to infer them from one boolean. [Microsoft wait contract](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject).
 
 The resumed full Kohi Windows-thread review records how the tutorial classifies wait outcomes. The table above checks the platform contract independently; it is not a claim that the narrated wrapper already implements every recovery path. [Caption source: Windows Multithreading](https://www.youtube.com/watch?v=jmt_BE6ny1g).
+
+
+##### Query success, worker completion and handle lifetime are separate states
+
+The earlier mutex table distinguishes acquiring ownership from recovering abandoned protected data. A thread-status wrapper needs another distinction: did the operating-system query succeed, and what did the worker itself report?
+
+For Win32, a **handle** is an operating-system reference to an object. GetExitCodeThread returns a BOOL indicating whether its query succeeded, and writes a separate DWORD status through its output pointer. A nonzero return means that the query worked; it does not mean the worker completed its application task successfully. For example, the query can succeed while the returned application exit status is $7$, which our application might define as “asset decoding failed.” Conversely, a failed query supplies no successful application result. Confirm termination before treating the status as final; avoid using STILL_ACTIVE, whose value is $259$, as an application exit code because polling code can mistake it for a running worker. [Microsoft: GetExitCodeThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodethread).
+
+One orderly shutdown path is to ask the worker to stop through its documented cancellation policy, allow it to finish its cleanup and return, wait for its thread handle to become signaled, query the final status, and close the owned handle. Closing a handle releases that reference; it does not itself request cancellation, terminate the worker, or establish that its borrowed memory is no longer in use. A deliberately detached design can close its handle earlier, but still needs another valid way to keep worker-accessed data alive. [Microsoft: CloseHandle](https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle).
+
+For an asset-loading worker, imagine the UI requests shutdown while the worker is writing into a staging buffer. Closing the thread handle and immediately freeing the buffer can leave a live worker writing through a dangling pointer. The missing gate is confirmed completion, not a second handle close. Conversely, keeping every completed worker's handle forever leaks resources. Keep the lifetime of the task, its shared buffers and its operating-system handle explicit.
+
+Waiting also requires that the handle stay valid: closing it while WaitForSingleObject is still pending has undefined behavior. The wrapper must serialize those lifetime operations. This is separate from the mutex's abandoned-owner recovery problem, already explained earlier. [Microsoft: WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject).
+
+The retained Kohi Windows-threading episode motivated this review. The platform contracts above were checked against Microsoft's documentation; they are not an assertion that the historical narrated wrapper implemented them correctly. This review did not run a native Windows thread or mutex experiment.
 
 
 #### Main-thread work and threads
@@ -97282,41 +97374,43 @@ This new subject volume opens Phase 28, the original 2701–2800 interval, at th
 
 Imagine the user selecting a cartridge image. The file begins with identifying header bytes and some ROM banks. When the emulator is started, the CPU reads an instruction from the address indicated by its program counter. That byte has no meaning by itself: it becomes an instruction only under the chosen instruction-set specification and the device map that determines which memory owns the address. The state-transition view is
 
-\[
-S_{t+1}=T(S_t,input_t),
-\]
+$$
+S_{t+1}=T(S_t,\mathrm{input}_t).
+$$
 
 where the architectural state may contain the accumulator A, index registers X and Y, stack pointer SP, program counter PC, processor flags P, CPU memory, device registers, mapper state, cycle counters, interrupt requests and controller state. Determinism means that *all machine-observable state* plus the same input sequence produces the same observable transition, under a fixed machine implementation. Saving A and PC while omitting the mapper's currently selected ROM bank does not preserve the machine state.
 
 The Nintendo Entertainment System CPU is derived from the 6502 family. A, X, Y, SP and P are 8-bit registers, while PC is 16-bit. A fetch normally reads at PC and advances PC. Decode identifies the instruction and its addressing mode, execution reads or writes operands, updates registers and flags, and assigns timing. A straightforward interpreter can implement this with a switch. A dispatch table can map opcode values to handlers. A generated micro-operation interpreter can model individual bus reads and writes. The implementation style does not guarantee accuracy; the contract is that the resulting effects and timing match the specified CPU variant. In particular, a generic 6502 and the NES Ricoh 2A03 are not interchangeable for decimal arithmetic.
 
-A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
+A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses `$FFFC` and `$FFFD`, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from `$8000` to `$FFFF`. The reset vector stored near the end of that bank can direct execution to `$8000`. A test that always hard-codes PC=`$8000` could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
 
-A stack pointer does not magically reference host language call frames. The 6502 stack lives on CPU page $0100–$01FF and grows downward as SP changes. Subroutine call JSR stores a return address using the emulated stack and jumps to the callee; RTS pulls the saved address and adds one to resume after the call. This differs from a typical high-level program's description of calling a function. Interrupt entry similarly saves a return context and jumps to an interrupt vector. The saved status byte must respect the 6502-specific break/unused-bit conventions; they are not simply independent physical flags that can be blindly copied.
+A stack pointer does not magically reference host language call frames. The 6502 stack lives on CPU page `$0100`–`$01FF` and grows downward as SP changes. Subroutine call JSR stores a return address using the emulated stack and jumps to the callee; RTS pulls the saved address and adds one to resume after the call. This differs from a typical high-level program's description of calling a function. Interrupt entry similarly saves a return context and jumps to an interrupt vector. The saved status byte must respect the 6502-specific break/unused-bit conventions; they are not simply independent physical flags that can be blindly copied.
 
 ### Addressing is an algorithm for finding a value, not a suffix
 
-Immediate addressing obtains the operand directly from the instruction stream. Zero-page addressing takes an 8-bit address from the stream and reads at that address within $0000–$00FF. Absolute addressing combines two operand bytes into a 16-bit little-endian address. Zero-page-indexed addressing adds X or Y with 8-bit wraparound, while absolute-indexed modes add to a 16-bit base and may cross a 256-byte page. Indexed-indirect means the index is applied to a zero-page pointer location *before* fetching the target address. Indirect-indexed obtains the pointer first and adds the index to the fetched address. Confusing these yields a program that may execute correctly for one set of values and fail as soon as a pointer crosses a page.
+Immediate addressing obtains the operand directly from the instruction stream. Zero-page addressing takes an 8-bit address from the stream and reads at that address within `$0000`–`$00FF`. Absolute addressing combines two operand bytes into a 16-bit little-endian address. Zero-page-indexed addressing adds X or Y with 8-bit wraparound, while absolute-indexed modes add to a 16-bit base and may cross a 256-byte page. Indexed-indirect means the index is applied to a zero-page pointer location *before* fetching the target address. Indirect-indexed obtains the pointer first and adds the index to the fetched address. Confusing these yields a program that may execute correctly for one set of values and fail as soon as a pointer crosses a page.
 
 Relative branches interpret an 8-bit displacement as signed. The displacement is added to PC *after* fetching the branch operand. A taken conditional branch normally adds a cycle over the two-cycle not-taken path, and crossing a 256-byte page adds another. Returning the correct resulting PC is not the whole execution contract when an instruction interacts with a device that changes every cycle. For each opcode, an implementation should record its instruction bytes, addressing mode, conditional cycle penalties, bus reads/writes and changed status bits. A complete cycle-accurate emulator also needs correct ordering of the individual memory accesses; a total-cycle counter is useful but is not sufficient to reproduce all hardware behavior.
 
 ### Unsigned carry is not signed overflow
 
-For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum $u=A+M+C$ and the 8-bit result $r=u\bmod256$. Set carry if $u>255$, zero if $r=0$, and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
 
-\[
+
+$$
 V= ((\neg(A\oplus M))\mathbin{\&}(A\oplus r)\mathbin{\&}0x80)\ne0.
-\]
+$$
 
-A=$7F, M=$01, C=0 produces $80: signed overflow V=1, N=1, and unsigned carry C=0. By contrast $FF+$01 produces $00 with C=1 and Z=1 but V=0. These two independently testable cases prove why a CPU interpreter must not use one generic overflow boolean for both flags. The NES 2A03 does not perform BCD decimal ADC even if the decimal-status bit is set. An apparently minor misunderstanding here breaks arithmetic, conditional branches and some game logic.
+
+A=`$7F`, M=`$01`, C=0 produces `$80`: signed overflow V=1, N=1, and unsigned carry C=0. By contrast `$FF`+`$01` produces `$00` with C=1 and Z=1 but V=0. These two independently testable cases prove why a CPU interpreter must not use one generic overflow boolean for both flags. The NES 2A03 does not perform BCD decimal ADC even if the decimal-status bit is set. An apparently minor misunderstanding here breaks arithmetic, conditional branches and some game logic.
 
 The CPU status also includes interrupt disable I and decimal D; B and the always-set status bit have nuanced behavior when a byte is pushed or pulled. Branches read flags generated by earlier instructions. Therefore a bug in a flag update can remain latent until a much later branch, making deterministic instruction traces invaluable. A useful trace row contains old PC, opcode and operands, old/new registers, old/new P, bus side effects and consumed cycles, not just the mnemonic.
 
 ## The memory bus is a device router, not one enormous RAM array
 
-An NES CPU address is a request to the bus, and the address decoder decides which hardware responds. The 2 KiB internal RAM occupies $0000–$07FF, mirrored through $1FFF. CPU addresses $2000–$2007 correspond to PPU registers, mirrored across $2008–$3FFF. Selected APU and controller registers occur around $4000–$4017, while cartridge-controlled space usually includes $4020–$FFFF and, on common NROM boards, PRG ROM from $8000 upward.
+An NES CPU address is a request to the bus, and the address decoder decides which hardware responds. The 2 KiB internal RAM occupies `$0000`–`$07FF`, mirrored through `$1FFF`. CPU addresses `$2000`–`$2007` correspond to PPU registers, mirrored across `$2008`–`$3FFF`. Selected APU and controller registers occur around `$4000`–`$4017`, while cartridge-controlled space usually includes `$4020`–`$FFFF` and, on common NROM boards, PRG ROM from `$8000` upward.
 
-This matters because a read can have effects. Reading a controller register can advance its shift position. Reading PPU status can clear or otherwise affect status/latch state under hardware timing rules. Writing a mapper register can change what later CPU ROM reads mean at the same address. Writing $4014 requests a DMA transfer into PPU sprite OAM; an actual transfer and CPU stall must obey the hardware cycle schedule. Representing every device register as a plain mutable byte array cannot reproduce those observable behaviors.
+This matters because a read can have effects. Reading a controller register can advance its shift position. Reading PPU status can clear or otherwise affect status/latch state under hardware timing rules. Writing a mapper register can change what later CPU ROM reads mean at the same address. Writing `$4014` requests a DMA transfer into PPU sprite OAM; an actual transfer and CPU stall must obey the hardware cycle schedule. Representing every device register as a plain mutable byte array cannot reproduce those observable behaviors.
 
 The reference CPU bus intentionally implements only 2-KiB RAM mirroring, NROM PRG read mapping, a controller serial interface and a simplified OAM copy. Reads from the unimplemented PPU registers return a placeholder; mapper/APU/open-bus behavior is not simulated. This is an explicit boundary, not an accidental omission hidden behind a broad claim of NES support. The CPU code increments total CPU cycles and a notional three PPU dots per CPU cycle. Such a counter can help explain relative timebases, but it cannot itself model device events at each dot.
 
@@ -97324,11 +97418,11 @@ A controller is itself a small state machine. With strobe asserted, reads return
 
 ### An iNES file describes cartridge memory; it is not executable code itself
 
-The iNES header occupies 16 bytes and begins with the bytes $4E $45 $53 $1A. A classic header records PRG ROM size in 16-KiB units, CHR ROM size in 8-KiB units and flags encoding mapper number, mirroring and optional features. A 16-KiB PRG NROM bank mirrors in CPU space; a 32-KiB bank maps directly. CHR size zero commonly selects CHR RAM, not necessarily an error. The mapper determines how cartridge circuitry maps CPU and PPU addresses, including bank switching. NROM or mapper 0 is only the simplest case; a real emulator cannot accept every mapper value and treat it as NROM.
+The iNES header occupies 16 bytes and begins with the bytes `$4E` `$45` `$53` `$1A`. A classic header records PRG ROM size in 16-KiB units, CHR ROM size in 8-KiB units and flags encoding mapper number, mirroring and optional features. A 16-KiB PRG NROM bank mirrors in CPU space; a 32-KiB bank maps directly. CHR size zero commonly selects CHR RAM, not necessarily an error. The mapper determines how cartridge circuitry maps CPU and PPU addresses, including bank switching. NROM or mapper 0 is only the simplest case; a real emulator cannot accept every mapper value and treat it as NROM.
 
 A robust parser first validates the header and supported format, then performs checked size/offset arithmetic before copying or mapping any data. If a trainer is present, its 512 bytes shift subsequent bank offsets. NES 2.0 headers encode some metadata differently from iNES 1.0, and treating one as the other can misinterpret bank size or mapper IDs. The lab deliberately rejects NES 2.0, nonzero mappers and trainers instead of guessing; it supports one or two PRG banks and zero or one CHR bank. That behavior is far preferable to silently loading a malformed image whose pointer arithmetic could exceed the file.
 
-A parser should also distinguish content validation from ROM compatibility. Passing its supported-format checks proves that the byte layout can be interpreted as the selected subset, not that the ROM will execute under the few opcodes the test interpreter understands. The executable test uses a tiny synthetic PRG, sets its reset vector and confirms that $C000 aliases $8000 for a one-bank NROM fixture.
+A parser should also distinguish content validation from ROM compatibility. Passing its supported-format checks proves that the byte layout can be interpreted as the selected subset, not that the ROM will execute under the few opcodes the test interpreter understands. The executable test uses a tiny synthetic PRG, sets its reset vector and confirms that `$C000` aliases `$8000` for a one-bank NROM fixture.
 
 ## Rendering time is not the same clock as CPU time
 
@@ -97401,13 +97495,15 @@ A cryptographic hash deterministically maps an input byte sequence to a fixed-le
 
 An HMAC uses a secret key with an underlying hash to authenticate a message. It does not hide message contents. A key derivation function turns suitable initial key material into new keys for defined purposes. HKDF, specified by RFC 5869, separates an extract stage from an expand stage. Given input key material IKM and a salt, it derives PRK using HMAC. To expand, it generates blocks
 
-\[
-T(0)=\epsilon,\qquad
-T(i)=\operatorname{HMAC}_{PRK}
-\left(T(i-1)\parallel info\parallel i\right),
-\]
+$$
+\begin{aligned}
+T(0)&=\epsilon,\\
+T(i)&=\operatorname{HMAC}_{\mathrm{PRK}}
+\bigl(T(i-1)\parallel\mathrm{info}\parallel\operatorname{byte}(i)\bigr).
+\end{aligned}
+$$
 
-then concatenates blocks until reaching the requested length. The information string helps separate cryptographic contexts, so a key intended for snapshot authentication need not coincide with one intended for a different protocol purpose. This is not a substitute for a password-hardening KDF or sufficient entropy in initial key material.
+then concatenates blocks until reaching the requested length. Here epsilon denotes the empty byte string, and byte(i) is one counter octet for i from 1 through 255, not the decimal text of i. RFC 5869 limits the requested output to 255 times the hash-output length in bytes. [HKDF expansion specification](https://www.rfc-editor.org/rfc/rfc5869.html#section-2.3). The information string helps separate cryptographic contexts, so a key intended for snapshot authentication need not coincide with one intended for a different protocol purpose. This is not a substitute for a password-hardening KDF or sufficient entropy in initial key material.
 
 A symmetric encryption key protects confidentiality under an appropriate scheme. AES is a block cipher, while GCM defines authenticated encryption using counter-mode encryption and a polynomial tag. An AES-GCM application must ensure nonce uniqueness for a given key, validate authentication tags and apply the associated authenticated data (AAD) consistently. Reusing the same nonce under the same GCM key can expose relationships between plaintexts and undermine authenticity. A process-local nonce counter reset to zero at every restart is unsafe unless rekeying and global uniqueness are properly designed. AAD can authenticate metadata such as protocol version, message type or resource identifier even when those fields are not encrypted.
 
@@ -97417,9 +97513,9 @@ Public-key methods solve different problems. A verified signature can authentica
 
 A Shamir secret-sharing threshold scheme places a secret s as the constant term in a random degree-(t−1) polynomial over a finite field:
 
-\[
+$$
 f(x)=s+a_1x+\cdots+a_{t-1}x^{t-1}\pmod p.
-\]
+$$
 
 Each share is a distinct pair (x_i,f(x_i)). Any t valid shares can reconstruct s by polynomial interpolation; under the ideal model fewer than t reveal no information about the secret. This requires secure random coefficients, distinct nonzero x values, a suitable field and correct encoding. Authentication of shares and handling of dishonest participants are additional system concerns. Floating-point polynomial fitting is not a substitute for finite-field threshold cryptography.
 
@@ -107698,6 +107794,192 @@ The cache must decide whether an old normal still agrees with the new normal. It
 
 The C++20 \`persistent_contact_lab.cpp\` explicitly models two simultaneous contact rows sharing one velocity state. The row \`make_row\` computes lever arms, the normal and tangent basis, and scalar inverse effective masses. \`warm_start\` changes body velocities once using cached impulses. \`solve_one\` computes the *current* relative speed, adjusts the accumulated multiplier under the nonnegative and Coulomb bounds, and applies the **difference**. \`sweep\` repeats over the rows. To implement this in a real engine, move the prepared row data into a frame-owned contact arena with stable references and never let a pointer survive its arena lifetime. Contacts should be grouped by constraint island if they share bodies; independent islands can be processed separately, but changing row order may affect a finite-iteration result.
 
+#### Refresh neighboring penetrations after position correction
+
+A best-first positional solver cannot safely sort its contacts once and process that fixed order. [[Concepts/Incremental contact penetration refresh]] supplies the local update needed between corrections. Correcting one contact moves one or two bodies, which changes the measured penetration at every other contact sharing those bodies. Recomputing the collision geometry after every correction can refresh the measurements but is expensive; the inspected rigid-body method instead updates the affected existing contact records from the known linear and angular changes. (Millington, *Game Physics Engine Development*, §14.4, physical PDF pp. 364–366, printed pp. 341–343; source `src-e9c732c351283ecf3011`, units `u-a79db7bbba95c1fd8f355511`, `u-aa21fd9ee687ea248b10c8dc`, `u-6770636f1f499cd172407cb8`.)
+
+Use a declared convention for this update. Let the contact normal $\mathbf n$ point from body A toward body B, and let positive $d$ mean penetration. If the solver’s position correction changes a point on A by $\Delta\mathbf p_A$ and a point on B by $\Delta\mathbf p_B$, then, for the current feature pair and a small correction,
+
+$$
+\Delta d\approx \mathbf n\cdot(\Delta\mathbf p_A-\Delta\mathbf p_B).
+$$
+
+For rigid motion, estimate each point shift from the body translation and small rotation:
+
+$$
+\Delta\mathbf p_i\approx \Delta\mathbf x_i+\Delta\boldsymbol\theta_i\times\mathbf r_i,
+$$
+
+where $\mathbf r_i$ is the pre-correction world-space lever arm from that body’s chosen correction origin to the contact point. The small rotation vector and translations must use that same world frame; hold the current normal fixed for this linearization. The projection changes only the penetration component along the contact normal; sideways movement does not change this scalar contact depth in the approximation. If a codebase stores the opposite normal convention, the signs must reverse consistently.
+
+A concrete 2D trace shows why the next “worst contact” search must happen after this update. A crate has left and right support points at $x=-1\,\mathrm m$ and $x=+1\,\mathrm m$, with initial penetrations $12\,\mathrm{mm}$ and $8\,\mathrm{mm}$. Suppose resolving the left contact moves the crate upward by $2.5\,\mathrm{mm}$ and rotates it clockwise by $0.0075\,\mathrm{rad}$. For small rotation, $\Delta y\approx\theta x$: the left point moves upward by another $7.5\,\mathrm{mm}$, so its penetration falls to $2\,\mathrm{mm}$. The right point rotates downward by $7.5\,\mathrm{mm}$; after the same translation its net motion is $5\,\mathrm{mm}$ downward, so its penetration rises to $13\,\mathrm{mm}$. Add an unrelated contact with penetration $10\,\mathrm{mm}$ on another body; it does not change. Initially the ranking was left 12, unrelated 10, right 8. It is now right 13, unrelated 10, left 2. A stale one-time list that removes the corrected left contact would next choose the unrelated contact, rather than the now-worst right contact. This third contact makes the scheduling failure explicit.
+
+The loop is therefore: select the current deepest penetration above the positional tolerance; compute and apply that correction; record the bodies’ linear and angular changes; update only other contacts involving either moved body; then search again. This is a first-order refresh of known contact points, not a new collision query. The book’s method assumes each stored contact point remains the point used for that contact, so the approximation can become poor under large rotation or a feature change. It cannot discover a contact that did not exist in the current set. Refresh or regenerate contact geometry at the normal collision-detection boundary, and use a robust fallback when a correction changes the feature relationship too much. (PDF pp. 364–367; units `u-a79db7bbba95c1fd8f355511`, `u-aa21fd9ee687ea248b10c8dc`, `u-6770636f1f499cd172407cb8`, `u-2cb912a28bdf89e5ebc9f21d`.)
+
+This position refresh is distinct from velocity impulses and warm-start caches. It updates a local depth estimate; it does not by itself provide a new manifold or an impulse solution. This historical algorithm is not evidence of the current Kairo or Maveb solver implementation.
+
+For dense contact sets, the same source sketches a sorted doubly linked list of contacts, plus per-body adjacency links. After a correction, visit only contacts attached to the moved bodies, update their penetration values, and reinsert changed contacts into severity order. This can avoid rescanning all contacts for both the worst candidate and its neighbors, but it adds pointers, reordering logic, and cache-maintenance work. Finding a new insertion position in an ordinary sorted linked list can still require a linear scan; adjacency does not make the whole update constant time. The author reports the alternative losing on small contact sets and helping only as tightly packed sets grow, then recommends profiling before keeping the added complexity. Treat that as a workload-specific experiment, not an asymptotic promise for a modern engine. (Millington, physical PDF pp. 369–372, units `u-259ad1641d6a0607c9f0ee70`, `u-80a460165059584268f5777c`, `u-ca45b36dc14588c15b05862f`, `u-1be1625a4e825313312eece1`.)
+
+
+##### A planar penetration refresh witness
+
+The complete reference below chooses body A as the fixed floor, body B as the crate, and the A-to-B normal upward. Swapping the body labels also reverses the normal and swaps the point deltas, so the depth change is unchanged. The 2D rotation angle is positive counter-clockwise; the clockwise correction is therefore negative.
+
+Each correction describes only the movement just applied in this iteration. Refresh a contact once for that correction; carrying an old correction into the next iteration would count movement twice. The reference scans its three contacts for clarity. A larger engine can use body-to-contact adjacency to visit only affected records. Contact pointers borrow the correction objects, which must remain alive and at stable addresses; normals must already be unit vectors in the same world frame as the lever arms. This is a frozen-feature, first-order updater, not collision detection or a complete rigid-body solver.
+
+```cpp
+// First-order contact penetration refresh; planar correction and ordering witness.
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+namespace {
+
+struct Vec2 {
+    double x;
+    double y;
+};
+
+Vec2 operator+(Vec2 a, Vec2 b) { return {a.x + b.x, a.y + b.y}; }
+Vec2 operator-(Vec2 a, Vec2 b) { return {a.x - b.x, a.y - b.y}; }
+
+double dot(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
+
+// Signed delta is positive counter-clockwise. This is the first-order point
+// displacement theta x r in 2D; large rotations require refreshed geometry.
+Vec2 small_rotation_displacement(double delta_angle, Vec2 r) {
+    return {-delta_angle * r.y, delta_angle * r.x};
+}
+
+struct BodyCorrection {
+    Vec2 translation;
+    double delta_angle;
+};
+
+struct Contact {
+    std::string name;
+    const BodyCorrection* body_a;
+    const BodyCorrection* body_b;
+    Vec2 normal_a_to_b;
+    Vec2 r_a;
+    Vec2 r_b;
+    double penetration;
+};
+
+Vec2 point_delta(const BodyCorrection& body, Vec2 r) {
+    return body.translation + small_rotation_displacement(body.delta_angle, r);
+}
+
+// Positive penetration means overlap. With n from A to B, d = -n·(pB-pA),
+// so the first-order depth change is n·(delta_pA-delta_pB).
+void refresh_penetration(Contact& contact) {
+    const Vec2 delta_a = point_delta(*contact.body_a, contact.r_a);
+    const Vec2 delta_b = point_delta(*contact.body_b, contact.r_b);
+    contact.penetration += dot(contact.normal_a_to_b, delta_a - delta_b);
+}
+
+void require(bool condition, const std::string& message) {
+    if (!condition) {
+        throw std::runtime_error(message);
+    }
+}
+
+bool near(double actual, double expected, double tolerance = 1.0e-12) {
+    return std::fabs(actual - expected) <= tolerance;
+}
+
+std::size_t deepest_index(const std::array<Contact, 3>& contacts) {
+    std::size_t result = 0;
+    for (std::size_t i = 1; i < contacts.size(); ++i) {
+        if (contacts[i].penetration > contacts[result].penetration) {
+            result = i;
+        }
+    }
+    return result;
+}
+
+void three_contact_trace() {
+    constexpr Vec2 up{0.0, 1.0};
+    const BodyCorrection fixed_floor{{0.0, 0.0}, 0.0};
+    const BodyCorrection fixed_wall{{0.0, 0.0}, 0.0};
+
+    // A is the floor, B is the crate. Contact points are +/-1 m from the
+    // crate's correction origin. The unrelated pair does not include the crate.
+    BodyCorrection crate_correction{{0.0, 0.0025}, -0.0075};
+    std::array<Contact, 3> contacts{{
+        {"left", &fixed_floor, &crate_correction, up, {0.0, 0.0}, {-1.0, 0.0}, 0.012},
+        {"unrelated", &fixed_floor, &fixed_wall, up, {0.0, 0.0}, {0.0, 0.0}, 0.010},
+        {"right", &fixed_floor, &crate_correction, up, {0.0, 0.0}, {1.0, 0.0}, 0.008},
+    }};
+
+    require(deepest_index(contacts) == 0, "initial deepest contact should be left");
+
+    // Refresh every existing contact after applying the crate's one correction.
+    // The selected feature can change depth too; the unrelated pair has no moved
+    // body and therefore remains unchanged.
+    for (Contact& contact : contacts) {
+        refresh_penetration(contact);
+    }
+
+    require(near(contacts[0].penetration, 0.002), "left contact should fall to 2 mm");
+    require(near(contacts[1].penetration, 0.010), "unrelated contact should stay at 10 mm");
+    require(near(contacts[2].penetration, 0.013), "right contact should rise to 13 mm");
+    require(deepest_index(contacts) == 2, "right contact should become the next worst");
+
+    std::cout << "three-contact refresh: ";
+    for (const Contact& contact : contacts) {
+        std::cout << contact.name << '=' << contact.penetration * 1000.0 << " mm ";
+    }
+    std::cout << "next=" << contacts[deepest_index(contacts)].name << '\n';
+}
+
+void both_body_sign_case() {
+    constexpr Vec2 right{1.0, 0.0};
+    const BodyCorrection a{{0.002, 0.0}, 0.0};
+    const BodyCorrection b{{-0.003, 0.0}, 0.0};
+    Contact contact{"both-bodies", &a, &b, right, {0.0, 0.0}, {0.0, 0.0}, 0.004};
+
+    refresh_penetration(contact);
+    // A moves 2 mm toward B; B moves 3 mm toward A. The gap closes by 5 mm.
+    require(near(contact.penetration, 0.009), "both-body sign should add 5 mm penetration");
+    std::cout << "both-body sign: " << contact.penetration * 1000.0 << " mm\n";
+}
+
+void unrelated_contact_and_tangent_case() {
+    constexpr Vec2 up{0.0, 1.0};
+    const BodyCorrection still_a{{0.0, 0.0}, 0.0};
+    const BodyCorrection still_b{{0.0, 0.0}, 0.0};
+    Contact unrelated{"unrelated", &still_a, &still_b, up, {0.0, 0.0}, {0.0, 0.0}, 0.010};
+    refresh_penetration(unrelated);
+    require(near(unrelated.penetration, 0.010), "unrelated contact must not change");
+
+    // A 3 mm horizontal shift has zero projection on the vertical normal.
+    const BodyCorrection tangent_body{{0.003, 0.0}, 0.0};
+    Contact tangent{"tangent-only", &still_a, &tangent_body, up,
+                    {0.0, 0.0}, {0.0, 0.0}, 0.006};
+    refresh_penetration(tangent);
+    require(near(tangent.penetration, 0.006), "tangent shift must not change depth");
+    std::cout << "unrelated/tangent: 10 mm and 6 mm unchanged\n";
+}
+
+} // namespace
+
+int main() {
+    try {
+        three_contact_trace();
+        both_body_sign_case();
+        unrelated_contact_and_tangent_case();
+        std::cout << "all contact-refresh checks passed\n";
+    } catch (const std::exception& error) {
+        std::cerr << "contact-refresh witness failed: " << error.what() << '\n';
+        return EXIT_FAILURE;
+    }
+}
+```
+
 #### Complete persistent-contact implementation and cache policy
 
 An event stepper solves fresh impacts, but a box resting on the floor requires contact constraints that persist and act at spatially offset points. The following complete C++20 laboratory gives the prepared contact row, effective normal and tangent inverse masses, projected accumulated normal and Coulomb tangent impulses, frozen restitution target, repeated sequential solving, and a two-point shared-body manifold. Observe that the updated multiplier is *not* itself the impulse applied each iteration: only the increment from its old value is applied. Observe also that `warm_start` applies the saved impulse once before iteration; doing this every sweep double-counts historical state.
@@ -108840,6 +109122,356 @@ int main() {
     assert(rejected);
 }
 ```
+
+### A spring law is signed, not just a magnitude
+
+A force generator evaluates the simulation state and contributes a force to one or more bodies. For a particle at position $\mathbf{x}$ connected to an endpoint $\mathbf{a}$, choose the displacement
+
+$$
+\mathbf{r}=\mathbf{x}-\mathbf{a},\qquad
+L=\|\mathbf r\|,\qquad
+\mathbf n=\frac{\mathbf r}{L}\quad(L>0).
+$$
+
+This convention makes $\mathbf n$ point from the endpoint toward the particle. Let $L_0$ denote the rest length and $k_s$ the stiffness, measured in newtons per metre. The ideal [[Concepts/Spring forces and numerical integration|linear spring force]] **on this particle** is
+
+$$
+\mathbf F=-k_s(L-L_0)\mathbf n.
+$$
+
+The extension $L-L_0$ must keep its sign. If the spring is stretched, $L>L_0$, so the leading minus sign makes the force point opposite $\mathbf n$, toward the endpoint. If it is compressed, $L<L_0$, the extension is negative, so the force points along $\mathbf n$, pushing the particle away from the endpoint. At rest length the force is zero. For two movable endpoints, apply the equal and opposite force to the other particle; an anchored spring instead has a fixed endpoint that receives no simulated reaction. The missing reaction belongs to the external support; the simulated particle alone is not an isolated momentum-conserving system.
+
+The sign also follows from stored potential energy. For this ideal spring, $U(L)=\tfrac12k_s(L-L_0)^2$, measured in joules. For $L>0$, moving the particle changes its length with gradient $\nabla_{\mathbf x}L=\mathbf n$. Applying the chain rule gives
+
+$$
+\mathbf F=-\nabla_{\mathbf x}U=-k_s(L-L_0)\mathbf n.
+$$
+
+The [[Concepts/Partial derivatives and gradients|gradient]] records how the stored energy changes with a small displacement; the force points in the direction of decreasing potential energy. The particle may still travel outward because of its current velocity: force determines acceleration rather than changing position instantaneously. With $k_s=8\,\mathrm{N/m}$ and rest length $1\,\mathrm m$, lengths $0.5\,\mathrm m$ and $1.5\,\mathrm m$ both store $1\,\mathrm J$, yet their restoring force directions differ. Checking energy or force magnitude alone therefore cannot catch the printed sign mistake.
+
+A bungee or elastic cord is a different rule because it cannot push while slack. It produces zero force at and below rest length, and uses the ordinary restoring law only while stretched:
+
+$$
+\mathbf F_b=
+\begin{cases}
+\mathbf 0,&L\le L_0,\\
+-k_s(L-L_0)\mathbf n,&L>L_0.
+\end{cases}
+$$
+
+At $L=0$, normalization has no direction. A production generator must define a policy for that case (for example, return zero, reuse a previous valid direction, or use a deterministic fallback). The accompanying test program chooses zero force there; that is an explicit policy for the witness, not a rule stated by the source. For a nonzero rest length there is no unique direction at coincident endpoints; the zero policy can leave that configuration stuck until another effect separates it.
+
+The book’s anchored-spring listing on PDF p. 110 (printed p. 87) constructs particle-minus-anchor displacement and then replaces the signed extension with its absolute value before applying the negative direction. This returns an inward force both when stretched and when compressed. For the simple one-dimensional case with anchor $0$, rest length $1\,\mathrm m$, and $k_s=8\,\mathrm{N/m}$, a particle at $x=0.5\,\mathrm m$ should be pushed right by $+4\,\mathrm N$, but the printed listing produces $-4\,\mathrm N$. The bungee listing (PDF pp. 111–112, printed pp. 88–89) correctly returns while $L\le L_0$; when taut, its scalar $k_s(L_0-L)$ is negative and the code multiplies it by the negative normalized displacement. Under the listing’s displacement convention the resulting force points outward. At $x=1.5\,\mathrm m$ in the same example it produces $+4\,\mathrm N$, while a restoring bungee should pull left with $-4\,\mathrm N$. These are discrepancies between the printed listings and their intended physical behaviors; the book code was inspected, not compiled as a project. (Source src-5e24b94aa3c73cfcfc58, units u-9389df2a50771b5f6c1d446f, u-3d72f6a9103ab182e8902b5b, u-a8d542b6e4e1270193a371af.)
+
+The transferable test is directional. Test a stretched spring and require a force toward the endpoint; test a compressed ordinary spring and require a force away; test a slack bungee and require exactly zero. A magnitude-only assertion can pass even when a sign mistake makes the simulation diverge.
+
+![[Visual Recall/Game Engine/spring-force-law.png]]
+
+**Figure —** With outward radial direction positive, the spring gives +4 N at L = 0.5 m and −4 N at L = 1.5 m. The bungee is slack at L = 0.5 m, so its force is 0 N, and pulls inward with −4 N at L = 1.5 m. Both have zero force at the 1 m rest length.
+
+### Stiffness couples the force law to the time integrator
+
+A penalty spring used to imitate a rigid connection or contact is not just “a strong force.” A force-based integrator samples forces at a particular point in time and uses them to update state across a finite interval $h$. When the spring is stiff, its force can change substantially during that interval. The force sampled at the start may accelerate the body through the rest position; the next sample then points sharply the other way. Large steps can overshoot repeatedly. Smaller steps or substeps can help, but a very stiff penalty contact may require impractically small intervals for the surrounding simulation. The source presents this as a limitation of its framework, not a universal numeric timestep bound. (PDF pp. 116–118 / printed pp. 93–95; source units u-17cb64fdca5feba411224813, u-7b7bc339be18c7931df2347e, u-f3ada0049be8dc7468b74a93.)
+
+A spring force, an update rule, and a stability claim are separate things. The canonical Engine volume already derives the semi-implicit Euler oscillator update for its buoyancy example and gives the bounded undamped regime $0<h\omega<2$. That result belongs to the velocity-first, then position update. The supplied book’s Particle::integrate listing instead advances position from the old velocity and then updates velocity from acceleration (PDF pp. 93–94 / printed pp. 70–71). That order is forward Euler. For $\ddot{x}=-\omega^2x$, let $\omega=\sqrt{k_s/m}$ be the undamped angular frequency in inverse seconds. Its state matrix is
+
+$$
+A_{FE}=\begin{bmatrix}1&h\\-\omega^2h&1\end{bmatrix},
+\qquad |\lambda|=\sqrt{1+(\omega h)^2}>1\quad(h>0).
+$$
+
+The matrix’s two eigenvalues, its mode multipliers, are $1\pm i\omega h$, where $i^2=-1$. Their magnitude is the per-step envelope factor shown above. Thus the ideal undamped oscillator’s amplitude grows under forward Euler at every positive step size; reducing $h\omega$ reduces the per-step growth but does not make that method bounded. Do not transfer the semi-implicit $h\omega<2$ criterion to this listing.
+
+### The analytic “fake stiff spring” has two separate caveats
+
+The book describes a shortcut for predicting a stiff spring’s endpoint. Restrict this prediction to motion along one fixed axis. The signed displacement from equilibrium follows the ideal undamped oscillator
+
+$$
+\ddot p=-\chi^2p,\qquad \chi=\sqrt{\frac{k_s}{m}},
+$$
+
+where $m>0$ is mass and $k_s>0$. A general three-dimensional spring with nonzero rest length is not three independent copies of this equation because its radial direction changes. For zero stiffness, use the free-motion limit rather than dividing by a zero frequency. Given initial relative displacement $p_0$ and velocity $v_0$, the analytic oscillator predicts
+
+$$
+p_t=p_0\cos(\chi h)+\frac{v_0}{\chi}\sin(\chi h).
+$$
+
+These equations assume a linear spring, constant mass and stiffness, no damping, no changing constraints, and no omitted external forces. The motion must remain in that linear force-law regime: a bungee switching between slack and taut states, or a finite-length radial spring reversing through its anchor, needs its own piecewise or geometric treatment. This endpoint is a prediction of the ideal continuous oscillator, not automatically a state that a chosen discrete integrator can reach by adding a force.
+
+First, the book’s printed conversion from the target endpoint to acceleration is dimensionally inconsistent. On PDF p. 119 (printed p. 96), rewritten in the notation here, printed Eq. 6.5 amounts to $\ddot p=(p_t-p_0)/h^2-v_0$: the first term is acceleration, while the second is velocity. Under an explicitly assumed constant-acceleration trajectory,
+
+$$
+p_t=p_0+v_0h+\tfrac12 ah^2,
+\qquad
+a=\frac{2(p_t-p_0-v_0h)}{h^2},
+\qquad F=ma.
+$$
+
+This reaches the target position in that constant-acceleration model when $h>0$, but generally does not reproduce the oscillator’s target velocity. The source itself notes the velocity mismatch just after the printed equation. The corrected equation here is a dimensional and kinematic derivation, not a claim that the book prints it correctly. (Source units u-f3ada0049be8dc7468b74a93, u-86a1c555363233f1247d3b0d.)
+
+Second, the target-to-force conversion depends on the actual integrator. In the book’s position-first forward Euler listing, the next position is $p_1=p_0+v_0h$. A force calculated now changes the next velocity, but that updated velocity is not used for the same step’s position. Therefore no current-step force can make that listed position update land at the predicted $p_t$, except by coincidence. For a velocity-first semi-implicit update, $p_1=p_0+(v_0+ah)h$, so a same-step endpoint solve would instead use $a=(p_t-p_0-v_0h)/h^2$. That solves the discrete position equation but still does not guarantee the analytic endpoint velocity or stability for interactions among several springs. These are different assumptions and formulae; name the integrator before deriving a force.
+
+The source calls this a restricted “fake implicit” method and warns about interactions and chains (PDF p. 118 / printed p. 95, source unit u-f3ada0049be8dc7468b74a93). Treat it as a specialized approximation, not as an implicit solver, constraint solver, or general contact method. The excerpt gives no general stability guarantee.
+
+### Damping and coefficient units
+
+The damped closed form on PDF p. 120 (printed p. 97) is an oscillatory solution for a linear velocity-damped system. Written dimensionally as
+
+$$
+\ddot p+\delta\dot p+\kappa p=0,
+$$
+
+the coefficients are $\kappa=k_s/m$ in $\mathrm{s^{-2}}$ and $\delta=c/m$ in $\mathrm{s^{-1}}$, where $c\geq0$ is a linear damping coefficient measured in $\mathrm{N\,s/m}$. The sine-and-cosine form with an exponential envelope applies only in the underdamped regime $\delta^2<4\kappa$. Critical damping has a different limiting form, and the overdamped roots are real; the oscillatory formula cannot be used for those cases. The book excerpt excludes quadratic drag. A dimensionless velocity-retention multiplier used by an engine is not itself the coefficient $\delta$, which has units of inverse time. Because the source reuses k while moving between physical spring stiffness and mass-normalized oscillator coefficients, state the normalization explicitly before using the expression. (Source unit u-b7fad713c6af82cc7cc90aa2.)
+
+
+
+#### Solve each linear damping regime with its own form
+
+For the one-dimensional equation above, assume positive mass and stiffness and nonnegative linear damping. Write $\alpha=\delta/2$, let $p_0$ and $v_0$ be the initial displacement and velocity, and measure time $t$ from that initial state. Substituting a trial solution $e^{\rho t}$ gives $\rho^2+\delta\rho+\kappa=0$. Its two roots explain the three cases.
+
+In the underdamped case, $\alpha^2<\kappa$. Define the damped angular frequency $\omega_d=\sqrt{\kappa-\alpha^2}$. The displacement is
+
+$$
+p(t)=e^{-\alpha t}\left[p_0\cos(\omega_d t)
++\frac{v_0+\alpha p_0}{\omega_d}\sin(\omega_d t)\right].
+$$
+
+The bracket oscillates while the exponential scales its envelope. With no damping, $\alpha=0$, this reduces to the earlier undamped solution. At critical damping, $\alpha^2=\kappa$, the roots coincide and the limit is
+
+$$
+p(t)=e^{-\alpha t}\bigl[p_0+(v_0+\alpha p_0)t\bigr].
+$$
+
+In the overdamped case, $\alpha^2>\kappa$, use two real roots and their initial-condition coefficients:
+
+$$
+\rho_\pm=-\alpha\pm\sqrt{\alpha^2-\kappa},\qquad
+C_+=\frac{v_0-\rho_-p_0}{\rho_+-\rho_-},\qquad C_-=p_0-C_+,
+$$
+
+$$
+p(t)=C_+e^{\rho_+t}+C_-e^{\rho_-t}.
+$$
+
+These are solutions of the same declared linear model, not interchangeable approximations. Every case gives $p(0)=p_0$ and $\dot p(0)=v_0$. The roots, $\alpha$ and $\omega_d$ have units of inverse seconds; the coefficients $C_\pm$ have units of displacement. As $\omega_d$ approaches zero, $\sin(\omega_d t)/\omega_d$ approaches $t$, which explains the critical limit without dividing by zero. Near repeated roots, a numerical implementation needs limit-aware evaluation because direct subtraction can lose precision. The source excerpt presents the oscillatory branch; this three-case derivation supplies the missing domain and limiting explanation.
+
+### Standalone spring-direction and integration-order laboratory
+
+This complete C++20 reference uses throwing checks that remain active under NDEBUG. It checks the intended laws against scalar reductions of the printed sign patterns, rest and coincident states, invalid inputs, overflow rejection and tiny-vector direction. It also demonstrates that the current force cannot change a position-first step’s new position. Its oscillator experiment stores displacement from equilibrium; that scalar is a different coordinate from the absolute endpoint distance used by the force-law experiment. It is not the book’s Cyclone program or a general spring/contact solver.
+
+```cpp
+// Signed spring and bungee laws; source-sign and integration-order witnesses.
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <stdexcept>
+#include <string>
+
+struct Vec3 {
+    double x{}, y{}, z{};
+};
+
+static double length(const Vec3& v) {
+    const double scale = std::max({std::abs(v.x), std::abs(v.y), std::abs(v.z)});
+    if (scale == 0.0) return 0.0;
+    const double sx = v.x / scale, sy = v.y / scale, sz = v.z / scale;
+    return scale * std::sqrt(sx * sx + sy * sy + sz * sz);
+}
+static bool finite(const Vec3& v) {
+    return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
+}
+static bool near(double a, double b, double eps = 1e-12) {
+    return std::abs(a - b) <= eps;
+}
+static void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+static void validate(Vec3 position, Vec3 endpoint, double stiffness,
+                     double restLength) {
+    if (!finite(position) || !finite(endpoint) || !std::isfinite(stiffness) ||
+        !std::isfinite(restLength) || stiffness < 0.0 || restLength < 0.0)
+        throw std::invalid_argument("invalid spring input");
+}
+static Vec3 springForceFromLength(Vec3 r, double L, double stiffness,
+                                  double restLength) {
+    if (!std::isfinite(L)) throw std::overflow_error("spring length overflow");
+    if (L == 0.0) return {}; // Witness policy: no direction, so choose zero force.
+    // Normalize scaled components so a rounded subnormal length does not
+    // materially change the direction or require an overflowing reciprocal.
+    const double scale = std::max({std::abs(r.x), std::abs(r.y), std::abs(r.z)});
+    const double sx = r.x / scale, sy = r.y / scale, sz = r.z / scale;
+    const double scaledLength = std::sqrt(sx * sx + sy * sy + sz * sz);
+    const Vec3 n{sx / scaledLength, sy / scaledLength, sz / scaledLength};
+    const double magnitude = -stiffness * (L - restLength);
+    if (!std::isfinite(magnitude))
+        throw std::overflow_error("spring force magnitude overflow");
+    const Vec3 force{magnitude * n.x, magnitude * n.y, magnitude * n.z};
+    if (!finite(force)) throw std::overflow_error("spring force component overflow");
+    return force;
+}
+// Returns force ON the particle. n points outward from endpoint to particle.
+// Stiffness is N/m; positions and rest length are m.
+static Vec3 springForce(Vec3 position, Vec3 endpoint, double stiffness,
+                        double restLength) {
+    validate(position, endpoint, stiffness, restLength);
+    const Vec3 r{position.x - endpoint.x, position.y - endpoint.y,
+                 position.z - endpoint.z};
+    if (!finite(r)) throw std::overflow_error("spring displacement overflow");
+    const double L = length(r);
+    return springForceFromLength(r, L, stiffness, restLength);
+}
+// A bungee exerts no force while slack, including exactly at rest length.
+static Vec3 bungeeForce(Vec3 position, Vec3 endpoint, double stiffness,
+                        double restLength) {
+    validate(position, endpoint, stiffness, restLength);
+    const Vec3 r{position.x - endpoint.x, position.y - endpoint.y,
+                 position.z - endpoint.z};
+    if (!finite(r)) throw std::overflow_error("bungee displacement overflow");
+    const double L = length(r);
+    if (!std::isfinite(L)) throw std::overflow_error("bungee length overflow");
+    if (L <= restLength) return {};
+    return springForceFromLength(r, L, stiffness, restLength);
+}
+// Scalar reductions of the two printed sign patterns, solely for comparison.
+static double printedAnchoredForce1D(double x, double stiffness, double restLength) {
+    const double L = std::abs(x);
+    if (L == 0.0) return 0.0;
+    const double magnitude = std::abs(L - restLength) * stiffness;
+    return -(x / L) * magnitude;
+}
+static double printedBungeeForce1D(double x, double stiffness, double restLength) {
+    const double L = std::abs(x);
+    if (L <= restLength) return 0.0;
+    const double magnitude = stiffness * (restLength - L);
+    return -(x / L) * magnitude;
+}
+struct ParticleState { double x, v; };
+// Position-first forward Euler ordering from PDF pp. 93-94 / printed pp. 70-71.
+static ParticleState integrateForwardEuler(ParticleState s, double force,
+                                           double mass, double h) {
+    if (!std::isfinite(s.x) || !std::isfinite(s.v) || !std::isfinite(force) ||
+        !std::isfinite(mass) || mass <= 0.0 || !std::isfinite(h) || h <= 0.0)
+        throw std::invalid_argument("state, force, mass and duration must be finite; mass and duration positive");
+    const double nextX = s.x + s.v * h;
+    const double acceleration = force / mass;
+    const double nextV = s.v + acceleration * h;
+    if (!std::isfinite(nextX) || !std::isfinite(acceleration) ||
+        !std::isfinite(nextV))
+        throw std::overflow_error("forward-Euler state overflow");
+    return {nextX, nextV};
+}
+template<class Exception, class F>
+static void expectThrow(F&& f, const char* message) {
+    bool threw = false;
+    try { f(); }
+    catch (const Exception&) { threw = true; }
+    require(threw, message);
+}
+
+int main() {
+    constexpr double k = 8.0;       // N/m
+    constexpr double rest = 1.0;    // m
+    const Vec3 anchor{};
+
+    const Vec3 stretched = springForce({1.5, 0, 0}, anchor, k, rest);
+    const Vec3 compressed = springForce({0.5, 0, 0}, anchor, k, rest);
+    const Vec3 negativeStretched = springForce({-1.5, 0, 0}, anchor, k, rest);
+    const Vec3 negativeCompressed = springForce({-0.5, 0, 0}, anchor, k, rest);
+    const Vec3 atRest = springForce({1.0, 0, 0}, anchor, k, rest);
+    const Vec3 coincident = springForce(anchor, anchor, k, rest);
+    const Vec3 tautBungee = bungeeForce({1.5, 0, 0}, anchor, k, rest);
+    const Vec3 slackBungee = bungeeForce({0.5, 0, 0}, anchor, k, rest);
+    const Vec3 boundaryBungee = bungeeForce({1.0, 0, 0}, anchor, k, rest);
+
+    require(near(stretched.x, -4.0), "positive stretched spring direction");
+    require(near(compressed.x, 4.0), "positive compressed spring direction");
+    require(near(negativeStretched.x, 4.0), "negative stretched spring direction");
+    require(near(negativeCompressed.x, -4.0), "negative compressed spring direction");
+    require(near(atRest.x, 0.0), "spring at rest");
+    require(near(coincident.x, 0.0), "coincident-point zero-force policy");
+    require(near(tautBungee.x, -4.0), "taut bungee direction");
+    require(near(slackBungee.x, 0.0), "slack bungee");
+    require(near(boundaryBungee.x, 0.0), "bungee at rest-length boundary");
+    require(near(printedAnchoredForce1D(0.5, k, rest), -4.0),
+            "printed anchored-sign reduction");
+    require(near(printedBungeeForce1D(1.5, k, rest), 4.0),
+            "printed bungee-sign reduction");
+
+    expectThrow<std::invalid_argument>(
+        [&] { (void)springForce({0,0,0}, anchor, -1.0, rest); },
+        "negative stiffness must be rejected");
+    expectThrow<std::invalid_argument>(
+        [&] { (void)springForce({std::numeric_limits<double>::quiet_NaN(),0,0}, anchor, k, rest); },
+        "nonfinite position must be rejected");
+    expectThrow<std::overflow_error>(
+        [&] { (void)springForce({2,0,0}, anchor, std::numeric_limits<double>::max(), 0.0); },
+        "nonfinite force magnitude must be rejected");
+    const double tiny = std::numeric_limits<double>::denorm_min();
+    const Vec3 tinySeparation = springForce({tiny,0,0}, anchor, 1.0, 0.0);
+    require(tinySeparation.x == -tiny && tinySeparation.y == 0.0 &&
+            tinySeparation.z == 0.0,
+            "subnormal separation normalization");
+
+    const Vec3 tinyDiagonal = springForce({tiny, tiny, tiny}, anchor, 1.0, 1.0);
+    require(near(tinyDiagonal.x, 1.0 / std::sqrt(3.0)),
+            "subnormal diagonal retains its direction");
+    require(near(length(tinyDiagonal), 1.0), "subnormal force has unit magnitude");
+
+    std::cout << "force law, anchor=0 m, rest=1 m, k=8 N/m\n"
+              << "stretched spring: intended=" << stretched.x
+              << " N, printed anchored listing="
+              << printedAnchoredForce1D(1.5, k, rest) << " N\n"
+              << "compressed spring: intended=" << compressed.x
+              << " N, printed anchored listing="
+              << printedAnchoredForce1D(0.5, k, rest) << " N\n"
+              << "taut bungee: intended=" << tautBungee.x
+              << " N, printed listing="
+              << printedBungeeForce1D(1.5, k, rest) << " N\n"
+              << "slack bungee: intended=" << slackBungee.x << " N\n";
+
+    constexpr double mass = 2.0;       // kg
+    constexpr double springK = 8.0;    // N/m
+    constexpr double x0 = 0.5;         // m from natural length
+    constexpr double v0 = 0.4;         // m/s
+    constexpr double h = 0.25;         // s
+    const double omega = std::sqrt(springK / mass);
+    const double target = x0 * std::cos(omega * h) +
+                          (v0 / omega) * std::sin(omega * h);
+    const double xForwardEuler =
+        integrateForwardEuler({x0, v0}, -4.0, mass, h).x;
+    require(near(xForwardEuler, x0 + v0 * h), "position-first Euler update");
+    require(!near(xForwardEuler, target, 1e-6),
+            "current force cannot set this step's position");
+    std::cout << "\nundamped endpoint example: omega=" << omega
+              << " 1/s, analytic target=" << target
+              << " m, listed forward-Euler next position=" << xForwardEuler
+              << " m (current force affects velocity first)\n";
+}
+```
+
+
+### A friction coefficient describes a pair, not a timestep
+
+The Coulomb model describes friction as a bounded response between contacting surfaces. For an isolated crate at rest on a stationary horizontal floor, take its weight to be $100\,\mathrm N$, apply the horizontal push through its center of mass, and exclude rotation and tipping. With no other vertical load, the floor supplies an upward normal reaction of $N=100\,\mathrm N$. With static coefficient $\mu_s=0.6$, the maximum friction force is $\mu_sN=60\,\mathrm N$: a $45\,\mathrm N$ horizontal push is fully canceled, while a $65\,\mathrm N$ push exceeds the static limit and starts sliding. This force example connects to the bounded tangent impulse already derived in [[Game Engine - From First Frame to Living Worlds#Friction lives in the contact plane|Friction lives in the contact plane]]. (Millington, *Game Physics Engine Development*, physical PDF pp. 382–383 / printed pp. 359–360.)
+
+In this elementary model, $\mu_s$ is a dimensionless empirical parameter for the contacting material pair. An engine may store values per surface and choose a mixing rule, but physics supplies no universal rule that says to add them. The basic Coulomb limit also does not depend on apparent contact area; deformable tire and surface models need additional state. Keep the material coefficient distinct from numerical solver choices such as timestep, iteration budget, or stabilization. Those choices can change how accurately a discrete solver satisfies the model, but they do not change the units or definition of $\mu_s$.
+
+Once sliding begins, kinetic friction opposes the relative tangential velocity. A kinetic coefficient $\mu_k=0.4$ with the same normal reaction gives $40\,\mathrm N$ of sliding resistance. Static friction adjusts to the required value within its bound; it is not always equal to its maximum. Kinetic and static coefficients need not match. The earlier contact-plane chapter converts this force-level idea into the bounded tangential impulse used by a discrete solver.
+
+### Slow a projectile only after choosing what to preserve
+
+A game-scale projectile can preserve one physical quantity while changing another. Millington gives a 5-gram projectile at $500\,\mathrm{m/s}$ and slows it to $25\,\mathrm{m/s}$ so its travel can be seen in a human-scale game. Kinetic energy is $K=\tfrac12mv^2$. Preserving the original $625\,\mathrm J$ requires multiplying the mass by the square of the speed ratio: $m'=0.005(500/25)^2=2\,\mathrm{kg}$. But momentum changes from $mv=2.5\,\mathrm{kg\,m/s}$ to $50\,\mathrm{kg\,m/s}$, a factor of twenty. Preserving momentum instead would require a $0.1\,\mathrm{kg}$ proxy, whose kinetic energy at $25\,\mathrm{m/s}$ is only $31.25\,\mathrm J$. A slower proxy therefore cannot preserve both quantities. Decide whether the game needs a visible flight time, a chosen target impulse, or a chosen energy scale, then test the resulting collision; matching kinetic energy alone does not make the impact physically equivalent. (Millington, *Game Physics Engine Development*, physical PDF p. 79 / printed p. 56.)
+
+Projectile gravity is a separate per-body rule; the engine volume defines that policy at [[Game Engine - From First Frame to Living Worlds#Why body gravity scale is not mass|Why body gravity scale is not mass]]. It should not be inferred from the energy-preserving mass adjustment.
+
+The same source suggests reducing a bullet's downward acceleration from $10\,\mathrm{m/s^2}$ to $0.5\,\mathrm{m/s^2}$ when slowing its speed by twenty (physical PDF pp. 79–80 / printed pp. 56–57). Treat this as a game-tuning recipe. To see what it preserves, consider a horizontal launch with no drag, constant horizontal speed $v>0$, and constant downward acceleration $g$. At horizontal range $d$, flight time is $t=d/v$, so the downward drop is
+
+$$
+y=\tfrac12g t^2=\frac{g d^2}{2v^2}.
+$$
+
+Reducing $v$ by twenty increases flight time by twenty and its square by four hundred. Reducing $g$ by twenty then leaves twenty times the original drop at the same range. Matching that range-based drop would instead require $g'=g/400$. This would preserve the ideal trajectory shape under the stated assumptions, while still changing flight time and impact behavior. Choose the intended invariant explicitly rather than assuming that a plausible-looking acceleration value preserves the old shot.
 
 ## A tool's feature list should follow the game it is meant to enable
 
