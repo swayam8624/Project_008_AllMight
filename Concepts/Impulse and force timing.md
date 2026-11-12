@@ -71,3 +71,10 @@ Test the same physical scenario with different render rates but the same fixed s
 Read the connected explanation in [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From the push on a panel to a repeatable rigid-body simulator]].
 
 Related: [[Center of mass and inertia]], [[Time integrators and symplectic updates]].
+
+## Constraint-level continuation
+
+Forces change momentum over time; collision impulses change momentum at a discrete event. `tools/labs/constraint_friction_island_lab.cpp` now connects that distinction to a minimal sequential-impulse solver: an approaching normal velocity produces a nonnegative impulse that removes approach, a tangential impulse is clamped by $|j_t|\le\mu j_n$, and repeated sweeps propagate support through a two-body stack.
+
+The same witness builds contact islands with union-find. This makes a practical ownership boundary visible: contacts couple bodies inside an island, while disconnected islands may be solved independently. Angular effective mass, restitution thresholds, warm starting, sleeping and a full two-dimensional friction cone remain higher solver layers.
+
