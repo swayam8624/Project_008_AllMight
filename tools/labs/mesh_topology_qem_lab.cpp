@@ -14,6 +14,12 @@
 #include <utility>
 #include <vector>
 
+#ifdef assert
+#undef assert
+#endif
+#define ALLMIGHT_REQUIRE(expr) do { if (!(expr)) throw std::runtime_error("check failed: " #expr); } while (false)
+#define assert(expr) ALLMIGHT_REQUIRE(expr)
+
 namespace allmight {
 
 struct V3 { double x{}, y{}, z{}; };
