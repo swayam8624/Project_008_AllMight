@@ -18272,6 +18272,620 @@ This is numerical energy drift.
 
 For the ideal harmonic oscillator, explicit Euler injects energy systematically. We will derive that behavior from its update matrix in the stability section.
 
+
+### Variational mechanics explains where the equations of motion come from
+
+The spring examples above began from a differential equation and asked how to integrate it. Classical mechanics provides a deeper layer: instead of accepting the equation of motion as the starting point, we can derive it from a scalar quantity defined over an entire trajectory.
+
+Let the generalized coordinates of a mechanical system be
+
+\[
+\mathbf q(t)
+=
+(q_1(t),\ldots,q_n(t)).
+\]
+
+The coordinates do not have to be Cartesian positions. They may be joint angles, slider distances, or any independent coordinates that describe a configuration locally.
+
+Define the **Lagrangian**
+
+\[
+\boxed{
+L(\mathbf q,\dot{\mathbf q},t)
+=
+T(\mathbf q,\dot{\mathbf q},t)
+-
+V(\mathbf q,t)
+}
+\]
+
+for the common conservative mechanical case, where \(T\) is kinetic energy and \(V\) is potential energy.
+
+For a candidate trajectory between fixed endpoint configurations at fixed times, define the **action**
+
+\[
+\boxed{
+S[\mathbf q]
+=
+\int_{t_0}^{t_1}
+L(\mathbf q,\dot{\mathbf q},t)\,dt
+}.
+\]
+
+Hamilton's principle states that the physical trajectory is stationary with respect to admissible infinitesimal variations of the path whose endpoint variations vanish:
+
+\[
+\delta S=0.
+\]
+
+“Stationary” is more precise than “minimum.” Depending on the problem, the physical path need not globally minimize the action. The first variation must vanish.
+
+#### Deriving the Euler–Lagrange equations rather than quoting them
+
+Perturb one coordinate by a small function \(\eta_i(t)\):
+
+\[
+q_i(t)\mapsto q_i(t)+\varepsilon\eta_i(t),
+\]
+
+with
+
+\[
+\eta_i(t_0)=\eta_i(t_1)=0.
+\]
+
+Differentiate the action with respect to \(\varepsilon\) at zero:
+
+\[
+\delta S
+=
+\int_{t_0}^{t_1}
+\sum_i
+\left(
+\frac{\partial L}{\partial q_i}\eta_i
++
+\frac{\partial L}{\partial \dot q_i}\dot\eta_i
+\right)
+dt.
+\]
+
+Integrate the second term by parts:
+
+\[
+\int
+\frac{\partial L}{\partial\dot q_i}
+\dot\eta_i\,dt
+=
+\left[
+\frac{\partial L}{\partial\dot q_i}\eta_i
+\right]_{t_0}^{t_1}
+-
+\int
+\frac{d}{dt}
+\left(
+\frac{\partial L}{\partial\dot q_i}
+\right)\eta_i\,dt.
+\]
+
+The boundary term vanishes because the endpoint variations are zero. Therefore
+
+\[
+\delta S
+=
+\int_{t_0}^{t_1}
+\sum_i
+\left[
+\frac{\partial L}{\partial q_i}
+-
+\frac{d}{dt}
+\left(
+\frac{\partial L}{\partial\dot q_i}
+\right)
+\right]
+\eta_i\,dt.
+\]
+
+The variations \(\eta_i\) are otherwise arbitrary. Hence every coefficient must vanish:
+
+\[
+\boxed{
+\frac{d}{dt}
+\left(
+\frac{\partial L}{\partial\dot q_i}
+\right)
+-
+\frac{\partial L}{\partial q_i}
+=
+0
+}.
+\]
+
+These are the Euler–Lagrange equations.
+
+For a particle in one dimension,
+
+\[
+L(x,\dot x)=\frac12m\dot x^2-V(x).
+\]
+
+Then
+
+\[
+\frac{\partial L}{\partial\dot x}=m\dot x,
+\qquad
+\frac{\partial L}{\partial x}=-V'(x),
+\]
+
+so
+
+\[
+m\ddot x+V'(x)=0.
+\]
+
+Because force is
+
+\[
+F(x)=-V'(x),
+\]
+
+we recover
+
+\[
+m\ddot x=F(x).
+\]
+
+The variational and Newtonian descriptions agree here, but the variational form generalizes naturally to non-Cartesian coordinates and exposes symmetries that may be hidden in component force equations.
+
+#### Generalized momentum is defined by the Lagrangian
+
+The momentum conjugate to \(q_i\) is
+
+\[
+\boxed{
+p_i
+=
+\frac{\partial L}{\partial\dot q_i}
+}.
+\]
+
+For a Cartesian particle with ordinary kinetic energy this becomes \(p_i=m\dot q_i\), but the definition is more general. In curvilinear coordinates or coupled systems, conjugate momentum need not be a mass times the corresponding coordinate velocity.
+
+This matters when converting an engine model into Hamiltonian form: blindly storing \(\mathbf p=m\mathbf v\) is only valid when the model's kinetic energy gives that relation.
+
+#### Cyclic coordinates reveal conservation laws immediately
+
+If a coordinate \(q_j\) does not appear explicitly in the Lagrangian,
+
+\[
+\frac{\partial L}{\partial q_j}=0,
+\]
+
+then the Euler–Lagrange equation gives
+
+\[
+\frac{d}{dt}
+\left(
+\frac{\partial L}{\partial\dot q_j}
+\right)
+=0.
+\]
+
+Thus
+
+\[
+\boxed{p_j=\text{constant}.}
+\]
+
+Such a coordinate is called **cyclic** or **ignorable**. The word “ignorable” does not mean physically unimportant; it means the Lagrangian is invariant under translation in that coordinate.
+
+This is the local computational face of a much deeper principle: symmetry creates conservation laws.
+
+### Noether's principle connects continuous symmetry to conserved quantities
+
+A conservation law should not be treated as a lucky algebraic cancellation. When the action is invariant under a continuous one-parameter transformation, an associated quantity is conserved along solutions of the Euler–Lagrange equations.
+
+The full theorem can be expressed geometrically, but three standard correspondences provide the engineering intuition:
+
+\[
+\boxed{
+\text{spatial translation symmetry}
+\longleftrightarrow
+\text{linear momentum conservation}
+}
+\]
+
+\[
+\boxed{
+\text{rotational symmetry}
+\longleftrightarrow
+\text{angular momentum conservation}
+}
+\]
+
+\[
+\boxed{
+\text{time-translation symmetry}
+\longleftrightarrow
+\text{energy conservation}
+}
+\]
+
+The assumptions matter. An external time-dependent force breaks time-translation invariance. A fixed wall or field can break spatial translation symmetry. Dissipation is generally not described by the simple conservative action above. A collision solver that injects or removes energy according to restitution is not obliged to conserve the pre-impact Hamiltonian.
+
+For debugging, however, symmetry-derived invariants are extremely useful. If an isolated rotationally symmetric system should conserve angular momentum and a numerical method produces systematic drift, the invariant gives a targeted test. The right question is not “does the simulation look plausible?” but “which continuous symmetry should imply which invariant, and which part of the discrete update violates it?”
+
+### Configuration space, velocity space, and phase space are different state spaces
+
+A configuration is one possible geometric arrangement of the system. The set of all configurations is the **configuration space**, usually denoted \(Q\).
+
+For a point particle constrained to a sphere, \(Q\) is the sphere itself, not all of \(\mathbb R^3\). For a rigid body's orientation, the configuration space is the rotation group \(SO(3)\), not an arbitrary three-vector space even though software may use three local parameters or four quaternion components to represent it.
+
+A Lagrangian state needs both configuration and velocity. Geometrically, velocities live in the tangent space \(T_qQ\) at the current configuration. The collection of all pairs
+
+\[
+(q,\dot q)
+\]
+
+forms the tangent bundle \(TQ\).
+
+Hamiltonian mechanics instead uses configuration and conjugate momentum:
+
+\[
+(q,p).
+\]
+
+Momenta are covector-like objects belonging to the cotangent space \(T_q^*Q\). The collection of all such pairs is the **cotangent bundle**
+
+\[
+\boxed{T^*Q,}
+\]
+
+which is the natural phase space for Hamiltonian mechanics.
+
+This distinction connects directly to the earlier vector/covector discussion in this volume. Velocity is tangent to a trajectory in configuration space. Momentum is produced by differentiating the scalar Lagrangian with respect to velocity, so it naturally acts like a covector. In Euclidean coordinates with a fixed identity metric, software often identifies vectors and covectors so casually that the distinction disappears. Curved coordinates, generalized inertia, and geometric mechanics force it back into view.
+
+### The Legendre transform moves from velocity to momentum
+
+Starting with a Lagrangian \(L(q,\dot q,t)\), define
+
+\[
+p_i=\frac{\partial L}{\partial\dot q_i}.
+\]
+
+If these relations can be inverted to obtain
+
+\[
+\dot{\mathbf q}
+=
+\dot{\mathbf q}(\mathbf q,\mathbf p,t),
+\]
+
+then define the Hamiltonian by the Legendre transform
+
+\[
+\boxed{
+H(\mathbf q,\mathbf p,t)
+=
+\mathbf p^T\dot{\mathbf q}
+-
+L(\mathbf q,\dot{\mathbf q},t)
+}.
+\]
+
+For
+
+\[
+L=\frac12m\dot q^2-V(q),
+\]
+
+we have
+
+\[
+p=m\dot q,
+\qquad
+\dot q=\frac pm.
+\]
+
+Therefore
+
+\[
+H
+=
+p\frac pm
+-
+\left(
+\frac12m\frac{p^2}{m^2}
+-
+V(q)
+\right)
+=
+\boxed{
+\frac{p^2}{2m}+V(q)
+}.
+\]
+
+In this familiar case \(H\) is total mechanical energy.
+
+But “Hamiltonian equals energy” is not a definition that works without qualification. Time-dependent coordinates, velocity-dependent potentials, constrained or singular systems, and other generalized models can make the relationship subtler.
+
+The invertibility condition is also substantive. The velocity Hessian
+
+\[
+\left[
+\frac{\partial^2L}
+{\partial\dot q_i\partial\dot q_j}
+\right]
+\]
+
+must be nonsingular for the ordinary Legendre transformation to define velocities uniquely from momenta. If it is singular, constraints are present in the Hamiltonian description and a naive inversion fails. This is one reason constrained mechanics requires more than rearranging equations.
+
+### Hamilton's equations turn mechanics into first-order flow on phase space
+
+When the Legendre transform is regular, the dynamics can be written
+
+\[
+\boxed{
+\dot q_i
+=
+\frac{\partial H}{\partial p_i},
+\qquad
+\dot p_i
+=
+-
+\frac{\partial H}{\partial q_i}
+}.
+\]
+
+Second-order equations in configuration become a first-order system on phase space.
+
+For a harmonic oscillator,
+
+\[
+H(q,p)
+=
+\frac{p^2}{2m}
++
+\frac12kq^2.
+\]
+
+Then
+
+\[
+\dot q=\frac pm,
+\qquad
+\dot p=-kq.
+\]
+
+The energy level
+
+\[
+H(q,p)=E
+\]
+
+is an ellipse in the \((q,p)\) phase plane:
+
+\[
+\frac{p^2}{2mE}
++
+\frac{kq^2}{2E}
+=
+1.
+\]
+
+The exact trajectory circulates around this ellipse. This phase portrait makes numerical behavior visually interpretable. A method whose states spiral outward is injecting energy. A method whose states spiral inward is dissipating energy. A structure-preserving method may follow a nearby closed curve while its exact energy oscillates.
+
+That geometric picture is the reason the symplectic discussion below is more than terminology.
+
+### The canonical symplectic form encodes the position-momentum pairing
+
+In canonical coordinates
+
+\[
+(q_1,\ldots,q_n,p_1,\ldots,p_n),
+\]
+
+the canonical symplectic two-form is
+
+\[
+\boxed{
+\omega
+=
+\sum_{i=1}^{n}
+dq_i\wedge dp_i
+}.
+\]
+
+A two-form measures oriented infinitesimal area in pairs of tangent directions. The wedge product is antisymmetric:
+
+\[
+dq_i\wedge dp_i
+=
+-
+dp_i\wedge dq_i.
+\]
+
+In matrix form the same bilinear structure is represented by
+
+\[
+\Omega
+=
+\begin{bmatrix}
+0&I\\
+-I&0
+\end{bmatrix}.
+\]
+
+A Hamiltonian \(H\) determines a vector field \(X_H\) through the symplectic form. With one common sign convention,
+
+\[
+\boxed{
+\iota_{X_H}\omega=dH
+}
+\]
+
+with the corresponding canonical-coordinate convention chosen consistently. Expanding the relation yields Hamilton's equations. Different texts may place a minus sign in the defining contraction depending on whether \(\omega\) is written \(dq\wedge dp\) or \(dp\wedge dq\); the physical equations do not change when conventions are used consistently.
+
+The important idea is that the Hamiltonian is not merely a scalar we try to conserve. Through \(\omega\), its differential generates the direction of motion in phase space.
+
+### Poisson brackets turn observables into a dynamical algebra
+
+Let \(f(q,p,t)\) be any scalar observable on phase space. Define the canonical **Poisson bracket**
+
+\[
+\boxed{
+\{f,g\}
+=
+\sum_i
+\left(
+\frac{\partial f}{\partial q_i}
+\frac{\partial g}{\partial p_i}
+-
+\frac{\partial f}{\partial p_i}
+\frac{\partial g}{\partial q_i}
+\right)
+}.
+\]
+
+Along Hamiltonian motion,
+
+\[
+\boxed{
+\frac{df}{dt}
+=
+\{f,H\}
++
+\frac{\partial f}{\partial t}
+}.
+\]
+
+This single formula packages many conservation arguments. If \(f\) has no explicit time dependence and
+
+\[
+\{f,H\}=0,
+\]
+
+then \(f\) is conserved.
+
+For the coordinate observable \(q_j\),
+
+\[
+\{q_j,H\}
+=
+\frac{\partial H}{\partial p_j}
+=
+\dot q_j.
+\]
+
+For \(p_j\),
+
+\[
+\{p_j,H\}
+=
+-
+\frac{\partial H}{\partial q_j}
+=
+\dot p_j.
+\]
+
+Thus Hamilton's equations themselves are special cases of observable evolution.
+
+The bracket is bilinear and antisymmetric:
+
+\[
+\{f,g\}=-\{g,f\},
+\]
+
+obeys a product rule, and satisfies the Jacobi identity. Those properties make phase-space observables into a Lie algebra. For practical mechanics, the main value is conceptual compression: “commutes with the Hamiltonian under the Poisson bracket” becomes a test for a conserved quantity.
+
+### Liouville's theorem says Hamiltonian flow does not compress phase-space volume
+
+Consider the phase-space vector field
+
+\[
+\dot{\mathbf z}
+=
+\begin{bmatrix}
+\dot{\mathbf q}\\
+\dot{\mathbf p}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\nabla_pH\\
+-\nabla_qH
+\end{bmatrix}.
+\]
+
+Its divergence in canonical coordinates is
+
+\[
+\nabla_{\mathbf z}\cdot\dot{\mathbf z}
+=
+\sum_i
+\left(
+\frac{\partial^2H}{\partial q_i\partial p_i}
+-
+\frac{\partial^2H}{\partial p_i\partial q_i}
+\right)
+=0
+\]
+
+when the required mixed derivatives are regular.
+
+Zero divergence means the continuous Hamiltonian flow preserves phase-space volume. A cloud of initial states can stretch, shear, and fold, but its phase-space volume is preserved.
+
+This is **Liouville's theorem**.
+
+For one degree of freedom, phase space is two-dimensional, so volume preservation becomes area preservation. In higher dimensions, preserving \(2n\)-dimensional volume is weaker than preserving the full symplectic structure. A map can have determinant one and still fail the symplectic condition
+
+\[
+(D\Phi)^T\Omega(D\Phi)=\Omega.
+\]
+
+This distinction prevents a common shortcut: “volume preserving” and “symplectic” are not interchangeable.
+
+### Canonical transformations preserve the mechanics, not merely coordinates
+
+A change of phase-space variables
+
+\[
+(q,p)\mapsto(Q,P)
+\]
+
+is **canonical** when it preserves the symplectic form. In matrix language for a differentiable map, the Jacobian must satisfy the same symplectic condition used below for discrete integrators.
+
+Ordinary coordinate changes can rewrite equations. Canonical transformations do something stronger: they preserve the Hamiltonian geometric structure, so the transformed variables still obey Hamiltonian mechanics in canonical form.
+
+This perspective explains why the symplectic condition is the right discrete analogue to care about. A symplectic integrator attempts to make each timestep a canonical transformation, even though it only approximates the exact Hamiltonian flow.
+
+### What this means for an engine integrator
+
+The hierarchy is now precise:
+
+\[
+\boxed{
+\text{action}
+\rightarrow
+\text{Euler--Lagrange equations}
+\rightarrow
+\text{conjugate momentum}
+\rightarrow
+\text{Hamiltonian phase-space flow}
+\rightarrow
+\text{symplectic discrete update}
+}
+\]
+
+Each arrow introduces assumptions.
+
+A real-time engine can violate the clean conservative model in many legitimate ways: damping, control forces, impulses, unilateral contact, friction, constraint stabilization, sleeping, clamping, adaptive stepping, and discontinuous gameplay state changes. The point of geometric mechanics is not to pretend those features do not exist. It gives a reference structure against which each modification can be understood.
+
+When a solver changes momentum through an impact impulse, ask which invariant the collision law is meant to preserve. When damping is applied, do not diagnose energy loss as an integrator bug if energy loss is the model. When variable timestep logic is introduced, do not assume a method retains every fixed-step structural property. When a projection step enforces a constraint, verify what that projection does to momentum and phase-space geometry.
+
+The value of the theory is therefore diagnostic: it tells us which properties belong to the physical model, which belong to the continuous equations, and which belong to the numerical approximation.
+
+Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, especially the development from variational/Lagrangian mechanics to Hamiltonian mechanics and the geometric formulation of phase-space flow. The implementation-facing diagnostics and engine examples above are a synthesis with the numerical-integration narrative already developed here.
+
+
 ### Semi-implicit Euler: why update order changes the dynamics
 
 [[#ODEs and numerical simulation|Semi-implicit Euler]] is often called symplectic Euler or Euler–Cromer integration when applied in the appropriate canonical position-momentum formulation.
@@ -31617,6 +32231,387 @@ Statistics allows us to answer those questions without relying on impressions fr
 <!-- end V10.09 -->
 
 <!-- begin V10.10 -->
+
+### The empirical distribution is a model built directly from the sample
+
+The central limit theorem tells us how one important statistic behaves asymptotically, but it does not by itself explain a much broader statistical pattern: how can we estimate an unknown property of a population when we do not want to commit to a narrow parametric family?
+
+Suppose the unknown data-generating distribution is \(F\), and we observe
+
+\[
+X_1,\ldots,X_n\sim F.
+\]
+
+The **empirical distribution function** is
+
+\[
+\boxed{
+\widehat F_n(x)
+=
+\frac{1}{n}
+\sum_{i=1}^{n}
+\mathbf 1\{X_i\le x\}
+}.
+\]
+
+At any query value \(x\), \(\widehat F_n(x)\) is simply the fraction of observed samples not exceeding \(x\). It is a step function with a jump of \(1/n\) at every observation, counting repeated observations with repeated mass.
+
+This construction is more important than it first appears. It says that the observed sample itself can define a complete discrete probability model: place probability \(1/n\) on each observed datum. That model is not asserted to be the true population. It is a data-supported surrogate that becomes increasingly informative as sampling improves.
+
+For a concrete sample
+
+\[
+2,\;2,\;5,\;9,
+\]
+
+the empirical model assigns total mass \(1/2\) to value \(2\), mass \(1/4\) to \(5\), and mass \(1/4\) to \(9\). Therefore
+
+\[
+\widehat F_4(4)=\frac{2}{4}=\frac12,
+\qquad
+\widehat F_4(7)=\frac{3}{4}.
+\]
+
+The empirical CDF is useful because many population quantities can be regarded as **functionals of a distribution**. The population mean can be written
+
+\[
+\mu(F)=\int x\,dF(x).
+\]
+
+Replacing \(F\) by \(\widehat F_n\) gives
+
+\[
+\mu(\widehat F_n)
+=
+\int x\,d\widehat F_n(x)
+=
+\frac1n\sum_iX_i
+=
+\bar X.
+\]
+
+So the ordinary sample mean is a special case of a much larger pattern.
+
+#### The plug-in principle
+
+If the desired population quantity is
+
+\[
+\theta=T(F),
+\]
+
+then the **plug-in estimator** replaces the unknown \(F\) with its empirical estimate:
+
+\[
+\boxed{
+\widehat\theta_{\mathrm{plug\text{-}in}}
+=
+T(\widehat F_n)
+}.
+\]
+
+This one idea unifies many familiar formulas.
+
+For the population variance,
+
+\[
+V(F)=
+\int (x-\mu(F))^2\,dF(x),
+\]
+
+the direct plug-in estimate is
+
+\[
+V(\widehat F_n)
+=
+\frac1n\sum_i(X_i-\bar X)^2.
+\]
+
+Notice that this is the denominator-\(n\) empirical variance, not the denominator-\((n-1)\) unbiased sample-variance estimator discussed later. The distinction is instructive. **Plug-in estimation and unbiased estimation are different design criteria.** A plug-in estimator asks, “what do I obtain by replacing the unknown distribution by the empirical distribution?” An unbiased estimator asks, “does the repeated-sampling expectation equal the target?” Sometimes the same formula satisfies both goals; sometimes it does not.
+
+Quantiles provide another example. If \(q_\alpha(F)\) is the population \(\alpha\)-quantile, then \(q_\alpha(\widehat F_n)\) is an empirical quantile. Medians, trimmed statistics, empirical moments, and many risk summaries can all be viewed this way.
+
+The empirical-distribution viewpoint also makes the bootstrap section later in this volume much less mysterious. A nonparametric bootstrap sample is simply a fresh IID sample drawn from \(\widehat F_n\). The bootstrap therefore asks what the estimator would do if the empirical distribution were the population. It is not random perturbation for its own sake; it is repeated sampling from a concrete estimated distribution.
+
+#### Convergence of a distribution estimate is stronger than convergence of one statistic
+
+For any fixed \(x\), the random variables
+
+\[
+\mathbf 1\{X_i\le x\}
+\]
+
+are Bernoulli with expectation \(F(x)\). Their sample mean is exactly \(\widehat F_n(x)\). The law of large numbers therefore suggests
+
+\[
+\widehat F_n(x)\to F(x)
+\]
+
+at continuity points of \(F\).
+
+A stronger result, the Glivenko–Cantelli theorem, says under the IID setup that the maximum CDF discrepancy converges to zero:
+
+\[
+\boxed{
+\sup_x
+\left|
+\widehat F_n(x)-F(x)
+\right|
+\longrightarrow 0
+}
+\]
+
+almost surely.
+
+The important conceptual jump is from estimating one number to estimating an entire function. Once a whole distribution can be approximated, many downstream functionals become estimable through the same object. But continuity matters: a tiny change in a distribution can sometimes produce a large change in a poorly behaved functional. “The empirical CDF converges” does not mean every imaginable statistic inherits a simple Gaussian approximation.
+
+For graphics, simulation, and experimental engineering this matters whenever a pipeline reports more than a mean. Frame-time percentiles, tail latencies, reconstruction-error quantiles, residual distributions, visibility probabilities, and empirical BRDF or sensor-error summaries are all distributional objects. Reporting only an average can hide the behavior the system actually needs to control.
+
+### The delta method propagates asymptotic uncertainty through a nonlinear function
+
+Suppose an estimator \(\widehat\theta_n\) already has an asymptotic normal approximation:
+
+\[
+\sqrt n(\widehat\theta_n-\theta)
+\xrightarrow{d}
+\mathcal N(0,\sigma^2).
+\]
+
+Now suppose the quantity we actually care about is not \(\theta\), but a smooth transformation
+
+\[
+\psi=g(\theta).
+\]
+
+Examples appear constantly:
+
+- a variance estimate may be converted to a standard deviation by \(g(v)=\sqrt v\);
+- an odds estimate may be converted to probability;
+- a camera calibration parameter may be transformed into field of view;
+- a positive scale may be logged;
+- an estimated physical coefficient may be converted into a derived observable.
+
+We could derive a new sampling distribution from scratch for every transformation. The **delta method** instead uses the same local linearization idea that already appears throughout calculus and numerical analysis.
+
+Taylor-expand \(g\) around the true parameter:
+
+\[
+g(\widehat\theta_n)
+=
+g(\theta)
++
+g'(\theta)(\widehat\theta_n-\theta)
++
+R_n,
+\]
+
+where the remainder is smaller than the first-order term under the usual differentiability and convergence conditions. Multiply by \(\sqrt n\):
+
+\[
+\sqrt n
+\left[
+g(\widehat\theta_n)-g(\theta)
+\right]
+=
+g'(\theta)
+\sqrt n(\widehat\theta_n-\theta)
++
+\sqrt nR_n.
+\]
+
+If the remainder vanishes in probability, the limiting distribution becomes
+
+\[
+\boxed{
+\sqrt n
+\left[
+g(\widehat\theta_n)-g(\theta)
+\right]
+\xrightarrow{d}
+\mathcal N
+\left(
+0,\,
+[g'(\theta)]^2\sigma^2
+\right)
+}.
+\]
+
+Equivalently, when the large-\(n\) variance of \(\widehat\theta_n\) is approximately \(\sigma^2/n\),
+
+\[
+\operatorname{Var}\!\left[g(\widehat\theta_n)\right]
+\approx
+[g'(\theta)]^2
+\frac{\sigma^2}{n}.
+\]
+
+This is statistical uncertainty propagation through a Jacobian.
+
+#### Vector form: the same Jacobian logic used elsewhere in this book
+
+Let
+
+\[
+\widehat{\boldsymbol\theta}\in\mathbb R^p
+\]
+
+satisfy
+
+\[
+\sqrt n
+(\widehat{\boldsymbol\theta}-\boldsymbol\theta)
+\xrightarrow{d}
+\mathcal N(\mathbf 0,\Sigma).
+\]
+
+For a differentiable scalar function
+
+\[
+g:\mathbb R^p\to\mathbb R,
+\]
+
+the first-order perturbation is
+
+\[
+g(\widehat{\boldsymbol\theta})
+-
+g(\boldsymbol\theta)
+\approx
+\nabla g(\boldsymbol\theta)^T
+(\widehat{\boldsymbol\theta}-\boldsymbol\theta).
+\]
+
+Therefore
+
+\[
+\boxed{
+\sqrt n
+\left[
+g(\widehat{\boldsymbol\theta})
+-
+g(\boldsymbol\theta)
+\right]
+\xrightarrow{d}
+\mathcal N
+\left(
+0,\,
+\nabla g^T
+\Sigma
+\nabla g
+\right)
+}.
+\]
+
+For a vector-valued transformation
+
+\[
+\mathbf g:\mathbb R^p\to\mathbb R^m
+\]
+
+with Jacobian \(J_g\),
+
+\[
+\boxed{
+\operatorname{Cov}
+\left[
+\mathbf g(\widehat{\boldsymbol\theta})
+\right]
+\approx
+\frac1n
+J_g
+\Sigma
+J_g^T
+}.
+\]
+
+This is the same mathematical structure used earlier for first-order covariance propagation. The difference is interpretive: here \(\Sigma\) describes an estimator's asymptotic sampling fluctuation; in a state-estimation calculation it may describe uncertainty in a random state vector. The algebra can be identical while the source of uncertainty is different.
+
+#### Worked example: uncertainty of an estimated standard deviation
+
+Suppose an estimator of variance \(v=\sigma^2\) is approximately normal:
+
+\[
+\widehat v
+\approx
+\mathcal N(v,\tau^2).
+\]
+
+We want the standard deviation
+
+\[
+s=\sqrt v.
+\]
+
+Here
+
+\[
+g(v)=\sqrt v,
+\qquad
+g'(v)=\frac{1}{2\sqrt v}.
+\]
+
+The delta method gives
+
+\[
+\operatorname{Var}(\widehat s)
+\approx
+\frac{\tau^2}{4v}.
+\]
+
+So an approximate standard error is
+
+\[
+\boxed{
+\operatorname{se}(\widehat s)
+\approx
+\frac{\operatorname{se}(\widehat v)}
+{2\sqrt v}
+}.
+\]
+
+In practice \(v\) is unknown, so a plug-in step often replaces it by \(\widehat v\). This shows how two ideas connect rather than living in separate chapters:
+
+\[
+\text{estimate distribution or parameter}
+\rightarrow
+\text{plug in unknown quantities}
+\rightarrow
+\text{linearize the requested transformation}
+\rightarrow
+\text{propagate uncertainty}.
+\]
+
+#### Where the first-order delta method can fail
+
+A derivative is not a ceremonial requirement. It controls the approximation.
+
+If
+
+\[
+g'(\theta)=0,
+\]
+
+the first-order term disappears and a second-order expansion may determine the limiting behavior. If \(g\) is not differentiable at the true value, the ordinary delta method may be invalid. If the parameter lies on a boundary, the estimator's limiting distribution itself may be non-Gaussian. If the transformation has a very large derivative near the operating point, small parameter uncertainty can become large output uncertainty.
+
+A common numerical example is reciprocal depth:
+
+\[
+z=\frac1d.
+\]
+
+Its derivative is
+
+\[
+\frac{dz}{dd}=-\frac1{d^2}.
+\]
+
+When disparity \(d\) approaches zero, first-order uncertainty in depth explodes. That is not merely a bad covariance matrix; it reflects real geometric ill-conditioning. The same Jacobian that propagates uncertainty also exposes sensitivity.
+
+The broader lesson is that **asymptotic normality is not closed under arbitrary nonlinear operations without conditions**. A transformed estimate should inherit its uncertainty through an explicitly justified transformation, not through the assumption that every downstream number is “approximately Gaussian.”
+
+Source basis: Wasserman, *All of Statistics*, especially the chapters on empirical distributions and plug-in estimation, convergence, the delta method, and the bootstrap. The graphics, calibration, frame-time, and reciprocal-depth examples above are integrations into this volume's existing computational narrative.
+
+
 ## 9. Finite samples need stable descriptive statistics
 
 ### Sample mean
