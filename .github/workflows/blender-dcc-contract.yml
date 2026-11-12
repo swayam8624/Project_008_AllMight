@@ -25,8 +25,9 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender python3-numpy
           blender --version
+          blender --background --factory-startup --python-expr "import numpy; print('numpy', numpy.__version__)"
 
       - name: Execute DCC-to-GLB round-trip contract
         run: |
