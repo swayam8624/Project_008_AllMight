@@ -29,6 +29,9 @@ jobs:
       - name: Audit readability of the full graphics note
         run: python3 tools/audit_note_readability.py "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
 
+      - name: Install Python numerical dependency
+        run: python3 -m pip install --disable-pip-version-check numpy
+
       - name: Run 3-D IMU witness
         run: python3 tools/labs/xr_3d_imu_preintegration_lab.py
 
