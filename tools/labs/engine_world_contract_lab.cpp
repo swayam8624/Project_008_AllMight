@@ -272,6 +272,18 @@ int main() {
         "acquire:renderer", "rollback-partial:renderer", "stop:window", "stop:platform"
     }), "startup rollback order changed");
 
+    // Reject dependency cycles before creating a single native resource.
+    std::vector<std::string> invalid_trace;
+    ServiceManager cyclic({
+        {"a", {1}, false, false, false, &invalid_trace},
+        {"b", {0}, false, false, false, &invalid_trace}
+    });
+    bool cycle_rejected = false;
+    try { cyclic.start_all(); }
+    catch (const std::runtime_error&) { cycle_rejected = true; }
+    require(cycle_rejected && invalid_trace.empty(),
+            "cycle had effects before graph validation");
+
     auto stick = radial_dead_zone({0.3, 0.4}, 0.2); // Radius = 0.5.
     require(std::abs(std::hypot(stick.x, stick.y) - 0.375) < 1e-12,
             "incorrect radial rescale");
@@ -285,7 +297,23 @@ int main() {
     require(edges.size() == 2 && edges[0] == Edge::Pressed &&
             edges[1] == Edge::Released && !action.held(), "tap was lost");
     require(action.sample_at_tick_boundary().empty(), "edge fired twice");
+    TickInput captured;
+    captured.on_physical_button(true, false);
+    captured.on_physical_button(true, true); // Focus moved to an editor control.
+    const auto capture_edges = captured.sample_at_tick_boundary();
+    require(capture_edges.size() == 2 &&
+            capture_edges[1] == Edge::Released && !captured.held(),
+            "UI capture left a gameplay action stuck");
 
+    AssetBudget tiny(8);
+    AssetSlot first, second;
+    tiny.request(first, 8);
+    bool overbudget_rejected = false;
+    try { tiny.request(second, 1); }
+    catch (const std::runtime_error&) { overbudget_rejected = true; }
+    require(overbudget_rejected && tiny.charged() == 8,
+            "overbudget admission modified accounting");
+    tiny.cancel(first);
     AssetBudget budget(128);
     AssetSlot door;
     const auto stale = budget.request(door, 64);
