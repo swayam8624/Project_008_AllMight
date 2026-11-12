@@ -37,3 +37,12 @@ tools/labs/phase29_ml_runtime_lab.cpp does not parse protobuf and labels that li
 That is deliberately narrower than ONNX support. Full support requires actual protobuf decoding, opset semantics, operator-specific validation, shape inference and numerical parity against a trusted runtime.
 
 Related: [[Tensor runtime layout and views]], [[Transformer attention and KV cache runtime]], [[Interface contracts and publication]].
+
+## Real protobuf and official reference-runtime witness
+
+The internal graph contract is now complemented by `tools/ml/onnx_contract.py`, which uses the official ONNX package instead of modeling the interchange format by hand. The witness builds a `ModelProto` with `MatMul → Add → Relu`, named initializers and symbolic batch dimension, serializes it to a real `.onnx` protobuf, reloads it, runs the official model checker, invokes shape inference, and executes the graph with ONNX's reference evaluator.
+
+The expected numerical result is independently computed with NumPy before comparison. A second deliberately invalid model reuses a node-output name and must be rejected by the official checker, exercising the SSA constraint at the actual interchange boundary.
+
+This changes the evidence level for the **ONNX file/IR boundary**, not for a production inference backend. Dynamic control flow, nested subgraphs, arbitrary opsets, external tensor data, quantized operators, custom domains, ONNX Runtime/device execution and current KairoONNX lowering still need separate proofs.
+
