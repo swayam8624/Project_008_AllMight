@@ -36,3 +36,10 @@ For memory mapping, “the pointer is valid” is not enough. The mapping object
 GGUF storage type and execution type are separate decisions. A block-quantized format normally stores scale or other metadata together with packed codes. A portable reference path should decode or dot-product those blocks in a simple scalar implementation first. SIMD or Metal kernels then have an independent oracle. If the optimized path disagrees, the scalar path is evidence; if both paths share the same unpacking bug, the test is not independent enough.
 
 Related: [[Tensor runtime layout and views]], [[Quantized matvec and dequantization]], [[Transformer attention and KV cache runtime]], [[Binary format contracts]].
+
+## Metadata and tensor-descriptor witness
+
+The earlier prefix-only boundary has now been extended by `tools/labs/gguf_metadata_tensor_lab.cpp`. The subset parser validates GGUF v3 magic and counts, parses typed UINT32 and STRING metadata, consumes `general.alignment`, reads tensor names/ranks/dimensions/type IDs/relative offsets, computes the aligned tensor-data start, and rejects truncation or invalid alignment.
+
+The parser remains deliberately incomplete rather than permissive. Unsupported metadata types are rejected instead of skipped with guessed sizes. It does not yet implement arrays, every GGUF value type, every GGML quantized tensor block, tokenizer metadata, endian conversion for big-endian files, or payload interval validation for all tensor types. That is the correct boundary for an independent reference: a small loader should fail loudly outside the subset it actually understands.
+
