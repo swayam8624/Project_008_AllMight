@@ -23,8 +23,17 @@ def main() -> None:
         text = raw.decode("utf-8")
         if len(raw) < MIN_BYTES and "depth_floor: exempt" not in text:
             failures.append(f"{path.name}: only {len(raw)} bytes (< {MIN_BYTES})")
-        if not text.startswith("# "):
-            failures.append(f"{path.name}: missing top-level concept heading")
+        lines = text.splitlines()
+        index = 0
+        if lines and lines[0].strip() == "---":
+            index = 1
+            while index < len(lines) and lines[index].strip() != "---":
+                index += 1
+            index += 1
+        while index < len(lines) and not lines[index].strip():
+            index += 1
+        if index >= len(lines) or not lines[index].startswith("# "):
+            failures.append(f"{path.name}: missing top-level concept heading after optional frontmatter")
         for ch in text:
             code = ord(ch)
             if code < 32 and ch not in "\n\t":
