@@ -36,6 +36,7 @@ EMBEDDED = {
         "render_graph_contract_lab.cpp",
         "engine_world_contract_lab.cpp",
         "animation_controller_contract_lab.cpp",
+        "threaded_asset_publication_lab.cpp",
     ),
 }
 
