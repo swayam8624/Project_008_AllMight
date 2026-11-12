@@ -68,3 +68,10 @@ Compare simplification against invariants after every collapse: manifold/boundar
 The current branch now provides tools/labs/mesh_topology_lab.cpp for the topology layer and the existing cotangent-energy witness for discrete operators. A full executable QEM collapse loop remains the next implementation milestone rather than being silently claimed complete.
 
 Related: [[Half-edge topology invariants]], [[Mesh topology and homology]].
+
+## Executable collapse layer
+
+`tools/labs/qem_edge_collapse_lab.cpp` now implements the first complete QEM collapse witness instead of leaving this section at topology-only prose. It constructs normalized face planes, accumulates $pp^T$ quadrics into vertices, combines the two endpoint quadrics for an edge, evaluates candidate cost in homogeneous coordinates, and runs a geometric validity gate before accepting the collapse.
+
+The validity witness deliberately distinguishes a triangle that disappears because it contains both collapsed endpoints from a surviving triangle that becomes degenerate or flips. The former is expected topology change; the latter is rejected. This still leaves the optimal $3\times3$ solve, link-condition proof, boundary-feature weights, attribute quadrics and progressive-mesh bookkeeping as higher layers, but QEM is no longer merely named.
+
