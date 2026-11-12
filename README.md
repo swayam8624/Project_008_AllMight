@@ -17,6 +17,32 @@ The earlier **Computing Foundations** volume remains preserved for bits/C++/API 
 
 **Implementation acceptance rule:** a mechanism is not marked taught to reconstruction depth unless the continuous note itself states the forcing problem, definitions with units and conventions, derivation, memory representation, complete state/algorithm flow, commented implementation, worked numerical trace, edge cases, mathematical invariants, runtime limits, and reproducible tests. A link or a code file by itself does not meet this gate. The direct C++20 physics laboratories are a tested independent reference family; current Kairo production integration, GPU behavior, general rotating convex CCD and full hosted CI success require separate evidence.
 
+## Curriculum-wide three-volume responsibility map
+
+The following is a **routing and completion-audit contract**, not a declaration that every listed part is already developed. The original 180 mastery chunks / 3,000 atomic parts remain the coverage checklist; each concept must ultimately be reconstructable from its assigned continuous volume, with a numeric trace, full algorithm, code and failure tests at first meaningful use. A subject may refer to another book for a genuinely different application, but cannot outsource prerequisites needed for its own derivation.
+
+| Original phases | Assigned canonical destination | Complete-teaching obligation |
+|---|---|---|
+| 1–3: bits, object model, modern C++ | **Game Engine** (systems foundations embedded when used) | Representation, lifetime/ownership, templates, modules, API semantics and complete C++ labs |
+| 4–5: CPU and algorithms | **Game Engine** | Cache, SIMD, allocation, concurrency, complexity, data structures, testable implementations |
+| 6–10: vectors through statistics | **Mathematics** | Definitions, geometric meaning, proofs, stable numerical algorithms, implementations and error analysis |
+| 11: cameras and projection | **Mathematics** for transforms, **Graphics** for image/pixel implementation | Coordinate conventions, projective derivations, calibration and reproducible raster tests |
+| 12–13: geometry and collision queries | **Graphics** | Predicates, GJK/SAT/rays, degeneracies, contact generation, proofs, CPU reference code |
+| 14–18: spatial structures, ECS, architecture, dynamics and response | **Game Engine** | End-to-end world state, broad/narrow phase, persistent constraints, serialization and engine ownership |
+| 19–21: rasterization, PBR and light transport | **Graphics** | Image formation, BRDF derivations, shaders, sampling estimators and numerical/visual comparisons |
+| 22–24: GPU execution, Vulkan and Metal | **Graphics** for shader execution, **Game Engine** for resource/backend/lifetime architecture | Full buffer formats, synchronization, commands, shader kernels, backend parity and validation |
+| 25–27: Gaussian rendering, advanced real-time and mesh/animation | **Graphics** for representations/rendering, **Game Engine** for runtime ownership | Covariance projection, blending, temporal validity, mesh operators, skinning and motion testing |
+| 28–29: emulation/OS and ML runtime | **Game Engine** (reusable systems and runtime foundations) | Executable CPU/emulator/tensor laboratories, file/network contracts, scheduling and performance |
+| 30: DCC, reliability, research and capstones | **Game Engine** for build/runtime and **Graphics** for rendering/DCC evidence | End-to-end reproducibility, metrics, benchmark gates, provenance and production acceptance |
+
+The existing **Computing Foundations** book is still a preserved source of substantial Parts 1–300 teaching and is **not yet proved completely migrated** into Game Engine. It should remain available until every unique mathematical, C++ and system-level derivation, code block, failure example and source annotation is accounted for in the three-volume destination. Likewise, the source queue explicitly records unreceived parts and unreviewed book/video claims; source presence, a topic-name match, an extracted claim and an independently implementable explanation are different states. A 30-row map, a 180-chunk catalog or a part-number search alone cannot certify completeness.
+
+## Automated source integrity for the three books
+
+Run `python3 tools/check_continuous_code_sync.py` from the repository root. It checks exact byte agreement for the six complete C++20 witnesses embedded in Graphics and Game Engine and checks display-math/fenced-code boundary parity in **Mathematics, Graphics and Game Engine**. The CI workflow [Continuous volume executable source agreement](.github/workflows/continuous-volume-sync.yml) executes that check whenever a canonical volume or its laboratory source changes. The [successful hosted check](https://github.com/swayam8624/Project_008_AllMight/actions/runs/43127857163) confirms the current mechanical agreement. The [five-job GCC/Clang/modules laboratory matrix](https://github.com/swayam8624/Project_008_AllMight/actions/runs/43127394396) also passed after the invalid general-workflow trigger was repaired.
+
+Neither gate proves semantic correctness or complete original-part coverage; that requires source-by-source review, mathematical/implementation evidence and explicit manually audited reconstruction. In particular, the code extracted from an older lesson cannot be treated as current without this check. One stale value-versus-reference structured-binding line was caught and synchronized to the compiled version during supervision.
+
 ## Current combined reading route
 
 - [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Computing foundations]] combines the original bits and C++ teaching and adds general API/build contracts, shader buffer layout and GPU programming. The original 01 and 02 live files were retired after the approved merge audit; byte-identical recovery copies remain in the checkpoint.
