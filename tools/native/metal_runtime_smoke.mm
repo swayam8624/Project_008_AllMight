@@ -21,7 +21,8 @@ int main(int argc, char** argv) {
 
         NSError* error = nil;
         NSString* path = [NSString stringWithUTF8String:argv[1]];
-        id<MTLLibrary> library = [device newLibraryWithFile:path error:&error];
+        NSURL* libraryURL = [NSURL fileURLWithPath:path];
+        id<MTLLibrary> library = [device newLibraryWithURL:libraryURL error:&error];
         if (library == nil) {
             std::cerr << "metal_runtime_smoke: failed to load metallib: "
                       << (error ? [[error localizedDescription] UTF8String] : "unknown") << "\n";
