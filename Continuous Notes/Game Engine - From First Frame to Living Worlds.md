@@ -101384,6 +101384,254 @@ A production implementation must therefore refine `Resource` into typed generati
 A reconstruction exercise that exposes misunderstandings is to add a downsampled Hi-Z pyramid: track each mip as a separate logical version, construct a depth-read then mip-write chain, prove that every mip has a producer, compare the DAG schedule against serial execution, and then implement Vulkan synchronization2 image barriers for exactly the required subresource ranges. The independent GPU capture and result comparison, not merely successful compilation, become the acceptance test.
 
 
+
+## After graph ordering, derive real resource-state obligations — Vulkan synchronization2 and Metal 4
+
+The previous render-graph witness constructs a directed acyclic graph and proves that logical producers precede consumers. A GPU backend still has to answer a different question: *what exact memory can each execution stage read or write, through which queue, in which layout and at what moment can its physical allocation be reused?* A CPU topological sort cannot establish that data in a device cache has become visible to a later shader. It also cannot establish ownership of a particular image mip level or prove that recording a command buffer extends the lifetime of the texture bound through its argument table. We now need to turn each graph edge into an access and lifetime obligation, then translate those obligations differently on Vulkan and Metal.
+
+### Start with the data, not the barrier function
+
+The minimal state key for an image is its immutable physical identity plus the relevant aspect, mip level and array layer. A volume with color and depth aspects, a cubemap, and a chain of Hi-Z mips must not be treated as one indistinguishable resource. For buffers, the analogous hazard scope is a byte interval; two ranges that partially overlap need interval-aware reasoning, not string equality. Every tracked version also knows whether its bytes were initialized externally, its most recent writer, the outstanding readers that must complete before overwrite, the stages and accesses at those uses, its required image layout, and its current queue-family owner when exclusive sharing applies.
+
+Consider a compute pass writing mip 0 of an HDR image and a later fragment pass sampling mip 0. The resource identity matches and one use writes while the next reads: that is a RAW data dependency. Yet sampling mip 1 is still illegal if nothing initialized mip 1; a declaration that a *texture* was previously written cannot initialize all of its mips by implication. Conversely, two pure reads of an already visible image with unchanged valid layout and queue ordinarily need no new memory barrier, even when they occur in separate passes. When a color-output pass later overwrites mip 0, all readers of the old version have to be finished: that is a WAR dependency. A new writer following an old writer must respect WAW order. The logical compiler can derive those arrows; the physical planner must additionally specify exact memory and execution scopes.
+
+### A Vulkan dependency has execution scope and visibility scope
+
+Vulkan requires an application to state synchronization explicitly. An execution dependency establishes an order between selected GPU operations; a memory dependency also establishes the availability and visibility of writes to the selected later accesses. For a same-queue compute storage-image write followed by fragment sampling, a minimal synchronization2 description uses source stage \`VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT\`, source access \`VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT\`, destination stage \`VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT\`, and destination access \`VK_ACCESS_2_SHADER_SAMPLED_READ_BIT\`. If the image changes from GENERAL storage usage to SHADER_READ_ONLY_OPTIMAL sampled usage, include that layout transition over the correct \`VkImageSubresourceRange\`. Image barrier, pipeline stages and access masks must be legal for the created usage flags, format, queue capabilities and Vulkan version.
+
+\`\`\`cpp
+// Illustrative same-queue Vulkan 1.3 synchronization2 fragment.
+// hdrImage and commandBuffer must be valid objects owned by the caller.
+// This is NOT the tested C++ planner below and is NOT yet a verified device patch.
+VkImageMemoryBarrier2 imageBarrier{
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+    .pNext = nullptr,
+    .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+    .srcAccessMask = VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
+    .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+    .dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT,
+    .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+    .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = hdrImage,
+    .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}
+};
+VkDependencyInfo dependency{
+    .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+    .pNext = nullptr,
+    .dependencyFlags = 0,
+    .memoryBarrierCount = 0,
+    .pMemoryBarriers = nullptr,
+    .bufferMemoryBarrierCount = 0,
+    .pBufferMemoryBarriers = nullptr,
+    .imageMemoryBarrierCount = 1,
+    .pImageMemoryBarriers = &imageBarrier
+};
+vkCmdPipelineBarrier2(commandBuffer, &dependency);
+\`\`\`
+
+The two memory-access masks are chosen for this actual producer/consumer pair; they are not a universal replacement for every pipeline barrier. A WAR hazard with no intervening layout transition may require execution ordering without a new write-availability operation. The queue submission order, by itself, does not establish all execution and visibility dependencies. Broad ALL_COMMANDS barriers may hide missing reasoning and create avoidable GPU stalls; unrealistically narrow stage masks can permit races. When importing a swapchain image, the transition's initial state, acquire synchronization, presentation ownership and last valid completed use also matter. An image initially in UNDEFINED discards its previous contents, so it cannot stand for a history image that must be preserved.
+
+### Queue-family ownership is a two-sided handshake
+
+A texture uploaded through an exclusive-sharing transfer queue may have to move to a separate graphics queue family before sampling. A correct implementation records a release operation on the source queue and a matching acquire on the destination queue, specifying both queue-family indices and the same image subresource ownership transfer. A semaphore signal/wait must order their submissions. A timeline semaphore is a useful orchestration primitive, but only if the engine maintains valid monotonic values, submission scopes and retirement. It is incorrect to substitute one arbitrary pipeline barrier on the destination queue for this handshake. With concurrent-sharing resources, some ownership transfers are unnecessary, but execution and memory ordering are still needed. Device queue family topology must be inspected rather than guessed from the labels "transfer" or "graphics".
+
+The primary verification references are [Vulkan synchronization specification](https://docs.vulkan.org/spec/latest/chapters/synchronization.html), [VkImageMemoryBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageMemoryBarrier2.html), and the [Khronos synchronization2 examples](https://docs.vulkan.org/guide/latest/synchronization_examples.html). The example above is a reasoned specification-shaped fragment, not a claim of being compiled and run against the live Vulkan implementation.
+
+### Metal 4 requires the same intent but different submission and hazard machinery
+
+Metal 4 introduces a new \`MTL4CommandQueue\`, reusable \`MTL4CommandBuffer\`, \`MTL4CommandAllocator\`, \`MTL4ArgumentTable\`, and barrier model. It is not a mechanical rename of older Metal types. Work encoded through \`MTL4CommandQueue\` treats resource hazards as untracked regardless of the legacy resource \`hazardTrackingMode\`; conflicting accesses must be synchronized appropriately, for example a compute write followed by a render fragment read using a producer/consumer barrier. Across queues, events or shared events establish the necessary ordering in the supported scope. The same neutral graph access description can therefore drive a Metal-specific barrier strategy, but copying Vulkan's stage enums, ownership model or barrier structures directly would be conceptually wrong.
+
+The lifetime contract changes too. Metal 4 command buffers are created from a device and submitted through a compatible queue; they can be reused, with command allocator storage rotated across in-flight frames. An allocator cannot be reset merely because the CPU has *submitted* its commands; the GPU users must be finished. Argument tables are a reusable binding path, but bound resources still need suitable residency and ownership. Metal 4 command buffers do not have the same default strong-reference behavior as typical older retained-reference command buffers, so the engine must keep referenced resources alive until actual completion. Mixed legacy and MTL4 queues require explicit cross-queue coordination rather than assuming the legacy tracking policy extends to new queues. Consult Apple's [Metal 4 core API](https://developer.apple.com/documentation/metal/understanding-the-metal-4-core-api) and [Resource synchronization](https://developer.apple.com/documentation/metal/resource-synchronization) for supported devices, current API contracts and correct stage-scoped barrier usage.
+
+### An executable intermediate-state planner: precise witness and precise limitations
+
+Before writing Vulkan and Metal emitters, implement a small *symbolic planner* that exposes all decisions in ordinary C++ data. The following complete C++20 code, also stored as \`tools/labs/resource_state_plan_lab.cpp\`, carries independent state for two texture mips. It outputs an initialization transition for the first write, a paired symbolic release/acquire on queue-family change, an overwrite-after-read transition, and a separate initialization for the second mip. It does not invent a needless transition between two identical read-only accesses. Negative tests reject uninitialized mip reads and unsupported same-pass feedback. The output is a reproducible intermediate contract, **not Vulkan-valid \`VkDependencyInfo\` emission, not Metal 4 encoding, and not GPU verification**.
+
+\`\`\`cpp
+// C++20. Symbolic resource hazards: NOT valid Vulkan barrier emission.
+// Run: c++ -std=c++20 -Wall -Wextra -Werror -pedantic -O2 resource_state_plan_lab.cpp -o planner && ./planner
+#include <cstddef>
+#include <iostream>
+#include <map>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+enum class Queue { Transfer, Graphics };
+enum class Stage { Transfer, Compute, Fragment, ColorOutput };
+enum class Access { Read, Write };
+enum class Layout { Undefined, TransferDst, ShaderRead, ColorAttachment };
+
+struct Key {
+    std::string image;
+    unsigned mip = 0, layer = 0;
+    bool operator<(const Key& rhs) const {
+        return std::tie(image, mip, layer) < std::tie(rhs.image, rhs.mip, rhs.layer);
+    }
+};
+struct Image {
+    std::string name;
+    unsigned mips=1, layers=1;
+    bool imported=false;
+    Layout initial=Layout::Undefined;
+    Queue owner=Queue::Graphics;
+};
+struct Use { Key key; Queue queue; Stage stage; Access access; Layout layout; };
+struct Pass { std::string name; std::vector<Use> uses; };
+enum class Kind { Initialize, SameQueue, Release, Acquire };
+struct Transition {
+    Kind kind;
+    std::size_t before, after; Key key;
+    Queue from, to; Layout oldLayout, newLayout;
+    std::set<Stage> producerStages;
+    Stage consumerStage;
+    bool memoryWrite;
+    unsigned handoff=0;
+};
+struct State {
+    bool initialized=false;
+    Layout layout=Layout::Undefined;
+    Queue owner=Queue::Graphics;
+    std::size_t previousPass=0;
+    bool priorWrite=false;
+    std::set<Stage> readers, writers;
+};
+void require(bool ok,const std::string& why) {
+    if(!ok) throw std::runtime_error(why);
+}
+std::vector<Transition> plan(const std::vector<Image>& images,
+                             const std::vector<Pass>& passes) {
+    std::map<Key, State> states; // independent state for every mip/layer
+    for(const Image& image:images) {
+        require(!image.name.empty() && image.mips>0 && image.layers>0,
+                "invalid image declaration");
+        for(unsigned m=0;m<image.mips;++m) for(unsigned l=0;l<image.layers;++l) {
+            Key key{image.name,m,l};
+            State state;
+            state.initialized=image.imported;
+            state.layout=image.imported?image.initial:Layout::Undefined;
+            state.owner=image.owner;
+            require(states.emplace(key,state).second,"duplicate image");
+        }
+    }
+    std::vector<Transition> result;
+    unsigned nextHandoff=1;
+    for(std::size_t i=0;i<passes.size();++i) {
+        require(!passes[i].name.empty(),"unnamed pass");
+        std::set<Key> inPass;
+        for(const Use& use:passes[i].uses) {
+            auto it=states.find(use.key);
+            require(it!=states.end(),"unknown image, mip or layer");
+            require(inPass.insert(use.key).second,
+                    "same-subresource feedback needs richer pass declarations");
+            require(use.layout!=Layout::Undefined,"cannot access undefined layout");
+            if(use.layout==Layout::TransferDst)
+                require(use.stage==Stage::Transfer && use.access==Access::Write,
+                        "transfer destination misuse");
+            if(use.layout==Layout::ColorAttachment)
+                require(use.stage==Stage::ColorOutput && use.access==Access::Write,
+                        "color output misuse");
+            if(use.layout==Layout::ShaderRead)
+                require(use.access==Access::Read &&
+                       (use.stage==Stage::Fragment || use.stage==Stage::Compute),
+                        "shader sampled read misuse");
+            State& state=it->second;
+            require(state.initialized || use.access==Access::Write,
+                    "uninitialized read");
+            std::set<Stage> producers=state.readers;
+            producers.insert(state.writers.begin(),state.writers.end());
+            if(!state.initialized) {
+                // First write establishes one subresource's initialized state.
+                result.push_back({Kind::Initialize,i,i,use.key,
+                                  use.queue,use.queue,Layout::Undefined,
+                                  use.layout,{},use.stage,false,0});
+            } else if(state.owner!=use.queue) {
+                const unsigned handoff=nextHandoff++;
+                // Symbolic release/acquire pair. Real Vulkan requires actual
+                // VkImageMemoryBarrier2 on each queue + matching submission
+                // semaphore ordering and correct scope/layout legality.
+                result.push_back({Kind::Release,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,handoff});
+                result.push_back({Kind::Acquire,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,handoff});
+            } else if(state.layout!=use.layout ||
+                      state.priorWrite || use.access==Access::Write) {
+                // Consecutive read-only operations at identical layout and
+                // queue intentionally do not create a new transition.
+                result.push_back({Kind::SameQueue,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,0});
+            }
+            if(use.access==Access::Write) {
+                state.readers.clear();
+                state.writers={use.stage};
+            } else {
+                state.readers.insert(use.stage);
+            }
+            state.priorWrite=(use.access==Access::Write);
+            state.previousPass=i;
+            state.initialized=true;
+            state.layout=use.layout;
+            state.owner=use.queue;
+        }
+    }
+    return result;
+}
+int main() {
+    const Key mip0{"hdr",0,0},mip1{"hdr",1,0};
+    const std::vector<Image> images{
+        {"hdr",2,1,false,Layout::Undefined,Queue::Graphics}
+    };
+    const auto use=[](Key key,Queue q,Stage s,Access a,Layout l) {
+        return Use{key,q,s,a,l};
+    };
+    const auto transitions=plan(images,{
+        {"upload0",{use(mip0,Queue::Transfer,Stage::Transfer,Access::Write,Layout::TransferDst)}},
+        {"sample0",{use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead)}},
+        {"sample0-again",{use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead)}},
+        {"overwrite0",{use(mip0,Queue::Graphics,Stage::ColorOutput,Access::Write,Layout::ColorAttachment)}},
+        {"upload1",{use(mip1,Queue::Transfer,Stage::Transfer,Access::Write,Layout::TransferDst)}}
+    });
+    require(transitions.size()==5,"unexpected transition count");
+    require(transitions[0].kind==Kind::Initialize,"missing first-write initialization");
+    require(transitions[1].kind==Kind::Release &&
+            transitions[2].kind==Kind::Acquire,"missing ownership pair");
+    require(transitions[1].handoff==transitions[2].handoff,
+            "release/acquire handoff IDs differ");
+    require(transitions[3].kind==Kind::SameQueue &&
+            transitions[3].after==3,"write-after-read transition missing");
+    require(transitions[4].kind==Kind::Initialize &&
+            transitions[4].key.mip==1,"mip isolation violated");
+    bool rejected=false;
+    try {
+        (void)plan(images,{{"bad",{use(mip1,Queue::Graphics,Stage::Fragment,
+                                     Access::Read,Layout::ShaderRead)}}});
+    } catch(const std::runtime_error&) {rejected=true;}
+    require(rejected,"read of uninitialized mip accepted");
+    rejected=false;
+    try {
+        (void)plan(images,{{"feedback",{
+            use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead),
+            use(mip0,Queue::Graphics,Stage::ColorOutput,Access::Write,Layout::ColorAttachment)
+        }}});
+    } catch(const std::runtime_error&) {rejected=true;}
+    require(rejected,"ambiguous same-pass feedback accepted");
+    std::cout<<"planned="<<transitions.size()
+             <<" symbolic transitions; ownership pair, mip isolation and negatives PASS\n";
+}
+\`\`\`
+
+The expected example has five symbolic transitions. It is important to explain why there are five rather than simply assert that the test passed: upload mip 0 initializes that mip; graphics sampling after a transfer-queue upload requires a release/acquire pair; a second graphics read does not need an additional read/read transition; a later color write must wait for the earlier readers; and upload of mip 1 initializes that independently. The code records a handoff identifier for the paired queue operations, but does **not** yet submit a semaphore, validate stage-mask legality, handle depth/stencil aspects, buffer intervals, transient aliasing, host visibility, device loss, physical resource retirement, or live Kairo/Maveb integration. Consequently this is reconstruction-level evidence only for the symbolic planner.
+
+The next genuine completion gate is a device-backed emitter: use this intent to produce \`VkImageMemoryBarrier2\`/\`VkBufferMemoryBarrier2\` records and matching submission waits, test read/write/layout/mip/ownership cases with Vulkan synchronization validation and capture, then implement the equivalent Metal 4 adapter with argument-table residency and per-frame allocator reuse on a supported device. Report negative validation cases and performance changes. Only then can this portion of the backend claim independent verification. The following backend abstraction section now begins from a fully motivated boundary: *share the intent and invariants, not invented interchangeable native APIs*.
+
 ## Compile renderer intent into backend work
 
 ### + M144
