@@ -1,0 +1,29 @@
+name: Continuous volume executable source agreement
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/check_continuous_code_sync.py'
+      - '.github/workflows/continuous-volume-sync.yml'
+  pull_request:
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/check_continuous_code_sync.py'
+      - '.github/workflows/continuous-volume-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  embedded-code-and-delimiters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare all six embedded C++ labs and formatting boundaries
+        run: python3 tools/check_continuous_code_sync.py
