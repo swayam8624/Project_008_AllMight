@@ -98073,7 +98073,7 @@ The companion lab uses only owned contiguous storage because it is the smallest 
 
 ### Overflow is part of the tensor contract
 
-Before allocating (\prod d_i) elements, the product must be checked for integer overflow. Otherwise a malicious or corrupted model can request a shape whose product wraps to a small allocation and then drives out-of-bounds indexing. The same rule applies when converting element counts to byte counts.
+Before allocating $\prod_i d_i$ elements, the product must be checked for integer overflow. Otherwise a malicious or corrupted model can request a shape whose product wraps to a small allocation and then drives out-of-bounds indexing. The same rule applies when converting element counts to byte counts.
 
 The correct order is: validate rank and dimensions, checked-multiply dimensions, checked-multiply by element size, validate against runtime limits, then allocate or map.
 
@@ -98084,7 +98084,7 @@ Broadcasting aligns dimensions from the trailing side. Two aligned dimensions ar
 Thus
 
 $$
-(4,1,8)quad\text{and}quad(1,7,8)
+(4,1,8)\quad\text{and}\quad(1,7,8)
 $$
 
 broadcast to
@@ -98172,7 +98172,7 @@ A loader should conceptually run in four stages.
 
 **Stage D — publication.** Only after the entire directory is coherent should the runtime publish tensor views backed by an owned mapping or buffer.
 
-The lab parses only the fixed header. That is intentional: a \partial parser should state its boundary rather than silently look like a full GGUF implementation. A future production-grade parser must follow the authoritative `ggml_type` definitions because type codes and block layouts evolve.
+The lab parses only the fixed header. That is intentional: a partial parser should state its boundary rather than silently look like a full GGUF implementation. A future production-grade parser must follow the authoritative `ggml_type` definitions because type codes and block layouts evolve.
 
 ## 6. Memory mapping changes lifetime, not the mathematical tensor
 
@@ -98329,7 +98329,7 @@ The complete mental trace should be reconstructable as follows.
 
 A GGUF file is opened or mapped. The loader validates its header and metadata. Tensor descriptors are checked for shape, type, alignment and bounds. Quantized weight tensors remain compressed in storage.
 
-The tokenizer, which is intentionally outside the current executable lab, maps \text to token IDs. An embedding lookup turns one token ID into a vector. Positional machinery modifies or accompanies that representation according to the architecture.
+The tokenizer, which is intentionally outside the current executable lab, maps text to token IDs. An embedding lookup turns one token ID into a vector. Positional machinery modifies or accompanies that representation according to the architecture.
 
 For each layer, the runtime obtains the required quantized projection weights, runs a dequantizing matvec or other compressed kernel, forms query/key/value vectors, appends the new key/value state to the cache, computes causally masked attention, runs the output projection and feed-forward path, and preserves residual state.
 
@@ -98350,7 +98350,7 @@ The new laboratory establishes a reference layer, not production completion. The
 7. Memory planner with overlapping-lifetime tests and alignment constraints.
 8. Tokenizer implementation and exact round-trip fixtures.
 9. Architecture-specific transformer execution, including positional encoding and normalization.
-10. End-to-\end logits comparison against a trusted runtime on a small public model.
+10. End-to-end-to-end logits comparison against a trusted runtime on a small public model.
 
 The acceptance bar is not “the model produced text.” It is that each layer can be independently tested and disagreements can be localized.
 
@@ -98358,7 +98358,7 @@ The acceptance bar is not “the model produced text.” It is that each layer c
 
 Close the note and answer these from memory.
 
-Why can shape and storage order differ? Derive row-major strides for ((2,3,4)). Why is a broadcast usually a view rather than a copy? Why can quantization make a matvec faster even though it adds arithmetic? What does the GGUF tensor offset measure relative to? Why must an importer distinguish attributes from runtime values? What invariant does SSA give the internal graph? Why does subtracting the maximum preserve softmax probabilities? Why is the attention score divided by (\sqrt{d_k})? What exactly persists in a KV cache, and what invalidates it? Finally, trace one quantized weight block from mapped file bytes to its contribution to one output logit.
+Why can shape and storage order differ? Derive row-major strides for ((2,3,4)). Why is a broadcast usually a view rather than a copy? Why can quantization make a matvec faster even though it adds arithmetic? What does the GGUF tensor offset measure relative to? Why must an importer distinguish attributes from runtime values? What invariant does SSA give the internal graph? Why does subtracting the maximum preserve softmax probabilities? Why is the attention score divided by $\sqrt{d_k}$? What exactly persists in a KV cache, and what invalidates it? Finally, trace one quantized weight block from mapped file bytes to its contribution to one output logit.
 
 ## Primary specification anchors
 
