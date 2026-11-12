@@ -44,6 +44,26 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compile Metal source to AIR and metallib
         run: |
-          xcrun -sdk macosx metal -Wall -Werror -c             tools/native/metal_compile_smoke.metal -o /tmp/allmight.air
+          xcrun -sdk macosx metal -Wall -Werror -c \
+            tools/native/metal_compile_smoke.metal -o /tmp/allmight.air
           xcrun -sdk macosx metallib /tmp/allmight.air -o /tmp/allmight.metallib
           test -s /tmp/allmight.metallib
+
+      - name: Build and execute Metal runtime witness
+        shell: bash
+        run: |
+          set +e
+          xcrun -sdk macosx clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror \
+            -fobjc-arc -framework Foundation -framework Metal \
+            tools/native/metal_runtime_smoke.mm -o /tmp/metal_runtime_smoke
+          build_status=$?
+          if [[ $build_status -ne 0 ]]; then
+            exit $build_status
+          fi
+          /tmp/metal_runtime_smoke /tmp/allmight.metallib
+          status=$?
+          if [[ $status -eq 77 ]]; then
+            echo "Metal runtime evidence unavailable on this host; compile evidence remains valid."
+            exit 0
+          fi
+          exit $status
