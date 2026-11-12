@@ -50,25 +50,14 @@ def load(path: Path) -> str:
 
 
 def embedded_cpp(volume: str, source: str, path: Path) -> str:
-    # Accept the two Markdown fence styles used by the canonical notes.
-    first_line = source.splitlines()[0]
-    matches = []
-    for fence in ("```", "~~~"):
-        start_marker = fence + "cpp\n" + first_line
-        pos = 0
-        while (pos := volume.find(start_marker, pos)) != -1:
-            begin = pos + len(fence + "cpp\n")
-            end = volume.find("\n" + fence, begin)
-            if end == -1:
-                raise ValueError(f"{path.name}: unclosed embedded cpp block")
-            matches.append(volume[begin:end].rstrip("\n"))
-            pos = end + len(fence)
-    if len(matches) != 1:
+    expected_backtick = chr(96) * 3 + "cpp\n" + source + "\n" + chr(96) * 3
+    expected_tilde = "~~~cpp\n" + source + "\n~~~"
+    count = volume.count(expected_backtick) + volume.count(expected_tilde)
+    if count != 1:
         raise ValueError(
-            f"{path.name}: expected exactly one full cpp code block starting "
-            f"{first_line!r}, found {len(matches)}"
+            f"{path.name}: expected exactly one exact full cpp block, found {count}"
         )
-    return matches[0]
+    return source
 
 
 def verify() -> int:
