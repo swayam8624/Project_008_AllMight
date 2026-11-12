@@ -54,6 +54,8 @@ REQUIRED_ARTIFACTS = [
     "tools/native/metal_runtime_smoke.mm",
     "tools/native/openssl_aes_gcm_smoke.cpp",
     ".github/workflows/security-native-contract.yml",
+    "tools/ml/onnx_contract.py",
+    ".github/workflows/onnx-contract.yml",
     "tools/dcc/blender_contract.py",
     ".github/workflows/blender-dcc-contract.yml",
     "tools/native/metal_compile_smoke.metal",
