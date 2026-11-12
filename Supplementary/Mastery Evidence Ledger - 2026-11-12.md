@@ -38,7 +38,7 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 26 | Advanced real-time rendering | Temporal/shadow/cluster + TAA/SSR/SSAO/volume/particle CPU references | realtime_rendering_reference_lab.cpp, realtime_effects_reference_lab.cpp | production TAA masks/variance clipping, Hi-Z SSR, GTAO, scattering/froxels, GPU particle systems and renderer parity remain |
 | 27 | Meshes/animation | Topology + QEM + rigid-blend reference implemented | mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | optimal QEM/link-condition remeshing and production GPU skinning/import parity remain |
 | 28 | Emulation/OS/network/crypto | Real POSIX/network execution + primitive and native AES-GCM known-answer evidence | emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp, openssl_aes_gcm_smoke.cpp | internet faults, crash durability, nonce/key lifecycle, replay policy, side channels and production security remain |
-| 29 | ML runtime/tensors/compressed inference | Tensor/attention + GGUF metadata/tensor subset references | phase29_ml_runtime_lab.cpp, gguf_metadata_tensor_lab.cpp | full GGUF type catalog/payload, protobuf ONNX/opsets, tokenizer, SIMD/Metal kernels and model parity remain |
+| 29 | ML runtime/tensors/compressed inference | Tensor/attention + GGUF subset + real ONNX protobuf/checker/shape/reference execution | phase29_ml_runtime_lab.cpp, gguf_metadata_tensor_lab.cpp, tools/ml/onnx_contract.py | full GGUF catalog/payload, broad ONNX opsets/control flow/external data, tokenizer, SIMD/Metal kernels and production-model parity remain |
 | 30 | Production/DCC/research/capstone | Host-neutral pipeline + real Blender save/export/re-import host execution | production_pipeline_contract_lab.cpp, tools/dcc/blender_contract.py | Maya/Houdini/Nuke host runs, arbitrary-scene/material/armature parity, render farm/filesystem durability and learner oral mastery remain |
 
 ## What this repair changed
@@ -133,3 +133,10 @@ The latest repair wave closes four more areas that were previously recorded only
 **Authenticated encryption.** `openssl_aes_gcm_smoke.cpp` checks a standard AES-128-GCM known-answer vector through OpenSSL EVP, authenticated round trip, tag and AAD tamper rejection, nonce-sensitive output and discard-on-authentication-failure behavior. The evidence is for the primitive/API contract, not for nonce persistence, replay defense, key management or a complete production protocol.
 
 **DCC execution.** Blender is now exercised as a real host rather than only named in an adapter contract: background Python creates the asset, saves the source scene, exports GLB with logical metadata, validates the binary glTF container, resets the host, re-imports the publication and checks geometry plus identity fields. Maya, Houdini and Nuke remain explicitly unexecuted rather than being promoted by analogy.
+
+
+## ONNX interchange escalation
+
+Phase 29 no longer stops at a hand-modeled SSA graph contract. `tools/ml/onnx_contract.py` creates a real ONNX `ModelProto`, serializes and reloads the protobuf, preserves named initializers and opset metadata, passes the official checker, runs official symbolic shape inference, executes `MatMul → Add → Relu` with the ONNX reference evaluator, compares against an independently computed NumPy result, and requires the official checker to reject a duplicate-output SSA violation.
+
+This proves a bounded interchange/runtime slice, not universal ONNX support. Control-flow subgraphs, external data, arbitrary opsets/operators, custom domains, ONNX Runtime/device lowering, quantized operator kernels and current KairoONNX parity remain separate evidence gates.
