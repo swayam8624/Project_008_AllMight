@@ -67875,6 +67875,150 @@ Specific wording should preserve the source boundaries:
 
 This supplement draws on the completed extracted points only where their linked source-unit text was inspected. The broader corpus contains 457 completed video jobs, 133 completed book jobs, and four book jobs still in progress at the snapshot; this subset is not a full semantic review. The corpus-wide caption gate states that caption word accuracy was not independently compared against audio. Some chosen sources contain ASR-like terminology errors despite being labeled caption files; exact code symbols and API rules should therefore be cross-checked against primary documentation or the actual repository before implementation. No additional caption was fetched in this review, and no live note was edited.
 
+### A GPU-verified frame is also a resource-lifetime proof
+
+The Graphics volume's perspective-interpolation experiment uses a vertex buffer, pipeline, color attachment, submission and readback; the Mathematics volume supplies the exact reference value. Neither establishes correctness if the engine rewrites the vertex data before the GPU has read it or destroys the attachment while a command buffer still refers to it. Numerical correctness, GPU memory visibility and backing-object lifetime are three different promises. A barrier may order accesses without extending object lifetime; keeping an allocation alive does not automatically make a GPU write visible to a CPU read.
+
+Give each submitted unit of GPU work a monotonically increasing completion value \(s\). For every backing allocation, track the largest submitted serial that may reference it. The retirement invariant is
+
+\[
+\operatorname{completedSerial}\geq\operatorname{lastSubmittedUse}
+\quad\Longrightarrow\quad
+\text{reclamation may proceed}.
+\]
+
+The converse is equally important: before that condition, destruction is forbidden. Logical identity has another lifetime: a slot and generation pair names one incarnation of a resource. Reassigning slot 17 must change its generation, so an old handle does not silently bind a new object. Logical invalidation is immediate; physical reclamation can be delayed. The following C++20 program models exactly those transitions. It deliberately uses CPU allocations to permit deterministic testing without assuming a Vulkan or Metal device is available.
+
+\`\`\`cpp
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <vector>
+
+struct Handle {
+    std::size_t slot;
+    std::uint64_t generation;
+};
+
+class ResourceTable {
+    struct Slot {
+        std::uint64_t generation{1};
+        bool live{false};
+        std::uint64_t lastUse{0};
+        std::unique_ptr<std::vector<std::byte>> data;
+    };
+    struct Retired {
+        std::uint64_t lastUse;
+        std::unique_ptr<std::vector<std::byte>> data;
+    };
+    std::vector<Slot> slots_;
+    std::vector<Retired> retired_;
+    std::uint64_t submitted_{0};
+    std::uint64_t completed_{0};
+
+    Slot& require(Handle h) {
+        if (h.slot >= slots_.size())
+            throw std::out_of_range("Invalid resource slot");
+        Slot& slot = slots_[h.slot];
+        if (!slot.live || slot.generation != h.generation)
+            throw std::runtime_error("Stale generation");
+        return slot;
+    }
+
+public:
+    Handle create(std::size_t byteCount) {
+        std::size_t i = 0;
+        while (i < slots_.size() && slots_[i].live) ++i;
+        if (i == slots_.size()) slots_.emplace_back();
+        Slot& slot = slots_[i];
+        if (slot.generation == std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("Generation exhausted");
+        slot.live = true;
+        slot.lastUse = 0;
+        slot.data = std::make_unique<std::vector<std::byte>>(byteCount);
+        return {i, slot.generation};
+    }
+
+    void submitted(std::uint64_t value) {
+        if (value <= submitted_) throw std::logic_error("Non-monotonic submission");
+        submitted_ = value;
+    }
+
+    void used(Handle h, std::uint64_t submission) {
+        Slot& slot = require(h);
+        if (submission == 0 || submission > submitted_ ||
+            submission <= completed_)
+            throw std::logic_error("Use must name unfinished submitted work");
+        slot.lastUse = std::max(slot.lastUse, submission);
+    }
+
+    void release(Handle h) {
+        Slot& slot = require(h);
+        slot.live = false;                    // Invalidate logical identity immediately.
+        ++slot.generation;                    // A stale handle cannot name the replacement.
+        if (slot.lastUse > completed_) {
+            retired_.push_back({slot.lastUse, std::move(slot.data)});
+        } else {
+            slot.data.reset();                // No unfinished submitted work can use it.
+        }
+        slot.lastUse = 0;
+    }
+
+    void complete(std::uint64_t value) {
+        if (value < completed_ || value > submitted_)
+            throw std::logic_error("Invalid completed serial");
+        completed_ = value;
+        std::erase_if(retired_, [value](const Retired& item) {
+            return item.lastUse <= value;     // Destruction now has a completion proof.
+        });
+    }
+
+    std::size_t pending() const { return retired_.size(); }
+};
+
+int main() {
+    ResourceTable table;
+    Handle old = table.create(4096);
+    table.submitted(1);
+    table.used(old, 1);
+    table.release(old);
+    assert(table.pending() == 1);            // Released but not GPU-safe to reclaim.
+
+    Handle replacement = table.create(8192);
+    assert(replacement.slot == old.slot);
+    assert(replacement.generation != old.generation);
+    try {
+        table.used(old, 1);
+        assert(false && "A stale handle was accepted");
+    } catch (const std::runtime_error&) {
+        // The expected failure is a meaningful state transition, not a GPU fault.
+    }
+
+    table.submitted(2);
+    table.used(replacement, 2);
+    table.complete(1);
+    assert(table.pending() == 0);            // Old allocation released after submission 1.
+    table.release(replacement);
+    assert(table.pending() == 1);            // New allocation still used by submission 2.
+    table.complete(2);
+    assert(table.pending() == 0);
+}
+\`\`\`
+
+Compile as C++20 with warnings and run with assertions enabled. The test is meaningful because the replacement immediately reuses the logical slot while receiving a different backing allocation. The old allocation remains in the retirement queue and survives until submission 1 is reported complete. This program is an ownership oracle, not a Vulkan/Metal backend. It assumes serialized table operations, and that commands referencing a handle have already been submitted and their last-use serial recorded before the handle is released. An as-yet-unsubmitted recorded command referring to a released handle violates a separate command-recording contract; a real engine must validate or retain those references through submission.
+
+On Vulkan, a completion value is sufficient only if its synchronization chain covers every relevant queue; signaling on an unrelated queue proves nothing about another queue's accesses. A timeline semaphore, fence, descriptor generation, layout transition and host-cache operation serve different purposes. On Metal, completed command buffers or appropriately coordinated shared events can provide GPU completion evidence, while texture and buffer ownership, blit dependencies, synchronization and CPU mapping still require explicit design. Neither API automatically makes descriptor-table reuse safe merely because an older frame was presented.
+
+The render graph must record each resource version's producer, consumers, read/write access, applicable transitions and final submitted use. It can alias physical storage inside a frame only when lifetimes do not overlap and ordered execution makes reuse legal. Across simultaneously in-flight frames, graph-local pass indices are not enough: the allocator must know which GPU submissions have actually finished. A new frame's uniform data must not overwrite an old frame's still-live range; use frame-specific regions or a verified ring-buffer allocation scheme.
+
+The test readback sequence closes the whole causal story. Write known clip-space vertices into a stable upload allocation; submit the draw; issue an appropriate image-to-readback copy with its required state and visibility transitions; wait for completion of the submission chain containing that copy; perform host visibility or mapping operations required by the backend; then read linear-channel values and compare with the Mathematics oracle. Only after the final referencing submission completes may the source, attachment and readback allocations be retired. If the pixel disagrees, test lifetime, synchronization, viewport conversion, coverage ownership and shader interpolation independently before changing a mathematically derived formula.
+
+To prove mastery, deliberately disable deferred reclamation and predict the use-after-free risk; then restore it and omit the readback transition to distinguish safe lifetime from correct visibility. Next reuse a logical slot and show the generation check rejects the stale handle. Finally allow two frames in flight and show exactly which completed serial makes each old allocation reclaimable. None of these tests should be passed by assuming that the CPU having finished a command-recording function means that the GPU is finished.
+
 ## Reconstruct the working loop and test its contracts
 
 The complete small program below gives several of these ideas one inspectable executable. Then use the milestone sequences as reconstruction exercises rather than a mandate to copy a single engine.
