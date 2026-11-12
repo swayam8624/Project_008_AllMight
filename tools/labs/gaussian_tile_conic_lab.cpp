@@ -96,12 +96,22 @@ void test_tiles_and_order(){
                 (rec[i-1].tile==rec[i].tile && rec[i-1].depth<=rec[i].depth),
                 "records not tile/depth sorted");
     }
-    bool saw_near_before_far=false;
-    for(std::size_t i=1;i<rec.size();++i){
-        if(rec[i-1].tile==rec[i].tile && rec[i-1].id==2 && rec[i].id==7)
-            saw_near_before_far=true;
+    bool shared_tile_checked=false;
+    for(std::size_t begin=0;begin<rec.size();){
+        std::size_t end=begin+1;
+        while(end<rec.size() && rec[end].tile==rec[begin].tile) ++end;
+        std::size_t near_pos=end, far_pos=end;
+        for(std::size_t i=begin;i<end;++i){
+            if(rec[i].id==2) near_pos=i;
+            if(rec[i].id==7) far_pos=i;
+        }
+        if(near_pos<end && far_pos<end){
+            require(near_pos<far_pos,"front splat did not sort before farther splat in shared tile");
+            shared_tile_checked=true;
+        }
+        begin=end;
     }
-    require(saw_near_before_far,"front splat did not sort before farther splat in shared tile");
+    require(shared_tile_checked,"test scene did not produce a shared tile for near/far splats");
 }
 
 void test_compositing(){
