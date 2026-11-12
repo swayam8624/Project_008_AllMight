@@ -30,3 +30,24 @@ Write and decode four bytes, including leading zero bytes.
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]]
+
+## Reconstruction depth
+
+Little-endian byte order stores the least-significant byte first. The 32-bit integer
+
+$$
+0x12345678
+$$
+
+appears in increasing memory addresses as
+
+$$
+78\;56\;34\;12.
+$$
+
+That layout is useful only after the interpretation contract is known: the same four bytes could be part of an integer, float, packed header or text. Endianness never supplies the type by itself.
+
+Most contemporary desktop CPUs are little-endian, but that is not permission to encode a durable binary format with raw object bytes. A format needs explicit field widths, byte order, versioning and bounds checks. If a file is defined little-endian, decode each field as little-endian even on a little-endian host; the explicit operation documents the contract and preserves portability.
+
+Tests should use byte arrays whose numeric values are obvious, include unaligned offsets, and verify both read and write paths. For floating point, byte order and IEEE-754 representation are separate assumptions.
+
