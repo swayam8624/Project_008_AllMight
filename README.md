@@ -1,5 +1,14 @@
 # Graphics and Engine Mastery Notes
 
+
+## Mastery-depth repair layer — 12 November 2026
+
+The current repair branch adds a machine-checkable [[mastery/mastery_ledger.json|M001–M180 mastery evidence ledger]] and deliberately separates **canonical teaching**, **executable reference**, **native backend evidence**, **current production-repository evidence**, and **source verification**. A heading, imported source body, or passing CPU oracle no longer counts as proof of the other tiers.
+
+The consolidation validators have been repaired to operate on the actual three-master layout instead of requiring retired Continuous Notes files. The weakest explicit curriculum zones now have new reconstruction material: [[Supplementary/Phase 29 - ML Runtime Reconstruction|Phase 29 ML runtime]] with `tools/labs/phase29_ml_runtime_lab.cpp`, and [[Supplementary/Phase 30 - DCC Production and Research Reconstruction|Phase 30 production/research]] with `tools/labs/phase30_pipeline_contract_lab.cpp`. New executable witnesses also cover generational sparse-set ECS, median/binned-SAH BVHs, CPU rasterization and perspective interpolation, GGX/MIS numerical sanity, and mesh topology/QEM.
+
+These additions are intentionally honest about their boundaries. CPU reference laboratories do not prove Vulkan/Metal memory visibility, DCC-host integration, current Kairo/Maveb/Vulkax/Nanoquant behavior, or complete external-source verification. Those remain separate evidence fields in the mastery ledger rather than hidden behind the word “complete.”
+
 A growing, self-contained teaching library for the 3,000-part curriculum, organized into continuous subject volumes and reusable cumulative companions.
 
 GitHub repository: `Project_008_AllMight`.
