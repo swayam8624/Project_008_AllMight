@@ -58,3 +58,10 @@ Clipping and perspective-correct interpolation preserve projective geometry, whi
 ## Worked clip-plane trace beside the shader explanation
 
 For clip endpoints $(0,0,0,1)$ and $(6,0,0,2)$, the right-plane intersection uses homogeneous edge parameter $1/5$; interpolating the already divided endpoints would use $1/3$. [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Clip coordinates are not normalized device coordinates|The worked trace and pipeline figure]] also explain negative fourth components, the zero-divisor limit and declared depth conventions. This is used by the shader-stage teaching before program compilation and linking are discussed.
+
+## Executable raster-state continuation
+
+The project now carries two complementary CPU witnesses. `tools/labs/raster_reference_lab.cpp` owns edge coverage, barycentrics, perspective-correct interpolation and depth ordering. `tools/labs/raster_pipeline_state_lab.cpp` continues the same pipeline through a homogeneous clip-plane intersection, an explicit four-sample coverage mask, stencil compare/pass update and premultiplied source-over blending.
+
+That separation is deliberate: clipping happens in homogeneous coordinates before divide-by-$w$; sample ownership happens after screen mapping; stencil/depth are stateful per-fragment/sample decisions; blending combines a surviving source with an existing destination. Treating all of them as “rasterization” without preserving these boundaries makes debugging nearly impossible.
+
