@@ -342,6 +342,137 @@ The important conceptual consequence is immediate: **vectors answer what motion 
 
 This development uses the reciprocal-vector treatment in *Mathematical Methods for Physics and Engineering*, physical PDF page 264, together with the inner-product discussion on pages 250–251. The numerical example and teaching sequence above are original reconstructions.
 
+### A coordinate frame becomes an implementable service: reconstruct, invert, reject, and measure
+
+Our sheared panel has already shown that a vector is not its coordinate list. To implement that statement in an engine, we need two distinct operations. **Construction** takes local coordinates and produces a world-space position. **Recovery** starts with a measured world point and determines its local coordinates. If these are confused, imported mesh vertices, UV frames, hit locations and moving-object attachments drift or point to the wrong feature even when every multiplication has the right dimensions.
+
+Fix a two-dimensional affine frame consisting of an origin \(o\) and two ordered world-space displacement axes \(a,b\), each measured in metres. Local coefficients \(u,v\) count how many steps to take along each axis; they are dimensionless if each axis represents a world displacement per unit local coordinate. The geometric definition is
+
+\[
+p=o+ua+vb,\qquad d=p-o,\qquad
+B=\begin{bmatrix}a_x&b_x\\a_y&b_y\end{bmatrix},\qquad
+B\begin{bmatrix}u\\v\end{bmatrix}=d.
+\]
+
+The expression \(p-o\) is legitimate point subtraction and produces a displacement. Adding \(a\) and \(b\) to the origin produces another point. Changing the origin alone is translation; changing the axes changes both the basis and the metric seen by coordinate lists. This distinction is why transforming a *direction* must not add translation, while transforming a *point* does.
+
+Recovery is a linear solve. Cross the equation \(d=ua+vb\) with \(b\): because \(b\times b=0\), we obtain \(d\times b=u(a\times b)\). Similarly \(a\times d=v(a\times b)\). Thus
+
+\[
+u=\frac{d_xb_y-d_yb_x}{a_xb_y-a_yb_x},
+\qquad
+v=\frac{a_xd_y-a_yd_x}{a_xb_y-a_yb_x}.
+\]
+
+Here the 2D cross product returns a signed **area**, not a 3D direction. The common denominator is \(\det B\). If it vanishes, the axes are linearly dependent and infinitely many or no coordinate pairs may explain the observation. A small *relative* determinant is more subtle: the frame is technically invertible but tiny measurement errors can cause large coefficient errors. The signed quantity \(\det B/(\|a\|\|b\|)=\sin\theta\) measures the angle between the axes independently of their lengths. A numerical implementation should reject an axis of zero length, reject nonfinite data, and define a documented conditioning policy. The threshold below is **an application policy**, not the mathematical definition of singularity.
+
+Our panel frame uses \(o=(5,-1)\,\mathrm m\), \(a=(2,0)\,\mathrm m\), and \(b=(1,3)\,\mathrm m\). A local point \(q=(2,-1)\) becomes \(p=(5,-1)+2(2,0)-(1,3)=(8,-4)\,\mathrm m\). Starting instead with \(p\), the displacement \(d=(3,-3)\) gives \(\det B=6\), \(u=12/6=2\), and \(v=-6/6=-1\). Both directions agree, and the intermediate values let us distinguish a basis-order bug from a rounding bug.
+
+A coordinate list is **not** automatically a Euclidean ruler. For our axes, \(G=B^\mathsf{T}B=\left[\begin{smallmatrix}4&2\\2&10\end{smallmatrix}\right]\). The world squared distance of a local difference \(q\) is \(q^\mathsf{T}Gq\), giving \(16-8+10=18\,\mathrm m^2\) for \(q=(2,-1)\). Its ordinary coordinate sum of squares is only \(5\), which has no claim to be the physical squared distance. This same metric issue reappears in collision margins, gradient descent with nonorthogonal coordinates, texel footprints and surface parameterization.
+
+The following **complete C++20 laboratory** implements both operations and makes the failure contract visible. It uses \(\mathrm{hypot}\) to compute axis lengths, divides each axis by its own norm before forming the determinant, and checks nonfinite input and output. These scaling steps reduce some intermediate overflow hazards; they do not guarantee accuracy for all floating-point exponents or for extremely ill-conditioned frames. Production code should expose error diagnostics, coordinate-space types and domain-specific tolerances. A \(\texttt{Vec2}\) of two doubles is a host-side mathematical record, **not** a portable shader ABI contract.
+
+```cpp
+#include <algorithm>
+#include <stdexcept>
+#include <cmath>
+#include <limits>
+#include <optional>
+
+// World-space positions and basis axes are measured in metres.
+// Local coefficients are dimensionless multiples of the chosen axes.
+struct Vec2 {
+    double x{};
+    double y{};
+};
+
+struct Frame2 {
+    Vec2 origin; // World-space location of local (0,0).
+    Vec2 axis0;  // World displacement made by one local-X step.
+    Vec2 axis1;  // World displacement made by one local-Y step.
+};
+
+constexpr Vec2 operator+(Vec2 a, Vec2 b) { return {a.x+b.x, a.y+b.y}; }
+constexpr Vec2 operator-(Vec2 a, Vec2 b) { return {a.x-b.x, a.y-b.y}; }
+constexpr Vec2 operator/(Vec2 a, double s) { return {a.x/s, a.y/s}; }
+constexpr double cross(Vec2 a, Vec2 b) { return a.x*b.y - a.y*b.x; }
+bool finite(Vec2 p) { return std::isfinite(p.x) && std::isfinite(p.y); }
+
+// Active construction: build a world point from an origin and two basis axes.
+Vec2 to_world(const Frame2& f, Vec2 local) {
+    return {
+        std::fma(local.y, f.axis1.x, std::fma(local.x, f.axis0.x, f.origin.x)),
+        std::fma(local.y, f.axis1.y, std::fma(local.x, f.axis0.y, f.origin.y))
+    };
+}
+
+// Passive coordinate recovery. No inverse matrix is constructed in memory;
+// the two signed-area ratios are Cramer's rule applied to a 2x2 system.
+std::optional<Vec2> to_local(const Frame2& f, Vec2 world) {
+    if (!finite(world) || !finite(f.origin) ||
+        !finite(f.axis0) || !finite(f.axis1)) return std::nullopt;
+
+    const double n0 = std::hypot(f.axis0.x, f.axis0.y);
+    const double n1 = std::hypot(f.axis1.x, f.axis1.y);
+    if (!(std::isfinite(n0) && std::isfinite(n1)) || n0 == 0 || n1 == 0)
+        return std::nullopt;
+
+    // Sine of the signed angle between unit basis axes; independent of scale.
+    const Vec2 a = f.axis0 / n0;
+    const Vec2 b = f.axis1 / n1;
+    const double signed_sin = cross(a, b);
+    constexpr double min_sin = 64 * std::numeric_limits<double>::epsilon();
+    if (!std::isfinite(signed_sin) || std::abs(signed_sin) <= min_sin)
+        return std::nullopt; // Exact or numerically ill-conditioned basis.
+
+    const Vec2 displacement = world - f.origin;
+    if (!finite(displacement)) return std::nullopt;
+
+    // Coordinate i is the oriented area ratio. Scale BEFORE multiplying
+    // to avoid an avoidable overflow in cross(axis0, axis1).
+    const Vec2 local{
+        cross(displacement / n0, b) / signed_sin,
+        cross(a, displacement / n1) / signed_sin
+    };
+    if (!finite(local)) return std::nullopt;
+    return local;
+}
+
+bool near(double a, double b, double tol = 1e-12) {
+    return std::abs(a-b) <= tol * std::max({1.0, std::abs(a), std::abs(b)});
+}
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+int main() {
+    const Frame2 panel{{5,-1}, {2,0}, {1,3}};
+    const Vec2 target{2,-1};
+    const Vec2 measured = to_world(panel, target);
+    require(near(measured.x, 8) && near(measured.y, -4), "World coordinate mapping failed");
+
+    const auto recovered = to_local(panel, measured);
+    require(recovered && near(recovered->x, 2) && near(recovered->y, -1), "Coordinate recovery failed");
+
+    // The basis Gram metric measures actual world length in local coordinates.
+    // G = [[4,2],[2,10]]; q = [2,-1] => q^T G q = 18 m^2.
+    const double g00 = 4, g01 = 2, g11 = 10;
+    const double squared_length =
+        g00*target.x*target.x + 2*g01*target.x*target.y + g11*target.y*target.y;
+    require(near(squared_length, 18), "Gram metric length mismatch");
+
+    const Frame2 nearly_parallel{{0,0}, {1,0}, {1,1e-15}};
+    require(!to_local(nearly_parallel, {1,2}), "Ill-conditioned basis not rejected");
+    require(!to_local(panel, {std::numeric_limits<double>::infinity(),0}), "Nonfinite input not rejected");
+}
+```
+
+**Execution and failure reconstruction.** Compile with `clang++ -std=c++20 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined tools/labs/basis_measurement_lab.cpp -o /tmp/basis_lab && /tmp/basis_lab`. The exact program was compiled and run with Clang 17 under AddressSanitizer and UndefinedBehaviorSanitizer in the local verification environment. Tests establish the round trip for one nonorthogonal frame, the Gram-metric calculation, rejection of one nearly parallel frame and rejection of nonfinite input. They do **not** prove general overflow immunity, perfect conditioning, GPU agreement, or the correctness of a 3D inverse. To reconstruct rather than memorize, derive the signed-area ratios, prove the metric identity by expanding \((Bq)\cdot(Bq)\), then change the basis to left-handed and verify the signs still recover the correct local point.
+
+This example is an original implementation bridge informed by the reciprocal-basis, inner-product and matrix treatments in the supplied *Mathematical Methods for Physics and Engineering*. Its implementation and test claims refer to this stand-alone program, not to an uninspected production Kairo source file.
+
+
 ### G1 - One movement, two descriptions
 
 ```mermaid
