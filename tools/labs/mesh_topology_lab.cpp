@@ -1,4 +1,5 @@
 // PROJECTALLMIGHT Phase 27 witness: half-edge pairing, manifold/boundary checks, and Euler characteristic.
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <map>
