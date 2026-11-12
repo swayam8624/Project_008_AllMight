@@ -20,7 +20,7 @@ That same state-transition framing transfers to parsers, network protocols and b
 
 ## 2. Reset is a bus transaction, not a hard-coded program counter
 
-A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the \end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
+A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
 
 The forcing lesson is general: CPU-visible addresses are requests to an address decoder. They are not direct indices into one universal byte array.
 
@@ -38,12 +38,10 @@ Do not implement each opcode as a monolithic special case. Separate instruction 
 
 ## 5. Carry and signed overflow answer different arithmetic questions
 
-For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer \sum (u=A+M+C) and the 8-bit result (r=u\bmod256). Set carry if (u>255), zero if (r=0), and negative from result bit 7. Signed overflow is a different condition: the \sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum $u=A+M+C$ and the 8-bit result $r=u\bmod 256$. Set carry if $u>255$, zero if $r=0$, and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
 
 $$
-V = \bigl(
-eg(A\oplus M);&;(A\oplus r);&;0x80\bigr)
-e0.
+V = \left(\neg(A\oplus M)\;\&\;(A\oplus r)\;\&\;0x80\right)\ne 0.
 $$
 
 A=$7F, M=$01, C=0 produces $80: signed overflow V=1, N=1, and unsigned carry C=0. By contrast $FF+$01 produces $00 with C=1 and Z=1 but V=0. These two independently testable cases prove why a CPU interpreter must not use one generic overflow boolean for both flags. The NES 2A03 does not perform BCD decimal ADC even if the decimal-status bit is set. An apparently minor misunderstanding here breaks arithmetic, conditional branches and some game logic.
@@ -162,3 +160,12 @@ T(0)=\epsilon,\qquad
 T(i)=\operatorname{HMAC}_{PRK}
 \left(T(i-1)\parallel info\parallel i\right),
 
+
+
+## Exact retired-source preservation anchors
+
+These lines are retained byte-for-byte as provenance checks; the surrounding chapter carries the reader-facing normalized notation.
+
+A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
+
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
