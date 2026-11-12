@@ -77,7 +77,7 @@ Suppose compute writes mip 0 of a luminance pyramid while graphics samples mip 1
 
 A per-subresource tracker can keep mip 0 and mip 1 state separate.
 
-But precision increases bookkeeping complexity. Range overlap, partial transitions, whole-image views and aliasing must all be correct. The safest development route is:
+But precision increases bookkeeping complexity. Range overlap, \partial transitions, whole-image views and aliasing must all be correct. The safest development route is:
 
 single whole-resource state
 → exact subresource tuple oracle
@@ -126,10 +126,10 @@ TAA history, exposure history and temporal denoisers are not ordinary transients
 
 Model them as versions:
 
-[
-H_n ightarrow 	ext{read by frame }n+1,qquad
-H_{n+1}ightarrow 	ext{written by frame }n+1.
-]
+$$
+H_n \rightarrow \text{read by frame }n+1,qquad
+H_{n+1}\rightarrow \text{written by frame }n+1.
+$$
 
 The graph must distinguish “previous history” from “next history” even if a backend ping-pongs between two physical images. Resize, format changes, camera cuts or content-version changes can invalidate the semantic history independently of GPU synchronization.
 
@@ -143,7 +143,7 @@ A native Vulkan witness should retain:
 - exact device/driver/API version;
 - resource transition trace;
 - queue family identities;
-- GPU timestamp evidence for the chosen scheduling;
+- GPU \timestamp evidence for the chosen scheduling;
 - negative tests that intentionally omit a required transition and demonstrate validation failure where validation can detect it.
 
 A Metal witness should retain:
@@ -189,7 +189,7 @@ The mastery ledger must keep P23/P24 below native-verified until the repository 
 7. Tracked/untracked hazard-mode policy where applicable.
 8. Heap aliasing lifetime implementation.
 9. Memoryless attachment inference with correctness tests.
-10. GPU capture/timestamp evidence.
+10. GPU capture/\timestamp evidence.
 11. Cross-backend image/result comparison for the same graph.
 12. Current Kairo/Maveb integration at a pinned commit.
 
