@@ -18,10 +18,32 @@ BASE = "5be7d79c337c3d359569c9531621dd386fa0b7f0"
 START = "## A correct image must survive the viewer — perceptual rendering and XR"
 END = "## Mathematical language: points, vectors, and derivatives"
 LABS = {
-    FOUNDATIONS: ("basis_measurement_lab.cpp", "math_contact_toi_lab.cpp"),
-    GRAPHICS: ("xr_planar_vio_ekf_lab.py",),
-    ENGINE: ("render_graph_contract_lab.cpp", "resource_state_plan_lab.cpp"),
+    FOUNDATIONS: (
+        "basis_measurement_lab.cpp",
+        "math_contact_toi_lab.cpp",
+        "temporary_lifetime_lab.cpp",
+        "se3_exp_log_lab.cpp",
+        "research_inference_lab.py",
+    ),
+    GRAPHICS: (
+        "xr_planar_vio_ekf_lab.py",
+        "xr_3d_imu_preintegration_lab.py",
+        "nerf_volume_rendering_lab.py",
+    ),
+    ENGINE: (
+        "render_graph_contract_lab.cpp",
+        "resource_state_plan_lab.cpp",
+        "two_point_contact_block_lab.cpp",
+        "rollback_netcode_lab.cpp",
+        "audio_voice_mixer_lab.cpp",
+        "ai_decision_models_lab.cpp",
+    ),
 }
+ENGINE_OLD_OVERCLOSURE = "That closes the **entire 18-pass run**.\n"
+ENGINE_RECONSTRUCTION_MARKER = (
+    "## From one collision impulse to a coupled contact problem "
+    "— reconstructed Phase 18 bridge"
+)
 
 
 def verify(condition: bool, message: str) -> None:
@@ -84,6 +106,20 @@ def main() -> None:
                                body.replace(original_xr, "", 1)),
                    "Graphics lost or reordered baseline text outside relocated XR")
             print(f"RELOCATED XR: {len(original_xr)} original characters preserved")
+        elif path == ENGINE:
+            verify(previous.count(ENGINE_OLD_OVERCLOSURE) == 1,
+                   "Pinned baseline no longer has the single Phase-18 overclosure sentence")
+            verify(ENGINE_OLD_OVERCLOSURE not in body,
+                   "Phase-18 overclosure sentence was accidentally restored")
+            verify(body.count(ENGINE_RECONSTRUCTION_MARKER) == 1,
+                   "Phase-18 provenance-correct reconstruction bridge is missing or duplicated")
+            previous_without_overclaim = previous.replace(
+                ENGINE_OLD_OVERCLOSURE, "", 1
+            )
+            verify(subsequence(previous_without_overclaim, body),
+                   "Engine lost or reordered baseline text outside the one documented "
+                   "Phase-18 overclaim correction")
+            print("DOCUMENTED CORRECTION: removed one false Phase-18 closure claim")
         else:
             verify(subsequence(previous, body),
                    f"{path.name}: original source lines removed or reordered")
