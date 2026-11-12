@@ -117,6 +117,320 @@ Two broad methods decide which scene elements contribute to a pixel. **Rasteriza
 
 An image pixel is not inherently the color of a mathematical point. It summarizes light from a small region of the image plane. A renderer approximates that summary by sampling coverage, texture, and illumination. This observation connects triangle antialiasing, texture filtering, and Monte Carlo rendering: all are attempts to estimate an integral from a finite set of measurements.
 
+
+### Ray tracing becomes difficult at the boundaries: precision, footprints, variance, reuse and hybrid execution
+
+The mathematical ray
+
+\[
+\mathbf r(t)=\mathbf o+t\mathbf d
+\]
+
+is simple. A production ray tracer becomes difficult when finite precision, secondary rays, texture filtering, stochastic sampling, denoising, temporal reuse, acceleration structures and rasterized passes interact.
+
+Ray Tracing Gems is valuable because its chapters live at these boundaries: robust self-intersection avoidance, precision, multi-hit traversal, load balancing, nested volumes, adaptive ray-traced shadows, sampling transformations, many-light importance sampling, ray-cone/ray-differential filtering, denoising, hybrid rendering, volumetric transport, path reuse and radiance caching.
+
+#### A secondary ray should not immediately hit the surface that spawned it
+
+Suppose a ray intersects a surface at computed position
+
+\[
+\widehat{\mathbf p}.
+\]
+
+In exact arithmetic, a reflected ray begins on the surface and leaves it. Floating-point reconstruction can place the computed point microscopically on the wrong side. The acceleration structure may then report the same surface at a tiny positive parameter, producing acne, black speckles or recursive self-hits.
+
+The naive fix
+
+~~~
+origin = p + epsilon * normal
+~~~
+
+is not scale invariant. A scene containing microscopic and kilometer-scale geometry cannot have one universally sensible world-space epsilon.
+
+The robust concept is:
+
+\[
+\boxed{
+\text{offset far enough to cross the numerical uncertainty interval,
+not an arbitrary visual distance}
+}
+\]
+
+The sign of the offset must also agree with the side of the interface into which the new ray travels. Reflection, transmission and nested-medium logic must use a consistent geometric-normal convention.
+
+This generalizes beyond ray tracing: tolerances should be connected to scale and numerical error whenever possible rather than copied as magic constants.
+
+#### A ray query includes an interval
+
+A ray is not only origin and direction. Its valid parameter interval
+
+\[
+t\in[t_{\min},t_{\max}]
+\]
+
+can encode self-hit exclusion, nearest-hit search, continuation after a previous hit, a finite sensor range or a shadow segment ending at a light.
+
+For a point light at \(\mathbf l\), a shadow ray from \(\mathbf p\) has
+
+\[
+\mathbf d=\mathbf l-\mathbf p,
+\qquad
+D=\|\mathbf d\|.
+\]
+
+After normalization, the useful ray ends at distance \(D\). A blocker farther away is irrelevant.
+
+An engine ray type should therefore carry interval semantics explicitly rather than letting every caller invent a different distance test.
+
+#### A mathematical ray has zero width; an image sample does not
+
+Texture filtering exposes a mismatch between visibility mathematics and sampled images. A mathematical ray is one-dimensional, but a pixel represents a finite sensor region. The corresponding bundle of camera paths has a finite footprint on surfaces.
+
+Rasterization estimates texture-coordinate derivatives from neighboring fragments. Ray tracing does not automatically receive the same local 2D neighborhood.
+
+Two practical approximations are **ray differentials** and **ray cones**.
+
+A ray differential tracks small changes of origin and direction with respect to image-space coordinates:
+
+\[
+\frac{\partial \mathbf o}{\partial x},
+\quad
+\frac{\partial \mathbf o}{\partial y},
+\quad
+\frac{\partial \mathbf d}{\partial x},
+\quad
+\frac{\partial \mathbf d}{\partial y}.
+\]
+
+After intersection, those derivatives induce a surface/texture Jacobian such as
+
+\[
+\frac{\partial(u,v)}{\partial(x,y)},
+\]
+
+which can drive mip selection and anisotropic filtering.
+
+A ray cone stores a cheaper approximation to footprint size/spread as the ray propagates.
+
+The tradeoff is:
+
+~~~
+ray differentials:
+    directional footprint
+    richer state
+    more propagation work
+
+ray cones:
+    compact footprint approximation
+    cheaper
+    less directional information
+~~~
+
+The general sampling principle is:
+
+\[
+\boxed{
+\text{filter width should reflect the sample footprint in signal space}
+}
+\]
+
+Mipmapping is therefore not merely a texture-memory optimization. It is an anti-aliasing response to finite footprint.
+
+#### Importance sampling changes variance only if the weight stays correct
+
+For
+
+\[
+I=\int_\Omega f(x)\,dx
+\]
+
+and samples \(X_i\sim p\),
+
+\[
+\widehat I_N=
+\frac1N
+\sum_{i=1}^{N}
+\frac{f(X_i)}{p(X_i)}.
+\]
+
+Changing \(p\) can reduce variance without changing the target, provided support and weights remain correct.
+
+This matters for many-light rendering. A renderer may choose lights according to power, distance, a spatial hierarchy or another proxy. Whatever selection policy is used, the estimator must account for its sampling probability.
+
+A useful invariant is:
+
+~~~
+selection policy says how a sample was chosen
+weight says how that choice is corrected
+~~~
+
+If the policy changes and the probability in the weight does not, the renderer changes its estimator, often unintentionally.
+
+#### Clamping and regularization trade bias for variance
+
+Rare paths can produce huge contributions and visible fireflies.
+
+Clamping
+
+\[
+\widetilde f=\min(f,C)
+\]
+
+reduces variance but changes expectation whenever values above \(C\) have nonzero probability:
+
+\[
+\mathbb E[\widetilde f]\neq\mathbb E[f].
+\]
+
+This does not make clamping forbidden. Real-time rendering frequently accepts controlled bias. It means the trade should be named correctly.
+
+Path regularization makes a similar compromise by modifying difficult later scattering behavior to obtain a lower-variance estimator.
+
+The general relation is
+
+\[
+\boxed{
+\text{less variance may require more bias}
+}
+\]
+
+and “looks cleaner” is not evidence that the estimator stayed unchanged.
+
+#### Denoising is inference from a noisy measurement
+
+A low-sample ray-traced component can be viewed schematically as
+
+\[
+Y=X+\varepsilon,
+\]
+
+where \(X\) is desired signal and \(\varepsilon\) is sampling noise.
+
+A denoiser estimates \(X\) from \(Y\) plus features such as:
+
+~~~
+depth
+normal
+motion
+material/roughness
+albedo
+history
+sample count
+variance
+~~~
+
+Spatial filtering assumes nearby compatible samples describe related signal. Temporal filtering assumes reprojected history remains valid.
+
+Both can fail at disocclusions, thin geometry, rapid motion, changing light, specular highlights, transparency and bad motion vectors.
+
+This is why denoising belongs inside the rendering estimator pipeline rather than being treated as an independent beautification filter.
+
+#### Temporal reuse changes the statistics
+
+History reuse can reduce variance dramatically, but reused samples are not fresh IID measurements.
+
+A history sample may have been generated under a previous:
+
+- camera pose,
+- visibility state,
+- material state,
+- proposal distribution,
+- light configuration.
+
+Temporal accumulation therefore needs validity tests based on signals such as depth, normal, object/material identity, motion reprojection and history age.
+
+Rejecting too aggressively discards useful information. Accepting too loosely causes ghosting and stale illumination.
+
+The mathematics volume's warning about correlated/adaptive samples applies directly: the variance story must match the process that actually generated the accumulated data.
+
+#### Hybrid rendering is a deliberate decomposition, not an embarrassing halfway state
+
+A renderer may use rasterization for primary visibility, G-buffer generation, particles and efficient opaque geometry, and ray tracing for reflections, difficult shadows, indirect illumination or selected transparency/volume queries.
+
+The real question is not “rasterized or ray traced?” but:
+
+> Which representation/query gives the best cost-quality trade for each subproblem under the frame budget?
+
+A frame may be:
+
+~~~
+raster primary visibility
+    ↓
+G-buffer
+    ↓
+ray-traced shadow/reflection/GI
+    ↓
+spatiotemporal filtering
+    ↓
+lighting/composition
+    ↓
+TAA/upscaling/presentation
+~~~
+
+This raises the value of a render graph because raster and ray passes share resources, coordinate conventions, motion vectors, material interpretation and lifetime dependencies.
+
+#### Ray tracing performance is scheduling and memory behavior too
+
+Rays are independently specifiable, but GPU lanes can diverge because neighboring rays traverse different BVH branches, hit different materials or terminate at different depths.
+
+Irregular BVH and geometry access can also weaken locality.
+
+Practical systems therefore use ideas such as:
+
+- coherent ray generation,
+- ray sorting/compaction,
+- wavefront path tracing,
+- work queues,
+- material grouping,
+- path-state compaction,
+- load balancing.
+
+A production ray tracer is not just an intersection function. It is a scheduler for irregular parallel work.
+
+#### How the MIT lectures and Ray Tracing Gems fit together
+
+The MIT graphics sequence supplies the conceptual chain:
+
+\[
+\text{ray casting}
+\rightarrow
+\text{ray tracing}
+\rightarrow
+\text{acceleration}
+\rightarrow
+\text{shading}
+\rightarrow
+\text{sampling}
+\rightarrow
+\text{Monte Carlo}
+\rightarrow
+\text{rasterization/shadows}
+\]
+
+Ray Tracing Gems adds the production pressure:
+
+\[
+\boxed{
+\text{precision}
++
+\text{footprints}
++
+\text{variance}
++
+\text{history}
++
+\text{divergence}
++
+\text{hybrid dependencies}
+}
+\]
+
+Those two layers belong in one narrative: first understand what the renderer computes, then understand why a correct-looking mathematical formula can still fail in a real-time implementation.
+
+Source basis: MIT 6.837 Computer Graphics and Ray Tracing Gems, especially its sections on intersections/efficiency, sampling, denoising/filtering, hybrid systems and global illumination.
+
+
 ### Algorithmic scope and debugging the image pipeline
 
 The first lecture treats graphics as the math and algorithms behind images, not as a tour of drawing software. Its examples introduce a shared toolkit: functions describe shape, transforms set pose, time-stepping rules evolve state, and sampling converts continuous pictures into pixels. Rasterization and ray-based rendering handle visibility in opposite directions, from primitive to pixel and from pixel to scene. A renderer can combine both. [[#MITG-01 - Introduction|MITG-01]] · [[#MITG-09 - Ray casting|MITG-09]] · [[#MITG-17 - Rasterization|MITG-17]] (00:19:00–00:45:00; 00:10:00–00:25:00; 00:10:00–00:30:00)
