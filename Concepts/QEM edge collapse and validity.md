@@ -75,3 +75,11 @@ Related: [[Half-edge topology invariants]], [[Mesh topology and homology]].
 
 The validity witness deliberately distinguishes a triangle that disappears because it contains both collapsed endpoints from a surviving triangle that becomes degenerate or flips. The former is expected topology change; the latter is rejected. This still leaves the optimal $3\times3$ solve, link-condition proof, boundary-feature weights, attribute quadrics and progressive-mesh bookkeeping as higher layers, but QEM is no longer merely named.
 
+## Optimal solve and topology link-condition continuation
+
+`tools/labs/qem_optimal_link_lab.cpp` now adds two pieces that the first collapse witness deliberately left open.
+
+For a summed quadric written in homogeneous form, the candidate minimizing the quadratic error satisfies the $3\times3$ linear system formed by the upper-left block and translation column. The lab solves that system with pivoting, verifies the unique intersection of three orthogonal planes, and detects a rank-deficient single-plane quadric so the caller can fall back to an endpoint/midpoint policy instead of inventing an unstable inverse.
+
+The same witness constructs vertex one-rings and the set of vertices opposite an edge in its incident triangles. A manifold triangle-mesh edge is accepted only when it has one boundary face or two interior faces **and** the common one-ring neighbors match that opposite set. A three-face edge is explicitly rejected as non-manifold. Attribute quadrics, boundary-feature weighting, priority-queue updates and production progressive simplification still remain above this reference layer.
+
