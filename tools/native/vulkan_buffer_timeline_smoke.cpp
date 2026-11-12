@@ -105,7 +105,6 @@ int main(){
         }
 
         std::uint32_t pc=0; check(vkEnumeratePhysicalDevices(instance,&pc,nullptr),"enumerate physical devices");
-        require:
         if(pc==0) throw std::runtime_error("no Vulkan physical device");
         std::vector<VkPhysicalDevice> physicals(pc);
         check(vkEnumeratePhysicalDevices(instance,&pc,physicals.data()),"enumerate physical devices");
