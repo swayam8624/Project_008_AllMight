@@ -32,8 +32,8 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 20 | PBR/materials | Isotropic + anisotropic/dielectric/furnace mathematical oracles | pbr_reference_lab.cpp, pbr_extended_reference_lab.cpp | rough transmission, multiple scattering, measured-material and material-import parity remain |
 | 21 | Ray/path transport | Scene-level geometry + MIS reference verified | monte_carlo_transport_lab.cpp, path_transport_scene_lab.cpp | emissive-geometry NEE, multibounce transport, BVH/image parity and media remain |
 | 22 | GPU architecture/parallel algorithms | Derived/reference + compile/native boundary | prefix-scan teaching, native graphics workflow | occupancy/bank/coalescing claims require device counters |
-| 23 | Vulkan | Native API execution smoke | tools/native/vulkan_sync_smoke.cpp | resource-specific layouts/queue ownership/timeline protocols and production renderer parity remain |
-| 24 | Metal/render graph | Logical graph reference + real MSL compile | render_graph_contract_lab.cpp, metal_compile_smoke.metal | Metal command-buffer execution/capture, heap aliasing and physical Apple-GPU behavior remain |
+| 23 | Vulkan | Native sync2 + buffer-visibility/timeline execution | vulkan_sync_smoke.cpp, vulkan_buffer_timeline_smoke.cpp | image layouts, queue-family transfer, descriptor/shader visibility, transient aliasing and production parity remain |
+| 24 | Metal/render graph | Logical graph + MSL compile + conditional native compute execution | render_graph_contract_lab.cpp, metal_compile_smoke.metal, metal_runtime_smoke.mm | hosted CI may expose no Metal device; heap aliasing, hazard capture, render-pass behavior and production parity remain |
 | 25 | Gaussian splatting/captured worlds | Projection + conic/tile/order CPU oracles | gaussian_projection_reference_lab.cpp, gaussian_tile_conic_lab.cpp | full SH, GPU radix/binning/rasterization and current Maveb/Vulkax parity remain |
 | 26 | Advanced real-time rendering | CPU semantic reference implemented | realtime_rendering_reference_lab.cpp | full TAA/SSR/SSAO/volumetrics/particles and GPU renderer parity remain |
 | 27 | Meshes/animation | Topology + QEM + rigid-blend reference implemented | mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | optimal QEM/link-condition remeshing and production GPU skinning/import parity remain |
@@ -106,3 +106,10 @@ The next repair wave closes another set of previously explicit reference gaps wi
 - `gguf_metadata_tensor_lab.cpp` advances GGUF from prefix-only validation to typed metadata, alignment and tensor descriptors.
 
 These are reference-level closures. Exact hardware/API behavior, production repository parity, third-party DCC execution, and learner Level-7 reconstruction are still tracked separately rather than absorbed into a generic “complete” label.
+
+
+## Native execution escalation
+
+The native graphics gate now goes beyond syntax-level API examples. Vulkan executes a real transfer fill into an allocated/bound buffer, records a resource-specific synchronization2 buffer barrier from transfer-write to host-read, signals a timeline semaphore, waits for a concrete timeline value, maps the memory and checks the written pattern. Metal compiles the MSL kernel and, when the macOS CI host exposes a Metal device, loads the metallib, creates a compute pipeline/queue/shared buffers, dispatches work, waits for command completion and validates the result. A Metal host without a device reports an explicit SKIP rather than being counted as runtime proof.
+
+This still does not elevate every Phase 23/24 claim to native verification. Image layout transitions, queue-family ownership, descriptor/shader visibility, heap aliasing, multi-queue behavior, capture-derived hazard evidence, and current Kairo/Maveb integration remain individually gated.
