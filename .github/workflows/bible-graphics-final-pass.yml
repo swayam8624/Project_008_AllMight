@@ -38,6 +38,9 @@ jobs:
       - name: Run neural volume-rendering witness
         run: python3 tools/labs/nerf_volume_rendering_lab.py
 
+      - name: Verify canonical embedded-source agreement
+        run: python3 tools/check_continuous_code_sync.py
+
       - name: Verify patch idempotence
         run: |
           sha256sum "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md" > /tmp/before
