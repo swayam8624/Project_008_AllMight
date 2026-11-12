@@ -78750,6 +78750,82 @@ All of these are **independent CPU examples**, not automatically compiled into K
 A direct implementation plan has a clear acceptance gate. First require matching pair IDs and impact times between the reference all-pairs and accelerated paths; then matching post-impact velocities and positions within a declared numerical tolerance; then long-sequence replay and error metrics; then benchmark candidate count and latency at equal accuracy. Include dense interacting scenes, exact simultaneous contacts, near-grazing paths, static bodies, large coordinate translations, invalid inputs and changed timesteps. Repeat with different fixed seeds and preserve the failing seeds. The no-false-negative broadphase contract is necessary but not sufficient: the event scheduler may still choose the wrong earliest time or handle simultaneous events differently.
 
 **Reconstruction challenge.** Implement a 2D body record, all-pairs disk TOI, scene time advancement, the projected normal impulse and a bounded collision-event loop without looking at the stored code. Explain in prose which function may mutate persistent body state and which may only return geometry. Add the broadphase with a no-false-negative property test, then add contact-cache warm-starting for a resting two-point manifold. Finally justify all failure policies and measure the residual gap, momentum, energy and total simulated time; if a result cannot be observed, it is not yet verified.
+#### Prove the accelerated step is the same world step, not merely a faster-looking loop
+
+The event-step implementation above has two candidate-generation modes: the exhaustive mode checks all unordered disk pairs, and the swept mode first rejects pairs whose conservative motion rectangles cannot overlap over the **remaining** time. Both modes subsequently use the same time-of-impact equation, event selection, frozen restitution target and projected impulse solver. This separation is a valuable architectural choice because it lets us test one optimization while holding the physics definition fixed. The optimization is not correct just because it compiles or because its candidate list usually seems reasonable; it must preserve the world evolution under the same initial conditions.
+
+The implementation owns a mutable array of disks for the *duration of a step*. A caller passes the initial scene by value into each test path, so the exhaustive pass cannot mutate the swept pass's input. Both scenes are advanced by the same time interval, with the same restitution coefficient and iteration/event budgets. After the runs, the test compares the number of impact events, number of event batches, simulated duration, stable body identities, positions and velocities. The comparisons use a declared numerical tolerance rather than requiring bitwise equality; the two paths can evaluate candidate pairs in different but deterministic orders, and coupled iterative solvers may then have small order-dependent rounding differences. A discrepancy larger than tolerance is a failure requiring an execution trace, not permission to widen tolerance until it passes.
+
+The next code is a **complete standalone regression** against the already-shown event stepper. It includes that source with its demonstration \`main\` disabled, constructs four explicit scenes, then generates 2,000 seeded isolated impact scenes spanning masses, closing speeds and restitution. The RNG seed makes failures reproducible. It is intentionally kept in the continuous teaching volume, with the checked repository source at [the differential laboratory](../tools/labs/disk_event_broadphase_differential_lab.cpp); the reader should be able to compile it without hunting through a supplementary explanation.
+
+\`\`\`sh
+c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_diff
+/tmp/disk_diff
+\`\`\`
+
+\`\`\`cpp
+// Compare exhaustive and swept candidate generation through the SAME event solver.
+// This tests source-level behavior but does not replace native Kairo integration.
+// c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/disk_event_broadphase_differential_lab.cpp -o /tmp/disk_diff && /tmp/disk_diff
+#define ALLMIGHT_EVENT_PIPELINE_NO_MAIN
+#include "disk_event_pipeline_lab.cpp"
+#undef ALLMIGHT_EVENT_PIPELINE_NO_MAIN
+#include <random>
+#include <string>
+
+void compare_world(const std::vector<Disk>& initial,double h,double e,const char* name) {
+    auto exhaustive=initial,swept=initial;
+    const auto reference=simulate(exhaustive,h,e,256,false);
+    const auto accelerated=simulate(swept,h,e,256,true);
+    if(reference.events!=accelerated.events || reference.batches!=accelerated.batches) {
+        std::cerr<<name<<": event/batch mismatch\n";
+        throw std::runtime_error("broadphase changed event sequence");
+    }
+    near(reference.simulated,accelerated.simulated,1e-9);
+    check(exhaustive.size()==swept.size(),"body count changed");
+    for(std::size_t i=0;i<exhaustive.size();++i) {
+        check(exhaustive[i].id==swept[i].id,"body identity changed");
+        near(exhaustive[i].centre.x,swept[i].centre.x,1e-8);
+        near(exhaustive[i].centre.y,swept[i].centre.y,1e-8);
+        near(exhaustive[i].velocity.x,swept[i].velocity.x,1e-8);
+        near(exhaustive[i].velocity.y,swept[i].velocity.y,1e-8);
+    }
+}
+int main() {
+    // Disjoint, close, high-speed and simultaneous cases exercise ordering as well as pairing.
+    compare_world({{1,{0,0},{0,0},1,0},{2,{10,0},{-100,0},1,1}},0.1,1,"wall");
+    compare_world({{1,{-4,0},{1,0},1,1},{2,{0,0},{0,0},1,1},
+                   {3,{4,0},{-1,0},1,1}},3,1,"simultaneous");
+    compare_world({{1,{-6,0},{4,0},1,1},{2,{0,0},{0,0},1,1},
+                   {3,{6,0},{0,0},1,1}},3,1,"chained");
+    compare_world({{1,{0,0},{0,0},1,1},{2,{30,30},{0,0},1,1}},0.5,0,"disjoint");
+
+    std::mt19937_64 generator(0xA118A11u);
+    std::uniform_real_distribution<double> separation(3.0,18.0);
+    std::uniform_real_distribution<double> speed(0.2,20.0);
+    std::uniform_real_distribution<double> mass(0.3,6.0);
+    std::uniform_real_distribution<double> restitution(0,1);
+    for(int trial=0;trial<2000;++trial) {
+        const double d=separation(generator),v=speed(generator);
+        // An isolated one-dimensional impact is guaranteed and numerically checkable.
+        const std::vector<Disk> world{
+            {1,{0,0},{v,0},1,1/mass(generator)},
+            {2,{d,0},{0,0},1,1/mass(generator)}
+        };
+        compare_world(world,(d-2)/v+0.1,restitution(generator),"seeded pair");
+    }
+    std::cout<<"event broadphase differential: 4 scenes + 2000 seeded pairs PASS\n";
+}
+\`\`\`
+
+**Execution trace for the case that matters most.** For the three-disk chain, A initially moves right toward B, while B and C start stationary. The first event transfers speed from A to B. The simulation then computes another broadphase *for the remaining interval*, so B's newly nonzero velocity creates a future candidate against C. If the broadphase was cached from the first frame state, that pair could be missing because B had no prior swept distance. The exhaustive and swept simulation outcomes should therefore agree on the two event batches and on the final velocities, not just on the initial pair A–B.
+
+The finite-precision invariants need deliberate boundaries. A disk that is geometrically tangent can have a tiny negative calculated gap after advancing to its impact time; the reference's linear surface-gap tolerance avoids falsely treating this tiny roundoff as deep penetration, but does not offer a general guarantee for arbitrary coordinate scales. An initial overlap deeper than the numeric threshold still triggers a visible failure because velocity-level impulses are not position recovery. A resting stack is another case entirely: it needs persistent manifold points, friction and warm-started constraints rather than repeated fresh impacts. The earlier [persistent contact witness](../tools/labs/persistent_contact_lab.cpp) shows its row mathematics; [the feature cache witness](../tools/labs/contact_cache_lab.cpp) shows key validity and tangent-basis transport, but these two systems have **not** been welded into this disk-only event stepper.
+
+Before claiming a production-quality Kairo integration, change the boundary from an array of toy disks to generation-checked engine handles and world-owned bodies, provide a real narrow phase that returns feature IDs and world-space contact points, and define who owns intermediate candidate buffers, contact rows and cache entries. Treat event-budget exhaustion and invalid geometry as a **transactional step failure**: compute on a temporary snapshot and commit the state only after the step succeeds, or maintain explicit rollback information. Without this, throwing an exception can leave part of a frame applied to the real world. Add fixed-step replay with input and seed capture; test static/kinematic/dynamic interaction, angular impulses, friction, simultaneous contacts, deep penetration, long-time drift, broadphase acceleration and invalid handle reuse. Record actual frame time, candidate counts, solver iterations, memory allocations and numerical residuals under equal quality settings. Only after those tests can the teaching claim transfer from an independent CPU oracle to a verified engine feature.
+
+**Repository evidence distinction:** the source code for this new differential test and its CI configuration are inspectable, but their existence is not a claim that a GitHub-hosted workflow has successfully executed or that Kairo's production runtime is using it. The reusable solver explanation, the mathematical derivation and the exact-source verification must remain connected to this chapter; a later source-ledger entry is not a substitute for the conceptual explanation above.
+
 <!-- END IMPLEMENTABLE CONTACT WORLD STEP 2026-11-12 -->
 
 ## Contact forces form a coupled system
