@@ -23633,6 +23633,19 @@ The order of teardown matters as systems acquire dependencies. A renderer may ho
 Source reading: [caption source](https://www.youtube.com/watch?v=jEbqCf-MsZs) · [caption source](https://www.youtube.com/watch?v=ojEPsZFPj2Q) · [caption source](https://www.youtube.com/watch?v=nGgvWzoCsyk). Captions document the narrated development state; on-screen code and reported builds were not independently reproduced.
 
 
+### A service is not ready merely because its constructor returned — Gregory integration
+
+The window and renderer story becomes a real engine architecture problem as soon as more than one subsystem can fail while starting. Consider an editor which needs a platform event pump, then a window, then a GPU device, then a resource loader, then a game world. Saying that these are "layers" does not determine **which of them is allowed to exist when another initialization step fails**. Nor does moving every subsystem into a C++ object automatically solve the problem. A service constructor might allocate a native handle before discovering that a required feature is unavailable; its caller must not treat the half-created service as ready, but the half-created service must still release anything it acquired.
+
+Describe the dependencies as a directed graph. Write an edge `A -> B` when *B cannot be initialized or used unless A is ready*. If the graph contains a cycle, such as renderer -> asset manager -> renderer, there is no valid whole-service startup ordering; the design must split construction from activation, inject a narrower interface, or break the dependency. If it is acyclic, a topological ordering gives an initialization sequence. The topological ordering does not specify **one unique** schedule: independent providers can start in either order or, when concurrency is safe, in parallel. The important property is that each service starts after all its providers and stops before any provider it still needs. During normal shutdown, reverse **successful start order**, not the alphabetical order of service names.
+
+The failure rule is deliberately stricter than "call shutdown on everything." Track the set `Ready` of services whose `start()` returned success. If startup fails at service `S`, `S` must roll back its own partial acquisition using local RAII or explicit cleanup, and the coordinator stops only members of `Ready` in reverse order. Destructors for successfully constructed C++ wrappers should be non-throwing; do not allow a platform callback or an already-destroyed logger to be invoked during late teardown. A final GPU frame's command submission is not its completion: the renderer must wait for the relevant device work or retain retired resources before destroying memory still referenced by that work.
+
+Take a concrete trace. Platform startup succeeds; window startup succeeds; renderer acquires a provisional surface object but fails device-feature negotiation. The trace must be `platform ready -> window ready -> renderer partial -> renderer partial cleaned -> window stopped -> platform stopped`. It must **not** try to stop an unready renderer as if it were fully active; nor may it destroy the platform first, because the window destructor still calls into that platform. Missing dependencies and cycles should be rejected *before* any service starts. This is what the accompanying C++20 witness tests, including the exact rollback trace. The witness intentionally does not pretend that its `Service` class is a Vulkan/Metal lifetime wrapper: device-loss, callbacks from other threads and GPU fences add real obligations beyond this logical proof.
+
+This improves the older engine-support-system motivation in Gregory's Chapter 5 (2009) without treating his original platform choices as present-day requirements. It also sharpens the existing engine lifecycle discussion: a scene's per-frame memory arena may be reset once all CPU jobs borrowing that arena have joined, but a GPU upload staging allocation must remain alive until the *GPU* has finished consuming it. "End of the frame" is not a universal free point. The practical ownership question is always **what is the last possible user, and what evidence proves that user is finished?**
+
+
 ### Precompiled headers as a measured project choice
 
 When many translation units repeatedly parse the same stable headers, a precompiled header (PCH) lets the compiler reuse a prepared representation of that shared prefix. In this Hazel episode, the instructor creates `HazelPCH.h` and a corresponding `.cpp`, puts common standard-library headers there, and conditionally includes `Windows.h` when the project's Windows platform define is active. The useful design rule is to keep this shared set relatively stable: frequently changed headers can invalidate the prepared state and reduce the benefit.
@@ -24231,6 +24244,19 @@ Now consider several fixed simulation ticks occurring before one displayed frame
 Focus loss needs a policy too. If the window loses focus after a key-down and receives no corresponding release, a purely event-updated held flag can remain stuck. Clear or reconcile relevant state on focus changes, and decide whether outstanding one-shot commands remain valid. Timestamp input when ordering matters, then specify how it maps to simulation ticks.
 
 The fully read Kohi input lessons develop current/previous state tracking, key and button processing, and platform event routing. The quick-tap and catch-up examples extend that foundation to expose information a final-state snapshot cannot retain. They are original worked cases, not a claim that every edge policy is implemented in the early tutorial. [Input state](https://www.youtube.com/watch?v=ZZhfCYNbVp8), [Windows event processing](https://www.youtube.com/watch?v=6zjpgUX1TRY).
+
+
+#### Input travels through two clocks, a focus owner, and a durable tick command
+
+A controller stick report is a two-dimensional sample `(x,y)` in a device-specific coordinate convention; it is not yet a requested game velocity. The player may tilt diagonally, the physical stick may fail to return precisely to the electrical center, the input UI may have keyboard focus, and the display frame that receives an event may contain zero, one, or several physics ticks. These are distinct problems. Solve them in the order physical device -> calibration -> logical action -> ownership/capture -> timestamped tick command -> gameplay, not by allowing gameplay systems to query raw keys whenever they happen to run.
+
+For a normalized stick `v = (x,y)`, use its **radial** magnitude `r = sqrt(x²+y²)` instead of dead-zoning `x` and `y` separately. With inner dead-zone `d` in `[0,1)`, define the output vector as zero for `r <= d`. Otherwise set `r' = (min(r,1)-d)/(1-d)` and `v' = (r'/r)v`. The scaling preserves the original direction because the same positive gain multiplies both axes. For example, `v=(0.3,0.4)` has `r=0.5`; with `d=0.2`, the new radius is `(0.5-0.2)/0.8=0.375`, hence `v'=(0.225,0.3)`. An axial dead zone can erase a gentle diagonal on one axis and distort aiming. If an outer dead zone or response curve is added, specify its order relative to calibration and remapping. A low-pass filter suppresses jitter but also adds latency; record its state and time base and do not assume a different sampling frequency preserves the same feel.
+
+A quick press-release can occur entirely between simulation ticks. Polling the final held state yields `up` before and `up` after, and the tap disappears. Retain *transition records* in order (`pressed`, `released`) until the next simulation consumption boundary. A tick can receive both transitions while ending with held=false. Each transition is consumed exactly once; a second simulation tick in the same display frame must not repeat the first tick's press event. For deterministic replays, record the **logical action, tick number, value and order** after the device mapping and UI-capture decision, not an unspecified host key scan code alone. A real timestamp-to-tick policy must also define events arriving exactly at a tick boundary and the permitted clock-quantization tolerance.
+
+Capture is an owner, not a property of a pixel hit test. If a text field or console takes focus while the MoveForward key is held, the gameplay action must be released or it can remain permanently stuck; it is not sufficient to ignore future key-up events. On device disconnect, clear device-specific state, send any necessary synthetic release, and decide whether another device can continue the same logical action. On a focus transition, UI and gameplay must not both consume the same activation. The reference lab's `TickInput` is a deliberately small single-button demonstration of the invariant and its focus-release rule. A shipping input router must additionally handle multiple active devices, capture ownership per source, bindings/chords/axes, accessibility remapping, platform timestamps, hot-plug, and vibration as an **output** command (not as gameplay input).
+
+This expands the control-device material of Gregory's Chapter 8 into a modern fixed-step and editor-aware path. It connects to the previous engine loop material without pretending that sampling a button once per render frame solves time ownership.
 
 
 #### Derive frame time from a monotonic clock, then treat pacing as a separate choice
@@ -61547,6 +61573,19 @@ A **cache** retains a result for reuse. Its key must include what affects the re
 
 For **hot reload**, replace a resource while the application continues running. Read and validate the new version independently. Publish it at a safe boundary only after it is complete. Preserve the old working version if replacement fails, and retire its GPU storage only after outstanding users finish. A half-decoded replacement should never become the globally visible “current” texture.
 
+#### Resource streaming is a publication protocol, not just a background read
+
+The previous example correctly refuses to publish a stale result; the deeper contract has four different owners. The **request owner** holds a logical asset ID and monotonically changing generation; an **I/O worker** owns file bytes and decompression scratch; the **CPU asset representation** is parsed and validated; a **render/resource owner** schedules GPU upload and, only after its required synchronization, publishes a resident handle at a defined frame boundary. `read()` returning does not make a texture safe to sample. A compressed file passing its checksum does not establish the correctness of offsets, dimensions, decompressed allocation bounds or shader-compatible pixel layout. CPU-ready, upload-submitted, GPU-ready and publicly visible are different states even if a toy engine initially combines some of them.
+
+A useful state machine is `Absent -> Requested -> CPUReady -> UploadQueued -> Resident -> Retiring -> Absent`, with separate Failed/Cancelled exits and a published generation. Each asynchronous result carries `(asset ID, request generation, content hash/version)`. A cancellation, world reset or replacement increments the generation. On arrival, publish only if the slot still expects that generation **and** the result passed parsing and budget checks. A worker is allowed to finish after cancellation; it is *not* allowed to overwrite a newer version. Avoid storing a pointer to a request-stack object or a borrowed file path inside an unjoined task. Hot reload follows the same rule: build a complete new generation beside the old, then atomically swap the owning handle at a safe boundary and retire the previous generation after its last GPU/CPU user.
+
+Budgeting is a peak-lifetime problem, not just `sum(resident texture sizes)`. Let `R` be committed resident bytes, `Q` be reserved bytes for work in flight, `S` be temporary decode/staging bytes, `F` be resources retired but still referenced by GPU commands, and `B` be the relevant memory budget. A conservative admission policy maintains `R+Q+S+F <= B` for memory classes that share the same allocator or hardware budget; separate CPU and GPU heaps require separate inequalities. The C++ witness simplifies this to `R+Q <= B` because it deliberately does not model staging, driver overhead or deferred GPU retirement. When an estimate proves too small, the witness refuses publication; a real loader can request a larger reservation or fail cleanly, but must never silently overrun its budget.
+
+A numerical trace clarifies the cancellation invariant. Budget `B=128` bytes (illustrative, not real texture sizes); issue generation 1 for a 64-byte asset and reserve 64. Cancel it, release its reservation and increment the generation. Request again at generation 3 for an estimated 40 bytes. A late completion for generation 1 must be discarded, without changing `Q` or `R`. Successful decoding for generation 3 permits publication of 36 actual bytes: release `Q=40`, acquire `R=36`, and leave the remaining capacity available. If a live render snapshot holds one pin, eviction must fail. Removing the pin does not itself prove *GPU* completion; the true renderer additionally checks its submission fence or completion event before recycling native resources.
+
+Priority needs a defined policy. A visible doorway texture might have an imminent deadline; a far-away decoration may be prefetched; a speculative request must not starve the objects required for collision or gameplay. Priority can be adjusted as camera movement changes, but cancellation/reprioritization must be separate from identity. Measure queue wait, bytes/s, CPU decode, upload time, peak allocations, deadline misses and stale-completion count. A successful mean load latency can conceal a traversal hitch at a ninety-ninth-percentile transition. The original Chapter 6 resource-management discussion motivates these concerns; this contract states what present-day asynchronous publication and frame-in-flight ownership must actually enforce.
+
+
 #### Runtime texture replacement and safe publication
 
 The texture-loading example decodes PNG data through `stb_image`, requests four channels, and flips vertically to match the engine's coordinate convention. It creates a GPU texture and tracks a generation number used by the renderer's handle resolution. A key event asks the system to load alternate named textures while the application runs. The speaker describes the resulting swap, but no independent frame inspection was performed.
@@ -76035,6 +76074,21 @@ A level is not the same thing as an objective. A **world chunk** is a discrete p
 The runtime **game state** is the current state of the world elements that change over time. A moving character, a projectile, or a trigger volume can be dynamic; terrain and buildings are often static. The boundary is a design and optimization choice rather than a universal property of an asset: animated waterfalls may still be treated as static if they do not participate in gameplay interactions. Knowing that geometry will not move can permit precomputation or omission of work, while destructible scenery may swap between authored intact, damaged, and destroyed versions. Static and dynamic are therefore ends of a spectrum shaped by interaction and the cost of updating (PDF pp. 712–715 / printed pp. 690–693; Figure 13.1 inspected on PDF p. 713).
 
 Large worlds are divided for more than memory limits. Chunks can control pacing and progression, make an open world manageable, and let different teams create separate regions. A hub-and-spoke layout gives a central area access to branches; a graph can connect regions in less regular ways. These are structural options, not mandatory level-loading architectures. Likewise, **instancing** means drawing or placing repeated copies of a small set of meshes at different transforms, creating variety without authoring every repeated piece as unique geometry. **Brush geometry** describes shapes as bounded convex volumes and can speed up early blockout; if the layout proves useful, artists can refine or replace it with detailed meshes (PDF pp. 714–716 / printed pp. 692–694).
+
+#### A streamed world must preserve authored identity when its objects are absent
+
+A door in world cell 7 may be named by an objective, a save file and a script even while cell 7 is not loaded. Therefore **durable identity** cannot be a raw pointer into a live ECS array. Use an authored key such as `(world ID, cell ID, local object ID)` or a stable GUID, and resolve it through a registry that knows which cell versions are resident. Resolution may return `Unloaded`, `Loading`, `Missing`, or a live runtime handle; those states must not be confused. A sparse-set entity index with a generation protects against reuse *inside a live world*, but it does not automatically provide stable identity across scene exports, runtime resets and streamed cell unload/reload. Store the authored-to-runtime mapping explicitly and invalidate it before destroying a cell's memory.
+
+Walk a three-step scene. A quest registers a reference to `cell=7, object=42` while the player is in cell 3; resolution returns `Unloaded`, but the quest retains the durable ID. When cell 7 becomes resident, the registry maps object 42 to a live, generation-checked ECS handle and queues `OnAvailable` once. When the player leaves, unloading must wait for consumers that have pinned the cell, for outstanding simulation queries and for any GPU work that borrows its buffers. Once retired, a stale direct runtime handle must be rejected even though the *authored* reference remains legitimate. If the quest actually requires a target immediately, that is an explicit streaming/pinning policy—not a reason to assume every referenced object is permanently resident.
+
+Spatial queries also cross residency boundaries. A gameplay radius query can visit the spatial structure of loaded cells while a navigation or quest system requests additional cells. But a query returning “no hit” among loaded cells is **not necessarily evidence that no matching world object exists**. Define whether the query is resident-only, blocks until a region is loaded, returns partial results with a completeness flag, or uses coarse baked proxies for unloaded cells. Deterministic physics must not suddenly begin colliding with an object half-way through an integration step; publish collision worlds at simulation phase boundaries. Visual streaming can obey different deadlines, but cannot silently determine gameplay authority.
+
+The runtime loop now has a meaningfully ordered schedule. At the beginning of fixed tick `k`, accept logical input and approved publication commands; issue simulation-safe stream changes; resolve gameplay references; run scripts/AI that consume snapshot state; evaluate animation motion requests; perform physics and collision; finalize authoritative transforms, tick events and ECS structural mutations; and seal a read-only presentation snapshot. The render loop may interpolate between snapshots and draw at a different rate without executing gameplay events twice. Do not assume this is the only valid ordering—some engines need AI before animation, animation after physics, multiple substeps, or deferred event dispatch—but every read/write dependency needs an unambiguous producer, consumer and boundary. An event emitted during tick `k` and delivered in tick `k+1` must carry enough identity to be processed once and to be logged and replayed.
+
+The world-editor representation is different again: editable source instances, prefab overrides, human-friendly paths, and undo history are authoring data. Runtime ECS archetypes, compact transforms, spatial indices and GPU draw packets are optimized derived data. Export a versioned immutable runtime package with an explicit dependency manifest and source identity; never promise that editing a scene document changes an already executing cell until the approved reload and publication protocol has run. A robust failure test edits/reloads a cell, preserves its authored IDs, verifies that obsolete runtime handles fail, and checks that gameplay events do not replay merely because a visual instance was recreated.
+
+This is the missing bridge between the world-editor/game-object discussions of Gregory's Chapters 13–14 and the much more detailed ECS, serialization and graphics foundations already present in this volume. The important contribution is not a new object hierarchy; it is a precise contract for identity, visibility, simulation authority and memory lifetime across absent and resident worlds.
+
 
 ### Make common searches cheap by choosing them deliberately
 
@@ -96311,6 +96365,359 @@ State switching and blending solve different problems. Switching replaces one ac
 
 Physics adds an authority question: which system controls each transform? A ragdoll uses linked physical bodies and constraints to drive a character. Mixing authored motion and simulated motion requires a stated authority/blending policy and a common timing convention. Simply running animation and physics in sequence can make one overwrite the other's results. The devlog mentions blending, inverse kinematics and physics coordination as work still to develop at that point; those mentions are roadmap evidence, not demonstrations of completed features.
 
+#### Animation proposes motion; a single system commits it
+
+A clip is a time-indexed set of local joint transforms, but the character *controller* must first select how time advances and which clips contribute. An idle-to-run blend may combine local translation, scale and rotation (quaternion interpolation uses normalized conventions and shortest-arc handling), but a blend between differently authored skeletons needs an explicit retargeting map, root convention and compatible reference pose. Sampling a clip at display rate and firing a footstep event whenever the sample crosses a marker is unsafe: one game tick may have two display evaluations, while a slow display frame can skip over several markers. Marker/event collection belongs to the authoritative animation advance at a defined tick boundary and must account for wrap-around, reverse/variable playback if supported and transition blends that could otherwise fire two copies of the same semantic footstep.
+
+Root motion exposes an especially common double-application bug. Let an authored clip request displacement `Δx_root=0.5 m` over a tick. The character motor/collision stage determines that only `Δx_allowed=0.3 m` can be moved because of a wall. The gameplay-world transform advances by `0.3 m`. The final rendered skeleton is then placed relative to that **resolved** world transform; adding the clip's `0.5 m` to the world transform again would move `0.8 m`, penetrate the wall and disagree with physics. If a ragdoll owns a limb or the entire root, declare the blend/override boundary; do not let animation and physics independently write the same authoritative transform without a reconciliation rule. The root-motion track may still affect the local animated pose, but the corresponding world-space displacement is not a second movement command.
+
+A practical tick contract reads: controller state `(active clips, normalized times, blend weights, transition state)` -> local-pose samples -> provisional blended pose and desired root displacement -> character controller/physics -> resolved world root and contacts -> final pose, inverse-bind matrices, bounds and animation events -> immutable render snapshot. CPU skinning and GPU skinning have different data lifetimes. If compute skinning writes a vertex buffer for drawing, producer/consumer barriers and frames-in-flight matter; the pose owning the previous render frame cannot be overwritten simply because the next CPU simulation tick has begun. Bounds must conservatively contain skinned geometry or culling can remove a correctly animated actor. Footstep audio and particles are dispatched from stable tick events, not from each camera render pass.
+
+Consider the witness's deliberately narrow `Character`: it accepts one displacement request per tick, clamps against a supplied allowed displacement, records which tick consumed the request, and emits one footstep event. An extra draw evaluation of the same tick is ignored. This proves a **logical once-per-tick contract**, not production motion matching, IK, ragdoll blend, imported curve retargeting, skinning quality or audio scheduling. Those remain distinct practical implementation requirements. Gregory's Chapter 11 offers the production subsystem motivation; the current engine's richer math and graphics treatment supplies the mechanics, and this bridge states who gets to commit the answer.
+
+### One executable world-contract reconstruction — where these hand-offs meet
+
+The sections on startup, input, asset streaming, world identity and animation have one shared failure mode: an operation finishes on one timeline while a different owner is not yet ready to accept its result. The following compact C++20 program is therefore placed **inside the teaching volume**, not outsourced to an unexamined repository example. It follows one set of exact ownership contracts. The independent source file is `tools/labs/engine_world_contract_lab.cpp`; `tools/check_continuous_code_sync.py` checks byte-for-byte agreement of the fenced source body with that file. This is deliberately a deterministic model; its absence of actual asynchronous I/O makes races reproducible here but does not demonstrate that a real worker queue is synchronized correctly.
+
+Read the source from its state changes. The service manager first builds a topological order **without side effects**, then starts each service; a failed service cleans up its own partial state, while successfully started services stop in reverse. The radial stick mapper uses the exact Euclidean radius and does not silently reinterpret diagonal input. The tick input buffer queues both edges of a short tap and empties only at a simulation boundary; UI capture forces an existing gameplay hold to release. The asset slot identifies completions by generation, with separate outstanding reservations, resident bytes and pins. The world stores stable `(cell,local)` identifiers and resolves them only against resident cells. The simulation stores previous/current snapshots plus unconsumed time; interpolation reads but does not change the authoritative state. Finally, the character consumes a root-motion proposal at most once per fixed tick.
+
+A complete reconstruction should reproduce these positive and negative results: failure while starting the renderer unwinds window and platform; 0.5 stick radius becomes 0.375 without changing direction; a press followed by release reaches the next tick as two ordered edges but never repeats; a cancelled 64-byte request cannot publish after a 40-byte successor is issued; resident publication charges 36 actual bytes rather than 40 estimated bytes; a pinned asset/cell refuses eviction; object `(7,42)` survives as an identifier but cannot be dereferenced after unloading cell 7; a 30 ms display interval causes one 20 ms simulation tick and 10 ms remainder, so the authoritative position 0.04 is presented as interpolation 0.02 without mutation; and a blocked 0.5 m root-motion request advances only 0.3 m even if display processing repeats the same tick. Numbers here are test fixtures, not production costs, frame timings or asset sizes.
+
+Build and run the source independently with `clang++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror -DNDEBUG -fsanitize=address,undefined -fno-omit-frame-pointer tools/labs/engine_world_contract_lab.cpp -o /tmp/engine-world-lab && /tmp/engine-world-lab`. GCC C++20 with `-O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror` is also supported. The authoring environment ran both configurations successfully; this statement refers only to the following program, not to a production Kairo build or remote GitHub CI.
+
+```cpp
+// C++20 reference: lifecycle, input edges, streaming publication, and world-time ownership.
+// This is a deterministic CPU model. It does not perform real I/O or GPU submission.
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <deque>
+#include <iostream>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+namespace lab {
+void require(bool condition, std::string_view why) {
+    if (!condition) throw std::runtime_error(std::string(why));
+}
+
+// A provider may allocate something before its start() reports failure. That
+// partial allocation must be rolled back by the provider, because the manager
+// is only allowed to stop providers that reached the Ready state.
+struct Service {
+    std::string name;
+    std::vector<std::size_t> dependencies;
+    bool fail_after_partial_acquisition = false;
+    bool ready = false;
+    bool partial = false;
+    std::vector<std::string>* trace = nullptr;
+
+    bool start() {
+        require(!ready && !partial, "service started twice");
+        partial = true;
+        trace->push_back("acquire:" + name);
+        if (fail_after_partial_acquisition) {
+            trace->push_back("rollback-partial:" + name);
+            partial = false;
+            return false;
+        }
+        partial = false;
+        ready = true;
+        trace->push_back("ready:" + name);
+        return true;
+    }
+    void stop() {
+        require(ready && !partial, "invalid service stop");
+        trace->push_back("stop:" + name);
+        ready = false;
+    }
+};
+
+class ServiceManager {
+    std::vector<Service> services_;
+    std::vector<std::size_t> started_;
+public:
+    explicit ServiceManager(std::vector<Service> services) : services_(std::move(services)) {}
+    // Preflight all graph edges and construct a deterministic topological order
+    // BEFORE starting anything. Cycles or missing services cause no side effects.
+    bool start_all() {
+        require(started_.empty(), "manager must be stopped before restarting");
+        const std::size_t n = services_.size();
+        std::vector<bool> finished(n, false);
+        std::vector<std::size_t> order;
+        order.reserve(n);
+        for (std::size_t completed = 0; completed < n; ++completed) {
+            std::optional<std::size_t> next;
+            for (std::size_t i = 0; i < n && !next; ++i) {
+                if (finished[i]) continue;
+                bool eligible = true;
+                for (std::size_t dep : services_[i].dependencies) {
+                    require(dep < n && dep != i, "invalid dependency");
+                    eligible = eligible && finished[dep];
+                }
+                if (eligible) next = i;
+            }
+            require(next.has_value(), "dependency cycle");
+            finished[*next] = true;
+            order.push_back(*next);
+        }
+        for (std::size_t index : order) {
+            if (!services_[index].start()) {
+                stop_all(); // The failed service cleaned up its own partial state.
+                return false;
+            }
+            started_.push_back(index);
+        }
+        return true;
+    }
+    void stop_all() {
+        // Reverse successful-start order protects each provider from its users.
+        for (auto it = started_.rbegin(); it != started_.rend(); ++it)
+            services_[*it].stop();
+        started_.clear();
+    }
+};
+
+struct Stick { double x = 0.0, y = 0.0; };
+Stick radial_dead_zone(Stick raw, double threshold) {
+    require(std::isfinite(raw.x) && std::isfinite(raw.y), "nonfinite stick");
+    require(threshold >= 0.0 && threshold < 1.0, "bad dead-zone threshold");
+    const double radius = std::hypot(raw.x, raw.y);
+    if (radius <= threshold) return {};
+    const double bounded = std::min(radius, 1.0);
+    // Apply the same radial gain to both axes. The direction is unchanged.
+    const double new_radius = (bounded - threshold) / (1.0 - threshold);
+    return {raw.x * new_radius / radius, raw.y * new_radius / radius};
+}
+
+enum class Edge { Pressed, Released };
+class TickInput {
+    bool held_ = false;
+    std::deque<Edge> pending_;
+public:
+    void on_physical_button(bool pressed, bool ui_has_capture) {
+        // UI ownership suppresses gameplay presses and actively releases a
+        // previously held gameplay action so focus transfer cannot stick it.
+        if (ui_has_capture) {
+            if (held_) lose_focus();
+            return;
+        }
+        if (pressed == held_) return; // Ignore OS repeat, not genuine transitions.
+        held_ = pressed;
+        pending_.push_back(pressed ? Edge::Pressed : Edge::Released);
+    }
+    std::vector<Edge> sample_at_tick_boundary() {
+        std::vector<Edge> delivered(pending_.begin(), pending_.end());
+        pending_.clear(); // Each transition is consumed at most once.
+        return delivered;
+    }
+    bool held() const { return held_; }
+    void lose_focus() {
+        if (held_) on_physical_button(false, false);
+    }
+};
+
+enum class AssetState { Empty, Requested, Decoded, Resident };
+struct AssetSlot {
+    std::uint64_t generation = 0;
+    AssetState state = AssetState::Empty;
+    std::size_t reserved_bytes = 0;
+    std::size_t resident_bytes = 0;
+    unsigned pins = 0; // World/render users explicitly prevent eviction.
+};
+
+class AssetBudget {
+    std::size_t limit_;
+    std::size_t reserved_ = 0;
+    std::size_t resident_ = 0;
+public:
+    explicit AssetBudget(std::size_t limit) : limit_(limit) {}
+    // Estimated reservation is charged before work starts. This is a logical
+    // memory budget, not a GPU fence or exact peak staging-memory estimator.
+    std::uint64_t request(AssetSlot& slot, std::size_t estimate) {
+        require(slot.state == AssetState::Empty, "asset already active");
+        require(estimate <= limit_ - (reserved_ + resident_), "asset budget exceeded");
+        reserved_ += estimate;
+        slot.reserved_bytes = estimate;
+        slot.state = AssetState::Requested;
+        return ++slot.generation;
+    }
+    void cancel(AssetSlot& slot) {
+        require(slot.state == AssetState::Requested || slot.state == AssetState::Decoded,
+                "cannot cancel inactive request");
+        reserved_ -= slot.reserved_bytes;
+        slot.reserved_bytes = 0;
+        slot.state = AssetState::Empty;
+        ++slot.generation; // Invalidates completions already in flight.
+    }
+    bool decode_finished(AssetSlot& slot, std::uint64_t generation) {
+        if (slot.generation != generation || slot.state != AssetState::Requested)
+            return false;
+        slot.state = AssetState::Decoded;
+        return true;
+    }
+    bool publish(AssetSlot& slot, std::uint64_t generation, std::size_t bytes) {
+        if (slot.generation != generation || slot.state != AssetState::Decoded)
+            return false;
+        // Reject incorrect estimates without changing accounted memory.
+        if (bytes > slot.reserved_bytes) return false;
+        reserved_ -= slot.reserved_bytes;
+        slot.reserved_bytes = 0;
+        resident_ += bytes;
+        slot.resident_bytes = bytes;
+        slot.state = AssetState::Resident;
+        return true;
+    }
+    bool evict(AssetSlot& slot) {
+        if (slot.state != AssetState::Resident || slot.pins != 0) return false;
+        resident_ -= slot.resident_bytes;
+        slot.resident_bytes = 0;
+        slot.state = AssetState::Empty;
+        ++slot.generation;
+        return true;
+    }
+    std::size_t charged() const { return reserved_ + resident_; }
+    std::size_t resident() const { return resident_; }
+};
+
+// Persistent authored identity is not a pointer to a resident object. A cell
+// can disappear while the identity remains usable in saved quests or scripts.
+struct ObjectId { std::uint32_t cell, local; };
+struct Cell {
+    std::uint32_t cell = 0;
+    bool resident = false;
+    unsigned pins = 0;
+};
+std::optional<ObjectId> resolve(const Cell& cell, ObjectId id) {
+    if (!cell.resident || cell.cell != id.cell) return std::nullopt;
+    return id;
+}
+bool unload(Cell& cell) {
+    if (cell.pins != 0) return false;
+    cell.resident = false;
+    return true;
+}
+
+struct Simulation {
+    double previous = 0.0;
+    double current = 0.0;
+    double velocity = 2.0;
+    double accumulator = 0.0;
+    std::uint64_t tick = 0;
+    static constexpr double dt = 0.02;
+
+    void update(double real_seconds) {
+        require(std::isfinite(real_seconds) && real_seconds >= 0.0,
+                "invalid monotonic delta");
+        accumulator += std::min(real_seconds, 0.1); // Explicit overload policy.
+        unsigned steps = 0;
+        while (accumulator + 1e-12 >= dt && steps < 5) {
+            previous = current;
+            current += velocity * dt; // Only fixed simulation writes authority.
+            accumulator -= dt;
+            ++tick;
+            ++steps;
+        }
+        if (accumulator >= dt) accumulator = std::fmod(accumulator, dt);
+    }
+    double render_interpolated() const {
+        const double alpha = std::clamp(accumulator / dt, 0.0, 1.0);
+        return previous * (1.0 - alpha) + current * alpha;
+    }
+};
+
+// Root motion is a movement *request*. Collision/character movement produces
+// the authoritative displacement; skinning then follows the resolved root.
+struct Character {
+    double world_x = 0.0;
+    unsigned footstep_events = 0;
+    std::optional<std::uint64_t> last_applied_tick;
+    void apply_root_request(double requested, double max_allowed, std::uint64_t tick) {
+        require(requested >= 0.0 && max_allowed >= 0.0, "invalid root request");
+        if (last_applied_tick && *last_applied_tick == tick) return;
+        last_applied_tick = tick; // Tick authority accepts at most one proposal.
+        world_x += std::min(requested, max_allowed); // Collision-resolved delta.
+        if (requested > 0.0) ++footstep_events; // One gameplay event per tick.
+    }
+};
+} // namespace lab
+
+int main() {
+    using namespace lab;
+    std::vector<std::string> trace;
+    ServiceManager manager({
+        {"renderer", {1}, true, false, false, &trace},
+        {"window", {2}, false, false, false, &trace},
+        {"platform", {}, false, false, false, &trace}
+    });
+    require(!manager.start_all(), "expected renderer startup failure");
+    require(trace == std::vector<std::string>({
+        "acquire:platform", "ready:platform", "acquire:window", "ready:window",
+        "acquire:renderer", "rollback-partial:renderer", "stop:window", "stop:platform"
+    }), "startup rollback order changed");
+
+    auto stick = radial_dead_zone({0.3, 0.4}, 0.2); // Radius = 0.5.
+    require(std::abs(std::hypot(stick.x, stick.y) - 0.375) < 1e-12,
+            "incorrect radial rescale");
+    require(std::abs(stick.x / stick.y - 0.75) < 1e-12,
+            "dead zone changed stick direction");
+    require(radial_dead_zone({0.1, 0.1}, 0.2).x == 0.0, "inside dead zone");
+    TickInput action;
+    action.on_physical_button(true, false);
+    action.on_physical_button(false, false); // Both edges between two ticks.
+    const auto edges = action.sample_at_tick_boundary();
+    require(edges.size() == 2 && edges[0] == Edge::Pressed &&
+            edges[1] == Edge::Released && !action.held(), "tap was lost");
+    require(action.sample_at_tick_boundary().empty(), "edge fired twice");
+
+    AssetBudget budget(128);
+    AssetSlot door;
+    const auto stale = budget.request(door, 64);
+    budget.cancel(door);
+    const auto current = budget.request(door, 40);
+    require(!budget.decode_finished(door, stale), "stale decode accepted");
+    require(budget.decode_finished(door, current), "current decode refused");
+    require(!budget.publish(door, current, 41), "oversized publication accepted");
+    require(budget.publish(door, current, 36) && budget.resident() == 36,
+            "publication accounting incorrect");
+    door.pins = 1; // A frame snapshot still references this resource.
+    require(!budget.evict(door), "evicted a pinned asset");
+    door.pins = 0;
+    require(budget.evict(door) && budget.charged() == 0, "asset leak");
+
+    Cell cell{7, true, 1};
+    ObjectId quest_target{7, 42};
+    require(resolve(cell, quest_target).has_value(), "lost resident target");
+    require(!unload(cell), "unloaded pinned world cell");
+    cell.pins = 0;
+    require(unload(cell) && !resolve(cell, quest_target).has_value(),
+            "unloaded object still resolved");
+
+    Simulation sim;
+    sim.update(0.03); // One 20 ms simulation step; 10 ms render remainder.
+    require(sim.tick == 1 && std::abs(sim.current - 0.04) < 1e-12,
+            "simulation advanced incorrectly");
+    const double authoritative = sim.current;
+    require(std::abs(sim.render_interpolated() - 0.02) < 1e-12,
+            "visual interpolation incorrect");
+    require(sim.current == authoritative, "render sampling wrote simulation state");
+    Character actor;
+    actor.apply_root_request(0.5, 0.3, 1); // A wall limits root delta.
+    actor.apply_root_request(0.5, 0.5, 1); // Duplicate display evaluation ignored.
+    require(actor.world_x == 0.3 && actor.footstep_events == 1,
+            "root motion or per-tick side-effect duplicated");
+
+    std::cout << "PASS startup rollback, input edges, request generations, "
+                 "budgets, world IDs, interpolation, root-motion ownership\n";
+}
+
+```
+
+
 ### Extracting a method should expose its inputs
 
 The older software-rendering episode on wall ordering fixes a visual overlap by changing when a render-distance effect and wall rendering execute. That example concerns a painter-style software composition order; it is not a universal substitute for depth testing in a modern renderer. It also moves a value into an object field when extracting wall code into a method. [Source episode](https://www.youtube.com/watch?v=98K5Bm2sApY)
@@ -96717,6 +97124,13 @@ A physics profiler becomes more useful when it records workload as well as durat
 Keep the measurement overhead bounded. Sampling every entity’s complete state each frame may change cache behavior and distort the result. Use counters, selected traces, and representative captures; compare instrumented and minimally instrumented runs if timing is close to a budget limit. Inclusive time should be reported as such. If `Physics::Step` includes `BroadPhase`, `NarrowPhase`, and `Resolve`, summing all four figures double-counts child work. Gregory’s profiling discussion explicitly raises the nested measurement problem (PDF pp. 411–413, printed pp. 389–391).
 
 The same principle applies to asset loading. Track request-to-ready latency, bytes read, decompression time, upload time, and peak memory by resource type. An average load time can hide a one-time shader or texture upload spike. A seamless level transition is a user-facing promise and needs evidence across worst-case travel routes, not just a fast desktop development machine.
+
+#### Correlate one player action through every subsystem hand-off
+
+Timing each subsystem separately still leaves the hardest stall unexplained: a platform event is delivered at one time, the next fixed tick consumes it later, a door's cell is requested, decompression completes, the GPU upload waits in a queue, the world publishes, and a frame eventually becomes visible. Give that journey a causal identifier rather than assuming that adjacent log lines belong to the same action. A useful diagnostic tuple is `(trace ID, logical action ID, fixed tick, display frame, asset/cell generation, service phase, thread/queue, monotonic timestamp)`. The trace ID connects a user-visible effect; the generation distinguishes cancelled/obsolete work; tick and frame numbers keep gameplay and presentation clocks apart. Do not conflate CPU time, GPU timestamp domains or network-synchronized clocks without recorded calibration.
+
+For the earlier toy trace, capture `tap acquired`, `press+release dispatched tick 1`, `door gen 1 cancelled`, `door gen 3 CPU-ready`, `door gen 3 published`, `cell 7 resolved`, `character root request 0.5`, `physics resolution 0.3`, `frame interpolated`. If the player says "the door sometimes fails to open," you can distinguish a lost input edge, a stale completion, an unloaded target, a blocked collision move, and a late presentation. In a production implementation, record actual service/OS error codes, device-loss states, IO queue depth, frame-in-flight fences, allocator pressure, frame-time distributions and p99 stalls under stress. Logs must have bounded allocation and avoid flooding real-time threads; sampling/aggregation policies should never silently omit failure records.
+
 
 ### Use measurement to decide what to optimize
 
