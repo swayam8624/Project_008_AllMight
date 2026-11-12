@@ -78,8 +78,8 @@ public:
             const State after{use.access, use.layout, use.queue, use.stage};
 
             const bool memory =
-                writes(before.access) && (reads(after.access) || writes(after.access)) ||
-                reads(before.access) && writes(after.access);
+                (writes(before.access) && (reads(after.access) || writes(after.access))) ||
+                (reads(before.access) && writes(after.access));
             const bool layout = before.layout != after.layout;
             const bool queue = before.queue != after.queue;
 
