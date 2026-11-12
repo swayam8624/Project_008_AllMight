@@ -2774,6 +2774,115 @@ A scalar image is sampled over a 2D grid. A mesh surface is sampled over a graph
 
 For a mesh scalar field $f$, a weighted discrete Laplacian at vertex $i$ has form $(Lf)_i=\sum_{j\in N(i)}w_{ij}(f_i-f_j)$. If neighboring values are equal, the Laplacian is zero. If one vertex differs sharply, the Laplacian magnitude is large. This operator can smooth color or geometry, estimate curvature, or build a diffusion process. The weights define what “neighbor influence” means and may account for edge length, angles, or local area. [[#CMU-03 - Vector Calculus (P)Review|CMU-03]] · [[#CMU-11 - Digital Geometry Processing|CMU-11]]
 
+
+### Differential coordinates preserve local shape while solving for new global positions
+
+Directly editing vertex positions makes global coordinates the primitive. Botsch and coauthors show another useful view: represent local shape through **differential coordinates**, modify those local quantities, then reconstruct positions by solving a sparse system.
+
+For a piecewise-linear scalar function \(f\) on a triangle mesh, its gradient is constant inside each triangle. Apply that independently to the three coordinate functions of the embedding,
+
+\[
+p:S\rightarrow\mathbb R^3,
+\]
+
+and each face \(T\) has a \(3\times3\) Jacobian \(J_T\) built from the gradients of \(p_x,p_y,p_z\). A desired local rotation/scale/shear can be represented by a matrix \(M_T\), giving a target gradient
+
+\[
+J'_T=M_TJ_T.
+\]
+
+The modified gradients generally no longer integrate exactly to one globally continuous surface. Reconstruction therefore asks for vertex positions whose gradients match the targets in least squares:
+
+\[
+E(p')
+=
+\int_S
+\|\nabla p'-J'\|^2\,dA.
+\]
+
+The Euler–Lagrange equation has Poisson form,
+
+\[
+\Delta p'
+=
+\operatorname{div}J',
+\]
+
+which becomes a sparse linear system after discretization. Handle and fixed-region positional constraints remove the null modes and make the solution correspond to the user’s intended edit.
+
+This gives a deeper interpretation of “Poisson mesh editing.” The linear solve is not smoothing by itself. The right-hand side encodes a desired **local differential field**; the solve finds the globally coherent surface closest to it. If the target field is inconsistent, the least-squares solution distributes the mismatch over the surface according to the operator and constraints.
+
+Laplacian editing uses per-vertex differential coordinates
+
+\[
+\delta_i=\Delta p_i
+\]
+
+instead of per-face gradients. Transform them to \(\delta_i'=M_i\delta_i\), then seek positions whose Laplacians match those targets. In the continuous formulation Botsch et al. minimize
+
+\[
+E(p')
+=
+\int_S
+\|\Delta p'-\delta'\|^2\,dA,
+\]
+
+leading to a bi-Laplacian equation
+
+\[
+\Delta^2p'
+=
+\Delta\delta'.
+\]
+
+The distinction matters. A first-order gradient formulation and a second-order Laplacian/shell formulation have different smoothness behavior at the boundary of the deformed region, different conditioning, and different sensitivity to constraints. “Both solve a sparse matrix” does not make them the same deformation model.
+
+Rotations need special treatment. If one simply keeps the original Laplacian vector while rotating a handle by ninety degrees, local details resist rotation because the differential vector is expressed in the old frame. The source therefore propagates local transformations and applies them to gradients/Laplacians before reconstruction. Polar decomposition is useful here because rotation should be interpolated differently from scale/shear. A globally linear solver can thus participate in a geometrically nonlinear editing workflow by updating the local target frames.
+
+This is also why the cotangent operator matters beyond smoothing. On irregular meshes, the uniform graph Laplacian depends strongly on valence and sampling density. Botsch et al. explicitly note improved deformation behavior from the cotangent discretization. The operator, mass weighting, constraints, and local-frame update together define the edit; none should be hidden behind the generic label “Laplacian deformation.”
+
+Source basis: Botsch, Kobbelt, Pauly, Alliez, and Lévy, *Polygon Mesh Processing*, Chapter 9, especially §§9.4.1–9.4.3 on gradient-based deformation, Laplacian coordinates, Poisson/bi-Laplacian reconstruction, local transformations, and the relationship to shell-based deformation.
+
+### Parameterization distortion is a singular-value statement about the surface map
+
+The current parameterization section says that angle, area, and scale cannot generally all be preserved. The differential-geometry formulation makes that trade measurable.
+
+Let a local parameterization map a 2D parameter domain to a surface. Its Jacobian maps infinitesimal parameter-space directions into tangent vectors on the surface. Locally, a tiny circle in parameter space becomes an ellipse whose principal stretches are the two singular values
+
+\[
+\sigma_1,\sigma_2.
+\]
+
+Those two numbers separate the common distortion goals.
+
+A map is locally **conformal** when it preserves angles. Equivalently, the two principal stretches are equal:
+
+\[
+\sigma_1=\sigma_2.
+\]
+
+A tiny circle stays a circle, though its radius may change. It is **area preserving** when
+
+\[
+\sigma_1\sigma_2=1,
+\]
+
+so the determinant of the local metric/Jacobian preserves area, though a circle may become an ellipse. It is locally **isometric** when both are true:
+
+\[
+\sigma_1=\sigma_2=1.
+\]
+
+That preserves both angles and lengths locally. A general curved surface cannot be flattened isometrically; only special developable geometry permits it without cutting or distortion.
+
+This turns UV quality into a local tensor measurement rather than a visual judgement. A texture can tolerate different errors depending on its content. Fine directional line art is sensitive to angular/shear distortion; a density map may care more about area; repeated texel detail may expose stretch. The correct objective follows the downstream signal.
+
+Least-squares conformal maps formulate conformality as a least-squares condition on the gradients of the two UV coordinate functions. Harmonic/barycentric parameterizations solve related sparse systems under boundary constraints. The boundary treatment is not a cosmetic detail: fixing a poor boundary polygon can force interior distortion even when the interior solver is exact.
+
+When a parameterization method reports one scalar “distortion,” ask which invariant it measures and in which map direction. Literature alternates between studying \(S\rightarrow\Omega\) and its inverse \(\Omega\rightarrow S\). Singular values invert under map inversion, so formulas can appear contradictory when the convention is unstated.
+
+Source basis: *Polygon Mesh Processing*, Chapter 5, especially conformal mapping and §5.5’s distortion analysis in terms of the first fundamental form and singular values.
+
 ### Signed distance as a geometric signal
 
 For a surface $S$, signed distance field $d(x)$ returns the shortest distance to the surface, positive outside and negative inside under one sign convention. The zero level set recovers the surface: $S=\{x:d(x)=0\}$. Near a smooth surface, the gradient of a true signed distance has unit length and points along the normal. This makes distance fields useful for collision margins, shape blending, and volumetric rendering. However, at points with multiple equally close surface points, distance may not be differentiable. In a mesh, approximate signed distance uses closest-point queries and inside-outside classification, combining geometric search with topology assumptions. [[#CMU-09 - Introduction to Geometry|CMU-09]] · [[#CMU-12 - Geometric Queries|CMU-12]]
@@ -3092,6 +3201,57 @@ A triangle boundary example is a small homology computation. Take the square dis
 
 The count relationship $\chi=\sum_p(-1)^p\beta_p$ is useful because it connects a cheap combinatorial statistic to the “cycles that remain after fillings” view. A discrepancy between the count $V-E+F$ and a separately computed Betti-number alternating sum can indicate an implementation error in boundary matrices, an inconsistent simplex ordering, or a mistake in component or boundary treatment. Agreement is still not proof of correct geometry: two wrong calculations can agree, and Euler characteristic is a coarse invariant.
 
+
+### Alpha complexes turn a union of balls into a finite topological object
+
+A point cloud has no edges, faces, or loops until a scale rule is introduced. One geometric choice places a closed ball of radius \(r\) around every sample. The union
+
+\[
+U(r)=
+\bigcup_{u\in S} B_u(r)
+\]
+
+is a continuous shape whose topology changes as \(r\) grows. Directly storing and analyzing the union is awkward, so computational topology seeks a finite complex with the same relevant topology.
+
+Intersect each ball with its Voronoi cell,
+
+\[
+R_u(r)
+=
+B_u(r)\cap V_u.
+\]
+
+Each \(R_u(r)\) is convex. The **alpha complex** is the nerve of this convex cover:
+
+\[
+\operatorname{Alpha}(r)
+=
+\left\{
+\sigma\subseteq S
+\;\middle|\;
+\bigcap_{u\in\sigma}R_u(r)\neq\varnothing
+\right\}.
+\]
+
+Because every restricted cell lies inside its Voronoi cell, the alpha complex is a subcomplex of the Delaunay complex. The nerve theorem supplies the key bridge: under the convex-cover conditions, the combinatorial nerve has the same homotopy type as the union it represents.
+
+This is more than a convenient point-cloud triangulation. The radius \(r\) becomes an explicit geometric scale. At tiny radius the complex contains isolated vertices. Edges enter as restricted balls meet, then triangles and tetrahedra fill cycles and cavities. The nested family
+
+\[
+\operatorname{Alpha}(r_1)
+\subseteq
+\operatorname{Alpha}(r_2)
+\subseteq\cdots
+\]
+
+is therefore a natural filtration for persistent homology.
+
+Delaunay sparsity also matters computationally. A Čech complex built from all intersecting ball subsets can become combinatorially large. Alpha complexes retain only simplices compatible with Voronoi/Delaunay geometry, often giving a much smaller complex while still representing the union-of-balls topology.
+
+For scanned geometry, the interpretation must remain honest. Radius is not “noise level” by definition. Nonuniform sampling, anisotropic sensor uncertainty, missing regions, and outliers can make one global radius physically inappropriate. The complex faithfully answers the topology of the chosen union-of-balls model, not the unknown true surface without assumptions.
+
+Source basis: Edelsbrunner and Harer, *Computational Topology: An Introduction*, Chapter III, especially the Delaunay and alpha-complex construction and the union-of-balls/nerve interpretation.
+
 ### Persistence asks which features survive scale changes
 
 A scan has noise at several scales. Some short loops arise from tiny ripples; other holes belong to the cup’s structure. A single topology count cannot say whether a loop is a persistent feature or a small perturbation. A filtration makes scale explicit: build a nested sequence of complexes $K_0\subseteq K_1\subseteq\cdots\subseteq K_N$ by increasing a parameter, and track when each component, loop, or shell appears and when it becomes filled or merged.
@@ -3105,6 +3265,68 @@ For a tiny explicit example, add three vertices of a triangle first, then its th
 In a simplicial filtration, simplex values must be monotone with inclusion: a face cannot arrive after its coface. Persistence algorithms encode the boundary of each simplex as a column in a boundary matrix, then reduce columns in order so repeated lowest rows are eliminated. A zero reduced column corresponds to a cycle-birth event; a nonzero column pairs with the simplex that kills a class. The matrix view explains why adding the triangle kills the loop it bounds. It also makes clear why a boundary operator must satisfy $\partial^2=0$: without that, the algebraic events would not describe cycles and fillings consistently.
 
 Persistence is often presented as robust to small perturbations, but translating that theorem into a mesh cleanup threshold requires care. The theorem concerns a specified function and metric, with a chosen distance between diagrams; it does not say that every short-lived feature is noise or that every significant geometric defect will be detected. An engineering workflow should show the filtration parameter, its physical or normalized units, the sampling assumptions, coefficient field, persistence threshold and a visual or analytic justification. Preserve the persistence diagram or feature list as diagnostic evidence rather than silently deleting geometry.
+
+
+### Persistence stability says small function perturbations cannot move the diagram arbitrarily far
+
+A persistence diagram is useful as a measurement only if a small perturbation of the measured function does not cause arbitrary topological chaos in the output. Edelsbrunner and Harer make this precise with the bottleneck metric.
+
+For two persistence diagrams \(X\) and \(Y\), augment each with diagonal points so short-lived features can be matched to the diagonal. The bottleneck distance is
+
+\[
+W_\infty(X,Y)
+=
+\inf_{\eta:X\to Y}
+\sup_{x\in X}
+\|x-\eta(x)\|_\infty,
+\]
+
+where \(\eta\) ranges over bijections respecting multiplicity. It asks for the matching whose worst paired displacement is as small as possible.
+
+For monotone filtration functions \(f\) and \(g\) on the same complex, the stability theorem gives
+
+\[
+W_\infty(
+\operatorname{Dgm}_p(f),
+\operatorname{Dgm}_p(g)
+)
+\le
+\|f-g\|_\infty.
+\]
+
+A corresponding theorem is developed for tame continuous functions on triangulable spaces. The important claim is quantitative: if every function value moves by at most \(\varepsilon\), then no persistence point needs to move by more than \(\varepsilon\) in bottleneck distance.
+
+This does **not** say every short-persistence feature is noise. It says the representation is stable with respect to perturbations measured in a specified norm of a specified function. A genuine tiny handle can have low persistence. A large systematic scan gap can have high persistence. Choosing a deletion threshold is still a domain decision.
+
+The theorem is nevertheless valuable in a repair pipeline. If two depth reconstructions differ by a known bounded scalar-field perturbation, their persistence diagrams cannot disagree arbitrarily under the theorem’s conditions. Conversely, a diagram change much larger than the known perturbation scale suggests that some assumption changed—domain, filtration, registration, topology construction, or error bound—not merely tiny numerical noise.
+
+A practical validation should therefore store the filtration function and its units alongside the diagram. Comparing diagrams without recording whether \(f\) was height, distance-to-samples, curvature, confidence, or density makes the stability number uninterpretable.
+
+Source basis: *Computational Topology*, Chapter VIII on bottleneck/Wasserstein distances and the stability theorems for filtrations and tame functions.
+
+### Morse functions and Reeb graphs compress how level-set components split and merge
+
+Persistent homology summarizes births and deaths of algebraic features. A **Reeb graph** keeps a different piece of information: how connected components of a scalar function’s level sets evolve.
+
+Given a continuous function
+
+\[
+f:X\rightarrow\mathbb R,
+\]
+
+two points are considered equivalent when they lie in the same connected component of the same level set. Quotienting \(X\) by that equivalence gives the Reeb graph \(R(f)\). Each point of the graph represents one contour/level-set component.
+
+This is useful for iso-surface extraction. Instead of scanning an entire volume to discover every component of \(f^{-1}(a)\), the Reeb graph can identify how many contour components exist at level \(a\) and provide representatives from which each component can be traced. When the domain is contractible, as in a cube volume, the Reeb graph is a tree and is often called a contour tree.
+
+For a Morse function on a manifold, critical points organize the graph. A local minimum creates a new level-set component; a saddle can merge or split components; a maximum destroys the final local component. On an orientable 2-manifold, minima/maxima correspond to degree-one nodes and the relevant saddles to degree-three nodes. Thus the topology of the scalar field becomes a one-dimensional combinatorial object.
+
+The height function on a torus is the canonical mental model. Starting below the torus gives an empty sublevel set. Passing the lowest critical point creates a disk. A saddle changes it to a cylinder, another saddle changes the connectivity again, and the maximum completes the torus. The critical values mark where topology changes; between them, level-set structure is stable.
+
+Reeb graphs are lossy summaries. They preserve component evolution and some one-dimensional connectivity, not the full topology or metric geometry. Edelsbrunner and Harer show, for example, that \(\beta_0(R(f))=\beta_0(X)\) and \(\beta_1(R(f))\le\beta_1(X)\). A graph is therefore useful for navigation through level sets and segmentation, but it should not replace a full homology/persistence computation when higher-dimensional features matter.
+
+In graphics/vision, choose \(f\) to match the question: height for terrain, scalar density for volumetric imaging, geodesic distance for shape segmentation, curvature-like fields for surface decomposition, or confidence/error fields for reconstruction diagnostics. The graph summarizes **that function on that domain**, not shape in an absolute sense.
+
+Source basis: *Computational Topology*, Chapter VI on Morse functions, piecewise-linear critical points, Reeb graphs/contour trees, and the relationship between graph nodes and critical points.
 
 ### The discrete Laplacian turns adjacency into a motion rule
 
@@ -3325,6 +3547,25 @@ Topology-preserving collapses preserve the connected surface type under the stat
 For the cup scan, suppose the source has a thin handle and a slightly noisy rim. A topology-preserving simplifier should keep the handle loop connected and the opening boundary intact while reducing redundant faces. Its acceptance report might state: component count unchanged; boundary loop count unchanged; Euler characteristic unchanged; no nonmanifold edges or vertices introduced; sampled bidirectional surface error below $0.4\,\mathrm{mm}$; maximum normal change under a declared threshold. These tests still do not prove the simplified cup looks right, but they make its guarantees inspectable. If the handle disappears because a collapse merged opposite sides, the link-condition gate failed or the algorithm intentionally permitted a topology change.
 
 Repair and simplification should not be conflated. A hole-filling patch changes an open boundary into a closed surface, so it intentionally changes topology and needs a modeling assumption about the missing surface. A local repair algorithm may cut a nonmanifold edge into multiple manifold sheets; that can produce valid components but may duplicate geometry. Closing a scan seam by snapping near boundary edges can create foldovers or self-intersections even if the boundary count improves. Repair tools should report each change and expose the inferred intent rather than silently claim the original topology was recovered.
+
+
+### Surface repair and volumetric repair preserve different kinds of evidence
+
+“Repair the mesh” hides an ill-posed inference problem: the corrupted input does not uniquely determine the surface the author or scanner intended. Botsch et al. therefore distinguish two broad algorithm families whose guarantees and failure modes are fundamentally different.
+
+**Surface-oriented repair** operates directly on the polygons. It can snap nearby boundary elements, stitch gaps with triangle strips, fill holes with a patch, or explicitly split triangles at self-intersections. Because most unaffected polygons survive unchanged, it can preserve local geometry, material attributes, curvature-line connectivity, UVs, and other authored structure. That precision is its strength.
+
+Its weakness is that reliable artifact classification may itself be difficult. Two boundaries close in space may be opposite sides of a legitimate thin feature rather than a gap to close. Large overlaps and self-intersections can be numerically delicate. Surface repair often needs tolerance choices or user guidance because geometry alone may not reveal intent.
+
+**Volumetric repair** first converts the input to a representation that classifies regions/cells as inside, outside, or intersected, using a regular grid, octree, BSP-like partition, Delaunay-based volume, or another spatial decomposition. A surface is then extracted from the repaired volume. Because the intermediate representation encodes a consistent inside/outside field, intersections, inconsistent face orientation, gaps, and open seams can disappear by construction. Morphological operations can remove features below a chosen scale.
+
+That robustness costs information. Voxelization/resampling can alias thin features and sharp edges. Original polygon connectivity and per-element attributes are not automatically preserved. The extracted mesh can contain far more triangles and require subsequent decimation/remeshing. Resolution becomes part of the repair model: a feature smaller than the voxel/octree tolerance can be intentionally or accidentally erased.
+
+This distinction is important for scan pipelines such as Maveb. A local surface repair is suitable when the input is already mostly trustworthy and preserving measured geometry matters. A volumetric reconstruction is attractive when watertightness/topological consistency matters more than retaining every original triangle. A hybrid can use volumetric reasoning to decide topology and then project or optimize the final surface back toward source samples.
+
+A repair report should therefore say **what was inferred**: gaps closed below which tolerance, holes filled under which patch energy, components merged under which proximity rule, handles removed below which scale, and how far output points moved from input evidence. “Watertight” is one property, not proof of fidelity to the intended object.
+
+Source basis: *Polygon Mesh Processing*, Chapter 8, especially the artifact taxonomy, distinction between surface-oriented and volumetric repair, regular/adaptive volumetric approaches, and the trade between robust topology and resampling/detail preservation.
 
 ### A repeatable mesh-processing checkpoint
 
