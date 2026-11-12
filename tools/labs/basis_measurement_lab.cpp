@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <cassert>
+#include <stdexcept>
 #include <cmath>
 #include <limits>
 #include <optional>
@@ -67,23 +67,27 @@ bool near(double a, double b, double tol = 1e-12) {
     return std::abs(a-b) <= tol * std::max({1.0, std::abs(a), std::abs(b)});
 }
 
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
 int main() {
     const Frame2 panel{{5,-1}, {2,0}, {1,3}};
     const Vec2 target{2,-1};
     const Vec2 measured = to_world(panel, target);
-    assert(near(measured.x, 8) && near(measured.y, -4));
+    require(near(measured.x, 8) && near(measured.y, -4), "World coordinate mapping failed");
 
     const auto recovered = to_local(panel, measured);
-    assert(recovered && near(recovered->x, 2) && near(recovered->y, -1));
+    require(recovered && near(recovered->x, 2) && near(recovered->y, -1), "Coordinate recovery failed");
 
     // The basis Gram metric measures actual world length in local coordinates.
     // G = [[4,2],[2,10]]; q = [2,-1] => q^T G q = 18 m^2.
     const double g00 = 4, g01 = 2, g11 = 10;
     const double squared_length =
         g00*target.x*target.x + 2*g01*target.x*target.y + g11*target.y*target.y;
-    assert(near(squared_length, 18));
+    require(near(squared_length, 18), "Gram metric length mismatch");
 
     const Frame2 nearly_parallel{{0,0}, {1,0}, {1,1e-15}};
-    assert(!to_local(nearly_parallel, {1,2}));
-    assert(!to_local(panel, {std::numeric_limits<double>::infinity(),0}));
+    require(!to_local(nearly_parallel, {1,2}), "Ill-conditioned basis not rejected");
+    require(!to_local(panel, {std::numeric_limits<double>::infinity(),0}), "Nonfinite input not rejected");
 }
