@@ -58,3 +58,10 @@ The witness explicitly does not claim arbitrary-component exception safety, para
 Read the connected engine narrative at [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Let identity survive changes in storage]].
 
 Related: [[Sparse-set storage]], [[Object identity and generation handles]], [[Field reordering and AoS versus SoA]].
+
+## Scheduler and hierarchy witness
+
+Storage density is only half of an ECS. `tools/labs/ecs_scheduler_hierarchy_lab.cpp` adds the next contract layer: systems declare component read/write masks, two readers may share a batch, and any overlapping writer creates a dependency. The witness uses deterministic first-fit batching and then verifies that no batch contains a conflicting pair. This is intentionally a semantic scheduler, not a claim about work stealing or lock-free execution.
+
+The same laboratory models transform hierarchy invalidation. Editing one local transform marks exactly its descendant subtree dirty; world evaluation recursively establishes the parent before a child consumes the parent's world state. An unrelated sibling remains untouched. This closes the earlier gap where hierarchy and scheduling were described but not executable.
+
