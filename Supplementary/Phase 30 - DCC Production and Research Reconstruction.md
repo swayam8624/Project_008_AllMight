@@ -61,7 +61,7 @@ Canonicalization usually requires:
 - stable ordering;
 - normalized paths;
 - explicit schema versions;
-- no timestamps inside identity hashes unless time is semantically part of the asset;
+- no \timestamps inside identity hashes unless time is semantically part of the asset;
 - normalized numeric/string formatting;
 - explicit dependency ordering policy;
 - deterministic diagnostic codes.
@@ -187,7 +187,7 @@ A typical runtime publication path cooks selected SOP/LOP outputs and exports de
 
 For simulation or VFX caches, publication also needs frame/time-sample contracts:
 
-- start/end frame;
+- start/\end frame;
 - frame rate;
 - substep/sample convention;
 - missing-frame policy;
@@ -268,7 +268,7 @@ A benchmark record should identify enough state to explain the result:
 
 Do not report only a mean when the distribution is unstable. Median and percentiles can expose stalls. Small samples need uncertainty qualification.
 
-GPU timings should come from appropriate GPU timestamp mechanisms when measuring GPU work; CPU wall time includes queueing and synchronization effects.
+GPU timings should come from appropriate GPU \timestamp mechanisms when measuring GPU work; CPU wall time includes queueing and synchronization effects.
 
 ## 16. Golden tests and exact tests solve different problems
 
