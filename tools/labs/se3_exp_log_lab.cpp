@@ -61,7 +61,14 @@ Mat3 transpose(Mat3 A) {
 double trace(Mat3 A) { return A.a[0][0]+A.a[1][1]+A.a[2][2]; }
 
 Mat3 hat(Vec3 w) {
-    return {{{{0.0,-w.z,w.y}},{{w.z,0.0,-w.x}},{{-w.y,w.x,0.0}}}};
+    Mat3 W{};
+    W.a[0][1] = -w.z;
+    W.a[0][2] =  w.y;
+    W.a[1][0] =  w.z;
+    W.a[1][2] = -w.x;
+    W.a[2][0] = -w.y;
+    W.a[2][1] =  w.x;
+    return W;
 }
 Vec3 vee(Mat3 W) {
     return {W.a[2][1], W.a[0][2], W.a[1][0]};
