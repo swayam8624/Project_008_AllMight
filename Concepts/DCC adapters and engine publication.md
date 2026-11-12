@@ -68,3 +68,12 @@ tools/labs/production_pipeline_contract_lab.cpp implements the host-neutral part
 It deliberately does not claim real Blender/Maya/Houdini/Nuke execution, SHA-256 computation, symlink resolution, atomic rename behavior or render-farm integration.
 
 Related: [[Atomic publication and durability]], [[Binary format contracts]], [[Interface contracts and publication]].
+
+## Executed Blender boundary
+
+The host-neutral adapter contract now has one real DCC execution path. `tools/dcc/blender_contract.py` runs inside Blender in background mode, creates mesh/collection/object datablocks without UI interaction, attaches logical publication metadata, saves a `.blend`, exports a binary glTF/GLB with extras, validates the GLB header/JSON chunk, resets Blender, re-imports the GLB and verifies mesh identity plus custom publication fields.
+
+The GitHub workflow `.github/workflows/blender-dcc-contract.yml` installs Blender on Linux and executes that round trip headlessly. This changes the Blender portion from “API described” to “host executed in CI.” It does not upgrade Maya, Houdini or Nuke: their adapters remain host-neutral contracts until a licensed/current host can execute them. It also does not prove arbitrary production scenes, armatures, materials, texture packaging or current Kairo import parity.
+
+Current Blender documentation explicitly supports background Python execution and glTF export; the repository test treats those host APIs as an external boundary and validates the exported artifact rather than assuming an operator call succeeded.
+
