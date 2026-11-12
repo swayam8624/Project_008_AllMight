@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <array>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
