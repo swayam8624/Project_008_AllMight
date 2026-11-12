@@ -83,6 +83,14 @@ def verify() -> int:
         for filename in EMBEDDED.get(volume_path, ()):
             source_path = ROOT / "tools" / "labs" / filename
             source = load(source_path).rstrip("\n")
+            exact_count = text.count(source)
+            if exact_count == 1:
+                print(f"SYNC {filename}: exact source == continuous narrative")
+                continue
+            if exact_count > 1:
+                print(f"FAIL {filename}: full source appears {exact_count} times")
+                failed = True
+                continue
             try:
                 embedded = embedded_cpp(text, source, source_path)
             except ValueError as error:
