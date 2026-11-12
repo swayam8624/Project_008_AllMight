@@ -15,13 +15,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTINUOUS = ROOT / "Continuous Notes"
-MATH = CONTINUOUS / "00 - From Vectors to Images - Integrated Mathematics for Visual Computing.md"
+MATH = CONTINUOUS / "Computing Foundations - From Bits to C++ and Systems APIs.md"
 GRAPHICS = CONTINUOUS / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
 ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
 # Every entry is a complete standalone witness embedded in the reader-facing book.
 EMBEDDED = {
-    MATH: ("math_contact_toi_lab.cpp",),
+    MATH: ("math_contact_toi_lab.cpp", "basis_measurement_lab.cpp"),
     GRAPHICS: (
         "disk_ccd_lab.cpp",
         "swept_broadphase_lab.cpp",
@@ -37,6 +37,7 @@ EMBEDDED = {
         "engine_world_contract_lab.cpp",
         "animation_controller_contract_lab.cpp",
         "threaded_asset_publication_lab.cpp",
+        "resource_state_plan_lab.cpp",
     ),
 }
 
@@ -80,6 +81,16 @@ def verify() -> int:
             failed = True
         else:
             print(f"FORMAT {volume_path.name}: {fences} fenced boundaries, {math} display boundaries")
+        if volume_path == GRAPHICS:
+            # Verify the additional complete executable Python block as well.
+            python_path = ROOT / "tools" / "labs" / "xr_planar_vio_ekf_lab.py"
+            python_source = load(python_path).rstrip("\n")
+            expected = chr(96) * 3 + "python\n" + python_source + "\n" + chr(96) * 3
+            if text.count(expected) != 1:
+                print("FAIL xr_planar_vio_ekf_lab.py: full Python source differs")
+                failed = True
+            else:
+                print("SYNC xr_planar_vio_ekf_lab.py: exact source agreement")
         for filename in EMBEDDED.get(volume_path, ()):
             source_path = ROOT / "tools" / "labs" / filename
             source = load(source_path).rstrip("\n")
