@@ -70,6 +70,8 @@ public:
     // rollback/resimulation was performed.
     bool receive_remote_input(std::int64_t tick, Input in) {
         if (tick <= confirmed_before_) return false; // duplicate/ancient confirmed packet
+        if (tick <= current_.tick && !states_.contains(tick - 1))
+            throw std::runtime_error("correction is older than retained rollback history");
         auto old = remote_.find(tick);
         if (old != remote_.end() && old->second == in) return false; // idempotent duplicate
 
