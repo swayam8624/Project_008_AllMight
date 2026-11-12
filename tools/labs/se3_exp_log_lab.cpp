@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <numbers>
 
 struct Vec3 {
     double x{}, y{}, z{};
@@ -87,7 +88,7 @@ Vec3 so3_log(Mat3 R) {
         return vee(0.5*(R-transpose(R)));
     }
     // This compact witness deliberately avoids the numerically delicate theta≈pi case.
-    assert(std::abs(M_PI-theta) > 1e-5);
+    assert(std::abs(std::numbers::pi-theta) > 1e-5);
     return vee((theta/(2.0*std::sin(theta)))*(R-transpose(R)));
 }
 
