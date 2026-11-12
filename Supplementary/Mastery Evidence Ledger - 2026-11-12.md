@@ -23,13 +23,13 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 11 | Cameras/projective geometry | Derived + numerical traces | camera/projection/jacobian witnesses | real calibration datasets and device conventions need current project evidence |
 | 12 | Geometry primitives | Reference implemented in teaching corpus | geometry/closest-point/intersection material | full production geometry-library fuzzing remains separate |
 | 13 | Collision/GJK/CCD | Multiple independent reference witnesses | disk CCD, swept broadphase, contact/TOI labs | arbitrary rotating 3D convex CCD and production solver parity remain higher evidence |
-| 14 | Spatial acceleration/navigation | Differential reference implemented | spatial_index_lab.cpp | SAH/LBVH quality, dynamic updates, SIMD/GPU traversal need workload/native evidence |
+| 14 | Spatial acceleration/navigation | BVH query parity + SAH/Morton/refit references | spatial_index_lab.cpp, bvh_sah_refit_lab.cpp | full binned SAH/LBVH construction, dynamic rotations, SIMD/GPU traversal need workload/native evidence |
 | 15 | ECS/data-oriented runtime | Storage + scheduler/hierarchy references implemented | ecs_reconstruction_lab.cpp, ecs_scheduler_hierarchy_lab.cpp | concurrent structural mutation, work stealing and KairoECS parity need production evidence |
 | 16 | Engine architecture/assets/tooling | Reference implemented with publication/concurrency witnesses | asset pipeline, world contract, threaded publication labs | current Kairo production integration remains a separate repository audit |
 | 17 | Rigid-body dynamics | Reference implemented + numerical checks | rigid/spring/mass/inertia teaching and labs | production multi-body/3D engine parity remains separate |
-| 18 | Contacts/constraints/CCD response | Strong reference/differential evidence | persistent contact, cache, penetration refresh, rigid-contact labs | complete 3D stacks/friction/islands and production parity are not implied |
-| 19 | Rasterization | Independent CPU reference implemented | raster_reference_lab.cpp | clipping/MSAA/stencil/conservative raster and GPU parity remain additional layers |
-| 20 | PBR/materials | Mathematical oracle implemented | pbr_reference_lab.cpp | full white-furnace suite, transmission, anisotropy and material-import parity remain |
+| 18 | Contacts/constraints/CCD response | Strong reference/differential evidence including friction/islands | persistent contact, cache, penetration refresh, rigid-contact, constraint_friction_island_lab.cpp | angular Jacobians, full friction cones, large 3D stacks/islands and production parity remain |
+| 19 | Rasterization | Coverage/interpolation + clipping/sample/stencil/blend CPU references | raster_reference_lab.cpp, raster_pipeline_state_lab.cpp | all clip planes, exact API sample rules, conservative rasterization and GPU parity remain |
+| 20 | PBR/materials | Isotropic + anisotropic/dielectric/furnace mathematical oracles | pbr_reference_lab.cpp, pbr_extended_reference_lab.cpp | rough transmission, multiple scattering, measured-material and material-import parity remain |
 | 21 | Ray/path transport | Scene-level geometry + MIS reference verified | monte_carlo_transport_lab.cpp, path_transport_scene_lab.cpp | emissive-geometry NEE, multibounce transport, BVH/image parity and media remain |
 | 22 | GPU architecture/parallel algorithms | Derived/reference + compile/native boundary | prefix-scan teaching, native graphics workflow | occupancy/bank/coalescing claims require device counters |
 | 23 | Vulkan | Native API execution smoke | tools/native/vulkan_sync_smoke.cpp | resource-specific layouts/queue ownership/timeline protocols and production renderer parity remain |
@@ -38,7 +38,7 @@ A phase can hold different levels for different claims. For example, Vulkan sync
 | 26 | Advanced real-time rendering | CPU semantic reference implemented | realtime_rendering_reference_lab.cpp | full TAA/SSR/SSAO/volumetrics/particles and GPU renderer parity remain |
 | 27 | Meshes/animation | Topology + QEM + rigid-blend reference implemented | mesh_topology_lab.cpp, qem_edge_collapse_lab.cpp, dual_quaternion_skinning_lab.cpp, animation controller lab | optimal QEM/link-condition remeshing and production GPU skinning/import parity remain |
 | 28 | Emulation/OS/network/crypto | Real POSIX/network execution + known-answer crypto | emulator lab, posix_vm_file_lab.cpp, network_loopback_lab.cpp, crypto_primitives_lab.cpp | internet faults, crash durability, side channels/key management and production security remain |
-| 29 | ML runtime/tensors/compressed inference | New reference implementation | phase29_ml_runtime_lab.cpp | full GGUF, protobuf ONNX/opsets, tokenizer, SIMD/Metal kernels and model parity remain |
+| 29 | ML runtime/tensors/compressed inference | Tensor/attention + GGUF metadata/tensor subset references | phase29_ml_runtime_lab.cpp, gguf_metadata_tensor_lab.cpp | full GGUF type catalog/payload, protobuf ONNX/opsets, tokenizer, SIMD/Metal kernels and model parity remain |
 | 30 | Production/DCC/research/capstone | Host-neutral publication reference + research methodology | production_pipeline_contract_lab.cpp | actual Blender/Maya/Houdini/Nuke host runs, render farm/filesystem durability and learner oral mastery remain |
 
 ## What this repair changed
@@ -93,3 +93,16 @@ The follow-up repair converted four previously explicit boundaries into tested r
 - `qem_edge_collapse_lab.cpp` moves mesh simplification from topology-only discussion to plane quadrics, candidate error and geometric collapse rejection.
 
 These raise the corresponding claims from prose/partial-reference status. They do not erase the higher evidence boundaries stated in the phase table.
+
+
+## Third-wave closure — pipeline state, spatial quality, solver coupling, and model containers
+
+The next repair wave closes another set of previously explicit reference gaps without promoting them beyond the evidence actually executed:
+
+- `raster_pipeline_state_lab.cpp` extends raster semantics through homogeneous clipping, explicit multisample coverage, stencil state, and premultiplied blending;
+- `pbr_extended_reference_lab.cpp` adds anisotropic GGX normalization, exact dielectric Fresnel, Snell refraction/total internal reflection, and a white-furnace energy integral;
+- `bvh_sah_refit_lab.cpp` adds surface-area split reasoning, Morton interleaving, and parent-bound refit to the earlier BVH query oracle;
+- `constraint_friction_island_lab.cpp` adds island connectivity, unilateral impulses, Coulomb friction clamping, and a tiny sequential-impulse stack;
+- `gguf_metadata_tensor_lab.cpp` advances GGUF from prefix-only validation to typed metadata, alignment and tensor descriptors.
+
+These are reference-level closures. Exact hardware/API behavior, production repository parity, third-party DCC execution, and learner Level-7 reconstruction are still tracked separately rather than absorbed into a generic “complete” label.
