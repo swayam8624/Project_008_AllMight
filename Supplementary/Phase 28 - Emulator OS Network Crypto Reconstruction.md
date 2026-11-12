@@ -62,7 +62,7 @@ A parser should also distinguish content validation from ROM compatibility. Pass
 
 This is the same contract used by model/asset parsers elsewhere in the repository: syntactic validity and runtime capability are separate gates.
 
-## 8. Native OS boundaries: handles, descriptors and \partial operations
+## 8. Native OS boundaries: handles, descriptors and partial operations
 
 A file descriptor or OS handle is a process-local capability to an operating-system resource. It is not the file itself and should not be serialized as durable identity.
 
@@ -154,7 +154,7 @@ Until those exist, Phase 28 should remain `developing` in the mastery ledger.
 
 The following four lines are retained exactly as provenance anchors because the integrated explanations above normalize display-math formatting. They are not additional teaching; they allow the preservation audit to distinguish a formatting rewrite from source loss.
 
-For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer \sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the \sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
 
 T(0)=\epsilon,\qquad
 T(i)=\operatorname{HMAC}_{PRK}
