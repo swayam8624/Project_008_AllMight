@@ -1,5 +1,12 @@
 # Graphics and Engine Mastery - Continuous Notes
 
+
+## Mastery evidence and reconstructed weak phases
+
+Use [[Concepts/Mastery evidence tiers]] and `mastery/mastery_ledger.json` when judging completion. The current repair adds [[Supplementary/Phase 29 - ML Runtime Reconstruction|Phase 29: model bytes to transformer execution]] and [[Supplementary/Phase 30 - DCC Production and Research Reconstruction|Phase 30: DCC state to reproducible engine evidence]], plus standalone laboratories for ML runtime, production publication, ECS, BVH/SAH, rasterization, GGX/MIS and mesh topology/QEM.
+
+The new material is additive. It does not turn reference CPU tests into native Vulkan/Metal, DCC-host or production-repository proof.
+
 **Mathematics 06–11 is now one active book:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|Open the complete integrated mathematics narrative]]. Phase rows below retain curriculum/source coverage and jump into that same volume.
 
 This library entry point leads to self-contained teaching stories. Definitions, worked examples, traces, assumptions and laboratory checkpoints stay inside each volume. Concept links provide navigation and later growth.
