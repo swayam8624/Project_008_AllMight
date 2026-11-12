@@ -61586,6 +61586,351 @@ A numerical trace clarifies the cancellation invariant. Budget `B=128` bytes (il
 Priority needs a defined policy. A visible doorway texture might have an imminent deadline; a far-away decoration may be prefetched; a speculative request must not starve the objects required for collision or gameplay. Priority can be adjusted as camera movement changes, but cancellation/reprioritization must be separate from identity. Measure queue wait, bytes/s, CPU decode, upload time, peak allocations, deadline misses and stale-completion count. A successful mean load latency can conceal a traversal hitch at a ninety-ninth-percentile transition. The original Chapter 6 resource-management discussion motivates these concerns; this contract states what present-day asynchronous publication and frame-in-flight ownership must actually enforce.
 
 
+#### From a simulated asset job to real concurrent decoding — Gregory integration
+
+The previous asset-publication reconstruction establishes the *logical* boundary: a worker's answer cannot mutate live engine resources merely because it has finished. That rule becomes harder when completion order is not known in advance. In a game that streams assets as the camera moves, the player can enter another world cell while a disk read or texture decode is running, and a higher-priority request can finish first on a different worker. A single map entry named `cell7/door/albedo` might therefore have several historical jobs with the same textual path but different *intent*. We need a way to recognize which result still owns permission to publish.
+
+Consider one timeline. At tick 100 the renderer still draws version A, while worker 1 begins decoding proposed version B. The player then exits the cell and the engine cancels B. At tick 101 the player re-enters; worker 2 decodes newer version C and finishes before B. Publishing C is valid. Publishing B afterward would silently roll the asset back to the cancelled generation. The result's *generation token*, together with a slot that records its current pending generation, prevents this. Cancellation does not have to halt a CPU thread immediately; it must revoke the result's authority. It is often preferable to let a bounded task finish, discard its obsolete completion and avoid ad-hoc mid-decoder interruption protocols. Work cancellation and *publication cancellation* are deliberately distinct concepts.
+
+For one asset slot, let `g` be the current request generation. A completion `c` is eligible only when the slot is pending and `c.generation == g`; the asset identifier must also resolve to that slot. A successful decode then enters a **CPU-ready, not-yet-published** state. That state means bytes passed a format check. It does not imply the renderer has uploaded them, transitioned their image layout or finished any GPU transfer. A production backend must supply an explicit upload-ready fact before the owner commits the new render-visible descriptor. In the small reference below, the `publish` call represents that permission and **does not perform a GPU upload**.
+
+Ownership matters as much as generations. A caller's temporary `std::span` or a pointer to stack-owned image bytes is unsuitable for a job that may outlive the call. In this laboratory, each `Job` owns a `std::vector<std::uint8_t>`; moving a job into the queue transfers those bytes without lending a view into disappearing memory. The queue and completions are both protected by one mutex. Workers wait on a condition variable whose predicate says either work exists or shutdown was requested; every wait re-checks that predicate after wakeup. Only the owning resource thread invokes `Residency::request`, `cancel`, `accept`, `publish`, `drawn`, `gpu_completed` and `evict`. This single-writer rule is an important part of the example's race freedom: the map and budget counters are **not** concurrently mutable data structures.
+
+The worker pool chooses the highest priority among **queued** jobs. Priority is a scheduling hint, not a deadline guarantee, because an already running decode is not preempted. With two workers and a third urgent request, the urgent request may still wait if both workers are occupied. A production pipeline should additionally bound the queue, propagate a resource-class priority, use back-pressure, consider deadline or camera-distance aging, and measure time from request to publication. A condition-variable wakeup only announces availability; it is not a fairness policy. The reference shutdown drains queued jobs and joins workers. A test gate that remains closed during destruction would block joining, so the harness explicitly releases gates before the pool exits. A production task API needs a shutdown/cancel policy strong enough to avoid that class of deadlock.
+
+The tiny package parser illustrates another boundary. Its first four bytes encode an unsigned little-endian payload length. The code first demands a five-byte minimum containing header plus checksum, decodes length with shifts, then checks both an application-defined maximum and equality with `raw.size()-5` **before allocating the payload**. It finally validates an XOR checksum. XOR is chosen only to make the fixture inspectable. It is **not a cryptographic authenticity check** and does not protect against deliberate tampering or many transmission errors. A real asset package would validate schema/version, offset and count arithmetic, compression ratios, file provenance, cryptographic integrity as appropriate, and resource-specific semantic invariants. Never trust a file-provided size simply because it fits a host integer type.
+
+Memory budgeting requires more care than measuring the current asset payload. Let `R` denote charged live resident bytes, `Q` denote reserved bytes for accepted pending requests and `F` denote old resident bytes held until previously submitted GPU uses complete. Our simplified accounting invariant is
+
+$
+B_{\mathrm{charged}} = R+Q+F \le B_{\mathrm{limit}}.
+$
+
+This model deliberately counts one reservation per pending request and keeps the *old* hot-reloaded texture charged until the last modeled frame fence has completed. For a 32-byte toy budget, a four-byte version C occupies four bytes. Requesting an eight-byte replacement temporarily raises the charge to 12, while the old four-byte version is still live. After decoding three bytes and publishing, the eight-byte reservation becomes three bytes of new residency, but the old four bytes remain in `F`: **seven bytes** are charged. A completion through fence 4 cannot release an old resource last read by fence 5; after fence 5 completes, the charge falls to three bytes. This is a conservation-style accounting test, not a claimed GPU observation.
+
+Real peak memory may be much higher than this convenient equality. Encoded input and decoder output can coexist, decompression allocators can hold scratch buffers, staging and GPU copies may overlap, sparse residency can have page-granularity costs, and driver allocations are not fully represented by visible texture sizes. In production, either charge each distinct owner including input, decoded bytes, staging, live resources and retiring generations or state plainly which components your budget excludes. An admission estimate smaller than the eventual payload must not silently make a slot over-budget; the reference rejects any completion whose decoded size exceeds its reserved estimate. A stronger implementation can re-reserve with a checked growth path if a trustworthy format justifies it.
+
+The two clocks in this example have different purposes. A **request generation** is a logical identity epoch and invalidates stale CPU results. A **GPU completion fence value** is an execution-order observation needed to determine when old GPU-visible storage is no longer in use. Incrementing a generation does not make submitted GPU commands stop reading their old descriptor. Conversely, a finished GPU command does not grant a cancelled CPU decode authority to publish. They solve different races and therefore must not be conflated. The example's fence values are controlled integers used to exercise retirement policy, **not** Vulkan timeline semaphore values or Metal command-buffer completion callbacks.
+
+The full C++20 reconstruction below executes two actual worker threads. A `std::promise` gate deliberately blocks the first worker after it has taken the old request, then submits the newer higher-priority request for the other worker to complete. That makes the stale-result hazard reproducible without relying on sleeps or a fast computer. It next tests hot-reload retirement, malformed-byte rejection and failed budget admission. An invalid replacement leaves the last valid resident asset intact. All validation happens through runtime checks, so `-DNDEBUG` does not turn the correctness tests off.
+
+Run the independent source with a compiler that supports C++20 and threads:
+
+```sh
+clang++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror -pthread \
+  -fsanitize=address,undefined -fno-omit-frame-pointer \
+  tools/labs/threaded_asset_publication_lab.cpp -o /tmp/threaded_asset_publication_lab
+/tmp/threaded_asset_publication_lab
+```
+
+The tested local build also passed GCC C++20 optimized release compilation. These tests establish the reference model's observed behavior on the tested hosts and sanitizers; they do not prove that every possible interleaving has been explored. For that level of confidence, add repeated stress with randomized ordering, ThreadSanitizer where supported, scheduler fault injection, cancellation at every job phase, queue-capacity tests, device-loss simulation and integration tests against a backend's actual completion signaling. `std::thread` success is evidence of genuine concurrency, but a hypothetical GPU fence does not become a real one by being tested in a CPU program.
+
+**Complete runnable source, identical to `tools/labs/threaded_asset_publication_lab.cpp`:**
+
+```cpp
+// C++20 reference: real worker threads plus generation-safe asset publication.
+// GPU upload and render fences are deterministic models, not Vulkan/Metal calls.
+#include <algorithm>
+#include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <future>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <utility>
+#include <vector>
+
+namespace asset_lab {
+void demand(bool ok,std::string_view why) {
+    if (!ok) throw std::runtime_error(std::string(why));
+}
+// A deliberately tiny trusted-size package format. The byte count in its
+// header is NOT trusted until checked against the actual encoded buffer.
+std::vector<std::uint8_t> pack(const std::vector<std::uint8_t>& bytes) {
+    demand(bytes.size()<=32,"fixture payload too large");
+    std::vector<std::uint8_t> out;
+    const auto n=static_cast<std::uint32_t>(bytes.size());
+    for (int i=0;i<4;i++) out.push_back(static_cast<std::uint8_t>(n>>(8*i)));
+    std::uint8_t check=0;
+    for (auto b:bytes) {out.push_back(b);check^=b;}
+    out.push_back(check);
+    return out;
+}
+struct Decode {
+    bool valid=false;
+    std::vector<std::uint8_t> bytes;
+    std::string error;
+};
+Decode unpack(const std::vector<std::uint8_t>& raw) {
+    if (raw.size()<5) return {false,{},"truncated package header"};
+    std::uint32_t n=0;
+    for (unsigned i=0;i<4;i++) n|=std::uint32_t(raw[i])<<(8*i);
+    // Check BOTH a semantic maximum and the encoded extent before allocation.
+    if (n>32 || std::size_t(n)!=raw.size()-5)
+        return {false,{},"payload size mismatch"};
+    std::uint8_t check=0;
+    for (std::size_t i=4;i<raw.size()-1;i++) check^=raw[i];
+    if (check!=raw.back()) return {false,{},"checksum mismatch"};
+    return {true,std::vector<std::uint8_t>(raw.begin()+4,raw.end()-1),{}};
+}
+
+struct Job {
+    std::string asset;
+    std::uint64_t generation=0;
+    int priority=0;
+    std::vector<std::uint8_t> encoded; // Owned job input; no borrowed caller span.
+    std::shared_future<void> may_finish; // Optional controlled test gate.
+    std::shared_ptr<std::promise<void>> started;
+};
+struct Completion {
+    std::string asset;
+    std::uint64_t generation=0;
+    Decode result;
+};
+
+class DecoderPool {
+    std::mutex guard_;
+    std::condition_variable work_ready_,completion_ready_;
+    std::deque<Job> queued_;
+    std::deque<Completion> completed_;
+    bool closing_=false;
+    std::vector<std::thread> workers_;
+    void work() {
+        for (;;) {
+            Job job;
+            {
+                std::unique_lock lock(guard_);
+                work_ready_.wait(lock,[&]{return closing_ || !queued_.empty();});
+                if (closing_ && queued_.empty()) return;
+                // Highest priority first among jobs not yet started. In-flight
+                // work cannot be preempted by changing a later request priority.
+                auto best=std::max_element(queued_.begin(),queued_.end(),
+                    [](const Job& a,const Job& b){return a.priority<b.priority;});
+                job=std::move(*best);
+                queued_.erase(best);
+            }
+            if (job.started) job.started->set_value();
+            if (job.may_finish.valid()) job.may_finish.wait();
+            Completion done{std::move(job.asset),job.generation,unpack(job.encoded)};
+            {
+                std::lock_guard lock(guard_);
+                completed_.push_back(std::move(done));
+            }
+            completion_ready_.notify_one();
+        }
+    }
+public:
+    explicit DecoderPool(unsigned concurrency) {
+        demand(concurrency>0 && concurrency<=8,"invalid worker count");
+        for (unsigned i=0;i<concurrency;i++)
+            workers_.emplace_back([this]{work();});
+    }
+    DecoderPool(const DecoderPool&)=delete;
+    DecoderPool& operator=(const DecoderPool&)=delete;
+    ~DecoderPool() {
+        // Caller must release any external test gates before destruction.
+        {std::lock_guard lock(guard_);closing_=true;}
+        work_ready_.notify_all();
+        for (auto& worker:workers_)worker.join();
+    }
+    void submit(Job job) {
+        {std::lock_guard lock(guard_);
+            demand(!closing_,"queue closed");queued_.push_back(std::move(job));}
+        work_ready_.notify_one();
+    }
+    Completion await_completion() {
+        std::unique_lock lock(guard_);
+        demand(completion_ready_.wait_for(lock,std::chrono::seconds(5),
+               [&]{return !completed_.empty();}),"worker completion timed out");
+        Completion out=std::move(completed_.front());
+        completed_.pop_front();
+        return out;
+    }
+};
+
+struct Resident {
+    std::vector<std::uint8_t> bytes;
+    std::uint64_t last_draw_fence=0;
+};
+struct Retired {
+    std::size_t bytes=0;
+    std::uint64_t last_draw_fence=0;
+};
+struct Slot {
+    std::uint64_t generation=0;
+    std::size_t pending_estimate=0;
+    bool pending=false;
+    bool cpu_ready=false;
+    std::vector<std::uint8_t> decoded;
+    std::optional<Resident> current;
+};
+class Residency {
+    std::map<std::string,Slot> slots_;
+    std::vector<Retired> retired_;
+    const std::size_t budget_;
+    std::size_t used_=0;
+    std::uint64_t completed_fence_=0;
+    unsigned stale_completions_=0;
+    unsigned failed_packages_=0;
+    void retire_or_free(Resident&& old) {
+        if (old.last_draw_fence<=completed_fence_) used_-=old.bytes.size();
+        else retired_.push_back({old.bytes.size(),old.last_draw_fence});
+    }
+public:
+    explicit Residency(std::size_t limit):budget_(limit) {}
+    // request() is called by the owning gameplay/resource thread only.
+    std::uint64_t request(const std::string& name,std::size_t estimated_bytes) {
+        Slot& s=slots_[name];
+        if (s.pending) cancel(name);
+        demand(estimated_bytes<=budget_-used_,"budget rejected request");
+        used_+=estimated_bytes;
+        s.pending=true;s.cpu_ready=false;s.pending_estimate=estimated_bytes;
+        s.decoded.clear();
+        return ++s.generation;
+    }
+    void cancel(const std::string& name) {
+        auto it=slots_.find(name);
+        demand(it!=slots_.end() && it->second.pending,"cancel nonpending");
+        Slot& s=it->second;
+        used_-=s.pending_estimate;
+        s.pending=false;s.cpu_ready=false;s.pending_estimate=0;
+        s.decoded.clear();
+        ++s.generation; // Any worker may still finish, but may not publish.
+    }
+    bool accept(Completion done) {
+        auto it=slots_.find(done.asset);
+        if (it==slots_.end() || !it->second.pending ||
+            it->second.generation!=done.generation) {
+            ++stale_completions_;return false;
+        }
+        Slot& s=it->second;
+        if (!done.result.valid || done.result.bytes.size()>s.pending_estimate) {
+            ++failed_packages_;cancel(done.asset);return false;
+        }
+        s.decoded=std::move(done.result.bytes);
+        s.cpu_ready=true;
+        return true;
+    }
+    // Called only after a real renderer would prove its new upload complete.
+    bool publish(const std::string& name) {
+        auto it=slots_.find(name);
+        if (it==slots_.end()) return false;
+        Slot& s=it->second;
+        if (!s.pending || !s.cpu_ready) return false;
+        const std::size_t actual=s.decoded.size();
+        // The estimate was precharged. Transfer its charge to actual residency.
+        used_-=s.pending_estimate-actual;
+        s.pending=false;s.cpu_ready=false;s.pending_estimate=0;
+        if (s.current) retire_or_free(std::move(*s.current));
+        s.current=Resident{std::move(s.decoded),0};
+        return true;
+    }
+    std::optional<std::vector<std::uint8_t>> read(const std::string& name) const {
+        auto it=slots_.find(name);
+        if (it==slots_.end() || !it->second.current) return std::nullopt;
+        return it->second.current->bytes;
+    }
+    void drawn(const std::string& name,std::uint64_t fence) {
+        auto it=slots_.find(name);
+        demand(it!=slots_.end() && it->second.current,"draw unresolved asset");
+        demand(fence>completed_fence_,"cannot submit to an already completed fence");
+        it->second.current->last_draw_fence=
+            std::max(fence,it->second.current->last_draw_fence);
+    }
+    void gpu_completed(std::uint64_t fence) {
+        demand(fence>=completed_fence_,"GPU completion clock reversed");
+        completed_fence_=fence;
+        auto it=retired_.begin();
+        while (it!=retired_.end()) {
+            if (it->last_draw_fence<=fence) {
+                used_-=it->bytes;
+                it=retired_.erase(it);
+            } else ++it;
+        }
+    }
+    void evict(const std::string& name) {
+        Slot& s=slots_.at(name);
+        demand(!s.pending && s.current.has_value(),"cannot evict pending/missing");
+        retire_or_free(std::move(*s.current));
+        s.current.reset();
+        ++s.generation;
+    }
+    std::size_t charged()const{return used_;}
+    std::size_t retired_count()const{return retired_.size();}
+    unsigned stale()const{return stale_completions_;}
+    unsigned failed()const{return failed_packages_;}
+};
+} // namespace asset_lab
+
+int main() {
+    using namespace asset_lab;
+    DecoderPool workers(2);
+    Residency budget(32);
+    const std::string name="cell7/door/albedo";
+    std::promise<void> release_old;
+    const auto old_gate=release_old.get_future().share();
+    auto started=std::make_shared<std::promise<void>>();
+    const auto begun=started->get_future();
+    const auto gen1=budget.request(name,12);
+    workers.submit({name,gen1,1,pack({1,2,3,4}),old_gate,started});
+    demand(begun.wait_for(std::chrono::seconds(5))==std::future_status::ready,
+           "old request did not start");
+    budget.cancel(name); // Worker 1 is already decoding generation 1.
+    const auto gen3=budget.request(name,8); // A newer request reuses the slot.
+    workers.submit({name,gen3,10,pack({9,8,7,6}),{},nullptr});
+    const auto next=workers.await_completion(); // Worker 2 can finish first.
+    demand(next.generation==gen3 && budget.accept(next),"new decode not accepted");
+    demand(budget.publish(name),"new asset publication failed");
+    demand(budget.read(name).value()==std::vector<std::uint8_t>({9,8,7,6}),
+           "wrong bytes published");
+    release_old.set_value();
+    const auto late=workers.await_completion();
+    demand(late.generation==gen1 && !budget.accept(late) && budget.stale()==1,
+           "old completion overwrote newer asset");
+    demand(budget.charged()==4,"cancelled request leaked reserved bytes");
+
+    budget.drawn(name,5); // Old generation is referenced by GPU work.
+    const auto gen4=budget.request(name,8);
+    workers.submit({name,gen4,5,pack({4,3,2}),{},nullptr});
+    demand(budget.accept(workers.await_completion()),"replacement decode failed");
+    demand(budget.publish(name),"replacement publish failed");
+    demand(budget.retired_count()==1 && budget.charged()==7,
+           "old GPU resource freed before completion");
+    budget.gpu_completed(4);
+    demand(budget.charged()==7,"premature GPU resource retirement");
+    budget.gpu_completed(5);
+    demand(budget.retired_count()==0 && budget.charged()==3,
+           "completed GPU frame did not retire its resource");
+
+    // Malformed bytes must not replace an existing valid published generation.
+    const auto malformed=budget.request(name,8);
+    auto invalid=pack({1,1,1});invalid.back()^=0xff;
+    workers.submit({name,malformed,1,invalid,{},nullptr});
+    demand(!budget.accept(workers.await_completion()) && budget.failed()==1,
+           "bad checksum accepted");
+    demand(budget.read(name).value()==std::vector<std::uint8_t>({4,3,2}),
+           "malformed hot reload replaced good bytes");
+    bool rejected=false;
+    try { (void)budget.request("huge",32); }
+    catch (const std::runtime_error&) {rejected=true;}
+    demand(rejected && budget.charged()==3,
+           "rejected over-budget request changed accounting");
+    budget.evict(name);
+    demand(budget.charged()==0,"asset not released after last user");
+    std::cout << "PASS actual workers, stale completion, owned bytes, "
+                 "checksum, hot reload, budget and mock GPU-fence retirement\n";
+}
+```
+
 #### Runtime texture replacement and safe publication
 
 The texture-loading example decodes PNG data through `stb_image`, requests four channels, and flips vertically to match the engine's coordinate convention. It creates a GPU texture and tracks a generation number used by the renderer's handle resolution. A key event asks the system to load alternate named textures while the application runs. The speaker describes the resulting swap, but no independent frame inspection was performed.
