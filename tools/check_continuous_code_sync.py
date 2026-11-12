@@ -21,7 +21,7 @@ ENGINE = CONTINUOUS / "Game Engine - From First Frame to Living Worlds.md"
 
 # Every entry is a complete standalone witness embedded in the reader-facing book.
 EMBEDDED = {
-    MATH: ("math_contact_toi_lab.cpp",),
+    MATH: ("math_contact_toi_lab.cpp", "temporary_lifetime_lab.cpp", "se3_exp_log_lab.cpp"),
     GRAPHICS: (
         "disk_ccd_lab.cpp",
         "swept_broadphase_lab.cpp",
@@ -50,25 +50,25 @@ def load(path: Path) -> str:
 
 
 def embedded_cpp(volume: str, source: str, path: Path) -> str:
-    # Use a unique, complete first line as an identity check. Repeated or absent
-    # programs are errors: silently matching the wrong copy would be misleading.
+    # Accept the two Markdown fence styles used by the canonical notes.
     first_line = source.splitlines()[0]
-    start_marker = "```cpp\n" + first_line
-    locations = []
-    pos = 0
-    while (pos := volume.find(start_marker, pos)) != -1:
-        locations.append(pos)
-        pos += len(start_marker)
-    if len(locations) != 1:
+    matches = []
+    for fence in ("```", "~~~"):
+        start_marker = fence + "cpp\n" + first_line
+        pos = 0
+        while (pos := volume.find(start_marker, pos)) != -1:
+            begin = pos + len(fence + "cpp\n")
+            end = volume.find("\n" + fence, begin)
+            if end == -1:
+                raise ValueError(f"{path.name}: unclosed embedded cpp block")
+            matches.append(volume[begin:end].rstrip("\n"))
+            pos = end + len(fence)
+    if len(matches) != 1:
         raise ValueError(
             f"{path.name}: expected exactly one full cpp code block starting "
-            f"{first_line!r}, found {len(locations)}"
+            f"{first_line!r}, found {len(matches)}"
         )
-    begin = locations[0] + len("```cpp\n")
-    end = volume.find("\n```", begin)
-    if end == -1:
-        raise ValueError(f"{path.name}: unclosed embedded cpp block")
-    return volume[begin:end].rstrip("\n")
+    return matches[0]
 
 
 def verify() -> int:
@@ -82,16 +82,22 @@ def verify() -> int:
             failed = True
         else:
             print(f"FORMAT {volume_path.name}: {fences} fenced boundaries, {math} display boundaries")
+        python_witnesses = []
         if volume_path == GRAPHICS:
-            # Verify the additional complete executable Python block as well.
-            python_path = ROOT / "tools" / "labs" / "xr_planar_vio_ekf_lab.py"
+            python_witnesses.append("xr_planar_vio_ekf_lab.py")
+        if volume_path == MATH:
+            python_witnesses.append("research_inference_lab.py")
+        for filename in python_witnesses:
+            python_path = ROOT / "tools" / "labs" / filename
             python_source = load(python_path).rstrip("\n")
-            expected = chr(96) * 3 + "python\n" + python_source + "\n" + chr(96) * 3
-            if text.count(expected) != 1:
-                print("FAIL xr_planar_vio_ekf_lab.py: full Python source differs")
+            expected_backtick = chr(96) * 3 + "python\n" + python_source + "\n" + chr(96) * 3
+            expected_tilde = "~~~python\n" + python_source + "\n~~~"
+            count = text.count(expected_backtick) + text.count(expected_tilde)
+            if count != 1:
+                print(f"FAIL {filename}: full Python source differs or is duplicated")
                 failed = True
             else:
-                print("SYNC xr_planar_vio_ekf_lab.py: exact source agreement")
+                print(f"SYNC {filename}: exact source agreement")
         for filename in EMBEDDED.get(volume_path, ()):
             source_path = ROOT / "tools" / "labs" / filename
             source = load(source_path).rstrip("\n")
