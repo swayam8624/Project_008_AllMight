@@ -1,4 +1,5 @@
-// Mathematics continuous-note C++20 first-contact oracle; code and tested source stay identical.\n#include <cmath>
+// Mathematics continuous-note C++20 first-contact oracle; code and tested source stay identical.
+#include <cmath>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
