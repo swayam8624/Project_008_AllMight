@@ -8,10 +8,12 @@ or master volumes losing the reconstruction checkpoints added by the repair.
 from __future__ import annotations
 
 from pathlib import Path
+import csv
 
 ROOT = Path(__file__).resolve().parents[1]
 CONCEPTS = ROOT / "Concepts"
 CONTINUOUS = ROOT / "Continuous Notes"
+MATRIX = ROOT / "Supplementary" / "mastery_chunk_evidence.csv"
 
 CANONICAL = {
     "foundations": CONTINUOUS / "Computing Foundations - From Bits to C++ and Systems APIs.md",
@@ -95,8 +97,41 @@ def main() -> None:
             if marker not in text:
                 raise RuntimeError(f"{path.name}: missing repair marker {marker!r}")
 
+    if not MATRIX.is_file():
+        raise RuntimeError("missing mastery chunk evidence matrix")
+    with MATRIX.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if len(rows) != 180:
+        raise RuntimeError(f"mastery matrix must contain exactly 180 rows, found {len(rows)}")
+
+    expected_part = 1
+    for index, row in enumerate(rows, start=1):
+        expected_chunk = f"M{index:03d}"
+        if row.get("chunk") != expected_chunk:
+            raise RuntimeError(
+                f"mastery matrix chunk order mismatch at row {index}: {row.get('chunk')!r}"
+            )
+        start = int(row["part_start"])
+        end = int(row["part_end"])
+        level = int(row["evidence_floor"])
+        phase = int(row["phase"])
+        if phase != ((index - 1) // 6) + 1:
+            raise RuntimeError(f"{expected_chunk}: phase mapping is wrong")
+        if start != expected_part or end < start:
+            raise RuntimeError(
+                f"{expected_chunk}: part range {start}-{end} breaks exact ordered coverage at {expected_part}"
+            )
+        if not 0 <= level <= 7:
+            raise RuntimeError(f"{expected_chunk}: invalid evidence floor {level}")
+        if not row.get("next_gate", "").strip():
+            raise RuntimeError(f"{expected_chunk}: next evidence gate is empty")
+        expected_part = end + 1
+    if expected_part != 3001:
+        raise RuntimeError(f"mastery matrix stops at part {expected_part - 1}, expected 3000")
+
     print(f"PASS: {len(list(CONCEPTS.glob('*.md')))} concept notes; none below 1000 bytes")
     print(f"PASS: {len(REQUIRED_ARTIFACTS)} required depth-repair artifacts present")
+    print("PASS: exact M001-M180 matrix partitions Parts 1-3000 and carries an evidence floor + next gate")
     print("PASS: reconstruction checkpoints remain in all three canonical volumes")
     print("LIMIT: structural depth floor is not a semantic mastery certificate")
 
