@@ -10,13 +10,13 @@ Related integration record: [[Supplementary/Manual Integration - Sources and Ver
 
 Multiple importance sampling combines samples drawn from different proposal distributions when each proposal is effective in different regions. In direct lighting, a BSDF sampler may find sharp specular directions well while a light sampler efficiently finds a small emitter.
 
-If technique (i) draws from density (p_i(x)) and contributes estimator (f(x)/p_i(x)), MIS assigns a weight (w_i(x)) while preserving the condition that the weights over participating techniques sum to one on the supported sample.
+If technique (i) draws from density (p_i(x)) and contributes estimator (f(x)/p_i(x)), MIS assigns a weight (w_i(x)) while preserving the condition that the weights over participating techniques \sum to one on the supported sample.
 
 The balance heuristic is
 
-[
+$$
 w_i(x)=\frac{n_i p_i(x)}{\sum_j n_j p_j(x)},
-]
+$$
 
 and the power heuristic commonly squares the weighted densities. The densities must be expressed with respect to the **same measure** before comparison. Comparing an area PDF directly to a solid-angle PDF is a dimensional error.
 
