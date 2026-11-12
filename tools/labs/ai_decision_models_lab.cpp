@@ -43,7 +43,7 @@ Status behavior_tree_decide(const World& w, std::string& action) {
 std::string utility_decide(const World& w) {
     struct Candidate { std::string name; double score; };
     std::vector<Candidate> c{
-        {"seek_cover", std::clamp((40.0 - w.health) / 40.0, 0.0, 1.0)},
+        {"seek_cover", std::clamp((50.0 - w.health) / 30.0, 0.0, 1.0)},
         {"attack", (w.enemy_visible && w.has_weapon && w.ammo > 0) ? 0.85 : 0.0},
         {"search", w.enemy_visible ? 0.1 : 0.55},
     };
@@ -155,9 +155,6 @@ int main() {
         Facts start{};
         auto plan=goap_plan(start);
         require(plan.has_value(), "planner should find a plan");
-        const std::vector<std::string> expected{
-            "find_enemy","find_weapon","find_ammo","attack"
-        };
         // Several equal-cost orderings can be logically valid. Verify the plan
         // reaches the goal and has the expected total number of required steps.
         require(plan->size()==4, "planner should need four prerequisite/action steps");
