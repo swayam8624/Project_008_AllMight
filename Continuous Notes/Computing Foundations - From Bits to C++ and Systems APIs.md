@@ -40057,9 +40057,39 @@ Parts 2771–2800 cover SHA-256/HMAC/HKDF, AES/GCM and nonce discipline, public 
 
 The conceptual capstone is a single pipeline: a validated cartridge file enters a deterministic CPU interpreter; a complete versioned state snapshot is constructed; a temporary filesystem object is atomically published with an explicitly chosen crash-durability contract; the state is length-framed for transport; received bytes are authenticated and authorized; a trusted snapshot is restored; and time-stamped input is replayed to reproduce the same program behavior. Any stage can fail, and the complete application must preserve the previous valid state or report a safe, diagnosable error.
 
-For the moment, only the CPU/iNES subset of that system has an executable witness. A complete implementation additionally requires an OS fault-injection lab, socket framing/partial-I/O tests, vetted crypto-library known-answer and tamper tests, nonce persistence tests, Rust/Python FFI ownership tests, and threat-model review. Real NESEmulator, ReliQuary and Memory Retrieval Cue code have not been inspected in this pass, regardless of paths named in the curriculum.
+The evidence layer is now broader than the original CPU/iNES witness. `tools/labs/posix_vm_file_lab.cpp` executes real POSIX descriptor sharing, unlink lifetime and file-backed `MAP_SHARED` behavior; `tools/labs/network_loopback_lab.cpp` executes real loopback TCP framing across arbitrary write/read splits and contrasts it with UDP datagram boundaries; and `tools/labs/crypto_primitives_lab.cpp` checks SHA-256, HMAC-SHA256 and HKDF-SHA256 against known-answer vectors while separately exercising a domain-separated Merkle tree and finite-field Shamir reconstruction. Those programs raise the evidence level without pretending to prove crash durability, Internet loss/reordering, side-channel resistance, secure key storage, nonce persistence, Windows parity, or a complete secure protocol. Real NESEmulator, ReliQuary and Memory Retrieval Cue production code still require separate current-revision inspection.
 
 The relevant primary-source routes are the platform's POSIX/Windows syscall specifications for file durability, TCP/UDP and IP RFCs for transport semantics, RFC 5869 for HKDF, and NIST SP 800-38D for authenticated GCM. This narrative is original teaching informed by those standards; no claim is made to have implemented a secure network/cryptographic stack. The source/coverage ledger explicitly separates these narrative entries from the running emulator oracle.
+
+---
+
+## From model bytes to a validated compressed-inference runtime
+
+The same representation discipline used for cartridges, assets and GPU records applies to machine-learning runtimes. A tensor is not “an array of numbers” until shape, element type, strides, storage ownership and view rules agree on which byte each logical index means. A model container is not “loaded” until its header, metadata, tensor descriptors, alignment, ranges and architecture contract have been validated. An imported graph is not executable merely because it parsed: value names, SSA ownership, topological order, shapes, operator semantics and backend capabilities still have to be lowered into one internal contract.
+
+The reconstruction path is deliberately continuous:
+
+$
+\text{GGUF / ONNX bytes}
+\rightarrow
+\text{validated metadata and graph}
+\rightarrow
+\text{tensor shape + stride map}
+\rightarrow
+\text{quantized or floating kernel}
+\rightarrow
+\text{stable softmax / attention}
+\rightarrow
+\text{KV-cache state}
+\rightarrow
+\text{measured backend execution}.
+$
+
+The new reference witness at `tools/labs/phase29_ml_runtime_lab.cpp` owns the first executable slice of that path. It checks contiguous row-major strides, multi-index addressing and trailing-axis broadcasting; compares a simple symmetric Q8 dot product with its floating-point reference under an explicit error budget; evaluates max-subtracted stable softmax; executes incremental causal attention over a KV cache; validates the fixed GGUF prefix boundary; and validates a backend-neutral post-decode graph for use-before-definition and SSA output collisions.
+
+This is **not** labeled “full GGUF” or “ONNX support.” The GGUF witness stops before the complete metadata and block-quantization catalog. The ONNX witness starts *after* protobuf decoding and therefore does not claim opset/operator coverage or shape-inference parity. The attention witness is one-head instructional execution, not rotary embeddings, grouped-query attention, paged KV caches or a production transformer. Those boundaries are part of the lesson: parsing, semantic lowering, numerical kernels, scheduling and native backend parity are distinct proof obligations.
+
+Use the connected derivations when reconstructing this runtime: [[Tensor runtime layout and views]], [[GGUF binary model loading]], [[ONNX graph import and lowering]], [[Quantized matvec and dequantization]], and [[Transformer attention and KV cache runtime]]. The next evidence level is an independent full-format loader plus SIMD/Metal kernels compared against the scalar reference and then against an external trusted model runtime.
 
 ---
 
