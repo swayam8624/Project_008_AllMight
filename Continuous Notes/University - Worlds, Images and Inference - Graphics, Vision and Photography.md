@@ -33856,7 +33856,7 @@ Use a test triangle whose three clip-\(w\) values differ, with a slowly varying 
 
 For a minimal Vulkan GLSL demonstration, bind three vertices containing clip-space positions and one scalar attribute. A vertex shader should forward the original clip position without a second projection and pass the scalar as a default smoothly interpolated varying:
 
-\`\`\`glsl
+```glsl
 #version 450
 layout(location = 0) in vec4 inClipPosition;
 layout(location = 1) in float inScalar;
@@ -33866,9 +33866,9 @@ void main() {
     gl_Position = inClipPosition;          // GPU still clips and divides homogeneous coordinates.
     perspectiveScalar = inScalar;         // Default smooth perspective interpolation.
 }
-\`\`\`
+```
 
-\`\`\`glsl
+```glsl
 #version 450
 layout(location = 0) in float perspectiveScalar;
 layout(location = 0) out vec4 outColor;
@@ -33876,13 +33876,13 @@ layout(location = 0) out vec4 outColor;
 void main() {
     outColor = vec4(perspectiveScalar, 0.0, 0.0, 1.0);
 }
-\`\`\`
+```
 
 This pair tests the **hardware interpolator**, not texture sampling. The render target should be a linear floating-point format when comparing numeric values; an 8-bit normalized target adds quantization, and an sRGB target changes the transfer function on storage. Disable any post-processing and tone mapping. Use a known full-viewport scissor, no vertex blending, and back-face culling disabled while diagnosing the sign convention. Later enable culling to verify the exact front-face setting.
 
 An equivalent Metal Shading Language pair makes the stage boundary explicit. The code below assumes a Metal version that supports the shown vertex and fragment stage syntax and uses data already encoded into a vertex buffer; it does **not** assume Vulkan GLSL input layout rules apply automatically to Metal's vertex descriptor.
 
-\`\`\`metal
+```metal
 #include <metal_stdlib>
 using namespace metal;
 
@@ -33910,7 +33910,7 @@ vertex RasterOut testVertex(
 fragment float4 testFragment(RasterOut in [[stage_in]]) {
     return float4(in.scalar, 0.0f, 0.0f, 1.0f);
 }
-\`\`\`
+```
 
 These shaders express the same intended smooth perspective interpolation, but equal source-level intent does not prove equal coverage at boundaries or identical floating-point results. The two APIs have platform-dependent differences in viewport origin, front-face orientation, clip/control conventions, supported sample locations, attachment formats, and shader language layout. Fix these variables before comparing outputs. In particular, never interpret a flipped or vertically offset image as a failure of the interpolation equation until coordinate conversion has been checked.
 
