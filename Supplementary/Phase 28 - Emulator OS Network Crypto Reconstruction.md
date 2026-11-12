@@ -8,9 +8,9 @@ It also restores substantive lines from the retired Systems volume that were not
 
 A useful emulator mental model is
 
-[
+$$
 S_{t+1}=T(S_t,input_t),
-]
+$$
 
 where (S_t) includes every state variable whose value can affect future observations: registers, flags, memory/device state, mapper state, interrupt lines, cycle/timing state and deterministic external input.
 
@@ -20,7 +20,7 @@ That same state-transition framing transfers to parsers, network protocols and b
 
 ## 2. Reset is a bus transaction, not a hard-coded program counter
 
-A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
+A reset vector is an excellent first test of whether we understand the bus. The CPU constructs PC from the two bytes visible at addresses $FFFC and $FFFD, low byte first. Those addresses are mapped by the cartridge. On an NROM cartridge with one 16-KiB PRG bank, the bank appears twice in CPU space from $8000 to $FFFF. The reset vector stored near the \end of that bank can direct execution to $8000. A test that always hard-codes PC=$8000 could appear to work on a toy ROM while being architecturally wrong for a cartridge whose reset vector points elsewhere.
 
 The forcing lesson is general: CPU-visible addresses are requests to an address decoder. They are not direct indices into one universal byte array.
 
@@ -38,13 +38,13 @@ Do not implement each opcode as a monolithic special case. Separate instruction 
 
 ## 5. Carry and signed overflow answer different arithmetic questions
 
-For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum (u=A+M+C) and the 8-bit result (r=umod256). Set carry if (u>255), zero if (r=0), and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer \sum (u=A+M+C) and the 8-bit result (r=u\bmod256). Set carry if (u>255), zero if (r=0), and negative from result bit 7. Signed overflow is a different condition: the \sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
 
-[
-V = igl(
-eg(Aoplus M);&;(Aoplus r);&;0x80igr)
+$$
+V = \bigl(
+eg(A\oplus M);&;(A\oplus r);&;0x80\bigr)
 e0.
-]
+$$
 
 A=$7F, M=$01, C=0 produces $80: signed overflow V=1, N=1, and unsigned carry C=0. By contrast $FF+$01 produces $00 with C=1 and Z=1 but V=0. These two independently testable cases prove why a CPU interpreter must not use one generic overflow boolean for both flags. The NES 2A03 does not perform BCD decimal ADC even if the decimal-status bit is set. An apparently minor misunderstanding here breaks arithmetic, conditional branches and some game logic.
 
@@ -64,7 +64,7 @@ A parser should also distinguish content validation from ROM compatibility. Pass
 
 This is the same contract used by model/asset parsers elsewhere in the repository: syntactic validity and runtime capability are separate gates.
 
-## 8. Native OS boundaries: handles, descriptors and partial operations
+## 8. Native OS boundaries: handles, descriptors and \partial operations
 
 A file descriptor or OS handle is a process-local capability to an operating-system resource. It is not the file itself and should not be serialized as durable identity.
 
@@ -78,9 +78,9 @@ TCP provides an ordered reliable byte stream, not message boundaries. If the app
 
 A simple framing protocol can use:
 
-[
-[	ext{magic}][	ext{version}][	ext{length}][	ext{type}][	ext{payload}][	ext{auth/tag}],
-]
+$$
+[\text{magic}][\text{version}][\text{length}][\text{type}][\text{payload}][\text{auth/tag}],
+$$
 
 with fixed endianness for integers and strict length limits before allocation.
 
@@ -110,14 +110,14 @@ HKDF uses an extract step to derive a pseudorandom key from input key material a
 
 The expansion recurrence is
 
-[
+$$
 T(0)=epsilon,qquad
-]
+$$
 
-[
-T(i)=operatorname{HMAC}_{PRK}
-left(T(i-1)parallel infoparallel iight),
-]
+$$
+T(i)=\operatorname{HMAC}_{PRK}
+\left(T(i-1)\parallel infoparallel i\right),
+$$
 
 then concatenates blocks until reaching the requested length. The information string helps separate cryptographic contexts, so a key intended for snapshot authentication need not coincide with one intended for a different protocol purpose. This is not a substitute for a password-hardening KDF or sufficient entropy in initial key material.
 
@@ -156,7 +156,7 @@ Until those exist, Phase 28 should remain `developing` in the mastery ledger.
 
 The following four lines are retained exactly as provenance anchors because the integrated explanations above normalize display-math formatting. They are not additional teaching; they allow the preservation audit to distinguish a formatting rewrite from source loss.
 
-For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
+For ADC, let A be the accumulator's original 8-bit unsigned value, M the operand and C the incoming carry bit. Form the full integer \sum \(u=A+M+C\) and the 8-bit result \(r=u\bmod256\). Set carry if \(u>255\), zero if \(r=0\), and negative from result bit 7. Signed overflow is a different condition: the \sum of two same-sign two's-complement operands cannot be represented in the signed 8-bit range. One bitwise expression for overflow is
 
 T(0)=\epsilon,\qquad
 T(i)=\operatorname{HMAC}_{PRK}
