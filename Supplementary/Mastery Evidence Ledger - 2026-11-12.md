@@ -113,3 +113,10 @@ These are reference-level closures. Exact hardware/API behavior, production repo
 The native graphics gate now goes beyond syntax-level API examples. Vulkan executes a real transfer fill into an allocated/bound buffer, records a resource-specific synchronization2 buffer barrier from transfer-write to host-read, signals a timeline semaphore, waits for a concrete timeline value, maps the memory and checks the written pattern. Metal compiles the MSL kernel and, when the macOS CI host exposes a Metal device, loads the metallib, creates a compute pipeline/queue/shared buffers, dispatches work, waits for command completion and validates the result. A Metal host without a device reports an explicit SKIP rather than being counted as runtime proof.
 
 This still does not elevate every Phase 23/24 claim to native verification. Image layout transitions, queue-family ownership, descriptor/shader visibility, heap aliasing, multi-queue behavior, capture-derived hazard evidence, and current Kairo/Maveb integration remain individually gated.
+
+
+## DCC execution escalation
+
+Blender is no longer represented only by prose or a host-neutral adapter. The dedicated CI workflow launches Blender in background mode, constructs a deterministic mesh asset and collection through `bpy`, attaches logical publication metadata, saves the source `.blend`, exports GLB, validates the GLB container/JSON contract, resets the host, re-imports the published artifact and checks geometry plus custom identity fields.
+
+This is intentionally a **Blender-only** native-host escalation. Maya, Houdini and Nuke are not marked executed because their current hosts/licenses are not available in this CI environment. Their contracts remain explicit and can be promoted only when equivalent host-side witnesses exist.
