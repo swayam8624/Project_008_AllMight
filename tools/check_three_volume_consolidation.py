@@ -2,6 +2,7 @@
 """Mechanical preservation audit for three canonical PROJECTALLMIGHT volumes."""
 from __future__ import annotations
 from pathlib import Path
+import os
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +51,16 @@ def main() -> None:
         (rigid, engine, "rigid-body bridge"),
         (systems, engine, "emulator and low-level systems"),
     ]:
-        assert source in destination, f"Missing exact source body: {name}"
+        # First check exact inclusion for the initial migration; future in-place
+        # explanatory paragraphs are allowed between original lines, provided
+        # no original content or order is lost.
+        if source in destination:
+            print(f"EXACT: {name}")
+        else:
+            assert line_subsequence(source, destination), (
+                f"Deleted or rewritten original source lines: {name}"
+            )
+            print(f"ADDITIVE: original lines preserved in order for {name}")
     assert read(LAB).rstrip() in math, "Standalone basis lab differs from inline math code"
     assert all(fence_count(x) % 2 == 0 for x in (math, graphics, engine))
 
@@ -70,6 +80,8 @@ def main() -> None:
     print("PASS: inline C++ laboratory, split boundaries, Markdown fence parity")
     print(f"Original canonical books preserved by ordered-line audit: {earlier_checked}/3")
     if earlier_checked != 3:
+        if os.environ.get("CI"):
+            raise RuntimeError("CI must fetch full baseline history for the ordered-line audit")
         print("WARNING: historical audit needs complete git history")
     print("LIMIT: conceptual coverage, hardware behavior, sources and all 3,000 parts need more review")
 

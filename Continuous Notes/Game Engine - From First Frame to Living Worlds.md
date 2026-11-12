@@ -98017,6 +98017,250 @@ The rendering mathematics can help bound what an edit should affect. Each change
 The platform implementation of this plan is developed in [[Computing Foundations - From Bits to C++ and Systems APIs#Give one image an explicit path through the machine|the explicit execution narrative]]. Its covariance and compositing counterpart is in [[University - Worlds, Images and Inference - Graphics, Vision and Photography#Local projection turns an ellipsoid into a screen ellipse|the Gaussian projection derivation]].
 
 
+## From a list of render passes to a proved execution order
+
+The workshop scene now has a G-buffer storing visible surface attributes, a shadow map describing light visibility, an HDR lighting image, an earlier-frame history image, a new history output, and a final display image. A naive renderer issues commands in a convenient sequence. That is not an implementation contract: after a material edit, a resized viewport or an extra view, another subsystem could overwrite a texture while a queued pass still needs its previous contents. A render graph exists to state **which pass produces and consumes which version of each resource** and to derive the required execution order before translating the work into Vulkan or Metal commands.
+
+A *logical resource* is an identified array, texture or buffer with an agreed content and lifecycle; it is not yet necessarily a GPU allocation. A pass declares the logical resources it reads and writes. An *imported resource* has an initialized version outside the current graph, such as temporal history from a successfully completed earlier frame. A transient resource has no valid initial value and therefore cannot be read until a graph pass writes it. This distinction is part of the data contract, not a performance option.
+
+### Derive all three resource hazards, not just producer–consumer arrows
+
+Suppose pass A writes the HDR image and pass B reads it. B needs A's output, a **read-after-write** (RAW) ordering dependency. If B reads a prior image version and C later replaces it, C must wait until B has finished reading: this is **write-after-read** (WAR). If A clears a target and C then draws into that same target, the writes must follow the specified ordering: this is **write-after-write** (WAW). RAW protects the validity of a newly produced value; WAR protects access to an old value; WAW protects the chosen order of replacements. A diagram containing only “written here, read there” omits two of these important obligations.
+
+Represent a dependency as a directed edge between pass indices: \(A\to B\) means A must precede B. The graph defines a *partial order*: independent passes may run in either order, but lighting must follow the passes that produce G-buffer attributes and shadow data. The compilation rule in the laboratory uses the submitted pass sequence as the required order for accesses to the **same** resource. It does not claim to infer an artist's intended ordering from arbitrary names. If the author wants to reorder two writes safely, they must specify the intended versions and dependencies.
+
+Maintain, per resource, the last writer, the readers of its current version, and the imported-initialization flag. For each read, add a RAW dependency from the last writer or reject a transient read without a writer. For each write, add WAW from the previous writer and WAR from every outstanding reader, then clear that reader set and record the new writer. Deduplicate pass-to-pass adjacencies before computing indegrees: two separate RAW reasons between the same passes create one predecessor relationship, not two required predecessor executions. Finally, topologically sort by repeatedly scheduling a zero-indegree pass and deleting its outgoing constraints. If passes remain, a cycle makes the declared ordering impossible.
+
+The test compiler deliberately rejects read-and-write access to one logical resource inside the *same pass*. In-place compute, attachment feedback, atomic access and Vulkan subpass self-dependencies are not inherently forbidden; they require a richer access contract than this whole-resource single-queue model. Silently accepting them here would teach an incorrect general guarantee.
+
+### Complete C++20 graph compiler, executable trace and negative cases
+
+The following program is an independent reference implementation: it constructs a pass DAG, records every named RAW/WAR/WAW reason, produces a stable topological order, checks invalid inputs and prints the exact result. Unlike a high-level diagram it exposes the state transitions of the compiler, and unlike an untested snippet it contains active checks even when compiled with `-DNDEBUG`.
+
+```cpp
+// An inspectable single-queue render-graph dependency compiler, not a GPU barrier API.
+#include <algorithm>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <optional>
+#include <queue>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+struct Resource {
+    std::string name;
+    bool imported = false; // Already initialized outside this graph, e.g. last frame's history.
+};
+
+struct Pass {
+    std::string name;
+    std::vector<std::string> reads;
+    std::vector<std::string> writes;
+};
+
+struct Dependency {
+    std::size_t before{};
+    std::size_t after{};
+    std::string resource;
+    std::string reason; // RAW, WAR, WAW, or an explicit CONTROL ordering.
+};
+
+struct CompiledGraph {
+    std::vector<std::size_t> order;
+    std::vector<Dependency> dependencies;
+};
+
+void require(bool condition, const std::string& message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+struct ResourceState {
+    bool imported = false;
+    std::optional<std::size_t> last_writer;
+    std::set<std::size_t> readers_since_write;
+};
+
+CompiledGraph compile_graph(
+    const std::vector<Resource>& resources,
+    const std::vector<Pass>& passes,
+    const std::vector<std::pair<std::size_t, std::size_t>>& explicit_edges = {}) {
+
+    // This laboratory uses resource names as whole-resource IDs. For actual
+    // images, a production engine must track mip/layer/aspect subresources.
+    std::map<std::string, ResourceState> states;
+    for (const auto& resource : resources) {
+        require(!resource.name.empty(), "a resource needs a name");
+        require(states.emplace(resource.name, ResourceState{resource.imported, {}, {}}).second,
+                "duplicate resource: " + resource.name);
+    }
+
+    // Each pass name is an identity for diagnostics, not a GPU object handle.
+    std::set<std::string> pass_names;
+    std::set<std::tuple<std::size_t, std::size_t, std::string, std::string>> edges;
+    for (std::size_t index = 0; index < passes.size(); ++index) {
+        const Pass& pass = passes[index];
+        require(!pass.name.empty() && pass_names.insert(pass.name).second,
+                "pass names must be nonempty and unique");
+        std::set<std::string> seen;
+        for (const auto& name : pass.reads) {
+            require(seen.insert(name).second, "duplicate or feedback access in " + pass.name);
+            auto state_it = states.find(name);
+            require(state_it != states.end(), "undeclared read resource: " + name);
+            ResourceState& state = state_it->second;
+            if (state.last_writer)
+                edges.emplace(*state.last_writer, index, name, "RAW");
+            else
+                require(state.imported, "read before first write: " + name);
+            state.readers_since_write.insert(index);
+        }
+        for (const auto& name : pass.writes) {
+            require(seen.insert(name).second,
+                    "read/write feedback or duplicate write in " + pass.name);
+            auto state_it = states.find(name);
+            require(state_it != states.end(), "undeclared write resource: " + name);
+            ResourceState& state = state_it->second;
+            if (state.last_writer)
+                edges.emplace(*state.last_writer, index, name, "WAW");
+            for (const std::size_t reader : state.readers_since_write)
+                edges.emplace(reader, index, name, "WAR");
+            state.readers_since_write.clear();
+            state.last_writer = index;
+        }
+    }
+
+    // Explicit ordering is for external side effects or constraints that
+    // cannot be deduced from declared resource accesses alone.
+    for (const auto& [before, after] : explicit_edges) {
+        require(before < passes.size() && after < passes.size() && before != after,
+                "invalid explicit dependency");
+        edges.emplace(before, after, "<external>", "CONTROL");
+    }
+
+    std::vector<std::set<std::size_t>> outgoing(passes.size());
+    std::vector<std::size_t> indegree(passes.size(), 0);
+    CompiledGraph compiled;
+    for (const auto& [before, after, resource, reason] : edges) {
+        compiled.dependencies.push_back({before, after, resource, reason});
+        if (outgoing[before].insert(after).second) ++indegree[after];
+    }
+
+    // The priority queue makes topological scheduling reproducible when
+    // multiple independent passes are ready simultaneously.
+    std::priority_queue<std::size_t, std::vector<std::size_t>, std::greater<>> ready;
+    for (std::size_t i = 0; i < indegree.size(); ++i)
+        if (indegree[i] == 0) ready.push(i);
+    while (!ready.empty()) {
+        const std::size_t chosen = ready.top();
+        ready.pop();
+        compiled.order.push_back(chosen);
+        for (std::size_t dependent : outgoing[chosen])
+            if (--indegree[dependent] == 0) ready.push(dependent);
+    }
+    require(compiled.order.size() == passes.size(), "cycle in pass dependencies");
+    return compiled;
+}
+
+bool has_dependency(const CompiledGraph& graph, std::size_t before,
+                    std::size_t after, const std::string& resource,
+                    const std::string& reason) {
+    return std::any_of(graph.dependencies.begin(), graph.dependencies.end(),
+        [&](const Dependency& d) {
+            return d.before == before && d.after == after &&
+                   d.resource == resource && d.reason == reason;
+        });
+}
+
+template<class Function>
+void must_reject(Function&& function, const std::string& expected_message) {
+    try {
+        function();
+    } catch (const std::runtime_error& error) {
+        require(std::string(error.what()).find(expected_message) != std::string::npos,
+                "rejected for the wrong reason: " + std::string(error.what()));
+        return;
+    }
+    throw std::runtime_error("invalid graph was accepted: " + expected_message);
+}
+
+int main() {
+    // The renderer declares logical resources; no Vulkan image, Metal texture,
+    // memory allocation, or transition has been created by this compilation.
+    const std::vector<Resource> resources{{"albedo"}, {"depth"}, {"shadow"},
+        {"hdr"}, {"history", true}, {"history_next"}, {"ldr"}};
+    const std::vector<Pass> passes{
+        {"gbuffer", {}, {"albedo", "depth"}},
+        {"shadow_map", {}, {"shadow"}},
+        {"lighting", {"albedo", "depth", "shadow"}, {"hdr"}},
+        {"temporal", {"hdr", "history"}, {"history_next"}},
+        {"tonemap", {"history_next"}, {"ldr"}},
+        {"present", {"ldr"}, {}},
+    };
+    const CompiledGraph compiled = compile_graph(resources, passes);
+    require(compiled.order == std::vector<std::size_t>({0, 1, 2, 3, 4, 5}),
+            "stable topological order changed");
+    require(has_dependency(compiled, 0, 2, "albedo", "RAW"), "missing albedo RAW");
+    require(has_dependency(compiled, 0, 2, "depth", "RAW"), "missing depth RAW");
+    require(has_dependency(compiled, 1, 2, "shadow", "RAW"), "missing shadow RAW");
+    require(has_dependency(compiled, 2, 3, "hdr", "RAW"), "missing HDR RAW");
+    require(has_dependency(compiled, 3, 4, "history_next", "RAW"), "missing temporal RAW");
+    require(has_dependency(compiled, 4, 5, "ldr", "RAW"), "missing present RAW");
+
+    // First a reader uses imported history, then a later pass overwrites it.
+    // Even with no earlier writer in this frame, the later writer must wait.
+    const auto war = compile_graph({{"history", true}},
+        {{"sample_old_history", {"history"}, {}},
+         {"overwrite_history", {}, {"history"}}});
+    require(has_dependency(war, 0, 1, "history", "WAR"), "missing WAR");
+
+    const auto waw = compile_graph({{"target"}},
+        {{"clear", {}, {"target"}}, {"draw", {}, {"target"}}});
+    require(has_dependency(waw, 0, 1, "target", "WAW"), "missing WAW");
+
+    must_reject([] {
+        (void)compile_graph({{"transient"}}, {{"bad_read", {"transient"}, {}}});
+    }, "read before first write");
+    must_reject([] {
+        (void)compile_graph({{"texture", true}},
+                            {{"feedback", {"texture"}, {"texture"}}});
+    }, "feedback");
+    must_reject([] {
+        (void)compile_graph({}, {{"a", {}, {}}, {"b", {}, {}}}, {{0, 1}, {1, 0}});
+    }, "cycle");
+    must_reject([] {
+        (void)compile_graph({{"x"}, {"x"}}, {});
+    }, "duplicate resource");
+
+    std::cout << "PASS: graph hazards and cycle/initialization/feedback rejection\n";
+    for (std::size_t index : compiled.order)
+        std::cout << "pass[" << index << "]: " << passes[index].name << '\n';
+    for (const auto& dependency : compiled.dependencies)
+        std::cout << passes[dependency.before].name << " -> "
+                  << passes[dependency.after].name << " : "
+                  << dependency.reason << " " << dependency.resource << '\n';
+}
+```
+
+Build and run with `g++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror tools/labs/render_graph_contract_lab.cpp -o /tmp/render_graph_contract_lab && /tmp/render_graph_contract_lab`. The same source also compiled and ran with Clang and GCC under strict warnings in both debug and release configurations before integration. It begins by printing `PASS: graph hazards and cycle/initialization/feedback rejection` and then lists the scheduled passes and dependency reasons. Throwing explicit errors rather than relying on `assert` is deliberate: the release build must still execute every test.
+
+Trace the actual resource values. Pass 0 (G-buffer) writes `albedo` and `depth`. Pass 1 writes `shadow`. Pass 2 (lighting) reads all three and writes `hdr`. Pass 3 reads `hdr` and imported `history`, writing `history_next`. Pass 4 tone-maps the new history into `ldr`; pass 5 reads `ldr` for presentation. The compiler records 0→2 twice with distinct reasons (albedo RAW and depth RAW), 1→2 (shadow RAW), 2→3 (HDR RAW), 3→4 (history-next RAW), and 4→5 (display RAW). Passes 0 and 1 are independent, although the stable ready queue chooses 0 first. When `history` is marked non-imported, pass 3 becomes an illegal first read. A separate scenario reads an imported history before overwriting it, proving WAR; another scenario clears then writes a target, proving WAW. The remaining cases must reject a dependency cycle, same-pass feedback, duplicates and uninitialized resources.
+
+With \(P\) passes and \(E\) unique pass-to-pass edges, a min-priority-queue topological sort costs \(O((P+E)\log P)\) as a conservative upper bound. The complete program also has ordered-map/set lookup costs, and generating WAR edges may be quadratic in the number of readers of one resource. Before optimizing, measure a representative workload and distinguish unique pass edges from multiple hazard reasons.
+
+### The essential missing GPU contract, and how to implement it next
+
+**A correct render-pass order does not by itself establish a valid GPU memory dependency.** Vulkan additionally requires compatible pipeline-stage scopes, access masks, memory availability/visibility, image layouts and sometimes queue-family ownership transitions. In particular, transitioning an attachment into shader-readable usage must preserve the correct image subresource and ensure prior writes are available and visible. This is explicitly specified by [Khronos Vulkan synchronization](https://docs.vulkan.org/spec/latest/chapters/synchronization.html). Metal provides different synchronization and encoder semantics; converting a Vulkan barrier structure directly into a Metal call is not portable abstraction.
+
+A production implementation must therefore refine `Resource` into typed generational handles and versioned subresources (mip, layer, aspect, byte range where relevant), refine pass access into read/write usages with pipeline stages and layouts, and turn each dependency into a validated backend transition. Aliasing temporary GPU allocations needs a separate live-interval and format/usage analysis, plus synchronization; overlapping frames cannot share an allocation merely because their CPU-side source lines do not overlap. Likewise, valid temporal history depends on the producing frame, prior camera transform, jitter, resize state, and entity identity. A passed CPU graph compiler establishes **only logical ordering and rejection behavior**, not device-level synchronization, live Kairo/Maveb integration, multi-queue scheduling or alias safety.
+
+A reconstruction exercise that exposes misunderstandings is to add a downsampled Hi-Z pyramid: track each mip as a separate logical version, construct a depth-read then mip-write chain, prove that every mip has a producer, compare the DAG schedule against serial execution, and then implement Vulkan synchronization2 image barriers for exactly the required subresource ranges. The independent GPU capture and result comparison, not merely successful compilation, become the acceptance test.
+
+
 ## Compile renderer intent into backend work
 
 ### + M144
