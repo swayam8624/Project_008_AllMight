@@ -78592,7 +78592,7 @@ Result simulate(std::vector<Disk>& disks,double dt,double restitution=1,
         std::vector<Event> candidates;
         // Recompute broadphase candidates after every impact because velocities change.
         // The all-pairs mode remains the independent reference.
-        for(const auto [i,j] : candidate_pairs_for_step(disks,remaining,useSweptBroadphase)) {
+        for(const auto& [i,j] : candidate_pairs_for_step(disks,remaining,useSweptBroadphase)) {
             const auto hit=time_of_impact(disks[i],disks[j],remaining);
             if(!hit)continue;
             if(*hit<first)first=*hit;
