@@ -46,6 +46,8 @@ REQUIRED_ARTIFACTS = [
     "tools/labs/constraint_friction_island_lab.cpp",
     "tools/labs/gguf_metadata_tensor_lab.cpp",
     "tools/native/vulkan_sync_smoke.cpp",
+    "tools/native/vulkan_buffer_timeline_smoke.cpp",
+    "tools/native/metal_runtime_smoke.mm",
     "tools/native/metal_compile_smoke.metal",
     "Concepts/Mastery evidence levels.md",
 ]
