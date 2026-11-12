@@ -1,0 +1,42 @@
+name: Blender DCC publication contract
+
+on:
+  push:
+    branches: [main, allmight-depth-repair-20261112]
+    paths:
+      - 'tools/dcc/**'
+      - '.github/workflows/blender-dcc-contract.yml'
+  pull_request:
+    paths:
+      - 'tools/dcc/**'
+      - '.github/workflows/blender-dcc-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  blender-headless:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+          blender --version
+
+      - name: Execute DCC-to-GLB round-trip contract
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/allmight-blender"
+          blender --background --factory-startup \
+            --python-exit-code 1 \
+            --python tools/dcc/blender_contract.py -- \
+            "$RUNNER_TEMP/allmight-blender"
+          test -s "$RUNNER_TEMP/allmight-blender/allmight_source.blend"
+          test -s "$RUNNER_TEMP/allmight-blender/allmight_cube.glb"
+          test -s "$RUNNER_TEMP/allmight-blender/blender_contract_receipt.json"
+          cat "$RUNNER_TEMP/allmight-blender/blender_contract_receipt.json"
