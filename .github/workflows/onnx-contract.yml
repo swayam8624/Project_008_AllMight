@@ -1,0 +1,35 @@
+name: ONNX protobuf and reference-runtime contract
+
+on:
+  push:
+    branches: [main, allmight-depth-repair-20261112]
+    paths:
+      - 'tools/ml/**'
+      - '.github/workflows/onnx-contract.yml'
+  pull_request:
+    paths:
+      - 'tools/ml/**'
+      - '.github/workflows/onnx-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  onnx-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install current audited ONNX package
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "onnx==1.24.0" "numpy>=2,<3"
+          python3 - <<'PY'
+          import onnx
+          print("onnx", onnx.__version__)
+          PY
+
+      - name: Execute serialized ONNX contract
+        run: python3 tools/ml/onnx_contract.py
