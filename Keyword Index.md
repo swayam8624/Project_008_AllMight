@@ -1,5 +1,29 @@
 # Keyword Index
 
+
+## Phase 29 - ML runtime reconstruction
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[Tensor shapes strides views and broadcasting]] | Developed | Phase29 | Phase29 |
+| [[GGUF container and tensor directory]] | Developed | Phase29 | Phase29 |
+| [[ONNX graph SSA validation and lowering]] | Developed | Phase29 | Phase29 |
+| [[KV cache and autoregressive execution]] | Developed | Phase29 | Phase29 |
+| [[Quantization and compressed weights]] | Developed | Phase29 | Phase29 |
+| [[Attention and visual transformers]] | Developed | Phase29 | Phase29 |
+
+Canonical deep reconstruction: [[Supplementary/Phase 29 - ML Runtime Reconstruction]]. Executable reference: `tools/labs/phase29_ml_runtime_lab.cpp`. Native Nanoquant/Kairo/Metal parity remains a separate evidence tier.
+
+## Phase 30 - DCC production, reliability and research reconstruction
+
+| Concept | Depth | First seen | Updated |
+|---|---|---|---|
+| [[DCC host-neutral publication pipeline]] | Developed | Phase30 | Phase30 |
+| [[Interface contracts and publication]] | Developed | Phase30 | Phase30 |
+| [[Mastery evidence tiers]] | Developed | Phase30 | Phase30 |
+
+Canonical deep reconstruction: [[Supplementary/Phase 30 - DCC Production and Research Reconstruction]]. Executable reference: `tools/labs/phase30_pipeline_contract_lab.cpp`. Blender/Maya/Houdini/Nuke in-host verification remains explicitly open.
+
 ## Phase 10 - Probability and Monte Carlo
 
 Received Parts 901-1000 in T01/T06/T07; Phase 11 Parts 1001-1100 are also integrated.
