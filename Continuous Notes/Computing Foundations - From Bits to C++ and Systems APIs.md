@@ -7641,7 +7641,6 @@ When code intentionally depends on representation, use mechanisms that make the 
 
 Sanitizers matter because many lifetime and UB bugs stay visually silent until optimization level, workload, compiler, driver, allocator, or scheduling changes.
 
-
 <!-- Bible-final-pass: C++ temporary lifetime -->
 #### A temporary is still a real object with a real destruction point
 
@@ -66011,10 +66010,10 @@ The executable witness below implements Rodrigues' formula, an SO(3) logarithm f
 ~~~cpp
 #include <algorithm>
 #include <array>
-#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <numbers>
+#include <stdexcept>
 
 struct Vec3 {
     double x{}, y{}, z{};
@@ -66106,7 +66105,8 @@ Vec3 so3_log(Mat3 R) {
         return vee(0.5*(R-transpose(R)));
     }
     // This compact witness deliberately avoids the numerically delicate theta≈pi case.
-    assert(std::abs(std::numbers::pi-theta) > 1e-5);
+    if (std::abs(std::numbers::pi-theta) <= 1e-5)
+        throw std::domain_error("compact SO(3) log witness does not support theta near pi");
     return vee((theta/(2.0*std::sin(theta)))*(R-transpose(R)));
 }
 
@@ -66158,35 +66158,39 @@ bool near(Mat3 A,Mat3 B,double eps=1e-9){
     return true;
 }
 
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
 int main() {
     {
         const Vec3 w{0.2,-0.3,0.1};
         const Mat3 R=so3_exp(w);
-        assert(near(transpose(R)*R, identity(), 1e-10));
-        assert(near(so3_log(R), w, 1e-10));
+        require(near(transpose(R)*R, identity(), 1e-10), "R must remain orthogonal");
+        require(near(so3_log(R), w, 1e-10), "ordinary SO(3) exp/log round trip");
     }
     {
         const Vec3 w{1e-10,-2e-10,3e-10};
         const Mat3 R=so3_exp(w);
-        assert(near(so3_log(R), w, 1e-9));
+        require(near(so3_log(R), w, 1e-9), "small-angle SO(3) exp/log round trip");
     }
     {
         const Vec3 omega{0.25,-0.15,0.05};
         const Vec3 rho{1.2,-0.4,0.7};
         const SE3 T=se3_exp(omega,rho);
         const auto [omega2,rho2]=se3_log(T);
-        assert(near(omega2,omega,1e-10));
-        assert(near(rho2,rho,1e-10));
+        require(near(omega2,omega,1e-10), "SE(3) rotational coordinate round trip");
+        require(near(rho2,rho,1e-10), "SE(3) translational coordinate round trip");
     }
     {
         // Translation and rotation are coupled by V(omega): t is not generally rho.
         const Vec3 omega{0.0,0.0,0.6};
         const Vec3 rho{1.0,0.0,0.0};
         const SE3 T=se3_exp(omega,rho);
-        assert(!near(T.t,rho,1e-6));
+        require(!near(T.t,rho,1e-6), "finite rigid motion must expose V(omega) translation coupling");
         const auto [w2,r2]=se3_log(T);
-        assert(near(w2,omega,1e-10));
-        assert(near(r2,rho,1e-10));
+        require(near(w2,omega,1e-10), "coupled example rotational round trip");
+        require(near(r2,rho,1e-10), "coupled example translational round trip");
     }
     std::cout << "se3 exp/log: 4 suites PASS\n";
 }
@@ -74773,8 +74777,6 @@ Alternatively, a 20% reduction in error accompanied by wide uncertainty may be p
 Report effect sizes, uncertainty intervals, workload characteristics, and computational cost alongside hypothesis-test results.
 
 For an engineering research claim, those quantities are often more informative than a p-value alone.
-
-
 
 <!-- Bible-final-pass: research inference -->
 #### A research claim needs more than a p-value
