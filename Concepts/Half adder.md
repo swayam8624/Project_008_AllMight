@@ -32,3 +32,18 @@ Explain half adder without the label, work the example above, then state the ass
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Arithmetic becomes a policy|C002 teaching chapter]] · [[Supplementary/Foundations|Part definitions and mechanisms]] · [[Dependency Map]]
+
+## From truth table to gate delay
+
+A half adder adds two one-bit inputs $a,b$. The sum bit is XOR and the carry bit is AND:
+
+$$
+s=a\oplus b,\qquad c=a\land b.
+$$
+
+The truth table is not just a memorization device; it proves why one output bit cannot encode all four input sums. Input $1+1$ produces binary $10$, requiring a second bit for carry.
+
+A half adder has no carry-in, so it cannot by itself build every bit position of a multi-bit integer addition. A full adder incorporates carry-in and can be composed into ripple-carry or faster prefix structures. The important systems connection is dependency depth: in a ripple chain, each bit may wait for the previous carry, whereas parallel-prefix adders reorganize generate/propagate information to reduce critical path.
+
+A reconstruction exercise should derive XOR/AND from the four rows, compose two half adders into a full adder, then explain why gate count and propagation depth are different optimization targets.
+
