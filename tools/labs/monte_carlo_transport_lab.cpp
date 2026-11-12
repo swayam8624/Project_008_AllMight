@@ -1,10 +1,12 @@
 // PROJECTALLMIGHT Monte Carlo transport reference: cosine sampling, throughput, and Russian roulette expectation.
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <numbers>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
