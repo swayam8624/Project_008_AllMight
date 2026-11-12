@@ -10,27 +10,27 @@ Calling a tensor a “multidimensional array” is useful but incomplete. A runt
 
 For a row-major contiguous tensor with shape
 
-[
+$$
 S=(d_0,d_1,ldots,d_{r-1}),
-]
+$$
 
 the number of scalar elements is
 
-[
-N=prod_{i=0}^{r-1} d_i.
-]
+$$
+N=\prod_{i=0}^{r-1} d_i.
+$$
 
 Its element strides, measured in elements rather than bytes, are
 
-[
-s_{r-1}=1,qquad s_i=d_{i+1}s_{i+1}.
-]
+$$
+s_{r-1}=1,\qquad s_i=d_{i+1}s_{i+1}.
+$$
 
 An index (I=(i_0,ldots,i_{r-1})) maps to the linear element offset
 
-[
-o(I)=sum_{k=0}^{r-1} i_k s_k.
-]
+$$
+o(I)=\sum_{k=0}^{r-1} i_k s_k.
+$$
 
 The important engineering point is that **shape does not imply contiguity**. A transpose can often be represented by changing shape and strides without moving any elements. A slice may have a nonzero base offset. A broadcast view may contain a stride of zero in a conceptual implementation because many logical indices refer to the same stored scalar. Therefore an operator that assumes contiguous rows must either reject a non-contiguous view, materialize it, or run a stride-aware kernel.
 
@@ -38,7 +38,7 @@ The companion lab uses only owned contiguous storage because it is the smallest 
 
 ### Overflow is part of the tensor contract
 
-Before allocating (prod d_i) elements, the product must be checked for integer overflow. Otherwise a malicious or corrupted model can request a shape whose product wraps to a small allocation and then drives out-of-bounds indexing. The same rule applies when converting element counts to byte counts.
+Before allocating (\prod d_i) elements, the product must be checked for integer overflow. Otherwise a malicious or corrupted model can request a shape whose product wraps to a small allocation and then drives out-of-bounds indexing. The same rule applies when converting element counts to byte counts.
 
 The correct order is: validate rank and dimensions, checked-multiply dimensions, checked-multiply by element size, validate against runtime limits, then allocate or map.
 
@@ -48,17 +48,17 @@ Broadcasting aligns dimensions from the trailing side. Two aligned dimensions ar
 
 Thus
 
-[
-(4,1,8)quad	ext{and}quad(1,7,8)
-]
+$$
+(4,1,8)quad\text{and}quad(1,7,8)
+$$
 
 broadcast to
 
-[
+$$
 (4,7,8).
-]
+$$
 
-No (4	imes7	imes8) copy of the second operand is required. The kernel maps an output coordinate back to each input; where an input dimension equals one, that input coordinate is forced to zero.
+No (4\times7\times8) copy of the second operand is required. The kernel maps an output coordinate back to each input; where an input dimension equals one, that input coordinate is forced to zero.
 
 This distinction matters for performance and ownership. Broadcasting creates a repeated **logical read**, not repeated storage. A writeable broadcast view is dangerous because many logical output positions alias the same physical element. A simple engine runtime should therefore treat broadcast views as read-only unless it implements explicit reduction/scatter semantics.
 
@@ -66,11 +66,11 @@ This distinction matters for performance and ownership. Broadcasting creates a r
 
 A dense matrix-vector product
 
-[
-y_i=sum_{j=0}^{n-1}W_{ij}x_j
-]
+$$
+y_i=\sum_{j=0}^{n-1}W_{ij}x_j
+$$
 
-performs (mn) multiply-add contributions for an (m	imes n) matrix. In many inference workloads, especially batch-one autoregressive decoding, the limiting resource is not the number of floating-point operations but the number of weight bytes that must reach the execution units.
+performs (mn) multiply-add contributions for an (m\times n) matrix. In many inference workloads, especially batch-one autoregressive decoding, the limiting resource is not the number of floating-point operations but the number of weight bytes that must reach the execution units.
 
 This is why quantization matters operationally. Reducing a weight from 16 or 32 bits to 8, 4, or fewer bits can reduce memory traffic enough that the extra dequantization arithmetic is cheaper than reading a larger representation.
 
@@ -91,31 +91,31 @@ A “4-bit kernel is faster” statement without those boundaries is not evidenc
 
 For simple symmetric int8 quantization, choose
 
-[
-s=rac{max_i |x_i|}{127},
-]
+$$
+s=\frac{\max_i |x_i|}{127},
+$$
 
 then store
 
-[
-q_i=operatorname{clamp}left(operatorname{round}left(rac{x_i}{s}ight),-127,127ight).
-]
+$$
+q_i=\operatorname{clamp}\left(\operatorname{round}\left(\frac{x_i}{s}\right),-127,127\right).
+$$
 
 Reconstruction uses
 
-[
-hat x_i=sq_i.
-]
+$$
+\hat x_i=sq_i.
+$$
 
 The zero vector is a special case because its maximum magnitude is zero; an implementation can choose a harmless scale such as one while storing all-zero quantized values.
 
 Asymmetric quantization adds a zero point (z),
 
-[
-q_i=operatorname{clamp}left(operatorname{round}left(rac{x_i}{s}ight)+z,q_{min},q_{max}ight),
+$$
+q_i=\operatorname{clamp}\left(\operatorname{round}\left(\frac{x_i}{s}\right)+z,q_{min},q_{max}\right),
 qquad
-hat x_i=s(q_i-z).
-]
+\hat x_i=s(q_i-z).
+$$
 
 Groupwise quantization estimates scale, and possibly zero point or codebook parameters, per block. Smaller groups adapt better to local ranges but spend more metadata and can complicate kernels.
 
@@ -137,7 +137,7 @@ A loader should conceptually run in four stages.
 
 **Stage D — publication.** Only after the entire directory is coherent should the runtime publish tensor views backed by an owned mapping or buffer.
 
-The lab parses only the fixed header. That is intentional: a partial parser should state its boundary rather than silently look like a full GGUF implementation. A future production-grade parser must follow the authoritative `ggml_type` definitions because type codes and block layouts evolve.
+The lab parses only the fixed header. That is intentional: a \partial parser should state its boundary rather than silently look like a full GGUF implementation. A future production-grade parser must follow the authoritative `ggml_type` definitions because type codes and block layouts evolve.
 
 ## 6. Memory mapping changes lifetime, not the mathematical tensor
 
@@ -197,14 +197,14 @@ A simple planner can compute each temporary value's first definition and last us
 
 Backend selection should be explicit:
 
-[
-	ext{node}ightarrow
-egin{cases}
-	ext{Metal kernel}, & 	ext{supported and profitable}\
-	ext{SIMD CPU kernel}, & 	ext{supported}\
-	ext{scalar reference}, & 	ext{fallback}
-end{cases}
-]
+$$
+\text{node}\rightarrow
+\begin{cases}
+\text{Metal kernel}, & \text{supported and profitable}\
+\text{SIMD CPU kernel}, & \text{supported}\
+\text{scalar reference}, & \text{fallback}
+\end{cases}
+$$
 
 A fallback is a feature only if the runtime records that it happened. Silent fallback makes benchmark results uninterpretable.
 
@@ -212,17 +212,17 @@ A fallback is a feature only if the runtime records that it happened. Silent fal
 
 Naively computing
 
-[
-operatorname{softmax}(x_i)=rac{e^{x_i}}{sum_j e^{x_j}}
-]
+$$
+\operatorname{softmax}(x_i)=\frac{e^{x_i}}{\sum_j e^{x_j}}
+$$
 
 can overflow for large positive logits. Since adding or subtracting a common scalar does not change the normalized distribution,
 
-[
-operatorname{softmax}(x_i)=
-rac{e^{x_i-m}}{sum_j e^{x_j-m}},
-qquad m=max_j x_j.
-]
+$$
+\operatorname{softmax}(x_i)=
+\frac{e^{x_i-m}}{\sum_j e^{x_j-m}},
+\qquad m=\max_j x_j.
+$$
 
 Now the largest exponent is (e^0=1), and every other exponent is at most one. The lab explicitly tests logits around 1000 to prove this is not cosmetic.
 
@@ -232,25 +232,25 @@ For masked attention, invalid positions should be excluded before normalization,
 
 For a sequence matrix (X), learned projections produce
 
-[
-Q=XW_Q,qquad K=XW_K,qquad V=XW_V.
-]
+$$
+Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V.
+$$
 
 For one query vector (q_t), attention scores against visible keys are
 
-[
-ell_j=rac{q_tcdot k_j}{sqrt{d_k}}.
-]
+$$
+\ell_j=\frac{q_tcdot k_j}{\sqrt{d_k}}.
+$$
 
-The (sqrt{d_k}) scaling keeps dot-product magnitude from growing with dimension under common initialization assumptions.
+The (\sqrt{d_k}) scaling keeps dot-product magnitude from growing with dimension under common initialization assumptions.
 
 After applying the causal mask,
 
-[
-p=operatorname{softmax}(ell),
+$$
+p=\operatorname{softmax}(ell),
 qquad
-o_t=sum_j p_jv_j.
-]
+o_t=\sum_j p_jv_j.
+$$
 
 The causal rule is semantic, not merely an optimization: token (t) must not read keys/values belonging to future tokens.
 
@@ -262,9 +262,9 @@ During autoregressive generation, earlier keys and values do not need to be reco
 
 That converts repeated prefix recomputation into persistent memory usage. For (L) layers, sequence length (T), key/value width (D), and element size (B), a simplified cache-size model is proportional to
 
-[
+$$
 2LTDB.
-]
+$$
 
 Real architectures introduce heads, grouped-query attention and layout details, but the scaling argument explains why long contexts create memory pressure.
 
@@ -294,7 +294,7 @@ The complete mental trace should be reconstructable as follows.
 
 A GGUF file is opened or mapped. The loader validates its header and metadata. Tensor descriptors are checked for shape, type, alignment and bounds. Quantized weight tensors remain compressed in storage.
 
-The tokenizer, which is intentionally outside the current executable lab, maps text to token IDs. An embedding lookup turns one token ID into a vector. Positional machinery modifies or accompanies that representation according to the architecture.
+The tokenizer, which is intentionally outside the current executable lab, maps \text to token IDs. An embedding lookup turns one token ID into a vector. Positional machinery modifies or accompanies that representation according to the architecture.
 
 For each layer, the runtime obtains the required quantized projection weights, runs a dequantizing matvec or other compressed kernel, forms query/key/value vectors, appends the new key/value state to the cache, computes causally masked attention, runs the output projection and feed-forward path, and preserves residual state.
 
@@ -315,7 +315,7 @@ The new laboratory establishes a reference layer, not production completion. The
 7. Memory planner with overlapping-lifetime tests and alignment constraints.
 8. Tokenizer implementation and exact round-trip fixtures.
 9. Architecture-specific transformer execution, including positional encoding and normalization.
-10. End-to-end logits comparison against a trusted runtime on a small public model.
+10. End-to-\end logits comparison against a trusted runtime on a small public model.
 
 The acceptance bar is not “the model produced text.” It is that each layer can be independently tested and disagreements can be localized.
 
@@ -323,7 +323,7 @@ The acceptance bar is not “the model produced text.” It is that each layer c
 
 Close the note and answer these from memory.
 
-Why can shape and storage order differ? Derive row-major strides for ((2,3,4)). Why is a broadcast usually a view rather than a copy? Why can quantization make a matvec faster even though it adds arithmetic? What does the GGUF tensor offset measure relative to? Why must an importer distinguish attributes from runtime values? What invariant does SSA give the internal graph? Why does subtracting the maximum preserve softmax probabilities? Why is the attention score divided by (sqrt{d_k})? What exactly persists in a KV cache, and what invalidates it? Finally, trace one quantized weight block from mapped file bytes to its contribution to one output logit.
+Why can shape and storage order differ? Derive row-major strides for ((2,3,4)). Why is a broadcast usually a view rather than a copy? Why can quantization make a matvec faster even though it adds arithmetic? What does the GGUF tensor offset measure relative to? Why must an importer distinguish attributes from runtime values? What invariant does SSA give the internal graph? Why does subtracting the maximum preserve softmax probabilities? Why is the attention score divided by (\sqrt{d_k})? What exactly persists in a KV cache, and what invalidates it? Finally, trace one quantized weight block from mapped file bytes to its contribution to one output logit.
 
 ## Primary specification anchors
 
