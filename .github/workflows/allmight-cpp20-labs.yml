@@ -58,7 +58,7 @@ jobs:
             name="$(basename "${source%.cpp}")"
             echo "::group::${name} ($CXX)"
             "$CXX" -std=c++20 -Wall -Wextra -Wpedantic -Werror \
-              $EXTRA_FLAGS "$source" -o "$RUNNER_TEMP/allmight-labs/$name"
+              -pthread $EXTRA_FLAGS "$source" -o "$RUNNER_TEMP/allmight-labs/$name"
             "$RUNNER_TEMP/allmight-labs/$name"
             echo "::endgroup::"
           done
