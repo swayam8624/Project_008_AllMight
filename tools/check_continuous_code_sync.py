@@ -34,6 +34,7 @@ EMBEDDED = {
         "spring_generator_lab.cpp",
         "contact_penetration_refresh_lab.cpp",
         "render_graph_contract_lab.cpp",
+        "engine_world_contract_lab.cpp",
     ),
 }
 
