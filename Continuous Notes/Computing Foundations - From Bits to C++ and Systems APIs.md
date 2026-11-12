@@ -51199,6 +51199,7 @@ This implementation stores graph nodes in a contiguous `std::vector`, addressing
 #include <limits>
 #include <stdexcept>
 #include <vector>
+```
 
 class Tape {
 public:

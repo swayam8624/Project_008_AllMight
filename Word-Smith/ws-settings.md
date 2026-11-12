@@ -6,7 +6,7 @@ reinstall — or a vault restored from a backup that kept the notes and
 not the plugin folder — can get everything back.
 
 - vault: Master
-- written: 2026-10-29 11:31:57
+- written: 2026-11-12 22:27:17
 
 ```json
 {
@@ -56,7 +56,7 @@ not the plugin folder — can get everything back.
   "barThemeCheckbox": "",
   "barThemeGlassStash": null,
   "barThemeMarkdown": false,
-  "pluginEnabled": true,
+  "pluginEnabled": false,
   "scopeMode": "include",
   "scopePaths": [],
   "countExclude": [],
@@ -297,7 +297,7 @@ not the plugin folder — can get everything back.
   "quickCycleCloseOnLeave": false,
   "enableFileTreeCounts": false,
   "fileTreeFlags": false,
-  "treeOrder": true,
+  "treeOrder": false,
   "treeOrderForcedOn": true,
   "fileTreeFolderIcons": true,
   "fileTreeKindIcons": false,
@@ -344,7 +344,7 @@ not the plugin folder — can get everything back.
   ],
   "fileTreeTasks": false,
   "enableOutlineCounts": false,
-  "vimSoftWrapMotion": true,
+  "vimSoftWrapMotion": false,
   "vimLabelNormal": "NORMAL",
   "vimLabelInsert": "INSERT",
   "vimLabelVisual": "VISUAL",

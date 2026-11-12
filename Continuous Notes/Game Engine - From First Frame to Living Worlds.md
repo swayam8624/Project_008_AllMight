@@ -1,11 +1,3 @@
----
-tags:
-  - game-engine
-  - continuous-notes
-  - architecture
-  - cumulative-volume
-source_scope: Named-channel engine series, supplied books, inspected primary references, and original teaching laboratories
----
 # Game Engine — From First Frame to Living Worlds
 
 Imagine a small workshop game. A player walks toward a crate, picks it up, carries it onto a pressure plate, and watches a door open. You can describe that experience in one sentence. Making it happen repeatedly, saving it, editing it, and diagnosing a failure requires several cooperating systems.
