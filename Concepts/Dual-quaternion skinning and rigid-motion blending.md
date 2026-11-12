@@ -2,21 +2,21 @@
 
 A unit quaternion represents rotation but not translation. A dual quaternion
 
-[
-\hat q = q_r + \varepsilon q_d,qquad \varepsilon^2=0
-]
+$$
+\hat q = q_r + \varepsilon q_d,\qquad \varepsilon^2=0
+$$
 
 can encode a rigid transform compactly. For unit rotation quaternion (q_r) and translation vector (t) represented as a pure quaternion (t_q=(t,0)),
 
-[
+$$
 q_d=\frac12 t_q q_r.
-]
+$$
 
 A point is transformed by the encoded rigid motion; translation can be recovered from
 
-[
+$$
 t_q=2q_d q_r^*.
-]
+$$
 
 This is useful for skinning because linearly blending transformation matrices can introduce volume loss and “candy-wrapper” artifacts around twisting joints. Blending dual quaternions better preserves rigid character before the final weighted transform is applied.
 
