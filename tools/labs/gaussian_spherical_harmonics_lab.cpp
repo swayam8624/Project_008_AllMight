@@ -1,5 +1,6 @@
 // PROJECTALLMIGHT real spherical-harmonics l<=3 oracle for Gaussian appearance.
 // Convention is stated explicitly; signs can differ in other SH conventions without changing orthonormality.
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
