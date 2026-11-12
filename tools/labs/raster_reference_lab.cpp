@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -71,8 +72,16 @@ SampleResult sample_triangle(std::array<Vertex,3> v,V2 p){
 
 void test_shared_edge_has_single_owner(){
     // Square split along the diagonal. Sample centers intentionally include a point on the diagonal.
-    std::array<Vertex,3> a{{{{0,0},1,0,0.2F},{{2,0},1,0,0.2F},{{2,2},1,0,0.2F}}};
-    std::array<Vertex,3> b{{{{0,0},1,0,0.3F},{{2,2},1,0,0.3F},{{0,2},1,0,0.3F}}};
+    std::array<Vertex,3> a{{
+        Vertex{{0,0},1,0,0.2F},
+        Vertex{{2,0},1,0,0.2F},
+        Vertex{{2,2},1,0,0.2F}
+    }};
+    std::array<Vertex,3> b{{
+        Vertex{{0,0},1,0,0.3F},
+        Vertex{{2,2},1,0,0.3F},
+        Vertex{{0,2},1,0,0.3F}
+    }};
 
     const std::vector<V2> samples{{0.5F,0.5F},{1.0F,1.0F},{1.5F,1.5F}};
     for(V2 p:samples){
@@ -105,8 +114,16 @@ void test_perspective_interpolation(){
 }
 
 void test_depth_order(){
-    std::array<Vertex,3> near_t{{{{0,0},1,0,0.2F},{{2,0},1,0,0.2F},{{0,2},1,0,0.2F}}};
-    std::array<Vertex,3> far_t{{{{0,0},1,0,0.8F},{{2,0},1,0,0.8F},{{0,2},1,0,0.8F}}};
+    std::array<Vertex,3> near_t{{
+        Vertex{{0,0},1,0,0.2F},
+        Vertex{{2,0},1,0,0.2F},
+        Vertex{{0,2},1,0,0.2F}
+    }};
+    std::array<Vertex,3> far_t{{
+        Vertex{{0,0},1,0,0.8F},
+        Vertex{{2,0},1,0,0.8F},
+        Vertex{{0,2},1,0,0.8F}
+    }};
     const V2 p{0.25F,0.25F};
     auto n=sample_triangle(near_t,p);
     auto f=sample_triangle(far_t,p);
