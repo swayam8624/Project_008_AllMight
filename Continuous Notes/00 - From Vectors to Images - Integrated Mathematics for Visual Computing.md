@@ -1571,7 +1571,7 @@ That discrepancy is not rounding noise; the two calculations describe different 
 
 The following complete C++20 oracle computes the interpolated value using a signed triangle determinant. This reference deliberately uses double precision to diagnose geometry and does not pretend to reproduce a GPU's fixed-point coverage rules. The projected triangle must be nondegenerate, all three \(w_i\) must be finite and nonzero, and the rational denominator must not vanish. Clipping against the appropriate homogeneous frustum precedes this operation in a real rasterizer; near-plane crossings cannot safely be handled by dividing arbitrary negative and positive \(w\) values first.
 
-\`\`\`cpp
+```cpp
 #include <array>
 #include <cassert>
 #include <cmath>
@@ -1629,9 +1629,9 @@ int main() {
     for (auto& vertex : equalW) vertex.clipW = 1.0;
     assert(std::abs(perspectiveAttribute(equalW, 1.0, 1.0) - 0.5) < 1e-12);
 }
-\`\`\`
+```
 
-Compile with \`c++ -std=c++20 -O2 -Wall -Wextra -pedantic\`. A debug assertion depends on whether \`NDEBUG\` is defined; preserve assertions for this check. Additional tests should change triangle winding without changing the computed attribute, approach a degenerate projected triangle and demand an explicit rejection, and compare many nondegenerate samples with a shader configured for smooth perspective interpolation. Coverage ownership and interpolation correctness are separate tests: one can pass while the other fails. This is the mathematical bridge to the covered-sample and shader-ABI contracts in the Graphics and Game Engine volumes.
+Compile with `c++ -std=c++20 -O2 -Wall -Wextra -pedantic`. A debug assertion depends on whether `NDEBUG` is defined; preserve assertions for this check. Additional tests should change triangle winding without changing the computed attribute, approach a degenerate projected triangle and demand an explicit rejection, and compare many nondegenerate samples with a shader configured for smooth perspective interpolation. Coverage ownership and interpolation correctness are separate tests: one can pass while the other fails. This is the mathematical bridge to the covered-sample and shader-ABI contracts in the Graphics and Game Engine volumes.
 
 ## Weighted points lead from affine geometry to collision shapes
 
