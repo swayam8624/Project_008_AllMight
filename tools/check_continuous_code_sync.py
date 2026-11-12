@@ -35,6 +35,7 @@ EMBEDDED = {
         "contact_penetration_refresh_lab.cpp",
         "render_graph_contract_lab.cpp",
         "engine_world_contract_lab.cpp",
+        "animation_controller_contract_lab.cpp",
     ),
 }
 

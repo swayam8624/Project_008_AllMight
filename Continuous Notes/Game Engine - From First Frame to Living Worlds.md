@@ -96375,6 +96375,274 @@ A practical tick contract reads: controller state `(active clips, normalized tim
 
 Consider the witness's deliberately narrow `Character`: it accepts one displacement request per tick, clamps against a supplied allowed displacement, records which tick consumed the request, and emits one footstep event. An extra draw evaluation of the same tick is ignored. This proves a **logical once-per-tick contract**, not production motion matching, IK, ragdoll blend, imported curve retargeting, skinning quality or audio scheduling. Those remain distinct practical implementation requirements. Gregory's Chapter 11 offers the production subsystem motivation; the current engine's richer math and graphics treatment supplies the mechanics, and this bridge states who gets to commit the answer.
 
+#### Reconstruct the animation controller, not just the pose formula
+
+The root-motion ownership rule above tells us **who** commits a character transform, but not how a controller produces the request. A controller is a small temporal program. Its state includes clip identity, clip-local time, whether an animation is looping, transition progress, event positions, blend weights and the last fixed tick on which it advanced. That state is not interchangeable with the current rendered skeleton. It must survive rendering zero or three times between consecutive fixed ticks, and it must not advance again simply because a camera asks for a different pose.
+
+Take two compatible clips: `Idle`, whose root does not move, and `Walk`, whose author-time root track travels one meter during each one-second cycle. To evaluate a joint at time `t`, first locate the two keys bracketing the clip-local time `τ = t mod T`, where `T` is the positive clip duration. For translation keys `p0,p1` at times `t0,t1`, the local interpolation fraction is `a = (τ−t0)/(t1−t0)`, and the interpolated translation is `p=(1−a)p0+a p1`. This is only defined when keys are strictly increasing, and it is not a universal treatment of authored cubic splines: spline interpolation needs its own tangents and interpolation contract. For unit quaternions `q0,q1`, use shortest-arc spherical interpolation. Normalize the inputs, negate `q1` if `dot(q0,q1)<0`, and interpolate by `sin((1−a)θ)/sin θ` and `sin(aθ)/sin θ` with `θ=acos(dot(q0,q1))`. Near coincident rotations, normalized linear interpolation avoids division by a nearly zero sine. The quaternions `q` and `−q` describe the same spatial rotation even though their coefficients differ.
+
+A transition from `Idle` to `Walk` lasting 0.20 seconds defines a blend `w(t)` from zero to one. The visual foot joint can be blended as `pose=(1−w)IdlePose+w WalkPose` for translations and by quaternion interpolation for rotations. This deliberately assumes compatible joint indices, rest pose, parent hierarchy and coordinate units. For different skeletons, joint-name equality is not enough: retargeting must resolve the rest-pose orientation, hierarchy, limb proportion, scale and root-bone conventions. A generic arithmetic average of rotation matrices would not preserve orthogonality. Additive animation layers and masks require separate reference poses and normalized composition policies.
+
+The moving root needs more care than the visual foot. If the walk clip has unwrapped root displacement `r(t)` with units meters, its request over a tick is an integral of its velocity contribution. For a *linear* fade and constant walk velocity over the tick, `Δx_requested = [r(t1)−r(t0)]·(w0+w1)/2`, where `w0` and `w1` are blend weights at the beginning and end. This trapezoidal expression is **exact for this particular linear weight and constant velocity**, not an arbitrary approximation guaranteed exact for all curves. Starting the 0.20-second transition with a 0.10-second simulation tick gives `w0=0, w1=0.5`, and a 0.10-meter raw walk displacement; therefore the first tick requests `0.10·0.25=0.025 m`. The next tick has weights `0.5` and `1`, so it requests `0.10·0.75=0.075 m`. If collision permits only 0.05 m during that second tick, the authoritative root is `0.025+0.05=0.075 m`, not the unconstrained 0.10 m and certainly not 0.10 m plus another animation offset. A transition with nonlinear weighting requires numerical/analytic integration or deliberately documented approximation.
+
+A looping pose resets its local time, but its **unwrapped** root displacement must not jump backward. For each completed cycle `n` and remainder `τ`, use `r(t)=nD+r_cycle(τ)` with per-cycle displacement `D` (one meter in the example). A footstep marker is also not a property of the render frame: it is a time-crossing query. Record a marker when its occurrence time `nT+m` lies in the half-open interval `(previousTickTime,currentTickTime]`, where `m` is the marker position within the cycle. This rule prevents duplicates at an exactly shared boundary and catches events when one tick crosses the end of a loop. For a backward-playback or seek operation, choose a separate, explicit event policy; do not reuse the positive-time crossing rule silently. An actual blend tree additionally needs a semantic policy for competing footsteps in simultaneous clips, for example dominant-clip gating or normalized phase matching.
+
+The **final visual pose** is a different product again. In column-vector convention, a skinned vertex position in bind coordinates is `p_deformed = Σ_j weight_j (GlobalJoint_j · InverseBind_j) p_bind`, with weights summing to one for conventional linear blend skinning. `GlobalJoint_j` depends on the resolved character root and parent-to-child joint transforms. The inverse-bind transform maps from mesh bind coordinates into each joint's rest space. If the root is updated by physics after animation sampled its provisional pose, the final skinning palette and culling bounds must use the resolved root, not an old provisional transform. Nonuniform scales, shear and normal transformation need special care; dual-quaternion skinning addresses some linear-blend artifacts but has its own scale/blending limitations. GPU uploads must retain the palette and skinned buffers until all consuming draws finish, which is a separate resource-lifetime proof.
+
+The following complete CPU witness models a two-clip controller with one animated foot joint and a scalar root track. It proves clip interpolation, quaternion sign equivalence, duration/marker validation, crossing three events over a loop boundary, blend-weight integration, collision authority and duplicate-tick rejection. The scope is intentionally smaller than a shipping animation engine: there is no asset importer, skeletal remapping, GPU palette buffer, additive layer, IK, ragdoll, multithreaded evaluation, compression or notification bus. This boundary matters more than pretending a short mathematical example proves all those subsystems. Keep the code here in the primary chapter; the identical separately compilable file is `tools/labs/animation_controller_contract_lab.cpp`.
+
+```cpp
+// C++20 reference: clip evaluation, controller blending, root ownership and tick events.
+// CPU contract only: no skeleton importer, inverse-bind matrices or GPU skinning.
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <numbers>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
+
+namespace animation {
+void check(bool ok, std::string_view problem) {
+    if (!ok) throw std::runtime_error(std::string(problem));
+}
+struct Vec3 { double x = 0, y = 0, z = 0; };
+Vec3 operator+(Vec3 a, Vec3 b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
+Vec3 operator*(Vec3 v, double s) { return {v.x*s, v.y*s, v.z*s}; }
+Vec3 interpolate(Vec3 a, Vec3 b, double t) { return a*(1-t)+b*t; }
+
+// Quaternion convention: w + xi + yj + zk. A and -A represent the same
+// spatial rotation, so shortest-arc slerp must change B's sign if dot < 0.
+struct Quat { double w=1, x=0, y=0, z=0; };
+double dot(Quat a, Quat b) {
+    return a.w*b.w+a.x*b.x+a.y*b.y+a.z*b.z;
+}
+Quat operator-(Quat q) { return {-q.w,-q.x,-q.y,-q.z}; }
+Quat operator+(Quat a, Quat b) {
+    return {a.w+b.w,a.x+b.x,a.y+b.y,a.z+b.z};
+}
+Quat operator*(Quat q, double s) { return {q.w*s,q.x*s,q.y*s,q.z*s}; }
+Quat normalized(Quat q) {
+    const double squared=dot(q,q);
+    check(std::isfinite(squared) && squared>1e-24, "invalid quaternion");
+    return q*(1.0/std::sqrt(squared));
+}
+Quat slerp(Quat a, Quat b, double t) {
+    check(std::isfinite(t) && t>=0 && t<=1, "invalid slerp weight");
+    a=normalized(a); b=normalized(b);
+    double cosine=dot(a,b);
+    if (cosine<0) { b=-b; cosine=-cosine; }
+    cosine=std::clamp(cosine,0.0,1.0);
+    // Near equal rotations, linear blending avoids division by tiny sine.
+    if (cosine>0.9995) return normalized(a*(1-t)+b*t);
+    const double angle=std::acos(cosine);
+    const double s=std::sin(angle);
+    return normalized(a*(std::sin((1-t)*angle)/s)+
+                      b*(std::sin(t*angle)/s));
+}
+
+struct JointPose { Vec3 translation; Quat rotation; };
+JointPose blend(JointPose a, JointPose b, double w) {
+    return {interpolate(a.translation,b.translation,w),slerp(a.rotation,b.rotation,w)};
+}
+struct Key { double time; JointPose pose; };
+struct Marker { double time; std::string name; };
+struct Clip {
+    double duration = 1.0;             // Positive seconds per loop.
+    double root_distance = 0.0;        // Meters per completed loop.
+    std::vector<Key> foot_keys;        // One animated local joint in this model.
+    std::vector<Marker> markers;       // Author-time semantic events.
+};
+void validate(const Clip& clip) {
+    check(std::isfinite(clip.duration) && clip.duration>0, "bad clip duration");
+    check(clip.foot_keys.size()>=2, "insufficient pose keys");
+    check(std::isfinite(clip.root_distance), "bad root displacement");
+    double previous=-1.0;
+    for (const Key& k:clip.foot_keys) {
+        check(std::isfinite(k.time) && k.time>=0 && k.time<=clip.duration &&
+              k.time>previous, "pose keys must be sorted and unique");
+        normalized(k.pose.rotation); // Reject invalid animation input early.
+        previous=k.time;
+    }
+    check(clip.foot_keys.front().time==0 &&
+          clip.foot_keys.back().time==clip.duration,
+          "loop must have boundary pose keys");
+    previous=-1.0;
+    for (const Marker& marker:clip.markers) {
+        check(marker.time>=0 && marker.time<clip.duration &&
+              marker.time>previous && !marker.name.empty(), "invalid markers");
+        previous=marker.time;
+    }
+}
+
+JointPose pose_at(const Clip& clip, double absolute_seconds) {
+    check(std::isfinite(absolute_seconds) && absolute_seconds>=0,
+          "invalid clip time");
+    const double t=std::fmod(absolute_seconds,clip.duration);
+    // Inclusive right key means the pose remains defined for exact key times.
+    auto upper=std::upper_bound(clip.foot_keys.begin(),clip.foot_keys.end(),t,
+        [](double time, const Key& k) { return time<k.time; });
+    if (upper==clip.foot_keys.begin()) return upper->pose;
+    if (upper==clip.foot_keys.end()) return clip.foot_keys.back().pose;
+    const Key& right=*upper; const Key& left=*(upper-1);
+    const double alpha=(t-left.time)/(right.time-left.time);
+    return blend(left.pose,right.pose,alpha);
+}
+
+// This simplified clip declares linear root movement over each loop. The
+// unwrapped function makes a 0.99s -> 1.01s update advance, not jump backward.
+double root_at(const Clip& clip,double absolute_seconds) {
+    const double loops=std::floor(absolute_seconds/clip.duration);
+    const double remainder=absolute_seconds-loops*clip.duration;
+    return loops*clip.root_distance+
+           (remainder/clip.duration)*clip.root_distance;
+}
+struct Event { std::string name; std::int64_t cycle; };
+std::vector<Event> crossed_markers(const Clip& clip,double before,double after) {
+    check(after>=before && std::isfinite(before) && std::isfinite(after),
+          "backward or invalid event interval");
+    check(after-before<=4*clip.duration, "event interval exceeds bounded update");
+    std::vector<Event> fired;
+    const auto first=static_cast<std::int64_t>(std::floor(before/clip.duration));
+    const auto last=static_cast<std::int64_t>(std::floor(after/clip.duration));
+    for (auto loop=first;loop<=last;++loop) {
+        for (const Marker& marker:clip.markers) {
+            const double when=loop*clip.duration+marker.time;
+            if (when>before && when<=after)
+                fired.push_back({marker.name,loop});
+        }
+    }
+    return fired;
+}
+
+struct Advance {
+    JointPose visual_foot;
+    double requested_root_meters=0.0;
+    std::vector<Event> events;
+};
+class Controller {
+    const Clip& idle_;
+    const Clip& walk_;
+    bool walking_=false;
+    double idle_time_=0,walk_time_=0;
+    double transition_elapsed_=0;
+    static constexpr double fade_seconds=0.20;
+    std::uint64_t last_tick_=0;
+public:
+    Controller(const Clip& idle,const Clip& walk):idle_(idle),walk_(walk) {
+        validate(idle_);validate(walk_);
+    }
+    void begin_walk() {
+        check(!walking_, "duplicate transition request");
+        walking_=true;transition_elapsed_=0;walk_time_=0;
+    }
+    Advance tick(std::uint64_t tick_id,double dt) {
+        check(tick_id>last_tick_ && std::isfinite(dt) && dt>0,
+              "tick must be positive and monotonic");
+        check(dt<=0.10, "timestep exceeds animation contract");
+        last_tick_=tick_id;
+        const double old_walk=walk_time_;
+        const double w0=walking_?std::clamp(transition_elapsed_/fade_seconds,0.0,1.0):0.0;
+        idle_time_+=dt;
+        if (!walking_) return {pose_at(idle_,idle_time_),0.0,{}};
+        walk_time_+=dt;
+        transition_elapsed_+=dt;
+        const double w1=std::clamp(transition_elapsed_/fade_seconds,0.0,1.0);
+        // Trapezoidal blend of movement weights is exact for a linear fade.
+        // A nonlinear fade needs actual integration to avoid timestep bias.
+        const double requested=(root_at(walk_,walk_time_)-root_at(walk_,old_walk))
+                                *0.5*(w0+w1);
+        auto pose=blend(pose_at(idle_,idle_time_),pose_at(walk_,walk_time_),w1);
+        // Clip events are tick events; visual draws do not call tick().
+        // A production controller must define event policy for multi-clip blends.
+        return {pose,requested,crossed_markers(walk_,old_walk,walk_time_)};
+    }
+};
+
+struct CharacterMotor {
+    double authoritative_root_m=0;
+    double previous_root_m=0;
+    std::vector<std::string> dispatched_events;
+    void commit(const Advance& proposal,double allowed_m) {
+        check(std::isfinite(allowed_m) && allowed_m>=0,"bad collision allowance");
+        previous_root_m=authoritative_root_m;
+        authoritative_root_m+=std::min(proposal.requested_root_meters,allowed_m);
+        for (const Event& e:proposal.events) dispatched_events.push_back(e.name);
+    }
+    double visual_root(double alpha) const {
+        check(alpha>=0 && alpha<=1,"invalid presentation alpha");
+        return previous_root_m*(1-alpha)+authoritative_root_m*alpha;
+    }
+};
+} // namespace animation
+
+int main() {
+    using namespace animation;
+    const Quat identity{};
+    const Quat half_turn{0,0,0,1}; // 180 deg about local z.
+    Clip idle{1,0,{{0,{{0,0,0},identity}},{1,{{0,0,0},identity}}}, {}};
+    Clip walk{1,1,
+        {{0,{{0,0,0},identity}},
+         {0.5,{{0,0.2,0},half_turn}},
+         {1,{{0,0,0},identity}}},
+        {{0.25,"left-footstep"},{0.75,"right-footstep"}}};
+    validate(walk);
+    const JointPose at_half=pose_at(walk,0.5);
+    check(std::abs(at_half.translation.y-0.2)<1e-12,"lost keyframe");
+    const Quat quarter=slerp(identity,half_turn,0.5);
+    check(std::abs(quarter.w-std::sqrt(0.5))<1e-12 &&
+          std::abs(quarter.z-std::sqrt(0.5))<1e-12,
+          "incorrect half-way quaternion orientation");
+    check(std::abs(dot(quarter,slerp(identity,-half_turn,0.5)))-1<1e-12,
+          "antipodal quaternion sign changed orientation");
+    check(std::abs(root_at(walk,1.01)-root_at(walk,0.99)-0.02)<1e-12,
+          "root movement snapped at loop boundary");
+    const auto boundary_events=crossed_markers(walk,0.24,1.26);
+    check(boundary_events.size()==3 && boundary_events[0].name=="left-footstep" &&
+          boundary_events[2].cycle==1,"markers lost across loops");
+
+    Controller controller(idle,walk);
+    CharacterMotor motor;
+    auto stand=controller.tick(1,0.1);
+    check(stand.requested_root_meters==0 && stand.events.empty(),
+          "idle state unexpectedly moved");
+    controller.begin_walk();
+    auto first=controller.tick(2,0.1);
+    check(std::abs(first.requested_root_meters-0.025)<1e-12,
+          "first half-fade root integral incorrect");
+    motor.commit(first,1.0);
+    const double before_draw=motor.authoritative_root_m;
+    (void)motor.visual_root(0.5); // Presentation is read-only.
+    (void)motor.visual_root(0.5);
+    check(motor.authoritative_root_m==before_draw,"draw modified gameplay root");
+    auto second=controller.tick(3,0.1);
+    check(std::abs(second.requested_root_meters-0.075)<1e-12,
+          "second half-fade root integral incorrect");
+    motor.commit(second,0.05); // A wall permits less than the desired delta.
+    check(std::abs(motor.authoritative_root_m-0.075)<1e-12,
+          "root motion double-applied or ignored collision");
+    auto third=controller.tick(4,0.1);
+    motor.commit(third,1.0);
+    check(motor.dispatched_events.size()==1 &&
+          motor.dispatched_events[0]=="left-footstep",
+          "footstep event must fire exactly once at the crossing tick");
+    bool repeat_rejected=false;
+    try { (void)controller.tick(4,0.1); }
+    catch (const std::runtime_error&) {repeat_rejected=true;}
+    check(repeat_rejected,"same animation tick executed twice");
+    bool malformed_rejected=false;
+    try { validate(Clip{1,1,{{0,{}},{0,{}}},{}}); }
+    catch (const std::runtime_error&) {malformed_rejected=true;}
+    check(malformed_rejected,"duplicate author-time keys accepted");
+    std::cout << "PASS clip interpolation, shortest-arc blend, loop markers, "
+                 "fade root integration, collision authority, tick events\n";
+}
+
+```
+
 ### One executable world-contract reconstruction — where these hand-offs meet
 
 The sections on startup, input, asset streaming, world identity and animation have one shared failure mode: an operation finishes on one timeline while a different owner is not yet ready to accept its result. The following compact C++20 program is therefore placed **inside the teaching volume**, not outsourced to an unexamined repository example. It follows one set of exact ownership contracts. The independent source file is `tools/labs/engine_world_contract_lab.cpp`; `tools/check_continuous_code_sync.py` checks byte-for-byte agreement of the fenced source body with that file. This is deliberately a deterministic model; its absence of actual asynchronous I/O makes races reproducible here but does not demonstrate that a real worker queue is synchronized correctly.
