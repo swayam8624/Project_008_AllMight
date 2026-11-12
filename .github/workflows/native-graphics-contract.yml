@@ -1,0 +1,77 @@
+name: Native graphics API contract smoke
+
+on:
+  push:
+    branches: [main, allmight-depth-repair-20261112]
+    paths:
+      - 'tools/native/**'
+      - '.github/workflows/native-graphics-contract.yml'
+  pull_request:
+    paths:
+      - 'tools/native/**'
+      - '.github/workflows/native-graphics-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vulkan-sync2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Vulkan SDK packages and Mesa software ICD
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev vulkan-validationlayers mesa-vulkan-drivers
+      - name: Build Vulkan synchronization witnesses
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+            tools/native/vulkan_sync_smoke.cpp -lvulkan -o /tmp/vulkan_sync_smoke
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+            tools/native/vulkan_buffer_timeline_smoke.cpp -lvulkan -o /tmp/vulkan_buffer_timeline_smoke
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+            tools/native/vulkan_image_layout_smoke.cpp -lvulkan -o /tmp/vulkan_image_layout_smoke
+
+      - name: Execute with Mesa software Vulkan when available
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f /usr/share/vulkan/icd.d/lvp_icd.x86_64.json ]]; then
+            export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+          fi
+          /tmp/vulkan_sync_smoke
+          /tmp/vulkan_buffer_timeline_smoke
+          /tmp/vulkan_image_layout_smoke
+
+  metal-compile:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Metal source to AIR and metallib
+        run: |
+          xcrun -sdk macosx metal -Wall -Werror -c \
+            tools/native/metal_compile_smoke.metal -o /tmp/allmight.air
+          xcrun -sdk macosx metallib /tmp/allmight.air -o /tmp/allmight.metallib
+          test -s /tmp/allmight.metallib
+
+      - name: Build and execute Metal runtime witness
+        shell: bash
+        run: |
+          set +e
+          xcrun -sdk macosx clang++ -std=c++20 -Wall -Wextra -Wpedantic -Werror \
+            -fobjc-arc -framework Foundation -framework Metal \
+            tools/native/metal_runtime_smoke.mm -o /tmp/metal_runtime_smoke
+          build_status=$?
+          if [[ $build_status -ne 0 ]]; then
+            exit $build_status
+          fi
+          /tmp/metal_runtime_smoke /tmp/allmight.metallib
+          status=$?
+          if [[ $status -eq 77 ]]; then
+            echo "Metal runtime evidence unavailable on this host; compile evidence remains valid."
+            exit 0
+          fi
+          exit $status

@@ -1,0 +1,33 @@
+name: Depth repair structural contract
+
+on:
+  push:
+    branches: [main, allmight-depth-repair-20261112]
+    paths:
+      - 'Concepts/**'
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/native/**'
+      - 'tools/check_depth_repair_contract.py'
+      - '.github/workflows/depth-repair-contract.yml'
+  pull_request:
+    paths:
+      - 'Concepts/**'
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/native/**'
+      - 'tools/check_depth_repair_contract.py'
+      - '.github/workflows/depth-repair-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structural-depth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify depth-repair artifacts and concept floor
+        run: python3 tools/check_depth_repair_contract.py

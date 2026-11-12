@@ -1,0 +1,36 @@
+name: Native security primitive contract
+
+on:
+  push:
+    branches: [main, allmight-depth-repair-20261112]
+    paths:
+      - 'tools/native/openssl_aes_gcm_smoke.cpp'
+      - '.github/workflows/security-native-contract.yml'
+  pull_request:
+    paths:
+      - 'tools/native/openssl_aes_gcm_smoke.cpp'
+      - '.github/workflows/security-native-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  openssl-aes-gcm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenSSL development package
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+          openssl version
+
+      - name: Build and execute AES-GCM witness
+        run: |
+          g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
+            tools/native/openssl_aes_gcm_smoke.cpp -lcrypto \
+            -o /tmp/openssl_aes_gcm_smoke
+          /tmp/openssl_aes_gcm_smoke

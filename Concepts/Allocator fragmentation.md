@@ -29,3 +29,14 @@ Distinguish slack, metadata, and separated holes.
 ## Source and navigation
 
 [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Where the bytes live|C003 teaching chapter]] · [[Supplementary/Foundations#M003 - Parts 41-60|Part definitions]] · [[Dependency Map]]
+
+## Reconstruction depth
+
+Fragmentation is wasted allocation capacity caused by request shapes and allocator policy. Internal fragmentation is unused space inside an allocated block because of alignment, size classes or rounding. External fragmentation is free memory split into pieces that cannot satisfy a larger request even when total free bytes are sufficient.
+
+A game or graphics workload amplifies the issue because lifetimes are structured: per-frame temporaries, long-lived assets, streaming resources and transient staging data behave differently. Using one general heap for all of them can mix lifetimes and make reuse less predictable.
+
+A useful experiment records requested bytes, committed bytes, peak live bytes, largest free span, allocation count and reuse over time. Frame arenas eliminate external fragmentation inside a frame by resetting wholesale; pools trade generality for fixed-size reuse; free lists require split and coalesce policy.
+
+Fragmentation is not measured by "the process uses a lot of memory" alone. Residency, allocator metadata, page commitment and application-owned slack must be separated before choosing a remedy.
+

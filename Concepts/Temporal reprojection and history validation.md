@@ -34,3 +34,14 @@ Derive ideal history variance and identify every violated assumption. Pending: m
 ## Phase 11 camera development
 
 Reprojection predicts where a prior sample lands under camera and object motion. Depth agreement tests whether the same visible surface likely occupies that location, but cannot prove stored color remains valid after lighting, exposure, material, or sampling changes. Combine projected position, depth tolerance, and disocclusion checks; reduce history weight when confidence is low. Monocular reconstruction has arbitrary global scale, so metric depth thresholds require an external scale or consistent units. Reprojection success is geometric evidence, not a photometric guarantee. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].
+
+## Neighborhood clipping and deterministic jitter witness
+
+`tools/labs/realtime_effects_reference_lab.cpp` now extends history validity into two mechanisms that directly affect temporal stability.
+
+The first is deterministic subpixel jitter generated from Halton bases 2 and 3. The sample lies inside one pixel but changes frame to frame, allowing temporal accumulation to observe different subpixel locations. A jitter sequence must be owned by the camera/projection history contract: if the current and previous transforms disagree about whether jitter is included, the motion vector and reprojection become inconsistent.
+
+The second is neighborhood clipping. A reprojected history value can be geometrically valid yet photometrically stale after disocclusion or fast shading change. The smallest CPU oracle clamps the history sample into the current 3×3 neighborhood min/max interval before blending. Production TAA often uses variance-guided bounds, color-space transforms, reactive masks and velocity-dependent weighting, but the invariant remains: history should not inject values unsupported by the current local evidence.
+
+The laboratory checks known first Halton points, uniqueness over an initial sequence, bright/dark history rejection and preservation of an in-range history value. It remains a semantic oracle rather than a complete production TAA implementation.
+
