@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <iterator>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -92,14 +93,18 @@ std::set<int> opposite_vertices(const std::vector<Tri>& tris,int u,int v){
     return opp;
 }
 
-bool link_condition(const std::vector<Tri>& tris,int u,int v){
+bool manifold_link_condition(const std::vector<Tri>& tris,int u,int v){
     auto nu=one_ring(tris,u);
     auto nv=one_ring(tris,v);
     nu.erase(v); nv.erase(u);
     std::set<int> intersection;
     std::set_intersection(nu.begin(),nu.end(),nv.begin(),nv.end(),
                           std::inserter(intersection,intersection.begin()));
-    return intersection==opposite_vertices(tris,u,v);
+    const auto opposite=opposite_vertices(tris,u,v);
+    // An ordinary triangle-mesh edge has one incident face on a boundary or two in the interior.
+    // More than two incident faces is non-manifold and must not be accepted by this collapse gate.
+    if(opposite.empty() || opposite.size()>2) return false;
+    return intersection==opposite;
 }
 
 void test_optimal_point(){
@@ -121,14 +126,14 @@ void test_optimal_point(){
 void test_link_condition(){
     // Closed tetrahedron: every edge has exactly the two opposite/common one-ring vertices required.
     const std::vector<Tri> tetra{{0,1,2},{0,3,1},{0,2,3},{1,3,2}};
-    require(link_condition(tetra,0,1),"valid tetrahedron edge failed link condition");
+    require(manifold_link_condition(tetra,0,1),"valid tetrahedron edge failed link condition");
 
     // Non-manifold edge 0-1 has three incident triangles, so the common neighbor set has
     // three opposite vertices. For a 2-manifold interior edge we explicitly require two.
     const std::vector<Tri> nonmanifold{{0,1,2},{0,3,1},{0,1,4}};
     const auto opp=opposite_vertices(nonmanifold,0,1);
     require(opp.size()==3,"non-manifold fixture did not create three incident faces");
-    require(!(link_condition(nonmanifold,0,1)&&opp.size()==2),
+    require(!manifold_link_condition(nonmanifold,0,1),
             "non-manifold edge incorrectly accepted as ordinary manifold edge");
 }
 
