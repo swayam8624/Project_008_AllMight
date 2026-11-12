@@ -10,11 +10,16 @@ def code_block(path, language):
 def insert_or_refresh_before(text, anchor, marker, body):
     if anchor not in text:
         raise SystemExit("missing anchor: " + anchor)
+    normalized = body.strip("\n")
     if marker in text:
         start = text.index(marker)
+        # Consume blank lines immediately before the managed section so refresh
+        # cannot accumulate whitespace on repeated runs.
+        while start > 0 and text[start - 1] == "\n":
+            start -= 1
         end = text.index(anchor, start)
-        return text[:start] + body.rstrip() + "\n\n" + text[end:]
-    return text.replace(anchor, body.rstrip() + "\n\n" + anchor, 1)
+        return text[:start] + "\n\n" + normalized + "\n\n" + text[end:]
+    return text.replace(anchor, normalized + "\n\n" + anchor, 1)
 
 text = NOTE.read_text()
 
