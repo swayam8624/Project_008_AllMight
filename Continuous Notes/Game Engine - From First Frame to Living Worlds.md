@@ -54793,6 +54793,419 @@ and print them in startup diagnostics. “Works on my M-series chip” is not a 
 Source basis: Apple's current Metal 4 documentation and Metal Shading Language Specification v4 dated 2025-10-23. The frame-ring, render-graph and cross-backend interpretations are integrations into this engine narrative.
 
 
+
+### Metal 4 deepening: argument tables, residency, barriers, and multi-threaded encoding are one resource protocol
+
+The first Metal 4 section establishes the new objects. The deeper architectural point is that these objects are not independent conveniences. Together they move more of the renderer's hidden resource bookkeeping into explicit application-visible structures.
+
+The useful way to read the Metal 4 core API is as four linked questions:
+
+\[
+\boxed{
+\begin{aligned}
+&\text{Where are commands stored?} &&\rightarrow \text{command allocator}\\
+&\text{What resources can shaders address?} &&\rightarrow \text{argument table}\\
+&\text{What resources must be GPU-visible?} &&\rightarrow \text{residency set}\\
+&\text{What earlier work must precede later work?} &&\rightarrow \text{barrier/dependency}
+\end{aligned}
+}
+\]
+
+A renderer that answers only one of those questions is incomplete.
+
+#### Argument tables are a root-binding layer, not a replacement for all resource indirection
+
+Metal 4 argument tables store bindings for buffers, textures, samplers and other resources. The key performance idea is that table population can happen outside the draw-critical encoding path and the same table can be applied to several encoder stages.
+
+A scene renderer can therefore separate slow-changing binding structure from per-draw identity.
+
+~~~text
+GlobalTable
+    frame constants
+    scene buffers
+    bindless material table
+    light lists
+
+MaterialTable
+    texture table / argument-buffer root
+    material constants
+
+DrawRecord
+    mesh index
+    material index
+    transform index
+~~~
+
+The draw call does not need to re-describe every resource that the shader may touch.
+
+However, argument tables should not be interpreted as permission to place every resource in one immortal global namespace. The engine still has to reason about:
+
+- update frequency,
+- frame overlap,
+- slot reuse,
+- table capacity,
+- resource destruction,
+- shader-stage visibility,
+- residency,
+- transient resources.
+
+A good table hierarchy reflects lifetime domains.
+
+\[
+\boxed{
+\text{binding domain should usually follow resource lifetime/update domain}
+}
+\]
+
+This is the same reason a frame table, material table and scene table are often better than one mutable mega-table.
+
+#### Bindless resource identity still needs generation safety
+
+Suppose a texture occupies table slot 731. If the texture is destroyed and slot 731 is immediately reused, an in-flight draw referring to the old slot can silently sample the new resource.
+
+The index is therefore not enough.
+
+The CPU-side identity can be:
+
+~~~cpp
+struct TextureHandle {
+    std::uint32_t index;
+    std::uint32_t generation;
+};
+~~~
+
+while the shader-visible table uses the compact index only after the CPU has guaranteed that the index cannot be recycled until the last dependent GPU epoch completes.
+
+This yields two separate correctness layers:
+
+~~~text
+CPU handle:
+    detects stale logical references
+
+GPU table slot:
+    remains physically stable while in flight
+~~~
+
+The deferred-reuse rule is:
+
+\[
+\boxed{
+\text{recycle slot only after completedEpoch}
+\ge
+\text{lastEpochThatCanReadSlot}
+}
+\]
+
+That same invariant applies to Vulkan descriptor arrays, descriptor buffers, Metal argument tables, and custom GPU-visible heaps.
+
+#### Residency is the physical counterpart to logical binding
+
+A shader can logically refer to a resource through a table while the runtime still needs to know that the resource must be available to the GPU.
+
+Metal 4 makes this explicit through residency sets.
+
+The render graph already has almost enough information to derive residency:
+
+~~~text
+selected pass
+    ↓
+declared reads/writes
+    ↓
+concrete buffers/textures/pipelines
+    ↓
+resources needed during submission
+    ↓
+residency set
+~~~
+
+The difficult cases are not ordinary static scene resources. They are:
+
+- streamed textures arriving mid-frame,
+- sparse resources with partial backing,
+- large acceleration structures,
+- transient heap aliases,
+- machine-learning tensors,
+- resources created by one worker while another worker encodes commands,
+- resources removed from the scene while prior frames remain in flight.
+
+A residency system should therefore distinguish logical liveness from physical GPU liveness.
+
+~~~text
+logical live:
+    scene may reference resource
+
+GPU live:
+    submitted/in-flight work may still reference resource
+
+resident:
+    runtime must make resource available to GPU
+~~~
+
+These are related but not identical states.
+
+#### Residency sets and streaming need a publication point
+
+Imagine a streaming thread creates a texture, fills it, and adds it to a residency set while the render thread is encoding.
+
+The renderer must define when the new resource becomes visible to scene tables.
+
+A safe conceptual sequence is:
+
+~~~text
+IO/decode
+    ↓
+resource creation
+    ↓
+upload
+    ↓
+upload completion known
+    ↓
+add/update residency information
+    ↓
+publish table slot at a frame-safe point
+    ↓
+future draw may reference slot
+~~~
+
+Publishing earlier can expose a resource whose contents are not ready. Publishing table identity without residency can expose a resource the GPU cannot access. Reusing a table slot too early can expose a different resource to an older frame.
+
+This is why asset streaming is ultimately a synchronization protocol.
+
+#### Queue barriers should be derived from resource hazards
+
+Apple describes Metal 4 queue barriers as a scalable way to express dependencies. The engine should not think in terms of manually sprinkling barrier calls.
+
+Instead define a resource edge:
+
+~~~text
+Pass A:
+    writes VisibilityBuffer
+
+Pass B:
+    reads VisibilityBuffer
+~~~
+
+That edge carries four pieces of information:
+
+\[
+(\text{resource},\text{producer access},\text{consumer access},\text{execution order})
+\]
+
+The Metal backend maps the edge to the appropriate Metal 4 dependency mechanism.
+
+The Vulkan backend maps the same edge to stage/access masks, barriers and potentially semaphore dependencies.
+
+This is exactly why the render graph is more than an ordering graph. It is a resource-hazard compiler.
+
+#### A barrier is not a lifetime guarantee
+
+A subtle but important distinction:
+
+~~~text
+barrier:
+    constrains visibility/order of accesses
+
+completion:
+    proves GPU has finished using a resource
+
+lifetime:
+    determines whether memory/object may be destroyed or reused
+~~~
+
+A barrier between two passes does not mean the CPU can destroy the resource after recording the second pass. The resource may still be referenced by queued or executing GPU work.
+
+The correct chain is:
+
+\[
+\boxed{
+\text{hazard ordering}
+\neq
+\text{submission completion}
+\neq
+\text{resource retirement}
+}
+\]
+
+This distinction should appear in backend abstractions. Otherwise one generic word such as sync ends up hiding three different problems.
+
+#### Command allocators create an allocator epoch
+
+The command allocator should be treated similarly to a frame arena.
+
+Its memory belongs to one encoding/submission epoch. Resetting it is safe only after all command buffers that use that storage are no longer in flight.
+
+For triple buffering:
+
+~~~text
+slot 0 allocator → frame N
+slot 1 allocator → frame N+1
+slot 2 allocator → frame N+2
+slot 0 cannot reset until frame N completed
+~~~
+
+The correct frame object therefore owns more than a drawable index:
+
+~~~cpp
+struct FrameContext {
+    MTL4CommandAllocatorHandle commandAllocator;
+    UploadArena uploadArena;
+    DescriptorOrArgumentScratch bindingScratch;
+    CompletionEpoch retireEpoch;
+};
+~~~
+
+The exact wrapper types vary, but the architectural rule is that all frame-scoped CPU/GPU resources retire together under an explicit completion condition.
+
+#### Reusable command-buffer objects do not imply reusable encoded commands
+
+Metal 4 can reuse a command-buffer object while replacing its encoded contents using a new allocator epoch.
+
+That means three identities must stay separate:
+
+~~~text
+wrapper object identity
+command storage identity
+submission identity
+~~~
+
+A profiler/debugger should log submission identity, not merely the wrapper pointer, or multiple frames will appear to be the same command buffer.
+
+A useful debug label is:
+
+~~~text
+Frame 481 / Main / Submission 1437
+~~~
+
+rather than only:
+
+~~~text
+MainCommandBuffer
+~~~
+
+#### Suspended/resumed render passes change how parallel encoding is partitioned
+
+Metal 4 can suspend a render pass in one command buffer and resume it in another. This provides a different path to multithreaded encoding than tying all worker encoders to a single parallel-render-encoder object.
+
+The engine can think in logical chunks:
+
+~~~text
+RenderPass: GBuffer
+|
++-- chunk A: opaque batch 0
++-- chunk B: opaque batch 1
++-- chunk C: opaque batch 2
++-- chunk D: terrain
+~~~
+
+Workers can encode chunks independently, while the renderer preserves one logical attachment lifetime.
+
+The important warning is that parallel CPU encoding does not automatically produce parallel GPU execution. All chunks writing the same attachments still obey the ordering and attachment semantics of that logical render pass.
+
+#### Attachment maps separate logical shader outputs from physical attachment slots
+
+Metal 4's attachment mapping allows one encoder to map logical shader outputs to physical color attachments more flexibly.
+
+That is useful when a render graph wants one shader/pipeline family to target different physical attachments across pass variants.
+
+The cross-backend abstraction should therefore represent semantic outputs:
+
+~~~text
+Color
+Normal
+Material
+Velocity
+ObjectId
+~~~
+
+and let the backend map those to concrete attachment slots/formats.
+
+This reduces pipeline explosion caused solely by attachment wiring differences.
+
+#### Texture view pools and placement sparse resources belong to the memory system
+
+Texture views are metadata objects that reinterpret or select portions of underlying texture storage. Large engines may create many views for mips, layers, formats, streaming tiles, or transient passes.
+
+A view pool reduces repeated allocation pressure.
+
+Placement sparse resources go deeper: they separate virtual resource shape from physical backing. The useful mental model is:
+
+\[
+\text{virtual texture address space}
+\quad\neq\quad
+\text{currently backed physical pages}
+\]
+
+This is valuable for huge textures, streamed worlds, and memory-budgeted content, but it means the engine must track residency at subresource/page granularity when it chooses to exploit sparsity.
+
+Sparse resources are therefore not just a texture feature; they extend the resource-state machine.
+
+#### Metal 4 machine-learning encoding strengthens the need for one graph of heterogeneous GPU work
+
+Metal 4 includes a machine-learning command encoder alongside render and compute encoders.
+
+A modern graphics engine can therefore have a frame such as:
+
+~~~text
+visibility compute
+    ↓
+raster G-buffer
+    ↓
+ray-traced reflections
+    ↓
+ML denoiser/upscaler
+    ↓
+tone map
+    ↓
+presentation
+~~~
+
+Treating ML as an external black box would lose resource lifetime and scheduling information. A better architecture places the ML pass in the same dependency graph, with explicit input/output resources and completion edges.
+
+The frame graph becomes a heterogeneous GPU work graph.
+
+#### The cross-backend lesson from Metal 4 and modern Vulkan is convergence around explicit resource databases
+
+The APIs remain different, but their engine pressures increasingly converge:
+
+~~~text
+Vulkan:
+    descriptor indexing / descriptor buffers
+    synchronization2
+    timeline semaphores
+    dynamic rendering
+    explicit queue submission
+
+Metal 4:
+    argument tables
+    residency sets
+    next-generation barriers
+    reusable command buffers
+    explicit command allocators
+~~~
+
+The portable engine abstraction should therefore not try to make one API look like the other. It should preserve the shared truths:
+
+\[
+\boxed{
+\text{resource identity}
++
+\text{binding}
++
+\text{residency}
++
+\text{access dependency}
++
+\text{completion}
++
+\text{retirement}
+}
+\]
+
+Then each backend can express those truths using its native mechanisms.
+
+Source integration basis: Apple's current Metal 4 core API documentation and WWDC25 Metal 4 sessions, especially the command allocator, argument table, residency-set, queue-barrier, drawable-resource, sparse-resource, and multithreaded encoding material.
+
+
 ## Execute and measure a Metal frame
 
 ### + M141
@@ -55041,6 +55454,408 @@ The synthesis is
 The older Vulkan Programming Guide remains excellent for the architectural reason Vulkan exists: application code takes ownership of synchronization, scheduling, memory strategy and command construction that older APIs often hid. Its concrete examples come from an earlier Vulkan generation, so keep the architecture and refresh the mechanisms.
 
 Source basis: Graham Sellers, Vulkan Programming Guide; Kosarevsky, Medvedev and Latypov, Vulkan 3D Graphics Rendering Cookbook, 2nd ed.; current Khronos Vulkan Guide/Tutorial; Brendan Galea's Vulkan Game Engine series; and Travis Vroman's Kohi series.
+
+
+
+### CURRENT VULKAN DEEPENING: DESCRIPTORS ARE BECOMING MEMORY, PIPELINES ARE BECOMING MORE DYNAMIC, BUT THE CONTRACT IS STILL EXPLICIT
+
+The modern Vulkan samples add several ideas beyond the baseline dynamic-rendering/synchronization2 path above. They are useful because they show which historical abstractions are optional and which responsibilities remain unavoidable.
+
+#### Descriptor buffers expose the fact that descriptors are encoded data
+
+Traditional Vulkan descriptor management uses descriptor pools, descriptor sets and update calls. Descriptor buffers provide another model in which descriptor data is written into specially created buffers and the command buffer binds those buffers plus offsets.
+
+Conceptually:
+
+~~~text
+traditional:
+application state
+    ↓
+vkUpdateDescriptorSets
+    ↓
+driver-owned descriptor representation
+    ↓
+bind descriptor set
+
+descriptor buffer:
+application asks driver for encoded descriptor bytes
+    ↓
+application stores bytes in descriptor memory
+    ↓
+bind descriptor buffer
+    ↓
+set offsets
+~~~
+
+This does not mean descriptor layout becomes arbitrary. The driver still defines:
+
+- encoded descriptor sizes,
+- set-layout size,
+- binding offsets,
+- required alignment,
+- supported binding counts.
+
+That is why code must query layout sizes and offsets instead of multiplying a descriptor size by a guessed count.
+
+The deeper lesson is:
+
+\[
+\boxed{
+\text{descriptor buffer removes a management abstraction}
+\quad
+\text{but not the shader-interface contract}
+}
+\]
+
+#### Descriptor-buffer writes are ordinary memory hazards
+
+Once descriptors live in memory, updating that memory on the GPU creates a synchronization problem like any other producer/consumer relationship.
+
+If a transfer or compute operation writes descriptor bytes that a later shader will read, the dependency must make those writes visible to descriptor-buffer reads.
+
+The conceptual edge is:
+
+~~~text
+descriptor memory write
+    ↓
+visibility dependency
+    ↓
+descriptor fetch by later shader
+~~~
+
+This matters because a renderer can no longer think of descriptors as purely CPU-side metadata.
+
+Descriptor data becomes part of GPU-visible state.
+
+#### Host descriptor writes and device descriptor writes have different visibility concerns
+
+A host-written descriptor buffer can rely on the submission visibility rules applicable to host writes and the buffer's memory properties.
+
+A device-written descriptor buffer needs an explicit GPU dependency before shader descriptor reads.
+
+The general rule is:
+
+\[
+\boxed{
+\text{same logical update}
+\not\Rightarrow
+\text{same synchronization path}
+}
+\]
+
+because the producer domain changed.
+
+This is a recurring systems theme: always identify who wrote the data and who will read it.
+
+#### Descriptor buffers make allocator architecture important again
+
+A renderer may allocate descriptor-buffer regions per frame, per material, per pass, or from a persistent heap.
+
+Each choice creates a different lifetime policy.
+
+A frame-linear allocator is simple:
+
+~~~text
+Frame N descriptor region
+    allocate sequentially
+    bind offsets
+    submit
+    wait for frame retirement
+    reset entire region
+~~~
+
+A persistent material heap requires free-list or slot-reuse logic plus deferred reuse.
+
+The resource-binding allocator should therefore be designed using the same lifetime categories as ordinary GPU memory.
+
+#### Shader objects decouple shader-stage selection from monolithic pipeline objects
+
+The shader-object extension allows stages and dynamic state to be set without constructing a conventional graphics pipeline object for every permutation.
+
+This changes where state composition happens.
+
+Traditional model:
+
+~~~text
+many fixed-function and shader choices
+    ↓
+pipeline object
+    ↓
+bind pipeline
+    ↓
+draw
+~~~
+
+Shader-object model:
+
+~~~text
+bind/select shader stages
+set required dynamic state
+    ↓
+draw
+~~~
+
+This can reduce pipeline-permutation pressure for highly dynamic applications, but it also transfers responsibility to the engine to ensure that all required state has been established before drawing.
+
+The architectural trade is:
+
+\[
+\boxed{
+\text{less precompiled state bundle}
+\Rightarrow
+\text{more explicit command-time state responsibility}
+}
+\]
+
+It is not automatically simpler.
+
+#### Dynamic rendering plus shader objects pushes the backend toward semantic state tracking
+
+When render passes and full pipeline objects become less central, the backend increasingly tracks semantic state such as:
+
+~~~text
+active color formats
+depth format
+shader stages
+blend state
+raster state
+vertex input
+topology
+sample count
+dynamic state
+~~~
+
+That can align well with a cross-backend renderer, but only if the engine knows which state is valid and which state must be re-established after changes.
+
+A state cache should therefore be a correctness mechanism first and an optimization second.
+
+#### Dynamic rendering local read closes part of the old subpass gap
+
+Classic Vulkan render passes and subpasses can express tightly coupled attachment reads and writes with tile-local advantages on some architectures.
+
+Dynamic rendering originally simplified render-pass setup but did not reproduce every subpass/local-read pattern.
+
+Dynamic rendering local-read facilities address more of that space, allowing current engines to use dynamic rendering in workflows that previously needed subpasses for local attachment reads.
+
+The important engine lesson is not a specific extension name. It is that API modernization often removes an object model in stages; a new abstraction may initially cover common cases and later absorb specialized capabilities.
+
+Therefore never infer:
+
+~~~text
+newer API path exists
+→ every older semantic has disappeared
+~~~
+
+Instead compare capabilities.
+
+#### Timeline semaphores are powerful, but swapchain presentation remains a special boundary
+
+The Khronos timeline-semaphore sample deliberately demonstrates out-of-order submission, multi-queue waits, host waits and monotonic progress.
+
+It also highlights a practical limitation: window-system swapchain acquire/present synchronization still has special binary-semaphore requirements in common paths.
+
+That means an engine often has two synchronization domains:
+
+~~~text
+internal engine progress:
+    timeline epochs
+
+WSI edge:
+    acquire/present binary synchronization
+~~~
+
+Trying to force presentation into the same abstraction without acknowledging the WSI rules can create incorrect assumptions.
+
+A clean backend can keep a generic completion-epoch system internally while isolating the presentation bridge.
+
+#### Out-of-order submission can increase latency even when it is legal
+
+Timeline semaphores permit flexible scheduling, including waits submitted before corresponding signals in scenarios where the API allows it.
+
+But legal scheduling is not automatically good frame pacing.
+
+If the CPU submits far ahead:
+
+\[
+\text{queue depth}\uparrow
+\Rightarrow
+\text{input-to-photon latency may rise}
+\]
+
+even if GPU throughput remains high.
+
+A frame scheduler therefore needs both correctness and pacing constraints.
+
+~~~text
+correct:
+    dependencies eventually resolve
+
+well paced:
+    bounded frames/submissions in flight
+~~~
+
+The engine should measure both throughput and latency.
+
+#### Streaming needs a safe descriptor publication point
+
+The current Khronos engine tutorial illustrates an important practical pattern:
+
+~~~text
+background upload
+    ↓
+transfer queue copies
+    ↓
+timeline value signals upload completion
+    ↓
+graphics waits as needed
+    ↓
+frame fence proves this frame's descriptor set is not in use
+    ↓
+descriptor update occurs at safe point
+~~~
+
+The critical idea is not the exact descriptor-set mechanism. It is that publishing a new resource binding must happen when both conditions are true:
+
+\[
+\boxed{
+\text{resource contents ready}
+\land
+\text{binding storage safe to mutate}
+}
+\]
+
+If either condition is false, the renderer risks sampling incomplete data or mutating state still consumed by an in-flight frame.
+
+This maps directly to Metal 4 argument-table publication.
+
+#### Descriptor update-after-bind is a permission with conditions, not universal mutability
+
+Vulkan descriptor binding flags can permit certain descriptors to be updated while sets are pending, especially when the updated descriptors are not dynamically used by those command buffers.
+
+That does not mean every bound descriptor can be freely overwritten at any time.
+
+The engine still needs to know which slots an in-flight workload may access.
+
+This is especially important for partially bound arrays and bindless tables.
+
+The safe abstraction is again epoch-based:
+
+~~~text
+slot last read by epoch E
+new binding wants same slot
+    ↓
+if completedEpoch < E:
+    allocate another slot or defer update
+else:
+    reuse permitted
+~~~
+
+#### Ray queries show why acceleration structures belong to the shared scene database
+
+A ray-query path can run inside compute or fragment shaders without requiring a full ray-generation/miss/hit pipeline.
+
+The renderer still needs BLAS, TLAS, instance transforms, geometry addresses, materials and texture tables.
+
+This means rasterization and ray queries should share scene identity rather than maintain unrelated scene copies.
+
+~~~text
+SceneDatabase
+|
++-- mesh buffers
++-- material table
++-- texture table
++-- transforms
++-- instance IDs
+|
++-- raster visibility path
+|
++-- ray-query / ray-tracing path
+~~~
+
+The path changes; the scene truth does not.
+
+This is essential for hybrid rendering because divergence between raster and ray-scene representations creates correctness bugs that are difficult to diagnose.
+
+#### Ray-query rebuild policy is a workload tradeoff
+
+Acceleration structures can be built with priorities such as fast traversal or fast rebuild/update.
+
+The right choice depends on geometry behavior.
+
+~~~text
+static environment:
+    expensive build acceptable
+    optimize traversal
+
+frequently deformed/rebuilt geometry:
+    rebuild/update cost matters more
+
+mixed scene:
+    separate policies by BLAS class
+~~~
+
+A single global flag wastes either build time or traversal performance.
+
+The broader rule is that acceleration structure policy belongs to asset/runtime metadata.
+
+#### Mesh shaders change geometry amplification and culling location
+
+A mesh-shader pipeline moves work that traditionally depended on fixed vertex/index assembly plus optional geometry/tessellation stages into programmable task/mesh stages.
+
+This enables cluster/meshlet-oriented culling and amplification.
+
+The engine-level dataflow becomes:
+
+~~~text
+meshlets/clusters
+    ↓
+task-stage culling/work generation
+    ↓
+mesh-stage vertex + primitive emission
+    ↓
+rasterization
+~~~
+
+This aligns naturally with GPU-driven rendering, but only when assets are preprocessed into suitable clusters and metadata.
+
+Mesh shaders are therefore not a drop-in replacement for vertex shaders. They often require a different asset representation.
+
+#### Fragment shading rate connects rendering policy to perception and content frequency
+
+The Vulkan samples include fragment-shading-rate paths, including dynamic generation of rate information.
+
+For XR/foveated rendering and adaptive shading, the key conceptual mapping is:
+
+\[
+\text{importance/frequency field}
+\rightarrow
+\text{shading-rate field}
+\rightarrow
+\text{fragment invocation density}
+\]
+
+A gaze-driven foveated renderer adds another temporal problem: the shading-rate field is only useful if gaze prediction, display timing, and frame scheduling keep the high-quality region aligned with perception.
+
+Thus a seemingly local Vulkan feature connects directly to XR latency and perceptual error.
+
+#### Modern Vulkan study should preserve one invariant across every feature
+
+Dynamic rendering, descriptor buffers, shader objects, mesh shaders, ray queries, timeline semaphores and synchronization2 all reduce or reorganize API ceremony.
+
+None of them remove the need to answer:
+
+~~~text
+Who owns this resource?
+Who may read/write it?
+When do those accesses happen?
+What state/layout/interface does the consumer expect?
+When is the last use complete?
+When may storage or identity be reused?
+~~~
+
+That six-question checklist is more durable than any Vulkan version-specific object checklist.
+
+Source integration basis: current Khronos Vulkan Samples and Guide material covering timeline semaphores, synchronization2, streaming/frame pacing, descriptor management, descriptor buffers, shader objects, dynamic rendering, mesh shaders, ray queries, fragment shading rate, and GPU-driven resource-binding patterns.
 
 
 ### METAL'S CORE EXECUTION MODEL
