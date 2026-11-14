@@ -25,7 +25,7 @@ The direct quadratic formula can lose nearly all significant digits in one root 
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Floating-point answers: error, conditioning, stability, and stable arithmetic|Floating-point answers: error, conditioning, stability, and stable arithmetic]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Floating-point answers: error, conditioning, stability, and stable arithmetic|Floating-point answers: error, conditioning, stability, and stable arithmetic]]
 
 ## Source coverage
 

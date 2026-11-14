@@ -27,7 +27,7 @@ Newton's method builds a local quadratic model of an objective from its gradient
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems|Phase 9 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Optimization and inverse problems|Phase 9 teaching section]]
 - [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · visual recall
 
 ## Source coverage

@@ -29,4 +29,4 @@ Convert a declared bar/gap convention to cycles/degree. Pending: calibrated task
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Visibility is about contrast, conditions and tasks|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Visibility is about contrast, conditions and tasks|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]

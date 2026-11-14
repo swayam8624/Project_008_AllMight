@@ -32,7 +32,7 @@ Expectation is the probability-weighted average of a random quantity, and varian
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#3. Expected values describe centers; covariance describes dependence|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#3. Expected values describe centers; covariance describes dependence|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

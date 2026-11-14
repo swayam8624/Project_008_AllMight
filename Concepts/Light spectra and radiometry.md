@@ -32,7 +32,7 @@ Explain W, W/m², W/(m²·sr), lux and nits. Pending: spectral/colorimetric cali
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Light must become a quantity before it becomes a color|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Light must become a quantity before it becomes a color|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
 
 ## University course development
 

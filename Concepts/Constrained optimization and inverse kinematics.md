@@ -41,5 +41,5 @@ An optimization problem specifies an objective, variables, and equality or inequ
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Optimization, constraints, and inverse kinematics|Optimization, constraints, and inverse kinematics]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Scene graphs and articulated geometry|Scene graphs and articulated geometry]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Pose estimation, transforms, and robust fitting|Pose estimation, transforms, and robust fitting]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems|Phase 9 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Optimization and inverse problems|Phase 9 teaching section]]
 - [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · Phase 9 visual recall

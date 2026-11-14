@@ -11,6 +11,13 @@ Scope:
 This is not a complete VIO/SLAM estimator: it does not include visual residuals,
 bias Jacobians, covariance propagation, marginalization, loop closure, or
 camera/IMU calibration estimation.
+
+Conventions: R_i maps body-i vectors into world coordinates; gyro samples are
+rad/s, accelerometer samples are specific force in m/s^2, dt is seconds,
+position is metres, and velocity is m/s. Gravity is a world-frame vector. Each
+sample is held constant over its interval; force is rotated using the relative
+orientation at the interval start. These choices define this discrete witness
+and should not be silently substituted for midpoint or higher-order schemes.
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -22,11 +29,18 @@ GRAVITY = np.array([0.0, 0.0, -9.81])
 
 
 def hat(v: np.ndarray) -> np.ndarray:
+    """Skew matrix [v]_x such that [v]_x w equals the 3-D cross product v x w."""
     x, y, z = v
     return np.array([[0.0, -z, y], [z, 0.0, -x], [-y, x, 0.0]])
 
 
 def so3_exp(phi: np.ndarray) -> np.ndarray:
+    """Map a rotation vector (axis times angle, radians) onto SO(3).
+
+    The series branch avoids division by tiny angles; the general branch is
+    Rodrigues' formula. The returned matrix actively rotates body coordinates
+    into the next frame under the multiplication convention used below.
+    """
     theta = float(np.linalg.norm(phi))
     W = hat(phi)
     if theta < 1e-8:
@@ -37,6 +51,7 @@ def so3_exp(phi: np.ndarray) -> np.ndarray:
 
 
 def so3_log(R: np.ndarray) -> np.ndarray:
+    """Return the principal rotation vector; this compact lab excludes near pi."""
     cos_theta = float(np.clip((np.trace(R) - 1.0) * 0.5, -1.0, 1.0))
     theta = math.acos(cos_theta)
     if theta < 1e-8:
@@ -56,6 +71,7 @@ def so3_log(R: np.ndarray) -> np.ndarray:
 
 @dataclass
 class Delta:
+    """Relative motion in the starting body frame plus elapsed seconds."""
     dR: np.ndarray
     dv: np.ndarray
     dp: np.ndarray
@@ -69,6 +85,12 @@ def preintegrate(
     gyro_bias: np.ndarray,
     accel_bias: np.ndarray,
 ) -> Delta:
+    """Compress equally spaced samples into gravity-free relative motion.
+
+    ``dR`` is dimensionless, ``dv`` has m/s, ``dp`` has m, and ``dt`` has s.
+    No gravity is inserted here: this keeps the relative measurement reusable
+    when the optimizer changes the starting world pose or gravity estimate.
+    """
     if gyros.shape != accels.shape or gyros.ndim != 2 or gyros.shape[1] != 3:
         raise ValueError("gyros and accels must both have shape (N,3)")
     if dt <= 0.0 or not np.isfinite(dt):
@@ -93,7 +115,7 @@ def preintegrate(
 
 
 def compose(a: Delta, b: Delta) -> Delta:
-    """Compose interval i->j with j->k into i->k."""
+    """Compose i->j and j->k deltas, rotating b's increments into frame i."""
     return Delta(
         dR=a.dR @ b.dR,
         dv=a.dv + a.dR @ b.dv,
@@ -109,7 +131,7 @@ def apply_delta(
     delta: Delta,
     gravity: np.ndarray = GRAVITY,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Recover state j from state i and a preintegrated interval."""
+    """Recover state j, adding world gravity only at state reconstruction."""
     R_j = R_i @ delta.dR
     v_j = v_i + gravity * delta.dt + R_i @ delta.dv
     p_j = (
@@ -127,6 +149,7 @@ def require(condition: bool, message: str) -> None:
 
 
 def main() -> None:
+    """Run geometry, stationary-gravity, yaw, composition, and bias checks."""
     # 1. Exp/log and orthogonality are checked independently.
     phi = np.array([0.2, -0.1, 0.3])
     R = so3_exp(phi)

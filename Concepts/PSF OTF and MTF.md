@@ -29,4 +29,4 @@ Recompute sigma 1 transfer at 0.05/0.25 cycles per pixel. Pending: measured opti
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#A footprint is more meaningful than an isolated pixel center|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A footprint is more meaningful than an isolated pixel center|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]

@@ -25,7 +25,7 @@ A root solver seeks $f(x)=0$. A bracketed method maintains an interval whose end
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Finding roots with guarantees and convergence checks|Finding roots with guarantees and convergence checks]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Finding roots with guarantees and convergence checks|Finding roots with guarantees and convergence checks]]
 
 ## Source coverage
 

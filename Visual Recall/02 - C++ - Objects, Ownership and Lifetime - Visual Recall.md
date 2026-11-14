@@ -417,3 +417,10 @@ Explain the two barriers in tiled matrix multiplication: one protects complete t
 ## API resource stages
 
 A name, initialized API object, allocated storage, initialized bytes and completed use are different states. glCreateBuffers establishes the object; a storage command establishes capacity; null initial data does not mean zero-filled bytes. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A buffer name, an API object, and its storage are separate|Open the worked API distinction]]. A nonzero integer alone proves neither a safe draw range nor safe retirement.
+
+
+## Temporary objects — retrieve the lifetime boundary
+
+| Prompt | Short answer | Full commented witness |
+|---|---|---|
+| Does every reference extend a temporary's lifetime? | No. The binding context matters; a borrowed view never owns its source. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Turn the lifetime rule into a scope trace|Lifetime trace and executable cases]] |

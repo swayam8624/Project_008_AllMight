@@ -30,7 +30,7 @@ Explain Lambertian rho/pi and identify what sampled shading approximates. Pendin
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Materials turn incoming light into outgoing light|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Materials turn incoming light into outgoing light|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
 
 ## University course development
 

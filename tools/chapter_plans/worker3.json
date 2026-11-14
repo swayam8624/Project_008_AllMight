@@ -1,0 +1,958 @@
+{
+  "source_book": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+  "source_sha256": "91f2e30b277f95f68fe44451907fb2ae809a25e3bd4efa6deebd92da47b5af05",
+  "page_model": "prose400words/page;code48wrappedlines/page;displaymath36lines/page;tables36rows/page;Mermaid/images0.5/0.45page;heading/paragraphspacing;50page target27–83flexibility",
+  "folder": "03 - Game Engine",
+  "title": "Game Engine — From First Frame to Living Worlds",
+  "book_introduction": "Follow one visible player action through memory, engine boundaries, rendering, tools, physics and game systems. Each major chapter preserves the complete lessons and working examples from the continuous master.",
+  "chapters": [
+    {
+      "number": 1,
+      "start_anchor": {
+        "line": 1,
+        "level": 0,
+        "heading": "BOOK_START",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 1285,
+        "level": 2,
+        "heading": "Where the bytes live",
+        "occurrence": 1
+      },
+      "estimated_pages": 48.8,
+      "title": "A game promise becomes bytes and running state",
+      "entry_bridge": "A small player action gives the volume a concrete contract: input changes a world and the player can see the result. This opening follows the data through representation, object lifetime, CPU work, and the first rendering boundary.",
+      "learning_goal": "Explain how a player-visible feature depends on data representation, object lifetime, and a sequence of engine services.",
+      "recall_question": "Trace one player action from input to a changed, visible world state; where can its meaning be lost?"
+    },
+    {
+      "number": 2,
+      "start_anchor": {
+        "line": 1285,
+        "level": 2,
+        "heading": "Where the bytes live",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 3595,
+        "level": 2,
+        "heading": "Representation is an intention, not input validation",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.0,
+      "title": "How bytes become programs, objects, and resource references",
+      "entry_bridge": "The opening representation story now needs durable rules: a byte sequence must survive storage and become the right live object. This chapter follows encoding, compilation, initialization, and identity so that later systems can rely on the same meaning.",
+      "learning_goal": "Reconstruct the path from serialized bytes to typed state and identify the lifetime and identity rules at each boundary.",
+      "recall_question": "Given a stored resource record, how do you validate it, construct its runtime object, and keep references valid as storage changes?"
+    },
+    {
+      "number": 3,
+      "start_anchor": {
+        "line": 3595,
+        "level": 2,
+        "heading": "Representation is an intention, not input validation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 5497,
+        "level": 2,
+        "heading": "The laboratory and the teaching desk",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.2,
+      "title": "Object representation, lifetime, and enforceable promises",
+      "entry_bridge": "Once a program has live objects, similar syntax can still create different states and lifetimes. This chapter compares initialization, copying, references, and invariants to show when a representation is safe to expose.",
+      "learning_goal": "Distinguish representation from validation and explain how constructors, ownership, and lifetime rules protect invariants.",
+      "recall_question": "For a record that owns data, which operations create, transfer, borrow, or invalidate that data, and how would you prove each?"
+    },
+    {
+      "number": 4,
+      "start_anchor": {
+        "line": 5497,
+        "level": 2,
+        "heading": "The laboratory and the teaching desk",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 7081,
+        "level": 2,
+        "heading": "One asset pipeline, many asset types — generic code without accidental promises",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.8,
+      "title": "Resource ownership, failure paths, and review practice",
+      "entry_bridge": "The object model becomes useful when an application owns real resources and can fail halfway through setup. This chapter turns ownership into a working review method before expanding to many asset types and backends.",
+      "learning_goal": "Follow a resource through acquisition, use, replacement, failure, and shutdown while keeping claims tied to demonstrated evidence.",
+      "recall_question": "If resource creation fails after three of five steps, what remains owned, what must be rolled back, and what evidence confirms cleanup?"
+    },
+    {
+      "number": 5,
+      "start_anchor": {
+        "line": 7081,
+        "level": 2,
+        "heading": "One asset pipeline, many asset types — generic code without accidental promises",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 8060,
+        "level": 2,
+        "heading": "From a living asset registry to reliable queries and transformations",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.0,
+      "title": "Generic asset pipelines with stable identity",
+      "entry_bridge": "Several resource kinds repeat the same loading shape, but their sizes, validation rules, and meanings differ. This chapter uses generic code and compile-time policy while keeping asset identity stable across container growth.",
+      "learning_goal": "Choose which asset operations can be generic and which depend on semantic type, then implement identity that survives storage movement.",
+      "recall_question": "How can one pipeline share mechanics across asset types without erasing their distinct validation and lifetime contracts?"
+    },
+    {
+      "number": 6,
+      "start_anchor": {
+        "line": 8060,
+        "level": 2,
+        "heading": "From a living asset registry to reliable queries and transformations",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 9067,
+        "level": 2,
+        "heading": "A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost",
+        "occurrence": 1
+      },
+      "estimated_pages": 43.4,
+      "title": "Queries, lazy ranges, allocators, and module boundaries",
+      "entry_bridge": "A registry can store assets correctly and still make reports costly or brittle. This chapter turns repeated reads into lazy queries, examines allocation lifetime, and carries the service across separately compiled boundaries.",
+      "learning_goal": "Design a query that returns only the needed view and state the ownership, allocator, and compilation boundaries it depends on.",
+      "recall_question": "What must remain alive while a lazy result is consumed, and which changes require recompilation or a new allocation?"
+    },
+    {
+      "number": 7,
+      "start_anchor": {
+        "line": 9067,
+        "level": 2,
+        "heading": "A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 9744,
+        "level": 2,
+        "heading": "From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500",
+        "occurrence": 1
+      },
+      "estimated_pages": 43.5,
+      "title": "Typed APIs and measured CPU data structures",
+      "entry_bridge": "An asset service now needs an interface that hides implementation without hiding identity or cost. The route then moves from typed boundaries into CPU execution, memory traffic, concurrency, and choosing containers for actual workloads.",
+      "learning_goal": "Connect strong types and PIMPL to measured CPU costs, then select containers and scheduling structures by their operation patterns.",
+      "recall_question": "Which promises does the public API make, and what measurement would show whether its internal representation meets them?"
+    },
+    {
+      "number": 8,
+      "start_anchor": {
+        "line": 9744,
+        "level": 2,
+        "heading": "From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 10843,
+        "level": 2,
+        "heading": "Design for play beyond a feature checklist",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.8,
+      "title": "Algorithms, application boundaries, and a first playable",
+      "entry_bridge": "Correct data structures answer only part of an engine’s job; a game also needs platform services and a playable question. This chapter moves from graph and search algorithms through source evaluation and into a first project that tests the architecture.",
+      "learning_goal": "Select algorithms for world queries and navigation, then connect them to a minimal application and a playable validation loop.",
+      "recall_question": "How would you test that a chosen graph or spatial operation supports an actual player decision rather than only passing an isolated algorithm test?"
+    },
+    {
+      "number": 9,
+      "start_anchor": {
+        "line": 10843,
+        "level": 2,
+        "heading": "Design for play beyond a feature checklist",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 11666,
+        "level": 2,
+        "heading": "Make a change cross the engine without breaking its promises",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.0,
+      "title": "Player choices, rules, and readable feedback",
+      "entry_bridge": "A working engine can still produce unclear play if its rules hide consequences. This chapter follows choices through interface, state change, feedback, and future possibilities so that implementation serves an understandable experience.",
+      "learning_goal": "Analyze a feature as a loop of visible options, player action, authoritative state change, and legible consequence.",
+      "recall_question": "What can the player infer before acting, what state changes, and what feedback proves that the rule took effect?"
+    },
+    {
+      "number": 10,
+      "start_anchor": {
+        "line": 11666,
+        "level": 2,
+        "heading": "Make a change cross the engine without breaking its promises",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 15891,
+        "level": 5,
+        "heading": "A streaming state machine",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**A streaming state machine**"
+      },
+      "estimated_pages": 57.9,
+      "title": "Engine changes across subsystem contracts",
+      "entry_bridge": "The first playable exposes repeated needs, and those needs become engine boundaries. This chapter follows changes through runtime architecture, assets, tools, and subsystem ownership without treating a feature list as proof of a coherent system.",
+      "learning_goal": "Explain how an engine change crosses dependencies and preserve stable contracts among game code, tools, runtime services, and backends.",
+      "recall_question": "If a feature changes its asset format or runtime service, which identities, callers, caches, and tests must change together?"
+    },
+    {
+      "number": 11,
+      "start_anchor": {
+        "line": 15891,
+        "level": 5,
+        "heading": "A streaming state machine",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**A streaming state machine**"
+      },
+      "end_anchor": {
+        "line": 20032,
+        "level": 3,
+        "heading": "UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.2,
+      "title": "Streaming resources through explicit states",
+      "entry_bridge": "Large worlds cannot load every resource before play begins, so readiness becomes a state transition with owners and versions. This chapter develops asynchronous work, publication, residency, and safe replacement as one resource lifecycle.",
+      "learning_goal": "Model streaming as request, decode, validation, upload, publication, use, and retirement, including stale completion and memory-budget cases.",
+      "recall_question": "When an older load finishes after a newer request, what prevents the stale result from becoming visible or freeing a resource still in use?"
+    },
+    {
+      "number": 12,
+      "start_anchor": {
+        "line": 20032,
+        "level": 3,
+        "heading": "UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 24168,
+        "level": 2,
+        "heading": "Turn the application into a portable working foundation",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.9,
+      "title": "Transactions, recovery, and safe project boundaries",
+      "entry_bridge": "Interactive tools need edits that can be undone and projects that can be reopened after failure. This chapter makes mutation transactional and treats paths, packages, backups, and atomic publication as security and recovery contracts.",
+      "learning_goal": "Design undo/redo, save recovery, path validation, and package publication so partial failure cannot silently corrupt authored work.",
+      "recall_question": "Which state is authoritative before and after a failed save, and how does the system prove that the published project is complete?"
+    },
+    {
+      "number": 13,
+      "start_anchor": {
+        "line": 24168,
+        "level": 2,
+        "heading": "Turn the application into a portable working foundation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 24901,
+        "level": 3,
+        "heading": "Keep application key names independent of a windowing library",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.6,
+      "title": "Portable startup, windows, events, and input",
+      "entry_bridge": "A project becomes interactive only after platform resources and application services start in a valid order. This chapter builds a small visible window and routes events through boundaries that keep game rules independent of the operating system.",
+      "learning_goal": "Describe startup/shutdown dependencies and separate native window events, application input state, and game actions.",
+      "recall_question": "How does a close request travel from the platform into orderly shutdown, and how does a key press become a tick-stamped game action?"
+    },
+    {
+      "number": 14,
+      "start_anchor": {
+        "line": 24901,
+        "level": 3,
+        "heading": "Keep application key names independent of a windowing library",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 26763,
+        "level": 3,
+        "heading": "COMPONENT POOLS AND SPARSE SETS",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.3,
+      "title": "Application clocks and stable input identity",
+      "entry_bridge": "Input and timing must agree on which state transition belongs to which simulation step. This chapter clarifies frame measurement, tick pacing, and stable identity before introducing dense component storage.",
+      "learning_goal": "Distinguish wall time, frame time, and simulation ticks, and ensure input identifiers remain meaningful across updates.",
+      "recall_question": "How do you measure a frame without confusing it with a simulation tick, and what data lets an input be replayed at the correct tick?"
+    },
+    {
+      "number": 15,
+      "start_anchor": {
+        "line": 26763,
+        "level": 3,
+        "heading": "COMPONENT POOLS AND SPARSE SETS",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 30462,
+        "level": 3,
+        "heading": "ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS",
+        "occurrence": 1
+      },
+      "estimated_pages": 53.2,
+      "title": "Sparse-set components and generational entity handles",
+      "entry_bridge": "As the world grows, storing every entity as a separate object becomes costly and references can outlive their occupants. This chapter derives dense component pools, sparse lookup, and generation checks from those constraints.",
+      "learning_goal": "Implement component membership and entity identity while accounting for swap removal, slot reuse, and stale handles.",
+      "recall_question": "After an entity is removed and its slot reused, what check proves that an old handle cannot refer to the new entity?"
+    },
+    {
+      "number": 16,
+      "start_anchor": {
+        "line": 30462,
+        "level": 3,
+        "heading": "ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 34508,
+        "level": 5,
+        "heading": "False sharing in metadata",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**False sharing in metadata**"
+      },
+      "estimated_pages": 54.0,
+      "title": "Archetypes, chunks, relationships, and transforms",
+      "entry_bridge": "Sparse sets make independent component stores easy to understand; archetypes group entities by shared component layout. This chapter compares the tradeoffs and then follows hierarchy, relationships, and transforms through chunked storage.",
+      "learning_goal": "Compare sparse-set and archetype operations, then specify how entity migration and transform dependencies preserve identity and update order.",
+      "recall_question": "What changes physically when an entity gains a component, and how do parent changes invalidate dependent world transforms?"
+    },
+    {
+      "number": 17,
+      "start_anchor": {
+        "line": 34508,
+        "level": 5,
+        "heading": "False sharing in metadata",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**False sharing in metadata**"
+      },
+      "end_anchor": {
+        "line": 38341,
+        "level": 3,
+        "heading": "DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE",
+        "occurrence": 1
+      },
+      "estimated_pages": 53.7,
+      "title": "ECS performance through cache and scheduling",
+      "entry_bridge": "Data layout affects both memory traffic and parallel ownership, not just the number of component lookups. This chapter connects false sharing, synchronization, and diagnostics to the query patterns an ECS must serve.",
+      "learning_goal": "Explain how cache-line ownership and scheduling influence an ECS workload, and propose measurements that isolate the bottleneck.",
+      "recall_question": "How can two workers update different entities yet still contend on one cache line, and what layout or partition change would test that cause?"
+    },
+    {
+      "number": 18,
+      "start_anchor": {
+        "line": 38341,
+        "level": 3,
+        "heading": "DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 41197,
+        "level": 1,
+        "heading": "From GPU-generated work to a Metal frame that can be reused safely",
+        "occurrence": 1
+      },
+      "estimated_pages": 43.7,
+      "title": "ECS contracts, diagnostics, and GPU handoff",
+      "entry_bridge": "An ECS needs evidence for its identity, query, and memory promises before rendering can consume its state. This chapter closes those defenses and transitions from world storage to explicit GPU work and resource lifetimes.",
+      "learning_goal": "Audit ECS invariants with diagnostics and tests, then explain how entity data becomes render work with explicit ownership.",
+      "recall_question": "Which ECS invariant would you inspect first when a rendered object is stale, duplicated, or associated with the wrong entity?"
+    },
+    {
+      "number": 19,
+      "start_anchor": {
+        "line": 41197,
+        "level": 1,
+        "heading": "From GPU-generated work to a Metal frame that can be reused safely",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 43825,
+        "level": 3,
+        "heading": "PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.3,
+      "title": "GPU work and reusable Metal frames",
+      "entry_bridge": "A CPU can build commands faster than a GPU finishes them, so frame memory needs a reuse condition. This chapter follows generated work through Metal command submission and separates CPU ownership from GPU completion.",
+      "learning_goal": "Trace one frame’s command, buffer, and completion state, and determine when each frame-scoped allocation can be reused.",
+      "recall_question": "What completion evidence permits a frame slot to be overwritten, and which resources remain live until that evidence arrives?"
+    },
+    {
+      "number": 20,
+      "start_anchor": {
+        "line": 43825,
+        "level": 3,
+        "heading": "PERFORMANCE MODELING & PRINCIPLED GPU REDESIGN",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 47434,
+        "level": 3,
+        "heading": "BUFFERS, IMAGES, MEMORY & UPLOADS",
+        "occurrence": 1
+      },
+      "estimated_pages": 53.6,
+      "title": "GPU performance models and principled redesign",
+      "entry_bridge": "Once the frame is correct, its limiting resource can be measured rather than guessed from a screenshot. This chapter evaluates occupancy, memory traffic, work distribution, and redesign choices against explicit workloads.",
+      "learning_goal": "Use a performance model to distinguish instruction, bandwidth, occupancy, and scheduling limits, then design a comparable measurement.",
+      "recall_question": "What observation would distinguish a bandwidth limit from an occupancy limit in the same GPU workload?"
+    },
+    {
+      "number": 21,
+      "start_anchor": {
+        "line": 47434,
+        "level": 3,
+        "heading": "BUFFERS, IMAGES, MEMORY & UPLOADS",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 51824,
+        "level": 3,
+        "heading": "VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES",
+        "occurrence": 1
+      },
+      "estimated_pages": 63.6,
+      "title": "Buffers, images, memory, and uploads",
+      "entry_bridge": "GPU resources are not just arrays; formats, usage, alignment, staging, and device-memory requirements shape whether a transfer is valid. This chapter follows buffers and images through allocation, upload, and visibility.",
+      "learning_goal": "Select resource layouts and memory types from API requirements, and trace a CPU upload until the GPU may safely consume it.",
+      "recall_question": "Which size, alignment, usage, and memory-type checks must pass before this image can be bound for rendering?"
+    },
+    {
+      "number": 22,
+      "start_anchor": {
+        "line": 51824,
+        "level": 3,
+        "heading": "VULKAN MEMORY MODEL, BARRIERS & MULTI-FRAME LIFETIMES",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 55726,
+        "level": 2,
+        "heading": "Execute and measure a Metal frame",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.7,
+      "title": "Vulkan synchronization and multi-frame lifetimes",
+      "entry_bridge": "Valid allocations are not enough if reads and writes overlap across queues or frames. This chapter turns pipeline stages, barriers, ownership transfer, and retirement into explicit proofs of execution order.",
+      "learning_goal": "Derive the dependency and lifetime requirements for a resource crossing Vulkan commands, queues, or frames in flight.",
+      "recall_question": "For each write and later read, which barrier or completion event establishes both visibility and safe reuse?"
+    },
+    {
+      "number": 23,
+      "start_anchor": {
+        "line": 55726,
+        "level": 2,
+        "heading": "Execute and measure a Metal frame",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 59368,
+        "level": 3,
+        "heading": "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.5,
+      "title": "Execute and measure a Metal frame",
+      "entry_bridge": "The previous API contracts now meet in a complete frame that must be recorded, submitted, and measured. This chapter turns Metal objects and synchronization into an executable sequence rather than an isolated setup list.",
+      "learning_goal": "Reconstruct command encoding, submission, presentation, and timing for a Metal frame while preserving each object’s ownership.",
+      "recall_question": "Which operation records work, which submits it, and what evidence shows that the measured interval matches the intended GPU work?"
+    },
+    {
+      "number": 24,
+      "start_anchor": {
+        "line": 59368,
+        "level": 3,
+        "heading": "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 61644,
+        "level": 2,
+        "heading": "Let a renderer evolve without losing resource ownership",
+        "occurrence": 1
+      },
+      "estimated_pages": 39.7,
+      "title": "Profiling and language/platform ownership",
+      "entry_bridge": "A renderer spans profiling tools, Objective-C++, Swift, and platform state, each with different ownership rules. This chapter keeps measurements scoped to the right build and makes language and process-wide state restoration explicit.",
+      "learning_goal": "Interpret profiling output with build and workload context, and cross language/platform boundaries without leaking ownership or global state.",
+      "recall_question": "What does this profile actually measure, and what state must be restored when the platform-specific operation ends?"
+    },
+    {
+      "number": 25,
+      "start_anchor": {
+        "line": 61644,
+        "level": 2,
+        "heading": "Let a renderer evolve without losing resource ownership",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 62543,
+        "level": 3,
+        "heading": "Model descriptor arrays as indexed data, and keep backend limits at the backend boundary",
+        "occurrence": 1
+      },
+      "estimated_pages": 61.1,
+      "title": "Renderer evolution through resource ownership",
+      "entry_bridge": "New rendering paths should reuse proven ownership rules rather than introduce hidden lifetime assumptions. This chapter carries resources from scene-level intent through frame packets, views, and GPU consumers.",
+      "learning_goal": "Evolve a renderer while keeping the owner, lifetime, and completion condition visible for every resource and frame packet.",
+      "recall_question": "If a view is removed while its command is in flight, which owner retains its data until the last consumer completes?"
+    },
+    {
+      "number": 26,
+      "start_anchor": {
+        "line": 62543,
+        "level": 3,
+        "heading": "Model descriptor arrays as indexed data, and keep backend limits at the backend boundary",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 63405,
+        "level": 2,
+        "heading": "Prepare and publish content before promising it is ready",
+        "occurrence": 1
+      },
+      "estimated_pages": 61.0,
+      "title": "Descriptor arrays and backend limits",
+      "entry_bridge": "Logical resource indices must fit the shader’s representation and the selected backend’s capabilities. This chapter connects descriptor arrays and binding state to queried limits and explicit fallback behavior.",
+      "learning_goal": "Design descriptor indexing and binding around device capabilities, reserved slots, and a validated shader-visible index range.",
+      "recall_question": "How do you prove that every material slot fits both the backend limit and the shader’s index type?"
+    },
+    {
+      "number": 27,
+      "start_anchor": {
+        "line": 63405,
+        "level": 2,
+        "heading": "Prepare and publish content before promising it is ready",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 65842,
+        "level": 3,
+        "heading": "TRAVERSAL, REFITTING, WIDE BVHs AND SIMD",
+        "occurrence": 1
+      },
+      "estimated_pages": 63.1,
+      "title": "Preparing and publishing runtime content",
+      "entry_bridge": "Authoring data becomes useful only after import, conversion, cache validation, and publication agree on what “ready” means. This chapter makes that pipeline observable and connects prepared content to visibility queries.",
+      "learning_goal": "Specify the inputs and version key for derived content, and publish it only after validation while rejecting stale asynchronous results.",
+      "recall_question": "If a material or renderer setting changes during import, how does the cache know the output is stale and prevent an old completion from being published?"
+    },
+    {
+      "number": 28,
+      "start_anchor": {
+        "line": 65842,
+        "level": 3,
+        "heading": "TRAVERSAL, REFITTING, WIDE BVHs AND SIMD",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 68683,
+        "level": 3,
+        "heading": "Dynamic AABB Trees, Sweep-and-Prune, Spatial Hashes and Uniform Grids",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.6,
+      "title": "BVH traversal, refitting, and SIMD",
+      "entry_bridge": "A hierarchy reduces query work only when its bounds remain valid after scene changes. This chapter follows traversal and refitting, then asks which parts can be widened or vectorized without weakening correctness.",
+      "learning_goal": "Trace a BVH query, update bounds after motion, and describe the invariants required for wide nodes and SIMD traversal.",
+      "recall_question": "Which bound should be tested next during traversal, and what update must occur when one primitive moves?"
+    },
+    {
+      "number": 29,
+      "start_anchor": {
+        "line": 68683,
+        "level": 3,
+        "heading": "Dynamic AABB Trees, Sweep-and-Prune, Spatial Hashes and Uniform Grids",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 72739,
+        "level": 3,
+        "heading": "Conventional depth",
+        "occurrence": 1
+      },
+      "estimated_pages": 60.6,
+      "title": "Dynamic spatial indices for moving worlds",
+      "entry_bridge": "A static hierarchy is not the only answer when objects move or appear in clusters. This chapter compares dynamic trees, sweep-and-prune, spatial hashing, and grids by update and query cost.",
+      "learning_goal": "Choose a dynamic broad-phase structure for a stated motion and density workload, including duplicate suppression and update rules.",
+      "recall_question": "What scene change makes this structure expensive, and how would you measure candidate quality as well as update time?"
+    },
+    {
+      "number": 30,
+      "start_anchor": {
+        "line": 72739,
+        "level": 3,
+        "heading": "Conventional depth",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 76618,
+        "level": 3,
+        "heading": "SERIALIZATION, VISUALIZATION, BENCHMARKING, STRUCTURE SELECTION, UNIFIED QUERY DESIGN",
+        "occurrence": 1
+      },
+      "estimated_pages": 60.0,
+      "title": "Depth, projection, and shadow-map precision",
+      "entry_bridge": "Depth buffers encode an ordering decision under finite precision, and projection choices determine where that precision is spent. This chapter connects conventional depth, reverse-Z, and shadow comparisons to geometry and camera range.",
+      "learning_goal": "Derive how projection maps distance to depth and explain precision, bias, and coverage limits in a shadow pass.",
+      "recall_question": "For the chosen near/far range, where is depth precision concentrated and how can you test whether shadow acne is numerical or geometric?"
+    },
+    {
+      "number": 31,
+      "start_anchor": {
+        "line": 76618,
+        "level": 3,
+        "heading": "SERIALIZATION, VISUALIZATION, BENCHMARKING, STRUCTURE SELECTION, UNIFIED QUERY DESIGN",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 78453,
+        "level": 2,
+        "heading": "Blend a small, explicit set of terrain materials",
+        "occurrence": 1
+      },
+      "estimated_pages": 44.3,
+      "title": "Spatial-index serialization and query evidence",
+      "entry_bridge": "A spatial index must be saved, inspected, and compared against a reference query before its performance claims are useful. This chapter joins serialization, visualization, benchmarking, and structure choice around one query contract.",
+      "learning_goal": "Define a reproducible spatial-query workload and compare candidate structures for correctness, update cost, and query quality.",
+      "recall_question": "What reference result validates the index, and what measurements separate serialization, update, and query costs?"
+    },
+    {
+      "number": 32,
+      "start_anchor": {
+        "line": 78453,
+        "level": 2,
+        "heading": "Blend a small, explicit set of terrain materials",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 79176,
+        "level": 3,
+        "heading": "Save scenes as a versioned authoring contract",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.3,
+      "title": "Terrain materials and image composition",
+      "entry_bridge": "A terrain tile must combine a compact set of materials while the renderer preserves filtering, layout, and color meaning. This chapter uses a small explicit blend before moving to saved scene contracts.",
+      "learning_goal": "Implement and validate a bounded material blend, including texture inputs, weights, and visible edge cases.",
+      "recall_question": "Do the blend weights sum to the intended value, and what image test reveals a missing texture or incorrect color-space conversion?"
+    },
+    {
+      "number": 33,
+      "start_anchor": {
+        "line": 79176,
+        "level": 3,
+        "heading": "Save scenes as a versioned authoring contract",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 80295,
+        "level": 2,
+        "heading": "From the push on a panel to a repeatable rigid-body simulator",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.1,
+      "title": "Versioned scenes and transactional loading",
+      "entry_bridge": "A scene file is an interface between authoring and runtime, so unknown versions and broken references need defined outcomes. This chapter establishes a versioned document contract and a safe path from parsed data to world state.",
+      "learning_goal": "Design schema validation, stable IDs, migration, and transactional replacement for a saved scene.",
+      "recall_question": "If parsing or reference resolution fails halfway through loading, how do you guarantee that the previous live scene remains intact?"
+    },
+    {
+      "number": 34,
+      "start_anchor": {
+        "line": 80295,
+        "level": 2,
+        "heading": "From the push on a panel to a repeatable rigid-body simulator",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 82451,
+        "level": 3,
+        "heading": "THE COMPLETE KAIRO STATE SO FAR",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.4,
+      "title": "Rigid-body motion from forces to contact",
+      "entry_bridge": "The crate that moved through the engine now needs a physical state whose translation and rotation agree. This chapter derives center of mass, inertia, force, torque, and contact from the state a simulator must own.",
+      "learning_goal": "Relate forces and impulses to linear/angular motion, compute simple inertia, and explain the assumptions behind a rigid-body contact step.",
+      "recall_question": "Where is the center of mass, what torque follows from this force point, and which state variables must be integrated?"
+    },
+    {
+      "number": 35,
+      "start_anchor": {
+        "line": 82451,
+        "level": 3,
+        "heading": "THE COMPLETE KAIRO STATE SO FAR",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 84985,
+        "level": 3,
+        "heading": "KAIRO AUDIT 4 — CAPSULE FORMULA",
+        "occurrence": 1
+      },
+      "estimated_pages": 42.1,
+      "title": "A complete rigid-body state before the formula audit",
+      "entry_bridge": "A simulator becomes inspectable when position, orientation, linear and angular velocity, mass properties, and force accumulators have explicit owners and update rules. This chapter consolidates the engine state reached so far, then uses it as the reference for checking individual formulas.",
+      "learning_goal": "Describe the rigid-body state and its update responsibilities, including body-local force points, world transforms, and the distinction between stored state and derived values.",
+      "recall_question": "Which values are authoritative state, which are derived, and how does a body-local force point become a world-space torque each step?"
+    },
+    {
+      "number": 36,
+      "start_anchor": {
+        "line": 84985,
+        "level": 3,
+        "heading": "KAIRO AUDIT 4 — CAPSULE FORMULA",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 88494,
+        "level": 3,
+        "heading": "Physical examples",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.5,
+      "title": "Auditing capsule mass properties and collision formulas",
+      "entry_bridge": "A working formula can still fail because its units, shape assumptions, or contact conventions were copied incorrectly. This chapter audits capsule geometry and related cases to expose those assumptions.",
+      "learning_goal": "Check capsule mass and inertia formulas dimensionally and geometrically before treating them as an engine implementation.",
+      "recall_question": "Which limiting shape or numeric witness would falsify this formula, and what independent computation would confirm the correction?"
+    },
+    {
+      "number": 37,
+      "start_anchor": {
+        "line": 88494,
+        "level": 3,
+        "heading": "Physical examples",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 92257,
+        "level": 3,
+        "heading": "Explicit versus semi-implicit energy example",
+        "occurrence": 1
+      },
+      "estimated_pages": 57.0,
+      "title": "Physical examples and state validation",
+      "entry_bridge": "The derived body model needs examples that connect coefficients and memory layout to observable motion. This chapter turns representative bodies into checks for state, inertia, and update behavior.",
+      "learning_goal": "Use physical examples to validate rigid-body state, inertia, and transformation synchronization against explicit invariants.",
+      "recall_question": "What numeric result should this body produce from the stated mass, dimensions, and force, and which sign error would reverse it?"
+    },
+    {
+      "number": 38,
+      "start_anchor": {
+        "line": 92257,
+        "level": 3,
+        "heading": "Explicit versus semi-implicit energy example",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 95743,
+        "level": 3,
+        "heading": "Timestep composability",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.9,
+      "title": "Integrator choices and energy drift",
+      "entry_bridge": "The same force law can produce different motion when time is discretized differently. This chapter compares explicit and semi-implicit updates, damping, and energy behavior without confusing numerical drift with physical dissipation.",
+      "learning_goal": "Derive one-step updates and predict stability and energy changes for a stated step size and force model.",
+      "recall_question": "For the same initial state and step, how do the two integrators differ, and which energy change comes from damping versus discretization?"
+    },
+    {
+      "number": 39,
+      "start_anchor": {
+        "line": 95743,
+        "level": 3,
+        "heading": "Timestep composability",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 99126,
+        "level": 2,
+        "heading": "From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.9,
+      "title": "Composable timesteps and stable simulation policy",
+      "entry_bridge": "A simulation often subdivides or combines work under frame deadlines, but the result depends on how state updates compose. This chapter tracks damping, fixed steps, and remainders as explicit policy choices.",
+      "learning_goal": "Explain when timestep subdivision preserves a model and when parameterization or state updates change the result.",
+      "recall_question": "If a step is split into two halves, which position, velocity, and damping results should match, and what assumptions make them differ?"
+    },
+    {
+      "number": 40,
+      "start_anchor": {
+        "line": 99126,
+        "level": 2,
+        "heading": "From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 100398,
+        "level": 2,
+        "heading": "Use tools and evidence to keep the design revisable",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.0,
+      "title": "Coupled contacts and iterative response",
+      "entry_bridge": "One isolated collision impulse does not determine a whole stack because contacts constrain one another. This chapter builds a small coupled solver and shows how ordering, friction, and iteration affect the result.",
+      "learning_goal": "Reconstruct the contact constraints and solve policy for a multi-contact system, stating where the reference witness stops.",
+      "recall_question": "Why can resolving one contact change another contact’s penetration or friction condition, and how does another solver sweep respond?"
+    },
+    {
+      "number": 41,
+      "start_anchor": {
+        "line": 100398,
+        "level": 2,
+        "heading": "Use tools and evidence to keep the design revisable",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 101144,
+        "level": 1,
+        "heading": "Systems: From Cartridge Bytes to a Reproducible Machine",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.1,
+      "title": "Evidence, tools, and revisable design",
+      "entry_bridge": "After the physics and runtime examples, the volume returns to how teams learn whether a design works. This chapter uses prototypes, diagnostics, and source evidence to keep architecture and game decisions revisable.",
+      "learning_goal": "Use the right artifact and evidence level to test a design question, distinguishing observed behavior, inference, and future intent.",
+      "recall_question": "What observation would change your design decision, and what test can produce it without confusing a prototype with a shipped feature?"
+    },
+    {
+      "number": 42,
+      "start_anchor": {
+        "line": 101144,
+        "level": 1,
+        "heading": "Systems: From Cartridge Bytes to a Reproducible Machine",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 102377,
+        "level": 2,
+        "heading": "Compile renderer intent into backend work",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.9,
+      "title": "From cartridge bytes to a reproducible machine",
+      "entry_bridge": "A deterministic machine gives each byte meaning through address decoding, state transitions, and timing. This chapter follows an emulator through storage, I/O, replay, files, networking, and rendering while naming each boundary’s evidence.",
+      "learning_goal": "Trace a stateful system from bytes to reproducible execution and identify what must be serialized or synchronized for replay.",
+      "recall_question": "Which hidden state, input order, or clock must be recorded so that another run reproduces the same machine state?"
+    },
+    {
+      "number": 43,
+      "start_anchor": {
+        "line": 102377,
+        "level": 2,
+        "heading": "Compile renderer intent into backend work",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 105603,
+        "level": 3,
+        "heading": "REAL CROSS-BACKEND CONVERSION & AGREEMENT",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.4,
+      "title": "Compiling renderer intent into backend work",
+      "entry_bridge": "A renderer should express what a frame needs before translating it into API-specific commands. This chapter makes the compilation boundary explicit so ordering, resource state, and backend execution can be checked separately.",
+      "learning_goal": "Map a render request to backend work while preserving resource dependencies, barriers, and lifetime ownership.",
+      "recall_question": "What logical dependency does this command represent, and where is it enforced in the selected backend?"
+    },
+    {
+      "number": 44,
+      "start_anchor": {
+        "line": 105603,
+        "level": 3,
+        "heading": "REAL CROSS-BACKEND CONVERSION & AGREEMENT",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 108340,
+        "level": 2,
+        "heading": "Rasterize kernels at scale and connect their identities — world correspondence",
+        "occurrence": 1
+      },
+      "estimated_pages": 37.7,
+      "title": "Cross-backend conversion and agreement",
+      "entry_bridge": "Two APIs can represent similar work with different resource and synchronization rules. This chapter tests conversion at those seams and states what agreement means for images and execution.",
+      "learning_goal": "Define parity criteria for a cross-backend path, including formats, coordinate conventions, synchronization, and output comparison.",
+      "recall_question": "Which differences are permitted by the contract, and what image or state witness would reveal a conversion error?"
+    },
+    {
+      "number": 45,
+      "start_anchor": {
+        "line": 108340,
+        "level": 2,
+        "heading": "Rasterize kernels at scale and connect their identities — world correspondence",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 111896,
+        "level": 2,
+        "heading": "Turn a design document into a set of tools, not a single promise",
+        "occurrence": 1
+      },
+      "estimated_pages": 59.5,
+      "title": "Rasterizing kernels and connecting world identity",
+      "entry_bridge": "A rendered kernel is a projected footprint, but editing and world reconstruction need more than pixels. This chapter connects scalable raster work to identity, geometry, and uncertainty in captured scenes.",
+      "learning_goal": "Trace kernel projection and compositing while stating the conditions needed to associate visible samples with editable world entities.",
+      "recall_question": "How does a changed kernel affect later transmittance, and what evidence connects its rendered footprint to a world-space object?"
+    },
+    {
+      "number": 46,
+      "start_anchor": {
+        "line": 111896,
+        "level": 2,
+        "heading": "Turn a design document into a set of tools, not a single promise",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 113188,
+        "level": 2,
+        "heading": "Narrative can be authored, played, and retold",
+        "occurrence": 1
+      },
+      "estimated_pages": 61.2,
+      "title": "Game design from mechanics to narrative interfaces",
+      "entry_bridge": "Engine capabilities become meaningful through the game’s rules, camera, actions, and feedback. This chapter treats design documents as working tools and tests how mechanics communicate without turning examples into universal prescriptions.",
+      "learning_goal": "Connect formal rules, player experience, cultural context, and camera policy to a specific playable situation.",
+      "recall_question": "Which action, feedback, and consequence make this rule legible, and what assumption about the player or culture remains untested?"
+    },
+    {
+      "number": 47,
+      "start_anchor": {
+        "line": 113188,
+        "level": 2,
+        "heading": "Narrative can be authored, played, and retold",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 114642,
+        "level": 0,
+        "heading": "BOOK_END",
+        "occurrence": 1
+      },
+      "estimated_pages": 60.4,
+      "title": "Narrative, simulation, and AI in playable worlds",
+      "entry_bridge": "The design route now extends from authored story into spaces, companions, and decisions that operate during play. This chapter ties narrative intent to navigation and runtime contracts, then closes with the evidence required for a complete system.",
+      "learning_goal": "Explain how story constraints and AI decisions enter simulation while preserving player agency, navigation correctness, and observable outcomes.",
+      "recall_question": "How does an AI action change the world in a way the player can interpret, and which movement-versus-decision contract must hold?"
+    }
+  ]
+}

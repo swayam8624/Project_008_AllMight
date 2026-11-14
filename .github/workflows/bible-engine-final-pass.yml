@@ -1,64 +1,45 @@
 name: Bible engine final pass
 
+# Validate the committed reading surface. Authoring patches never publish from CI.
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - allmight/closure-and-narrative-20261112
+    branches: [main, allmight/closure-and-narrative-20261112]
     paths:
-      - 'tools/patches/apply_engine_final_pass.py'
-      - 'tools/labs/rollback_netcode_lab.cpp'
-      - 'tools/labs/audio_voice_mixer_lab.cpp'
-      - 'tools/labs/ai_decision_models_lab.cpp'
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/patches/**'
+      - 'tools/note_integrity.py'
+      - 'tools/check_continuous_code_sync.py'
+      - 'tools/check_patch_idempotence.py'
       - '.github/workflows/bible-engine-final-pass.yml'
+  pull_request:
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/patches/**'
+      - 'tools/note_integrity.py'
+      - 'tools/check_continuous_code_sync.py'
+      - 'tools/check_patch_idempotence.py'
+      - '.github/workflows/bible-engine-final-pass.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-and-verify:
+  verify-committed-teaching:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: allmight/closure-and-narrative-20261112
-          fetch-depth: 0
-
-      - name: Apply engine final-pass patch
-        run: python3 tools/patches/apply_engine_final_pass.py
-
-      - name: Audit readability of the full engine note
-        run: python3 tools/audit_note_readability.py "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"
-
+      - name: Verify complete code and comments inside the books
+        run: python3 tools/check_continuous_code_sync.py
+      - name: Check authoring patches without modifying the checkout
+        run: python3 tools/check_patch_idempotence.py
       - name: Compile and run engine witnesses
         run: |
           set -euxo pipefail
-          for src in rollback_netcode_lab audio_voice_mixer_lab ai_decision_models_lab; do
-            c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror "tools/labs/$src.cpp" -o "/tmp/$src"
-            "/tmp/$src"
-            c++ -std=c++20 -DNDEBUG -O2 -Wall -Wextra -Wpedantic -Werror "tools/labs/$src.cpp" -o "/tmp/$src-release"
-            "/tmp/$src-release"
+          for lab in rollback_netcode_lab audio_voice_mixer_lab ai_decision_models_lab scene_persistence_lab; do
+            c++ -std=c++20 -O2 -DNDEBUG -Wall -Wextra -Wpedantic -Werror "tools/labs/$lab.cpp" -o "$RUNNER_TEMP/$lab"
+            "$RUNNER_TEMP/$lab"
           done
-
-      - name: Verify canonical embedded-source agreement
-        run: python3 tools/check_continuous_code_sync.py
-
-      - name: Verify patch idempotence
-        run: |
-          sha256sum "Continuous Notes/Game Engine - From First Frame to Living Worlds.md" > /tmp/before
-          python3 tools/patches/apply_engine_final_pass.py
-          sha256sum "Continuous Notes/Game Engine - From First Frame to Living Worlds.md" > /tmp/after
-          diff /tmp/before /tmp/after
-
-      - name: Commit canonical engine update
-        run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "Continuous Notes/Game Engine - From First Frame to Living Worlds.md"
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Finalize engine networking audio and AI Bible seams"
-            git push origin HEAD:allmight/closure-and-narrative-20261112
-          fi

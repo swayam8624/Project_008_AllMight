@@ -24,7 +24,7 @@ Latin-hypercube sampling divides each coordinate axis into $N$ equal strata and 
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Design samples: without replacement, stratified, and low-discrepancy|Design samples: without replacement, stratified, and low-discrepancy]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Design samples: without replacement, stratified, and low-discrepancy|Design samples: without replacement, stratified, and low-discrepancy]]
 
 ## Source coverage
 

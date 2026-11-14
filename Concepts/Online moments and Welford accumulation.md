@@ -26,7 +26,7 @@ Online statistics update a mean and centered sum of squares as observations arri
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#9. Finite samples need stable descriptive statistics|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#9. Finite samples need stable descriptive statistics|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

@@ -224,3 +224,25 @@ Run `bash tools/m018/build_m018_lab.sh` from the repository root for the multi-t
 `python3 tools/check_three_volume_consolidation.py` checks retained source inclusion and the historical ordered-line contract. `python3 tools/check_continuous_code_sync.py` checks the nine declared standalone programs against their complete inline versions. `python3 tools/m018/check_note_examples.py --compiler clang++` compiles the selected examples from the canonical Game Engine book, rather than its archival Foundations source. These are distinct checks; none certifies every sentence or every code fragment in the volumes.
 
 The new `spring_generator_lab.cpp` checks signed force laws and an integration-order counterexample; `contact_penetration_refresh_lab.cpp` checks a planar first-order depth update. Both use runtime checks that survive NDEBUG. They remain bounded CPU models, not production solvers.
+
+
+## Current teaching-integrity checks — 14 November 2026
+
+- `python3 tools/check_continuous_code_sync.py`: compare complete code and teaching comments for 26 declared inline programs; parse both Markdown fence styles.
+- `python3 tools/check_vault_links.py`: validate wiki note, heading, block and figure targets without modifying files.
+- `python3 tools/check_three_volume_consolidation.py`: protect the pinned pre-repair teaching while allowing only the documented route/fence/closure fixes and intact XR relocation.
+- `python3 tools/check_patch_idempotence.py`: run the four retained authoring patches twice in an isolated temporary copy; fail if they would change the already-integrated books.
+- `python3 -m unittest discover -s tools/tests -p test_note_integrity.py`: regression-test fence parsing, complete-program identity, source-preservation exceptions and navigation.
+
+The final-pass workflows have read-only repository permissions and verify the checked-in book state. They do not apply authoring patches or push automatic changes. The authoring tools remain available for deliberate local use; changing source comments also requires refreshing the exact inline program. The new scene persistence witness is a bounded in-memory text-schema/transaction reference, not filesystem durability or a production scene format.
+
+Caption-acquisition tools are retained until per-source review and merge proof establish safe retirement. Source deletion is separate from removing regenerable interpreter caches; see [[Supplementary/Vault Repair and Source Retention - 2026-11-14]].
+
+
+## Chapter reading edition
+
+The three continuous masters remain authoritative. `python3 tools/build_chapter_edition.py` writes their separate major-chapter reading copies under `Chapter Edition/`, using the supervised plans in `tools/chapter_plans/`. The generator resolves semantic boundary anchors, checks that all original source spans concatenate exactly, retains every fenced program and diagram, retargets master-to-master wiki links, and records span/file hashes in `Chapter Edition/MANIFEST.json`. It preserves opaque pasted citation markers in HTML comments rather than treating them as verified references.
+
+Run `python3 tools/build_chapter_edition.py --check` to detect any stale or manually changed copy. Source/master edits require regeneration; changing a chapter boundary or its opening explanation requires editing the reviewed plan, then regeneration. Unexpected files are reported for inspection rather than automatically deleted. Roughly 50-page chapter sizes are reading estimates, not native Obsidian or PDF pagination. Assets and concept companions are shared with the surrounding vault.
+
+Regression checks: `python3 -m unittest discover -s tools/tests -p test_chapter_edition.py`, followed by `python3 tools/check_vault_links.py`. The chapter guard checks content/navigation consistency, not the scientific correctness of every inherited claim.

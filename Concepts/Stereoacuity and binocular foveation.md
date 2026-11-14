@@ -29,4 +29,4 @@ Separate a fitted threshold, hypothesized mechanism and natural-scene validation
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Binocular depth changes the optimization question|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Binocular depth changes the optimization question|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]

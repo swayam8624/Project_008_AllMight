@@ -1,62 +1,45 @@
 name: Bible graphics final pass
 
+# Validate the committed reading surface. Authoring patches never publish from CI.
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - allmight/closure-and-narrative-20261112
+    branches: [main, allmight/closure-and-narrative-20261112]
     paths:
-      - 'tools/patches/apply_graphics_final_pass.py'
-      - 'tools/labs/xr_3d_imu_preintegration_lab.py'
-      - 'tools/labs/nerf_volume_rendering_lab.py'
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/patches/**'
+      - 'tools/note_integrity.py'
+      - 'tools/check_continuous_code_sync.py'
+      - 'tools/check_patch_idempotence.py'
       - '.github/workflows/bible-graphics-final-pass.yml'
+  pull_request:
+    paths:
+      - 'Continuous Notes/**'
+      - 'tools/labs/**'
+      - 'tools/patches/**'
+      - 'tools/note_integrity.py'
+      - 'tools/check_continuous_code_sync.py'
+      - 'tools/check_patch_idempotence.py'
+      - '.github/workflows/bible-graphics-final-pass.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-and-verify:
+  verify-committed-teaching:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: allmight/closure-and-narrative-20261112
-          fetch-depth: 0
-
-      - name: Apply graphics final-pass patch
-        run: python3 tools/patches/apply_graphics_final_pass.py
-
-      - name: Audit readability of the full graphics note
-        run: python3 tools/audit_note_readability.py "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
-
-      - name: Install Python numerical dependency
-        run: python3 -m pip install --disable-pip-version-check numpy
-
-      - name: Run 3-D IMU witness
-        run: python3 tools/labs/xr_3d_imu_preintegration_lab.py
-
-      - name: Run neural volume-rendering witness
-        run: python3 tools/labs/nerf_volume_rendering_lab.py
-
-      - name: Verify canonical embedded-source agreement
+      - name: Verify complete code and comments inside the books
         run: python3 tools/check_continuous_code_sync.py
-
-      - name: Verify patch idempotence
+      - name: Check authoring patches without modifying the checkout
+        run: python3 tools/check_patch_idempotence.py
+      - name: Install numerical test dependency
+        run: python3 -m pip install --disable-pip-version-check numpy
+      - name: Execute XR and neural-rendering witnesses
         run: |
-          sha256sum "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md" > /tmp/before
-          python3 tools/patches/apply_graphics_final_pass.py
-          sha256sum "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md" > /tmp/after
-          diff /tmp/before /tmp/after
-
-      - name: Commit canonical graphics update
-        run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Finalize graphics XR and neural-rendering Bible seams"
-            git push origin HEAD:allmight/closure-and-narrative-20261112
-          fi
+          python3 tools/labs/xr_planar_vio_ekf_lab.py
+          python3 tools/labs/xr_3d_imu_preintegration_lab.py
+          python3 tools/labs/nerf_volume_rendering_lab.py

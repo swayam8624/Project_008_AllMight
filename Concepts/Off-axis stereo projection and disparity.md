@@ -24,7 +24,7 @@ Stereo cameras use two eye centres separated by a baseline, while each projectio
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Build projection and stereo geometry around real camera baselines|Build projection and stereo geometry around real camera baselines]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Build projection and stereo geometry around real camera baselines|Build projection and stereo geometry around real camera baselines]]
 
 ## Source coverage
 

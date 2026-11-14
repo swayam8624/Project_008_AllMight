@@ -23,7 +23,7 @@ A cubic Hermite segment is determined by endpoint values and endpoint tangent da
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Reconstructing values and curves between samples|Reconstructing values and curves between samples]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstructing values and curves between samples|Reconstructing values and curves between samples]]
 
 ## Source coverage
 

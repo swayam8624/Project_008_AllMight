@@ -28,7 +28,7 @@ Sampling transforms convert simpler random inputs into a target law. Inverse-CDF
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#7. Transformations turn simple inputs into useful samples|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#7. Transformations turn simple inputs into useful samples|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

@@ -44,7 +44,7 @@ Prove 13Hz and 3Hz sample identity at 10Hz. Pending: anisotropic/nonuniform samp
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Sampling is a question of what remains distinguishable|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Sampling is a question of what remains distinguishable|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
 
 ## University course development
 
@@ -54,6 +54,6 @@ Sampling records measurements of a continuous signal on a discrete grid. Frequen
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences|Phase 10 teaching section]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#8. Monte Carlo estimates trade computation for uncertainty|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#6. A computer produces deterministic pseudorandom sequences|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#8. Monte Carlo estimates trade computation for uncertainty|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

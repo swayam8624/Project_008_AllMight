@@ -24,7 +24,7 @@ For a fixed-point iteration $x_{n+1}=G(x_n)$, suppose $G$ is a contraction with 
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Finding roots with guarantees and convergence checks|Finding roots with guarantees and convergence checks]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Finding roots with guarantees and convergence checks|Finding roots with guarantees and convergence checks]]
 
 ## Source coverage
 

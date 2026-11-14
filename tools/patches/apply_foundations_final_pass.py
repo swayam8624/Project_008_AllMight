@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
+import os
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 NOTE = ROOT / "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
@@ -8,16 +10,27 @@ def code_block(path, language):
     return "\n\n~~~" + language + "\n" + path.read_text().rstrip() + "\n~~~\n"
 
 def insert_or_refresh_before(text, anchor, marker, body):
-    if anchor not in text:
-        raise SystemExit("missing anchor: " + anchor)
+    if text.count(anchor) != 1:
+        raise SystemExit("expected exactly one insertion anchor: " + anchor)
     normalized = body.strip("\n")
-    if marker in text:
-        start = text.index(marker)
+    marker_count = text.count(marker)
+    if marker_count > 1:
+        raise SystemExit("duplicate managed-section marker: " + marker)
+    if marker_count == 1:
+        marker_start = text.index(marker)
         # Consume blank lines immediately before the managed section so refresh
         # cannot accumulate whitespace on repeated runs.
+        start = marker_start
         while start > 0 and text[start - 1] == "\n":
             start -= 1
-        end = text.index(anchor, start)
+        anchor_start = text.find(anchor, marker_start)
+        if anchor_start < 0:
+            raise SystemExit("managed section is no longer before its anchor: " + marker)
+        # A second managed marker before this anchor signals ambiguous ownership.
+        next_marker = text.find("<!-- Bible-final-pass:", marker_start + len(marker))
+        if next_marker >= 0 and next_marker < anchor_start:
+            raise SystemExit("managed sections overlap before anchor: " + marker)
+        end = anchor_start
         return text[:start] + "\n\n" + normalized + "\n\n" + text[end:]
     return text.replace(anchor, normalized + "\n\n" + anchor, 1)
 
@@ -29,155 +42,106 @@ inf_code = code_block(ROOT / "tools/labs/research_inference_lab.py", "python")
 
 life = """
 <!-- Bible-final-pass: C++ temporary lifetime -->
-#### A temporary is still a real object with a real destruction point
+#### Turn the lifetime rule into a scope trace
 
-C++ lets us write expressions without naming every intermediate object. That convenience can hide a lifetime. A temporary object is still an object: it comes into existence, occupies valid storage for a period, and is destroyed at a defined point. Any pointer, reference, span, iterator, string view, callback capture, or coroutine reference that observes it is useful only while the required object and storage remain valid.
+The preceding example showed that binding a local const reference can extend a temporary, while returning the same reference through a function does not extend it again. The distinction is visible if we count the object while the local binding is active, then watch a non-owning string view observe storage whose owner remains alive. That is a deliberately small witness: it makes the valid timeline executable without dereferencing a dangling observer.
 
-Start with a safe local case:
-
-~~~cpp
-const Tracked& ref = make_tracked(42);
-~~~
-
-The returned temporary is bound directly to a local const reference. In this specific initialization context, the language extends the temporary's lifetime to the lifetime of that reference. This does not mean that references are owners, and it does not mean that every reference extends a lifetime.
-
-Compare that with a non-owning view:
-
-~~~cpp
-std::string owner = "render_graph";
-std::string_view view = owner;
-~~~
-
-The string owns its character storage. The string view only remembers an address and a length. It does not keep the string alive. If the owner disappears, or an operation invalidates the storage, the view does not become empty or repair itself; it dangles.
-
-This is the engine rule to remember:
-
-> Find the owner, find the destruction or invalidation point, and prove that every observer finishes before that point.
-
-The compiler also performs temporary materialization when an expression value needs an actual object so that a reference or another operation can bind to it. The formal vocabulary matters less than the consequence: compact expression syntax can hide object creation and destruction.
-
-A useful mental model is:
-
-~~~text
-expression
-  -> may create or materialize an object
-  -> that object has a lifetime
-  -> observers are valid only while the required object and storage stay valid
-~~~
-
-Do not generalize the local const-reference example into "references extend lifetimes." Returning a reference to a local object is invalid. A view into a temporary buffer becomes invalid after the buffer dies. Passing an observer through another function does not automatically keep the source alive. A coroutine that suspends while holding a reference needs an explicit owner and cancellation/join policy.
-
-The witness below runs only valid cases. The dangling-reference example is intentionally disabled because undefined behavior is not a correctness test.
+Its comments identify the owner and the exact scope boundary. A pointer, span, iterator, callback capture, or coroutine reference follows the same review question: which object owns the storage, and which event ends its validity?
 """ + life_code + """
-**Reconstruct without reading:** explain why the reference-bound temporary survives for the local reference, while string_view does not own its characters. Then identify the owner and invalidation point for a span, an iterator, a callback reference capture, and a coroutine reference.
-
-**Evidence boundary:** this witness teaches the main ownership/lifetime distinction. It does not pretend to encode every temporary-lifetime corner case in the C++ standard. When a design depends on a subtle subobject, aggregate, range-for, or storage-reuse rule, verify that exact rule at the call site.
 """
 
-se3 = """
+se3 = r"""
 <!-- Bible-final-pass: SE3 exp log -->
 #### From a six-number pose update to an actual rigid transform
 
 The previous section derived the tangent space of SO(3) and showed how a small rotational perturbation changes a point. One bridge was still missing: how a six-component local pose update becomes a finite rigid transform, and how a nearby rigid transform becomes a six-component update again.
 
-A rigid transform in SE(3) contains a rotation R in SO(3) and a translation t:
+A rigid transform $T\in SE(3)$ contains a rotation $R\in SO(3)$ and a translation $t$:
 
-~~~text
-T = [ R  t ]
-    [ 0  1 ]
-~~~
+$$
+T=\begin{bmatrix}R&t\\0&1\end{bmatrix}
+$$
 
 A local six-vector is commonly written as:
 
-~~~text
-xi = [ omega ]
-     [ rho   ]
-~~~
+$$
+\xi=\begin{bmatrix}\omega\\\rho\end{bmatrix}
+$$
 
-omega is a three-component local rotation vector, measured in radians. rho is the translational part of the tangent coordinate. The important point is that rho is not generally equal to the final translation column t when rotation is nonzero.
+$\omega$ is a three-component local rotation vector measured in radians. $\rho$ is the translational part of the tangent coordinate. In general, $\rho$ is not the final translation column $t$ when rotation is nonzero.
 
 The wedge form is:
 
-~~~text
-xi^ = [ [omega]x   rho ]
-      [    0         0 ]
-~~~
+$$
+\widehat{\xi}=\begin{bmatrix}[\omega]_\times&\rho\\0&0\end{bmatrix}
+$$
 
 The group exponential gives:
 
-~~~text
-Exp(xi^) = [ Exp([omega]x)   V(omega) rho ]
-           [       0               1      ]
-~~~
+$$
+\exp(\widehat{\xi})=\begin{bmatrix}\exp([\omega]_\times)&V(\omega)\rho\\0&1\end{bmatrix}
+$$
 
-Let theta = length(omega). Rodrigues' formula is:
+Let $\theta=\lVert\omega\rVert$. Rodrigues' formula is:
 
-~~~text
-R = I
-  + (sin(theta) / theta) [omega]x
-  + ((1 - cos(theta)) / theta^2) [omega]x^2
-~~~
+$$
+R=I+\frac{\sin\theta}{\theta}[\omega]_\times+
+\frac{1-\cos\theta}{\theta^2}[\omega]_\times^2
+$$
 
 The translation uses the SO(3) left Jacobian:
 
-~~~text
-V = I
-  + ((1 - cos(theta)) / theta^2) [omega]x
-  + ((theta - sin(theta)) / theta^3) [omega]x^2
-~~~
+$$
+V(\omega)=I+\frac{1-\cos\theta}{\theta^2}[\omega]_\times+
+\frac{\theta-\sin\theta}{\theta^3}[\omega]_\times^2
+$$
 
-This V matrix is the coupling that is easy to miss. When omega is zero, V becomes I and t equals rho. When rotation is present, the finite translation is V times rho. Rotation and translation are therefore not six unrelated scalar slots.
+The matrix $V$ is the coupling that is easy to miss. When $\omega=0$, $V=I$ and $t=\rho$. With rotation, the finite translation is $t=V(\omega)\rho$. Rotation and translation are therefore not six unrelated scalar slots.
 
-Near theta = 0, the direct fractions lose numerical accuracy through cancellation. Use the series:
+Near $\theta=0$, the direct fractions lose numerical accuracy through cancellation. Use the series:
 
-~~~text
-R approximately I + [omega]x + 1/2 [omega]x^2
-V approximately I + 1/2 [omega]x + 1/6 [omega]x^2
-~~~
+$$
+R\approx I+[\omega]_\times+\tfrac12[\omega]_\times^2,
+\qquad
+V\approx I+\tfrac12[\omega]_\times+\tfrac16[\omega]_\times^2
+$$
 
-The logarithm reverses the construction. First recover omega from Log(R), then recover rho from:
+The logarithm reverses the construction. First recover $\omega=\operatorname{Log}(R)$, then recover $\rho$ from:
 
-~~~text
-rho = inverse(V(omega)) t
-~~~
+$$
+\rho=V(\omega)^{-1}t
+$$
 
 For ordinary non-singular angles:
 
-~~~text
-inverse(V) = I
-           - 1/2 [omega]x
-           + (1/theta^2 - (1 + cos(theta)) / (2 theta sin(theta))) [omega]x^2
-~~~
+$$
+V^{-1}=I-\tfrac12[\omega]_\times+
+\left(\frac1{\theta^2}-\frac{1+\cos\theta}{2\theta\sin\theta}\right)
+[\omega]_\times^2
+$$
 
 Near zero:
 
-~~~text
-inverse(V) approximately I - 1/2 [omega]x + 1/12 [omega]x^2
-~~~
+$$
+V^{-1}\approx I-\tfrac12[\omega]_\times+\tfrac1{12}[\omega]_\times^2
+$$
 
 Now the earlier pose Jacobian has a precise update convention. A left update is:
 
-~~~text
-T_new = Exp(delta_xi^) T
-~~~
+$$T_{\text{new}}=\exp(\widehat{\delta\xi})T$$
 
 A right update is:
 
-~~~text
-T_new = T Exp(delta_xi^)
-~~~
+$$T_{\text{new}}=T\exp(\widehat{\delta\xi})$$
 
 These are not interchangeable. They express the increment in different frames, so the Jacobians differ. Any paper or implementation that says only "we optimize six pose parameters" is incomplete until it states component ordering, units, frame convention, and left-versus-right composition.
 
-A simple hand trace makes the coupling visible. Let omega = (0, 0, 0.6) and rho = (1, 0, 0). The resulting translation is V(omega) times rho, not simply (1, 0, 0). The finite motion means "advance while rotating," so the displacement follows the geometry of the rigid-motion group.
+A simple hand trace makes the coupling visible. Let $\omega=(0,0,0.6)$ radians and $\rho=(1,0,0)$ length unit. The resulting translation is $V(\omega)\rho$, not simply $(1,0,0)$. The finite motion means "advance while rotating," so the displacement follows the geometry of the rigid-motion group.
 
 This is why bundle adjustment, visual odometry, XR tracking, camera calibration, robotics, and inverse graphics commonly update a pose through a local Lie-algebra increment instead of adding values directly to a 4 by 4 matrix.
 
-The executable witness below implements Rodrigues' formula, an SO(3) logarithm for ordinary non-pi cases, V, inverse(V), and SE(3) round trips.
+The executable witness implements Rodrigues' formula, an SO(3) logarithm for ordinary non-pi cases, V, inverse(V), and SE(3) round trips. Its code comments identify the small-angle series and the deliberate near-pi rejection. That rejection is a scope boundary: a production implementation needs a branch-aware axis recovery near pi, zero/tiny/ordinary/near-pi tests, inverse/composition checks, and analytic Jacobians compared against finite differences.
 """ + se3_code + """
-The near-pi logarithm is a real numerical branch, not a footnote. Around a rotation of pi, the simple theta/(2 sin(theta)) expression becomes delicate and the axis needs a branch-aware recovery method. The compact witness deliberately rejects that hard region instead of pretending the simple formula is universally robust.
-
-**Reconstruct without reading:** derive Rodrigues from the exponential series, explain why V appears in translation, write the small-angle series, explain left versus right updates, and implement Exp/Log round trips. A production library must additionally test zero, tiny angles, ordinary angles, near-pi rotations, inverse/composition consistency, and analytical Jacobians against finite differences.
 """
 
 inference = """
@@ -191,13 +155,13 @@ The paired t-test above is useful, but a paper-quality result needs four separat
 3. How surprising would the data be under a stated null model?
 4. Was the experiment powerful enough to detect an effect that would actually matter?
 
-For paired measurements, keep the per-unit difference:
+For paired measurements, keep the per-unit difference in the original unit:
 
 ~~~text
 D_i = E_A,i - E_B,i
 ~~~
 
-The mean difference, mean(D), is the effect in the original engineering unit. Do not throw that away. A standardized paired effect size is often:
+The mean difference $\overline{D}$ is the effect in the original engineering unit. Do not throw that away. A standardized paired effect size is often:
 
 ~~~text
 d_z = mean(D) / standard_deviation(D)
@@ -207,7 +171,7 @@ The standardized value helps compare scales, but it does not replace the origina
 
 When a normal model for paired differences is doubtful, a paired sign-flip/randomization test can be useful if its design assumption is justified. Under the sharp paired null, keep each observed magnitude but flip its sign. Recompute the statistic for all sign choices, or for a large random sample of them, and measure how often the null statistic is at least as extreme as the observed one.
 
-This is not assumption-free. Its validity comes from the sign-exchangeability or randomization argument. If the experimental design does not justify that exchangeability, the resulting p-value does not have the claimed interpretation.
+This is not assumption-free. Its validity comes from the sign-exchangeability or randomization argument. If the experimental design does not justify that exchangeability, the resulting p-value does not have the claimed interpretation. The code comments keep this assumption attached to the exact enumeration rather than presenting it as a generic test.
 
 A paired bootstrap answers a different question. Resample the pairs, or equivalently their paired differences, together with replacement. Recompute the statistic on each bootstrap sample. If the design was paired, do not independently resample algorithm A and algorithm B; that destroys the covariance that made pairing useful.
 
@@ -225,16 +189,13 @@ Multiple comparisons add another contract. Holm's step-down procedure controls t
 
 A strong result table therefore reports more than a p-value: effect in the original unit, uncertainty interval, experimental unit and sample count, pairing/blocking structure, exact test or interval construction, multiple-comparison policy, and the compute/time/memory cost needed to obtain the effect.
 
-The executable witness below preserves pairing, computes d_z, performs an exact sign-flip test for a small sample, forms a paired bootstrap percentile interval, and applies Holm adjustment.
+The executable witness below preserves pairing, computes d_z, performs an exact sign-flip test for a small sample, forms a paired bootstrap percentile interval, and applies Holm adjustment. Code comments retain the exchangeability assumption, the exponential enumeration cap, and the fact that a percentile interval is not guaranteed to have nominal coverage for every small or skewed sample.
 """ + inf_code + """
-**Reconstruct without reading:** given two per-scene error arrays, form paired differences, report their mean in the original unit, compute d_z, explain the null assumption behind a sign-flip test, bootstrap the pairs rather than the two marginal samples, and state the minimum effect your planned sample count was intended to detect.
-
-**Evidence boundary:** real studies must additionally account for dependence between frames, repeated measurements on the same participant or scene, hierarchical datasets, missing data, adaptive stopping, and preregistered versus exploratory analyses. Those facts determine the statistical unit and therefore determine which inferential method is defensible.
 """
 
 text = insert_or_refresh_before(
     text,
-    "#### Data-oriented design begins with the loop, not with a fashionable container",
+    "## Move permission is not resource transfer",
     "<!-- Bible-final-pass: C++ temporary lifetime -->",
     life,
 )
@@ -251,5 +212,9 @@ text = insert_or_refresh_before(
     inference,
 )
 
-NOTE.write_text(text)
+if text != NOTE.read_text():
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=NOTE.parent, delete=False) as handle:
+        handle.write(text)
+        temporary_path = Path(handle.name)
+    os.replace(temporary_path, NOTE)
 print("foundations final-pass patch applied")

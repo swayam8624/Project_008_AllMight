@@ -34,9 +34,9 @@ Reconstruct the example, state its conventions and find an input that violates i
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation|Phase 9 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Jacobians, curvature, and local approximation|Phase 9 teaching section]]
 - [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · Phase 9 visual recall

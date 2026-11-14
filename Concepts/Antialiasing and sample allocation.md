@@ -36,10 +36,10 @@ Explain mean(x²) versus square(mean(x)). Pending: actual shader invocation redu
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Multiresolution work must preserve the right information|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Multiresolution work must preserve the right information|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences|Phase 10 teaching section]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#12. Use probability to evaluate graphics and research claims|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#6. A computer produces deterministic pseudorandom sequences|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#12. Use probability to evaluate graphics and research claims|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

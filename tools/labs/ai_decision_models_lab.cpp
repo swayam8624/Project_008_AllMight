@@ -1,3 +1,13 @@
+/*
+Teaching contract: World is a snapshot of interpreted facts, not raw sensing.
+The same facts are fed to three distinct decision semantics: a behavior tree
+applies explicit branch priority and Success/Failure/Running status; utility AI
+scores available actions and needs stable tie/threshold policy; GOAP searches a
+bounded symbolic state graph using action preconditions, effects, and costs.
+Action names are intentions, not movement or combat implementations. Tests
+compare choices on fixtures and failure states; they do not establish that one
+model is universally better or that the world facts are accurate.
+*/
 #include <algorithm>
 #include <array>
 #include <functional>
@@ -25,6 +35,7 @@ void require(bool condition, const char* message) {
 // ---- Behavior tree: authored control structure ----
 enum class Status { Success, Failure, Running };
 
+// Ordered branches make authored priority the selection rule.
 Status behavior_tree_decide(const World& w, std::string& action) {
     // Selector priority is explicit: survive first, then attack, then search.
     if (w.health < 30) {
@@ -40,6 +51,7 @@ Status behavior_tree_decide(const World& w, std::string& action) {
 }
 
 // ---- Utility AI: score alternatives from current facts ----
+// Utility compares scored candidates; stable ties avoid nondeterministic choices.
 std::string utility_decide(const World& w) {
     struct Candidate { std::string name; double score; };
     std::vector<Candidate> c{
@@ -77,6 +89,7 @@ int encode(const Facts& f) {
          | (f.enemy_defeated ? 8 : 0);
 }
 
+// Expand applicable symbolic actions; this plan names intent, not navigation execution.
 std::optional<std::vector<std::string>> goap_plan(Facts start) {
     const std::vector<Action> actions{
         {"find_weapon", 2,

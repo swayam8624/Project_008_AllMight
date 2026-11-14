@@ -35,5 +35,5 @@ An initial-value problem consists of a differential equation and a specified sta
 ## Full teaching explanation
 
 [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Dynamics, forces, and numerical integration|Dynamics, forces, and numerical integration]] · [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Animation curves and motion paths|Animation curves and motion paths]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation|Phase 9 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#ODEs and numerical simulation|Phase 9 teaching section]]
 - [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · Phase 9 visual recall

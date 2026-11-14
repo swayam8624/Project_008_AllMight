@@ -10,6 +10,11 @@ from __future__ import annotations
 import math
 import numpy as np
 
+def require(condition: bool, message: str) -> None:
+    """Keep experiment checks active when the interpreter runs with -O."""
+    if not condition:
+        raise AssertionError(message)
+
 
 def volume_render(
     sigma: np.ndarray,
@@ -17,17 +22,26 @@ def volume_render(
     delta: np.ndarray,
     background: float = 0.0,
 ) -> tuple[float, np.ndarray, float]:
+    """Composite one scalar-color ray from piecewise-constant density intervals.
+
+    Density sigma is inverse metres; delta is metres; hence sigma*delta and
+    alpha are dimensionless. ``weights[i]`` is the fraction of initial ray
+    radiance assigned to interval i after surviving all earlier intervals.
+    The returned T is residual visibility for the background.
+    """
     if sigma.ndim != 1 or color.shape != sigma.shape or delta.shape != sigma.shape:
         raise ValueError("sigma, color and delta must be equal-length 1-D arrays")
     if np.any(sigma < 0.0) or np.any(delta <= 0.0):
         raise ValueError("density must be nonnegative and interval length positive")
 
+    # Beer-Lambert survival over one constant-density segment is exp(-sigma*dt).
+    # Opacity is the complementary fraction terminated inside that segment.
     alpha = 1.0 - np.exp(-sigma * delta)
     weights = np.empty_like(alpha)
     T = 1.0
     for i, a in enumerate(alpha):
-        weights[i] = T * a
-        T *= 1.0 - a
+        weights[i] = T * a  # Reach interval i, then terminate inside it.
+        T *= 1.0 - a        # Only the surviving fraction reaches the next interval.
     pixel = float(np.dot(weights, color) + T * background)
     return pixel, weights, T
 
@@ -38,7 +52,15 @@ def analytic_gradients(
     delta: np.ndarray,
     background: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return dC/dsigma and dC/dcolor for a scalar-color ray."""
+    """Return exact dC/dsigma and dC/dcolor for this discrete compositor.
+
+    The backward tail recurrence computes the color behind each interval with
+    unit incoming transmittance. Increasing sigma trades visibility from that
+    tail for the current interval, giving T_i*delta_i*exp(-sigma_i*delta_i)
+    times (current_color - tail_color). This derivative is for fixed samples,
+    fixed interval lengths and scalar color; it omits gradients through a
+    learned sampler, camera, neural field, or multi-channel loss.
+    """
     pixel, weights, _ = volume_render(sigma, color, delta, background)
     del pixel
 
@@ -50,7 +72,7 @@ def analytic_gradients(
     tail = np.empty(n)
     tail_color = background
     for i in range(n - 1, -1, -1):
-        tail[i] = tail_color
+        tail[i] = tail_color  # Strictly later samples plus background, reset to T=1.
         tail_color = alpha[i] * color[i] + (1.0 - alpha[i]) * tail_color
 
     d_color = weights.copy()
@@ -58,7 +80,7 @@ def analytic_gradients(
     T = 1.0
     for i in range(n):
         # d alpha / d sigma = delta * exp(-sigma*delta)
-        d_alpha = delta[i] * (1.0 - alpha[i])
+        d_alpha = delta[i] * (1.0 - alpha[i])  # d alpha / d sigma in metres.
         d_sigma[i] = T * d_alpha * (color[i] - tail[i])
         T *= 1.0 - alpha[i]
     return d_sigma, d_color
@@ -71,13 +93,15 @@ def finite_difference(
     background: float,
     eps: float = 1e-6,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Independent central-difference oracle, restricted to sigma >= 0."""
     gs = np.zeros_like(sigma)
     gc = np.zeros_like(color)
     for i in range(len(sigma)):
         plus, minus = sigma.copy(), sigma.copy()
         plus[i] += eps
         minus[i] -= eps
-        # Keep the finite-difference probe inside the legal sigma >= 0 domain.
+        # A central difference needs both sides; reject boundary probes instead
+        # of silently switching to a one-sided derivative with different error.
         if minus[i] < 0.0:
             raise ValueError("finite-difference density probe crossed zero")
         a = volume_render(plus, color, delta, background)[0]
@@ -94,6 +118,7 @@ def finite_difference(
 
 
 def positional_encoding(x: float, levels: int) -> np.ndarray:
+    """Expose raw coordinate and dyadic Fourier features for a scalar input."""
     values = [x]
     for k in range(levels):
         f = (2.0**k) * math.pi
@@ -102,6 +127,7 @@ def positional_encoding(x: float, levels: int) -> np.ndarray:
 
 
 def main() -> None:
+    """Run compositor invariants, gradient oracle, inverse toy, and ambiguity check."""
     sigma = np.array([0.4, 1.2, 0.7, 0.3])
     color = np.array([0.1, 0.8, 0.4, 0.9])
     delta = np.array([0.2, 0.25, 0.15, 0.4])
@@ -110,7 +136,7 @@ def main() -> None:
     # 1. Weights plus surviving background transmittance form a partition.
     pixel, weights, T_end = volume_render(sigma, color, delta, background)
     np.testing.assert_allclose(np.sum(weights) + T_end, 1.0, atol=1e-12)
-    assert 0.0 <= pixel <= 1.0
+    require(0.0 <= pixel <= 1.0, "bounded samples and background must yield a bounded pixel")
 
     # 2. Analytic rendering gradients agree with independent finite differences.
     gs, gc = analytic_gradients(sigma, color, delta, background)
@@ -134,7 +160,7 @@ def main() -> None:
         estimate = np.maximum(estimate, 1e-6)
     final_pred = volume_render(estimate, color, delta, background)[0]
     final_loss = 0.5 * (final_pred - target) ** 2
-    assert final_loss < initial_loss * 1e-4
+    require(final_loss < initial_loss * 1e-4, "tiny inverse-rendering loss did not decrease")
 
     # 4. One pixel cannot uniquely identify all densities/colors.
     # A single homogeneous slab has C = alpha*c on a black background.
@@ -143,15 +169,17 @@ def main() -> None:
     sigma_b = 2.0
     alpha_b = 1.0 - math.exp(-sigma_b * d)
     c_b = target_pixel / alpha_b
-    assert 0.0 < c_b < 1.0
+    require(0.0 < c_b < 1.0, "alternate density must admit an in-range matching color")
     pixel_b = (1.0 - math.exp(-sigma_b * d)) * c_b
-    assert abs(pixel_b - target_pixel) < 1e-12
-    assert abs(sigma_a - sigma_b) > 0.5 and abs(c_a - c_b) > 0.1
+    require(abs(pixel_b - target_pixel) < 1e-12,
+            "constructed ambiguous scene does not reproduce the target pixel")
+    require(abs(sigma_a - sigma_b) > 0.5 and abs(c_a - c_b) > 0.1,
+            "the two scenes should differ in both density and color")
 
     # 5. Positional encoding exposes multiple spatial frequencies explicitly.
     enc = positional_encoding(0.125, 4)
-    assert enc.shape == (9,)
-    assert np.all(np.isfinite(enc))
+    require(enc.shape == (9,), "four Fourier levels must produce nine scalar features")
+    require(np.all(np.isfinite(enc)), "positional encoding contains a non-finite feature")
 
     print("NeRF volume rendering: 5 suites PASS")
 

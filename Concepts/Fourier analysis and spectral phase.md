@@ -31,7 +31,7 @@ Recover the two tested sinusoid amplitudes and explain leakage. Pending: FFT imp
 
 ## Source and navigation
 
-[[Continuous Notes/XR - From Light to Perception - Seeing and Representing Reality#Fourier coordinates reveal what a filter removes|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
+[[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Fourier coordinates reveal what a filter removes|Expanded teaching explanation]] · [[Supplementary/Foundations#XR01 - Independent seeing and representation source|Independent coverage]] · [[Dependency Map]]
 
 ## University course development
 

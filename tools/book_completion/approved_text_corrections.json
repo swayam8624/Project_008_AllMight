@@ -1,0 +1,2450 @@
+[
+  {
+    "file": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+    "before": "Suppose our crate is a homogeneous rectangular box with mass $m=2\\\\,\\\\mathrm{kg}$, width $a=2\\\\,\\\\mathrm m$, height $b=1\\\\,\\\\mathrm m$, and depth $c=1\\\\,\\\\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\\\\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.",
+    "after": "Suppose our crate is a homogeneous rectangular box with mass $m=2\\,\\mathrm{kg}$, width $a=2\\,\\mathrm m$, height $b=1\\,\\mathrm m$, and depth $c=1\\,\\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.",
+    "reason": "Correct double-escaped TeX in the crate rigid-body worked example; use display delimiters for its inertia tensor. No model or teaching content removed."
+  },
+  {
+    "file": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+    "before": "$\nI_{\\\\mathrm{body}}=\\\\frac{m}{12}\\\\operatorname{diag}(b^2+c^2,\\\\;a^2+c^2,\\\\;a^2+b^2)=\\\\operatorname{diag}(1/3,5/6,5/6)\\\\;\\\\mathrm{kg\\\\,m^2}.\n$",
+    "after": "$$\nI_{\\mathrm{body}}=\\frac{m}{12}\\operatorname{diag}(b^2+c^2,\\;a^2+c^2,\\;a^2+b^2)=\\operatorname{diag}(1/3,5/6,5/6)\\;\\mathrm{kg\\,m^2}.\n$$",
+    "reason": "Correct double-escaped TeX in the crate rigid-body worked example; use display delimiters for its inertia tensor. No model or teaching content removed."
+  },
+  {
+    "file": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+    "before": "Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\\\\,\\\\mathrm N$ acting $0.5\\\\,\\\\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\\\\,\\\\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\\\\,\\\\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\\\\tau=r\\\\times F=(0,0,-5)\\\\,\\\\mathrm{N\\\\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\\\\alpha_z=\\\\tau_z/I_{zz}=-6\\\\,\\\\mathrm{rad/s^2}$ because $I_{zz}=5/6\\\\,\\\\mathrm{kg\\\\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\\\\omega\\\\times(I\\\\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.",
+    "after": "Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\\,\\mathrm N$ acting $0.5\\,\\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\\,\\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\\,\\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\\tau=r\\times F=(0,0,-5)\\,\\mathrm{N\\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\\alpha_z=\\tau_z/I_{zz}=-6\\,\\mathrm{rad/s^2}$ because $I_{zz}=5/6\\,\\mathrm{kg\\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\\omega\\times(I\\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.",
+    "reason": "Correct double-escaped TeX in the crate rigid-body worked example; use display delimiters for its inertia tensor. No model or teaching content removed."
+  },
+  {
+    "file": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+    "before": "At a fixed timestep $h=0.01\\\\,\\\\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\\\\,\\\\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\\\\,\\\\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.",
+    "after": "At a fixed timestep $h=0.01\\,\\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\\,\\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\\,\\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.",
+    "reason": "Correct double-escaped TeX in the crate rigid-body worked example; use display delimiters for its inertia tensor. No model or teaching content removed."
+  },
+  {
+    "file": "Continuous Notes/Game Engine - From First Frame to Living Worlds.md",
+    "before": "When the crate touches the plate or floor, the contact impulse must change both $v$ and $\\\\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Physical Foundations — Rigid Bodies, Extended Motion, and Contact Constraints|Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.",
+    "after": "When the crate touches the plate or floor, the contact impulse must change both $v$ and $\\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Physical Foundations — Rigid Bodies, Extended Motion, and Contact Constraints|Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.",
+    "reason": "Correct double-escaped TeX in the crate rigid-body worked example; use display delimiters for its inertia tensor. No model or teaching content removed."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf p_o \\xrightarrow{M} \\mathbf p_w \\xrightarrow{V} \\mathbf p_c \\xrightarrow{\\pi} \\mathbf p\\_{\\text{image}}.",
+    "after": "\\mathbf p_o \\xrightarrow{M} \\mathbf p_w \\xrightarrow{V} \\mathbf p_c \\xrightarrow{\\pi} \\mathbf p_{\\text{image}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{x\\to a}f(x)=L.",
+    "after": "\\lim_{x\\to a}f(x)=L.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{\\lim\\_{x\\to2}f(x)=4}.",
+    "after": "\\boxed{\\lim_{x\\to2}f(x)=4}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "We say $\\lim\\_{x\\to a}f(x)=L$ if, for every desired output tolerance $\\varepsilon>0$, there exists an input tolerance $\\delta>0$ such that:",
+    "after": "We say $\\lim_{x\\to a}f(x)=L$ if, for every desired output tolerance $\\varepsilon>0$, there exists an input tolerance $\\delta>0$ such that:",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{\\theta\\to0}\\frac{\\sin\\theta}{\\theta}=1",
+    "after": "\\lim_{\\theta\\to0}\\frac{\\sin\\theta}{\\theta}=1",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{x\\to a}f(x)=f(a).",
+    "after": "\\lim_{x\\to a}f(x)=f(a).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v\\_{\\text{average}}=\\frac{9-4}{3-2}=5\\ \\text{m/s}.",
+    "after": "v_{\\text{average}}=\\frac{9-4}{3-2}=5\\ \\text{m/s}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{x'(t)=\\lim\\_{h\\to0}\\frac{x(t+h)-x(t)}h=2t}.",
+    "after": "\\boxed{x'(t)=\\lim_{h\\to0}\\frac{x(t+h)-x(t)}h=2t}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\\epsilon\\_{\\mathrm{mach}}/h)$ times an appropriate function scale.",
+    "after": "has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\\epsilon_{\\mathrm{mach}}/h)$ times an appropriate function scale.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\\sqrt{\\epsilon\\_{\\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.",
+    "after": "Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\\sqrt{\\epsilon_{\\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{h\\to0} \\frac{f(a+h)-f(a)}h=f'(a).",
+    "after": "\\lim_{h\\to0} \\frac{f(a+h)-f(a)}h=f'(a).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{h\\to0}\\frac{r(h)}h=0.",
+    "after": "\\lim_{h\\to0}\\frac{r(h)}h=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac d{dx}x^n = \\lim\\_{h\\to0}\\frac{(x+h)^n-x^n}{h}.",
+    "after": "\\frac d{dx}x^n = \\lim_{h\\to0}\\frac{(x+h)^n-x^n}{h}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "h'(x)= \\lim\\_{\\Delta x\\to0} \\frac{f(x+\\Delta x)g(x+\\Delta x)-f(x)g(x)}{\\Delta x}.",
+    "after": "h'(x)= \\lim_{\\Delta x\\to0} \\frac{f(x+\\Delta x)g(x+\\Delta x)-f(x)g(x)}{\\Delta x}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\begin{aligned} h'(x)=\\lim\\_{\\Delta x\\to0} \\bigg[ &\\frac{f(x+\\Delta x)-f(x)}{\\Delta x}g(x+\\Delta x)\\\\ +{}&f(x)\\frac{g(x+\\Delta x)-g(x)}{\\Delta x} \\bigg]. \\end{aligned}",
+    "after": "\\begin{aligned} h'(x)=\\lim_{\\Delta x\\to0} \\bigg[ &\\frac{f(x+\\Delta x)-f(x)}{\\Delta x}g(x+\\Delta x)\\\\ +{}&f(x)\\frac{g(x+\\Delta x)-g(x)}{\\Delta x} \\bigg]. \\end{aligned}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac d{dx}e^x =e^x\\lim\\_{h\\to0}\\frac{e^h-1}{h} =e^x.",
+    "after": "\\frac d{dx}e^x =e^x\\lim_{h\\to0}\\frac{e^h-1}{h} =e^x.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "P=\\prod\\_{i=1}^{N}p_i.",
+    "after": "P=\\prod_{i=1}^{N}p_i.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\ln P=\\sum\\_{i=1}^{N}\\ln p_i.",
+    "after": "\\ln P=\\sum_{i=1}^{N}\\ln p_i.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{h\\to0}\\frac{\\sin h}{h}=1, \\qquad \\lim\\_{h\\to0}\\frac{\\cos h-1}{h}=0.",
+    "after": "\\lim_{h\\to0}\\frac{\\sin h}{h}=1, \\qquad \\lim_{h\\to0}\\frac{\\cos h-1}{h}=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial f}{\\partial x} = \\lim\\_{h\\to0} \\frac{f(x+h,y)-f(x,y)}h.",
+    "after": "\\frac{\\partial f}{\\partial x} = \\lim_{h\\to0} \\frac{f(x+h,y)-f(x,y)}h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial f}{\\partial y} = \\lim\\_{h\\to0} \\frac{f(x,y+h)-f(x,y)}h.",
+    "after": "\\frac{\\partial f}{\\partial y} = \\lim_{h\\to0} \\frac{f(x,y+h)-f(x,y)}h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Df(\\mathbf x)= \\begin{bmatrix} f\\_{x_1}&f\\_{x_2}&\\cdots&f\\_{x_n} \\end{bmatrix}.",
+    "after": "Df(\\mathbf x)= \\begin{bmatrix} f_{x_1}&f_{x_2}&\\cdots&f_{x_n} \\end{bmatrix}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathbf u}f(\\mathbf x) = \\lim\\_{h\\to0} \\frac{f(\\mathbf x+h\\mathbf u)-f(\\mathbf x)}h.",
+    "after": "D_{\\mathbf u}f(\\mathbf x) = \\lim_{h\\to0} \\frac{f(\\mathbf x+h\\mathbf u)-f(\\mathbf x)}h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ D\\_{\\mathbf u}f(\\mathbf x) = \\nabla f(\\mathbf x)\\cdot\\mathbf u }.",
+    "after": "\\boxed{ D_{\\mathbf u}f(\\mathbf x) = \\nabla f(\\mathbf x)\\cdot\\mathbf u }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\begin{aligned} D\\_{\\mathbf u}f &=4\\left(\\frac35\\right)+10\\left(\\frac45\\right)\\\\ &=\\frac{12}{5}+\\frac{40}{5}\\\\ &=\\boxed{10.4}. \\end{aligned}",
+    "after": "\\begin{aligned} D_{\\mathbf u}f &=4\\left(\\frac35\\right)+10\\left(\\frac45\\right)\\\\ &=\\frac{12}{5}+\\frac{40}{5}\\\\ &=\\boxed{10.4}. \\end{aligned}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathbf u}f=\\nabla f\\cdot\\mathbf u.",
+    "after": "D_{\\mathbf u}f=\\nabla f\\cdot\\mathbf u.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathbf u}f = \\|\\nabla f\\|\\cos\\theta.",
+    "after": "D_{\\mathbf u}f = \\|\\nabla f\\|\\cos\\theta.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf u\\_{\\max}= \\frac{\\nabla f}{\\|\\nabla f\\|} }.",
+    "after": "\\boxed{ \\mathbf u_{\\max}= \\frac{\\nabla f}{\\|\\nabla f\\|} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf u\\_{\\min}= -\\frac{\\nabla f}{\\|\\nabla f\\|} }.",
+    "after": "\\boxed{ \\mathbf u_{\\min}= -\\frac{\\nabla f}{\\|\\nabla f\\|} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf u\\_{\\max} = \\frac{G^{-1}\\nabla f} {\\sqrt{\\nabla f^TG^{-1}\\nabla f}}.",
+    "after": "\\mathbf u_{\\max} = \\frac{G^{-1}\\nabla f} {\\sqrt{\\nabla f^TG^{-1}\\nabla f}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J\\_{ij}=\\frac{\\partial f_i}{\\partial x_j}",
+    "after": "J_{ij}=\\frac{\\partial f_i}{\\partial x_j}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{\\|\\mathbf h\\|\\to0} \\frac{\\|\\mathbf r(\\mathbf h)\\|}{\\|\\mathbf h\\|}=0.",
+    "after": "\\lim_{\\|\\mathbf h\\|\\to0} \\frac{\\|\\mathbf r(\\mathbf h)\\|}{\\|\\mathbf h\\|}=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta u\\_{\\text{exact}} = f_x\\left( \\frac{X+\\Delta X}{Z+\\Delta Z} -\\frac XZ \\right).",
+    "after": "\\Delta u_{\\text{exact}} = f_x\\left( \\frac{X+\\Delta X}{Z+\\Delta Z} -\\frac XZ \\right).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta u\\_{\\text{exact}} = f_x\\frac{Z\\Delta X-X\\Delta Z}{Z(Z+\\Delta Z)}.",
+    "after": "\\Delta u_{\\text{exact}} = f_x\\frac{Z\\Delta X-X\\Delta Z}{Z(Z+\\Delta Z)}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta u\\_{\\text{linear}} = f_x\\frac{Z\\Delta X-X\\Delta Z}{Z^2}.",
+    "after": "\\Delta u_{\\text{linear}} = f_x\\frac{Z\\Delta X-X\\Delta Z}{Z^2}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\Delta u\\_{\\text{exact}}-\\Delta u\\_{\\text{linear}} = -\\frac{f_x(Z\\Delta X-X\\Delta Z)\\Delta Z} {Z^2(Z+\\Delta Z)} }.",
+    "after": "\\boxed{ \\Delta u_{\\text{exact}}-\\Delta u_{\\text{linear}} = -\\frac{f_x(Z\\Delta X-X\\Delta Z)\\Delta Z} {Z^2(Z+\\Delta Z)} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\text{pose}} = J\\_\\pi \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I_3 \\end{bmatrix} }.",
+    "after": "\\boxed{ J_{\\text{pose}} = J\\_\\pi \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I_3 \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ T_n(a+h)= \\sum\\_{k=0}^{n} \\frac{f^{(k)}(a)}{k!}h^k }.",
+    "after": "\\boxed{ T_n(a+h)= \\sum_{k=0}^{n} \\frac{f^{(k)}(a)}{k!}h^k }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac12 \\begin{bmatrix}h_x&h_y\\end{bmatrix} \\begin{bmatrix} f\\_{xx}&f\\_{xy}\\\\ f\\_{yx}&f\\_{yy} \\end{bmatrix} \\begin{bmatrix}h_x\\\\h_y\\end{bmatrix}.",
+    "after": "\\frac12 \\begin{bmatrix}h_x&h_y\\end{bmatrix} \\begin{bmatrix} f_{xx}&f_{xy}\\\\ f_{yx}&f_{yy} \\end{bmatrix} \\begin{bmatrix}h_x\\\\h_y\\end{bmatrix}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac12\\left( f\\_{xx}h_x^2+ f\\_{xy}h_xh_y+ f\\_{yx}h_yh_x+ f\\_{yy}h_y^2 \\right).",
+    "after": "\\frac12\\left( f_{xx}h_x^2+ f_{xy}h_xh_y+ f_{yx}h_yh_x+ f_{yy}h_y^2 \\right).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\frac12\\left( f\\_{xx}h_x^2+ 2f\\_{xy}h_xh_y+ f\\_{yy}h_y^2 \\right) }.",
+    "after": "\\boxed{ \\frac12\\left( f_{xx}h_x^2+ 2f_{xy}h_xh_y+ f_{yy}h_y^2 \\right) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "The cross term $2f\\_{xy}h_xh_y$ describes coupling between the two perturbation directions.",
+    "after": "The cross term $2f_{xy}h_xh_y$ describes coupling between the two perturbation directions.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\nabla\\_{\\mathbf h}m=\\nabla f+H\\mathbf h.",
+    "after": "\\nabla_{\\mathbf h}m=\\nabla f+H\\mathbf h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lim\\_{h\\to0}\\frac{r(h)}{|h|}=0.",
+    "after": "\\lim_{h\\to0}\\frac{r(h)}{|h|}=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E\\_{\\text{abs}}=|\\hat y-y|.",
+    "after": "E_{\\text{abs}}=|\\hat y-y|.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E\\_{\\text{rel}}=\\frac{|\\hat y-y|}{|y|},",
+    "after": "E_{\\text{rel}}=\\frac{|\\hat y-y|}{|y|},",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "w\\_{\\text{clip}}=-z\\_{\\text{view}}.",
+    "after": "w_{\\text{clip}}=-z_{\\text{view}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "X=X\\_{\\text{view}},\\quad Y=-Y\\_{\\text{view}},\\quad Z=-Z\\_{\\text{view}}",
+    "after": "X=X_{\\text{view}},\\quad Y=-Y_{\\text{view}},\\quad Z=-Z_{\\text{view}}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E(\\mathbf x)=\\frac12\\|\\mathbf r(\\mathbf x)\\|^2 =\\frac12\\sum\\_{i=1}^m r_i(\\mathbf x)^2.",
+    "after": "E(\\mathbf x)=\\frac12\\|\\mathbf r(\\mathbf x)\\|^2 =\\frac12\\sum_{i=1}^m r_i(\\mathbf x)^2.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial E}{\\partial x_j} = \\sum\\_{i=1}^m r_i \\frac{\\partial r_i}{\\partial x_j}.",
+    "after": "\\frac{\\partial E}{\\partial x_j} = \\sum_{i=1}^m r_i \\frac{\\partial r_i}{\\partial x_j}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J\\_{ij}=\\frac{\\partial r_i}{\\partial x_j}.",
+    "after": "J_{ij}=\\frac{\\partial r_i}{\\partial x_j}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\nabla^2E = J^TJ+ \\sum\\_{i=1}^m r_i\\nabla^2r_i }.",
+    "after": "\\boxed{ \\nabla^2E = J^TJ+ \\sum_{i=1}^m r_i\\nabla^2r_i }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "H\\_{\\mathrm{GN}}=J^TJ.",
+    "after": "H_{\\mathrm{GN}}=J^TJ.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\Sigma\\_{\\text{image}} \\approx J\\_\\pi\\Sigma J\\_\\pi^T }.",
+    "after": "\\boxed{ \\Sigma_{\\text{image}} \\approx J\\_\\pi\\Sigma J\\_\\pi^T }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\Sigma\\_{\\text{image}} \\approx J\\_\\pi R\\Sigma\\_{\\text{world}}R^TJ\\_\\pi^T }.",
+    "after": "\\boxed{ \\Sigma_{\\text{image}} \\approx J\\_\\pi R\\Sigma_{\\text{world}}R^TJ\\_\\pi^T }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Sigma\\_{\\text{image}}=J\\_\\pi\\Sigma J\\_\\pi^T.",
+    "after": "\\Sigma_{\\text{image}}=J\\_\\pi\\Sigma J\\_\\pi^T.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\Sigma\\_{\\text{image}}= \\begin{bmatrix} 20&2.05\\\\ 2.05&68.290625 \\end{bmatrix} \\text{ pixels}^2 }.",
+    "after": "\\boxed{ \\Sigma_{\\text{image}}= \\begin{bmatrix} 20&2.05\\\\ 2.05&68.290625 \\end{bmatrix} \\text{ pixels}^2 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "u\\_{XZ}=u\\_{ZX}=-\\frac{f_x}{Z^2}, \\qquad u\\_{ZZ}=\\frac{2f_xX}{Z^3}.",
+    "after": "u_{XZ}=u_{ZX}=-\\frac{f_x}{Z^2}, \\qquad u_{ZZ}=\\frac{2f_xX}{Z^3}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ H\\_{g\\circ F} = J_F^TH_gJ_F + \\sum\\_{k=1}^{m} \\frac{\\partial g}{\\partial y_k}H\\_{F_k} }.",
+    "after": "\\boxed{ H_{g\\circ F} = J_F^TH_gJ_F + \\sum_{k=1}^{m} \\frac{\\partial g}{\\partial y_k}H_{F_k} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{F^{-1}}(F(\\mathbf x))= [J_F(\\mathbf x)]^{-1} }.",
+    "after": "\\boxed{ J_{F^{-1}}(F(\\mathbf x))= [J_F(\\mathbf x)]^{-1} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "R\\_{\\text{new}}=\\exp([\\delta\\boldsymbol\\omega]\\_\\times)R.",
+    "after": "R_{\\text{new}}=\\exp([\\delta\\boldsymbol\\omega]\\_\\times)R.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\nabla\\_{\\mathbf z}\\tilde f = A^T\\nabla\\_{\\mathbf x}f }.",
+    "after": "\\boxed{ \\nabla_{\\mathbf z}\\tilde f = A^T\\nabla_{\\mathbf x}f }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ H\\_{\\mathbf z}=A^TH\\_{\\mathbf x}A }.",
+    "after": "\\boxed{ H_{\\mathbf z}=A^TH_{\\mathbf x}A }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H\\_{ij}$ and $H\\_{ji}$, inspect regularity                 |",
+    "after": "| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H_{ij}$ and $H_{ji}$, inspect regularity                 |",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\begin{aligned} f'(x)&=\\lim\\_{h\\to0}\\frac{f(x+h)-f(x)}h\\\\[3pt] Df(\\mathbf x)[\\mathbf h]&=\\nabla f(\\mathbf x)^T\\mathbf h\\\\[3pt] F(\\mathbf x+\\mathbf h)&\\approx F(\\mathbf x)+J_F(\\mathbf x)\\mathbf h\\\\[3pt] J\\_{G\\circ F}&=J_GJ_F\\\\[3pt] f(\\mathbf x+\\mathbf h)&\\approx f(\\mathbf x)+\\nabla f^T\\mathbf h+ \\frac12\\mathbf h^TH_f\\mathbf h\\\\[3pt] \\Sigma\\_{\\text{image}}&\\approx J\\_\\pi\\Sigma J\\_\\pi^T \\end{aligned} }",
+    "after": "\\boxed{ \\begin{aligned} f'(x)&=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}h\\\\[3pt] Df(\\mathbf x)[\\mathbf h]&=\\nabla f(\\mathbf x)^T\\mathbf h\\\\[3pt] F(\\mathbf x+\\mathbf h)&\\approx F(\\mathbf x)+J_F(\\mathbf x)\\mathbf h\\\\[3pt] J_{G\\circ F}&=J_GJ_F\\\\[3pt] f(\\mathbf x+\\mathbf h)&\\approx f(\\mathbf x)+\\nabla f^T\\mathbf h+ \\frac12\\mathbf h^TH_f\\mathbf h\\\\[3pt] \\Sigma_{\\text{image}}&\\approx J\\_\\pi\\Sigma J\\_\\pi^T \\end{aligned} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta x\\approx\\sum\\_{i=0}^{N-1}v(t_i)\\Delta t.",
+    "after": "\\Delta x\\approx\\sum_{i=0}^{N-1}v(t_i)\\Delta t.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "W=\\int\\_{x_0}^{x_1}F(x)\\\\,dx.",
+    "after": "W=\\int_{x_0}^{x_1}F(x)\\\\,dx.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf J=\\int\\_{t_0}^{t_1}\\mathbf F(t)\\\\,dt,",
+    "after": "\\mathbf J=\\int_{t_0}^{t_1}\\mathbf F(t)\\\\,dt,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta x_i=x\\_{i+1}-x_i.",
+    "after": "\\Delta x_i=x_{i+1}-x_i.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Choose a sampling point $\\xi_i\\in[x_i,x\\_{i+1}]$.",
+    "after": "Choose a sampling point $\\xi_i\\in[x_i,x_{i+1}]$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "S_N=\\sum\\_{i=0}^{N-1}f(\\xi_i)\\Delta x_i.",
+    "after": "S_N=\\sum_{i=0}^{N-1}f(\\xi_i)\\Delta x_i.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\int_a^b f(x)\\\\,dx = \\lim\\_{\\|\\mathcal P\\|\\to0} \\sum\\_{i=0}^{N-1}f(\\xi_i)\\Delta x_i }.",
+    "after": "\\boxed{ \\int_a^b f(x)\\\\,dx = \\lim_{\\|\\mathcal P\\|\\to0} \\sum_{i=0}^{N-1}f(\\xi_i)\\Delta x_i }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "L_N=h\\sum\\_{i=0}^{N-1}f(x_i).",
+    "after": "L_N=h\\sum_{i=0}^{N-1}f(x_i).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "R_N=h\\sum\\_{i=1}^{N}f(x_i).",
+    "after": "R_N=h\\sum_{i=1}^{N}f(x_i).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "M_N=h\\sum\\_{i=0}^{N-1}f\\left(x_i+\\frac h2\\right).",
+    "after": "M_N=h\\sum_{i=0}^{N-1}f\\left(x_i+\\frac h2\\right).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x(t)=x(t_0)+\\int\\_{t_0}^{t}v(s)\\\\,ds,",
+    "after": "x(t)=x(t_0)+\\int_{t_0}^{t}v(s)\\\\,ds,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v(t)=v(t_0)+\\int\\_{t_0}^{t}a(s)\\\\,ds,",
+    "after": "v(t)=v(t_0)+\\int_{t_0}^{t}a(s)\\\\,ds,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\int\\_{x_i}^{x_i+h}f(x)\\\\,dx = hf(x_i)+\\frac{h^2}{2}f'(x_i)+O(h^3)",
+    "after": "\\int_{x_i}^{x_i+h}f(x)\\\\,dx = hf(x_i)+\\frac{h^2}{2}f'(x_i)+O(h^3)",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\int\\_{-h/2}^{h/2}f'(m_i)s\\\\,ds=0.",
+    "after": "\\int_{-h/2}^{h/2}f'(m_i)s\\\\,ds=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\int\\_{x_i}^{x\\_{i+1}}f(x)\\\\,dx = hf(m_i)+\\frac{h^3}{24}f''(m_i)+O(h^5)",
+    "after": "\\int_{x_i}^{x_{i+1}}f(x)\\\\,dx = hf(m_i)+\\frac{h^3}{24}f''(m_i)+O(h^5)",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ T_N= h\\left[ \\frac{f(a)}2+ \\sum\\_{i=1}^{N-1}f(x_i)+ \\frac{f(b)}2 \\right] }.",
+    "after": "\\boxed{ T_N= h\\left[ \\frac{f(a)}2+ \\sum_{i=1}^{N-1}f(x_i)+ \\frac{f(b)}2 \\right] }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ |I-T_N| \\le \\frac{(b-a)h^2}{12} \\max\\_{x\\in[a,b]}|f''(x)| }.",
+    "after": "\\boxed{ |I-T_N| \\le \\frac{(b-a)h^2}{12} \\max_{x\\in[a,b]}|f''(x)| }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\int\\_{x_0}^{x_2}p(x)\\\\,dx = h\\int_0^2p(u)\\\\,du.",
+    "after": "\\int_{x_0}^{x_2}p(x)\\\\,dx = h\\int_0^2p(u)\\\\,du.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ S_N= \\frac h3 \\left[ f_0+f_N+ 4\\sum\\_{\\substack{i=1\\\\\\i\\text{ odd}}}^{N-1}f_i+ 2\\sum\\_{\\substack{i=2\\\\\\i\\text{ even}}}^{N-2}f_i \\right] }.",
+    "after": "\\boxed{ S_N= \\frac h3 \\left[ f_0+f_N+ 4\\sum_{\\substack{i=1\\\\\\i\\text{ odd}}}^{N-1}f_i+ 2\\sum_{\\substack{i=2\\\\\\i\\text{ even}}}^{N-2}f_i \\right] }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ |I-S_N| \\le \\frac{(b-a)h^4}{180} \\max\\_{x\\in[a,b]}|f^{(4)}(x)| }.",
+    "after": "\\boxed{ |I-S_N| \\le \\frac{(b-a)h^4}{180} \\max_{x\\in[a,b]}|f^{(4)}(x)| }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "For a damped spring receiving an external force $F\\_{\\mathrm{ext}}(t)$:",
+    "after": "For a damped spring receiving an external force $F_{\\mathrm{ext}}(t)$:",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\frac{d}{dt} \\begin{bmatrix} x\\\\v \\end{bmatrix} = \\begin{bmatrix} v\\\\ \\frac{F\\_{\\mathrm{ext}}(t)-cv-kx}{m} \\end{bmatrix} }.",
+    "after": "\\boxed{ \\frac{d}{dt} \\begin{bmatrix} x\\\\v \\end{bmatrix} = \\begin{bmatrix} v\\\\ \\frac{F_{\\mathrm{ext}}(t)-cv-kx}{m} \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf y(t) = \\mathbf y_0+ \\int\\_{t_0}^{t}f(s,\\mathbf y(s))\\\\,ds }.",
+    "after": "\\boxed{ \\mathbf y(t) = \\mathbf y_0+ \\int_{t_0}^{t}f(s,\\mathbf y(s))\\\\,ds }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{d}{dh}L(\\mathbf x+h\\mathbf d)\\bigg|\\_{h=0} = \\nabla L(\\mathbf x)^T\\mathbf d.",
+    "after": "\\frac{d}{dh}L(\\mathbf x+h\\mathbf d)\\bigg|_{h=0} = \\nabla L(\\mathbf x)^T\\mathbf d.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E\\_{\\mathrm{abs}}= |D_h-\\mathbf g^T\\mathbf d|.",
+    "after": "E_{\\mathrm{abs}}= |D_h-\\mathbf g^T\\mathbf d|.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ E\\_{\\mathrm{scaled}} = \\frac{ |D_h-\\mathbf g^T\\mathbf d| }{ \\max(s,\\ |D_h|,\\ |\\mathbf g^T\\mathbf d|) } }",
+    "after": "\\boxed{ E_{\\mathrm{scaled}} = \\frac{ |D_h-\\mathbf g^T\\mathbf d| }{ \\max(s,\\ |D_h|,\\ |\\mathbf g^T\\mathbf d|) } }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "F=F_k\\circ F\\_{k-1}\\circ\\cdots\\circ F_1.",
+    "after": "F=F_k\\circ F_{k-1}\\circ\\cdots\\circ F_1.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J_F = J\\_{F_k}\\cdots J\\_{F_2}J\\_{F_1}.",
+    "after": "J_F = J_{F_k}\\cdots J_{F_2}J_{F_1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\bar x\\_{\\text{product}} = \\bar a\\\\,y = 13.818594853(3).",
+    "after": "\\bar x_{\\text{product}} = \\bar a\\\\,y = 13.818594853(3).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\bar x\\_{\\text{product}} \\approx41.455784560.",
+    "after": "\\bar x_{\\text{product}} \\approx41.455784560.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\bar x\\_{\\text{sine}} = \\bar b\\cos x.",
+    "after": "\\bar x_{\\text{sine}} = \\bar b\\cos x.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\bar x = \\bar x\\_{\\text{product}} + \\bar x\\_{\\text{sine}}.",
+    "after": "\\bar x = \\bar x_{\\text{product}} + \\bar x_{\\text{sine}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Y\\_{ij}=X\\_{ij}+b_j.",
+    "after": "Y_{ij}=X_{ij}+b_j.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "G\\_{ij}=\\frac{\\partial L}{\\partial Y\\_{ij}}.",
+    "after": "G_{ij}=\\frac{\\partial L}{\\partial Y_{ij}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial L}{\\partial X\\_{ij}}=G\\_{ij}.",
+    "after": "\\frac{\\partial L}{\\partial X_{ij}}=G_{ij}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\frac{\\partial L}{\\partial b_j} = \\sum\\_{i=1}^{N}G\\_{ij} }.",
+    "after": "\\boxed{ \\frac{\\partial L}{\\partial b_j} = \\sum_{i=1}^{N}G_{ij} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf y\\_{n+1} = \\mathbf y_n+ h f(t_n,\\mathbf y_n,\\boldsymbol\\theta).",
+    "after": "\\mathbf y_{n+1} = \\mathbf y_n+ h f(t_n,\\mathbf y_n,\\boldsymbol\\theta).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial\\mathbf y\\_{n+1}}{\\partial\\theta} = \\frac{\\partial\\mathbf y_n}{\\partial\\theta} + h\\frac{d}{d\\theta} f(t_n,\\mathbf y_n,\\theta).",
+    "after": "\\frac{\\partial\\mathbf y_{n+1}}{\\partial\\theta} = \\frac{\\partial\\mathbf y_n}{\\partial\\theta} + h\\frac{d}{d\\theta} f(t_n,\\mathbf y_n,\\theta).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ S\\_{n+1} = S_n+ h\\left(J_fS_n+f\\_\\theta\\right) }.",
+    "after": "\\boxed{ S_{n+1} = S_n+ h\\left(J_fS_n+f\\_\\theta\\right) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}=(1-\\lambda h)y_n.",
+    "after": "y_{n+1}=(1-\\lambda h)y_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\boldsymbol\\lambda(T)= \\nabla\\_{\\mathbf y}\\ell(\\mathbf y(T)) }.",
+    "after": "\\boxed{ \\boldsymbol\\lambda(T)= \\nabla_{\\mathbf y}\\ell(\\mathbf y(T)) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "(\\nabla_A L)\\_{ri} = \\sum_cG\\_{rc}B\\_{ic}.",
+    "after": "(\\nabla_A L)_{ri} = \\sum_cG_{rc}B_{ic}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "(\\nabla_B L)\\_{ic} = \\sum_rA\\_{ri}G\\_{rc}.",
+    "after": "(\\nabla_B L)_{ic} = \\sum_rA_{ri}G_{rc}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{\\mathrm{observed}}(t_1),\\ldots, \\mathbf x\\_{\\mathrm{observed}}(t_N).",
+    "after": "\\mathbf x_{\\mathrm{observed}}(t_1),\\ldots, \\mathbf x_{\\mathrm{observed}}(t_N).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{\\mathrm{simulated}}(t_i;\\boldsymbol\\theta).",
+    "after": "\\mathbf x_{\\mathrm{simulated}}(t_i;\\boldsymbol\\theta).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ L(\\boldsymbol\\theta)= \\frac12\\sum\\_{i=1}^{N} \\left\\| \\mathbf x\\_{\\mathrm{simulated}}(t_i;\\boldsymbol\\theta) - \\mathbf x\\_{\\mathrm{observed}}(t_i) \\right\\|^2 }.",
+    "after": "\\boxed{ L(\\boldsymbol\\theta)= \\frac12\\sum_{i=1}^{N} \\left\\| \\mathbf x_{\\mathrm{simulated}}(t_i;\\boldsymbol\\theta) - \\mathbf x_{\\mathrm{observed}}(t_i) \\right\\|^2 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boldsymbol\\theta \\rightarrow \\text{forces} \\rightarrow \\text{ODE integration} \\rightarrow \\text{trajectory} \\rightarrow L \\rightarrow \\nabla\\_{\\boldsymbol\\theta}L.",
+    "after": "\\boldsymbol\\theta \\rightarrow \\text{forces} \\rightarrow \\text{ODE integration} \\rightarrow \\text{trajectory} \\rightarrow L \\rightarrow \\nabla_{\\boldsymbol\\theta}L.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ P\\left(\\bigcup\\_{i=1}^{\\infty}A_i\\right) = \\sum\\_{i=1}^{\\infty}P(A_i) }. ",
+    "after": " \\boxed{ P\\left(\\bigcup_{i=1}^{\\infty}A_i\\right) = \\sum_{i=1}^{\\infty}P(A_i) }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ P\\left(\\bigcup\\_{i=1}^{n}A_i\\right) \\le \\sum\\_{i=1}^{n}P(A_i) }. ",
+    "after": " \\boxed{ P\\left(\\bigcup_{i=1}^{n}A_i\\right) \\le \\sum_{i=1}^{n}P(A_i) }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ P(A_1\\cap\\cdots\\cap A_n) = P(A_1) \\prod\\_{k=2}^{n} P(A_k\\mid A_1\\cap\\cdots\\cap A\\_{k-1}) } ",
+    "after": " \\boxed{ P(A_1\\cap\\cdots\\cap A_n) = P(A_1) \\prod_{k=2}^{n} P(A_k\\mid A_1\\cap\\cdots\\cap A_{k-1}) } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\underbrace{P(A\\mid B)}\\_{\\text{posterior}} = \\frac{ \\underbrace{P(B\\mid A)}\\_{\\text{likelihood}} \\underbrace{P(A)}\\_{\\text{prior}} }{ \\underbrace{P(B)}\\_{\\text{evidence}} }. ",
+    "after": " \\underbrace{P(A\\mid B)}_{\\text{posterior}} = \\frac{ \\underbrace{P(B\\mid A)}_{\\text{likelihood}} \\underbrace{P(A)}_{\\text{prior}} }{ \\underbrace{P(B)}_{\\text{evidence}} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\int\\_{-\\infty}^{\\infty}p_X(x)\\\\,dx=1 }. ",
+    "after": " \\boxed{ \\int_{-\\infty}^{\\infty}p_X(x)\\\\,dx=1 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " P(\\mathbf X\\in R) = \\int_Rp\\_{\\mathbf X}(\\mathbf x)\\\\,d\\mathbf x. ",
+    "after": " P(\\mathbf X\\in R) = \\int_Rp_{\\mathbf X}(\\mathbf x)\\\\,d\\mathbf x. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " P(\\mathbf X\\in R) \\approx p\\_{\\mathbf X}(\\mathbf x_0)\\operatorname{Volume}(R) ",
+    "after": " P(\\mathbf X\\in R) \\approx p_{\\mathbf X}(\\mathbf x_0)\\operatorname{Volume}(R) ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p\\_{\\mathbf Y}(\\mathbf y) = p\\_{\\mathbf X}(g^{-1}(\\mathbf y)) \\left| \\det J\\_{g^{-1}}(\\mathbf y) \\right| }. ",
+    "after": " \\boxed{ p_{\\mathbf Y}(\\mathbf y) = p_{\\mathbf X}(g^{-1}(\\mathbf y)) \\left| \\det J_{g^{-1}}(\\mathbf y) \\right| }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\lim\\_{x\\to-\\infty}F_X(x)=0, ",
+    "after": " \\lim_{x\\to-\\infty}F_X(x)=0, ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\lim\\_{x\\to+\\infty}F_X(x)=1. ",
+    "after": " \\lim_{x\\to+\\infty}F_X(x)=1. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ F_X(x)=\\int\\_{-\\infty}^{x}p_X(t)\\\\,dt }. ",
+    "after": " \\boxed{ F_X(x)=\\int_{-\\infty}^{x}p_X(t)\\\\,dt }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " F_X(x)= \\sum\\_{t\\le x}p_X(t). ",
+    "after": " F_X(x)= \\sum_{t\\le x}p_X(t). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\mathbb E[X]= \\int\\_{-\\infty}^{\\infty}x\\\\,p_X(x)\\\\,dx } ",
+    "after": " \\boxed{ \\mathbb E[X]= \\int_{-\\infty}^{\\infty}x\\\\,p_X(x)\\\\,dx } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " X=\\sum\\_{i=1}^NI_i ",
+    "after": " X=\\sum_{i=1}^NI_i ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ I= \\mathbb E\\_{X\\sim p} \\left[ \\frac{f(X)}{p(X)} \\right] }. ",
+    "after": " \\boxed{ I= \\mathbb E_{X\\sim p} \\left[ \\frac{f(X)}{p(X)} \\right] }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma\\_{ij}=\\operatorname{Cov}(X_i,X_j). ",
+    "after": " \\Sigma_{ij}=\\operatorname{Cov}(X_i,X_j). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma\\_{ii}=\\operatorname{Var}(X_i). ",
+    "after": " \\Sigma_{ii}=\\operatorname{Var}(X_i). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\rho\\_{XY}= \\frac{ \\operatorname{Cov}(X,Y) }{ \\sigma_X\\sigma_Y } }. ",
+    "after": " \\boxed{ \\rho_{XY}= \\frac{ \\operatorname{Cov}(X,Y) }{ \\sigma_X\\sigma_Y } }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ -1\\le\\rho\\_{XY}\\le1 }. ",
+    "after": " \\boxed{ -1\\le\\rho_{XY}\\le1 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{\\rho\\_{XY}=0} ",
+    "after": " \\boxed{\\rho_{XY}=0} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p\\_{X,Y}(x,y)=P(X=x,Y=y) }. ",
+    "after": " \\boxed{ p_{X,Y}(x,y)=P(X=x,Y=y) }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ P((X,Y)\\in R) = \\iint_Rp\\_{X,Y}(x,y)\\\\,dx\\\\,dy }. ",
+    "after": " \\boxed{ P((X,Y)\\in R) = \\iint_Rp_{X,Y}(x,y)\\\\,dx\\\\,dy }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p_X(x)=\\sum_yp\\_{X,Y}(x,y) }. ",
+    "after": " \\boxed{ p_X(x)=\\sum_yp_{X,Y}(x,y) }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p_X(x)= \\int\\_{-\\infty}^{\\infty} p\\_{X,Y}(x,y)\\\\,dy }. ",
+    "after": " \\boxed{ p_X(x)= \\int_{-\\infty}^{\\infty} p_{X,Y}(x,y)\\\\,dy }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p\\_{Y\\mid X}(y\\mid x) = \\frac{p\\_{X,Y}(x,y)}{p_X(x)} } ",
+    "after": " \\boxed{ p_{Y\\mid X}(y\\mid x) = \\frac{p_{X,Y}(x,y)}{p_X(x)} } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p\\_{Y\\mid X}(y\\mid x) = \\frac{p\\_{X,Y}(x,y)}{p_X(x)} } ",
+    "after": " \\boxed{ p_{Y\\mid X}(y\\mid x) = \\frac{p_{X,Y}(x,y)}{p_X(x)} } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " K=\\sum\\_{i=1}^nX_i. ",
+    "after": " K=\\sum_{i=1}^nX_i. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\operatorname{Var}(K)= \\sum_i\\operatorname{Var}(X_i) + 2\\sum\\_{i\\<j}\\operatorname{Cov}(X_i,X_j). ",
+    "after": " \\operatorname{Var}(K)= \\sum_i\\operatorname{Var}(X_i) + 2\\sum_{i\\<j}\\operatorname{Cov}(X_i,X_j). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " I=\\int\\_{-\\infty}^{\\infty}e^{-x^2/2}\\\\,dx. ",
+    "after": " I=\\int_{-\\infty}^{\\infty}e^{-x^2/2}\\\\,dx. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " I^2= \\left(\\int\\_{-\\infty}^{\\infty}e^{-x^2/2}\\\\,dx\\right) \\left(\\int\\_{-\\infty}^{\\infty}e^{-y^2/2}\\\\,dy\\right). ",
+    "after": " I^2= \\left(\\int_{-\\infty}^{\\infty}e^{-x^2/2}\\\\,dx\\right) \\left(\\int_{-\\infty}^{\\infty}e^{-y^2/2}\\\\,dy\\right). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " I^2= \\iint\\_{\\mathbb R^2} e^{-(x^2+y^2)/2}\\\\,dx\\\\,dy. ",
+    "after": " I^2= \\iint_{\\mathbb R^2} e^{-(x^2+y^2)/2}\\\\,dx\\\\,dy. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[Z^2] = \\frac1{\\sqrt{2\\pi}} \\int\\_{-\\infty}^{\\infty}z^2e^{-z^2/2}\\\\,dz. ",
+    "after": " \\mathbb E[Z^2] = \\frac1{\\sqrt{2\\pi}} \\int_{-\\infty}^{\\infty}z^2e^{-z^2/2}\\\\,dz. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\int\\_{-\\infty}^{\\infty}z^2e^{-z^2/2}\\\\,dz = \\int\\_{-\\infty}^{\\infty}e^{-z^2/2}\\\\,dz =\\sqrt{2\\pi}. ",
+    "after": " \\int_{-\\infty}^{\\infty}z^2e^{-z^2/2}\\\\,dz = \\int_{-\\infty}^{\\infty}e^{-z^2/2}\\\\,dz =\\sqrt{2\\pi}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\Phi(z)= \\int\\_{-\\infty}^{z}\\phi(t)\\\\,dt }. ",
+    "after": " \\boxed{ \\Phi(z)= \\int_{-\\infty}^{z}\\phi(t)\\\\,dt }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[K] = \\sum\\_{k=0}^\\infty k e^{-\\lambda}\\frac{\\lambda^k}{k!}. ",
+    "after": " \\mathbb E[K] = \\sum_{k=0}^\\infty k e^{-\\lambda}\\frac{\\lambda^k}{k!}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\begin{aligned} \\mathbb E[K] &= e^{-\\lambda} \\sum\\_{k=1}^\\infty \\frac{\\lambda^k}{(k-1)!}\\\\ &= \\lambda e^{-\\lambda} \\sum\\_{j=0}^\\infty \\frac{\\lambda^j}{j!}\\\\ &=\\lambda e^{-\\lambda}e^\\lambda. \\end{aligned} ",
+    "after": " \\begin{aligned} \\mathbb E[K] &= e^{-\\lambda} \\sum_{k=1}^\\infty \\frac{\\lambda^k}{(k-1)!}\\\\ &= \\lambda e^{-\\lambda} \\sum_{j=0}^\\infty \\frac{\\lambda^j}{j!}\\\\ &=\\lambda e^{-\\lambda}e^\\lambda. \\end{aligned} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[K(K-1)] = \\sum\\_{k=2}^\\infty k(k-1)e^{-\\lambda} \\frac{\\lambda^k}{k!}. ",
+    "after": " \\mathbb E[K(K-1)] = \\sum_{k=2}^\\infty k(k-1)e^{-\\lambda} \\frac{\\lambda^k}{k!}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[K(K-1)] = \\lambda^2e^{-\\lambda} \\sum\\_{j=0}^{\\infty}\\frac{\\lambda^j}{j!} =\\lambda^2. ",
+    "after": " \\mathbb E[K(K-1)] = \\lambda^2e^{-\\lambda} \\sum_{j=0}^{\\infty}\\frac{\\lambda^j}{j!} =\\lambda^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " p\\_{\\mathbf Z}(\\mathbf z)= \\prod\\_{i=1}^{n} \\frac1{\\sqrt{2\\pi}}e^{-z_i^2/2}. ",
+    "after": " p_{\\mathbf Z}(\\mathbf z)= \\prod_{i=1}^{n} \\frac1{\\sqrt{2\\pi}}e^{-z_i^2/2}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\prod\\_{i=1}^{n}\\frac1{\\sqrt{2\\pi}} = \\frac1{(2\\pi)^{n/2}}. ",
+    "after": " \\prod_{i=1}^{n}\\frac1{\\sqrt{2\\pi}} = \\frac1{(2\\pi)^{n/2}}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p\\_{\\mathbf Z}(\\mathbf z)= \\frac1{(2\\pi)^{n/2}} e^{-\\frac12\\mathbf z^T\\mathbf z} }. ",
+    "after": " \\boxed{ p_{\\mathbf Z}(\\mathbf z)= \\frac1{(2\\pi)^{n/2}} e^{-\\frac12\\mathbf z^T\\mathbf z} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " p\\_{\\mathbf X}(\\mathbf x) = p\\_{\\mathbf Z}(A^{-1}(\\mathbf x-\\boldsymbol\\mu)) |\\det A^{-1}|. ",
+    "after": " p_{\\mathbf X}(\\mathbf x) = p_{\\mathbf Z}(A^{-1}(\\mathbf x-\\boldsymbol\\mu)) |\\det A^{-1}|. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " p\\_{\\mathbf X}(\\mathbf x) = \\frac{|\\det A^{-1}|}{(2\\pi)^{n/2}} \\exp\\left[ -\\frac12 \\\\|A^{-1}(\\mathbf x-\\boldsymbol\\mu)\\\\|^2 \\right]. ",
+    "after": " p_{\\mathbf X}(\\mathbf x) = \\frac{|\\det A^{-1}|}{(2\\pi)^{n/2}} \\exp\\left[ -\\frac12 \\\\|A^{-1}(\\mathbf x-\\boldsymbol\\mu)\\\\|^2 \\right]. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ d_M^2= \\sum\\_{i=1}^{n}\\frac{z_i^2}{\\lambda_i} }. ",
+    "after": " \\boxed{ d_M^2= \\sum_{i=1}^{n}\\frac{z_i^2}{\\lambda_i} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma= \\begin{bmatrix} \\Sigma\\_{aa}&\\Sigma\\_{ab}\\\\ \\Sigma\\_{ba}&\\Sigma\\_{bb} \\end{bmatrix}. ",
+    "after": " \\Sigma= \\begin{bmatrix} \\Sigma_{aa}&\\Sigma_{ab}\\\\ \\Sigma_{ba}&\\Sigma_{bb} \\end{bmatrix}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "If $\\Sigma\\_{aa}$ is positive definite, then:",
+    "after": "If $\\Sigma_{aa}$ is positive definite, then:",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\mathbb E[\\mathbf X_b\\mid\\mathbf X_a=\\mathbf a] = \\boldsymbol\\mu_b+ \\Sigma\\_{ba}\\Sigma\\_{aa}^{-1} (\\mathbf a-\\boldsymbol\\mu_a) } ",
+    "after": " \\boxed{ \\mathbb E[\\mathbf X_b\\mid\\mathbf X_a=\\mathbf a] = \\boldsymbol\\mu_b+ \\Sigma_{ba}\\Sigma_{aa}^{-1} (\\mathbf a-\\boldsymbol\\mu_a) } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{Cov}(\\mathbf X_b\\mid\\mathbf X_a) = \\Sigma\\_{bb} - \\Sigma\\_{ba}\\Sigma\\_{aa}^{-1}\\Sigma\\_{ab} }. ",
+    "after": " \\boxed{ \\operatorname{Cov}(\\mathbf X_b\\mid\\mathbf X_a) = \\Sigma_{bb} - \\Sigma_{ba}\\Sigma_{aa}^{-1}\\Sigma_{ab} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma\\_{ij}=\\mathbb E[Z_iZ_j]. ",
+    "after": " \\Sigma_{ij}=\\mathbb E[Z_iZ_j]. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[f_i(\\mathbf X)] \\approx f_i(\\boldsymbol\\mu) + \\frac12\\operatorname{tr}(H\\_{f_i}\\Sigma). ",
+    "after": " \\mathbb E[f_i(\\mathbf X)] \\approx f_i(\\boldsymbol\\mu) + \\frac12\\operatorname{tr}(H_{f_i}\\Sigma). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Here $H\\_{f_i}$ is the Hessian of output component $i$.",
+    "after": "Here $H_{f_i}$ is the Hessian of output component $i$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boldsymbol\\mu\\_{3D} ",
+    "after": " \\boldsymbol\\mu_{3D} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma\\_{3D}. ",
+    "after": " \\Sigma_{3D}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma_c=R\\Sigma\\_{3D}R^T. ",
+    "after": " \\Sigma_c=R\\Sigma_{3D}R^T. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\Sigma\\_{2D}\\approx J\\_\\pi\\Sigma_cJ\\_\\pi^T }. ",
+    "after": " \\boxed{ \\Sigma_{2D}\\approx J\\_\\pi\\Sigma_cJ\\_\\pi^T }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\Sigma\\_{2D}\\approx J\\_\\pi R\\Sigma\\_{3D}R^TJ\\_\\pi^T }. ",
+    "after": " \\boxed{ \\Sigma_{2D}\\approx J\\_\\pi R\\Sigma_{3D}R^TJ\\_\\pi^T }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "t\\_{n+1}=t_n+h,",
+    "after": "t_{n+1}=t_n+h,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1}=y_n+h f(t_n,y_n) }.",
+    "after": "\\boxed{ y_{n+1}=y_n+h f(t_n,y_n) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "The solver does not need to solve an equation involving the unknown $y\\_{n+1}$.",
+    "after": "The solver does not need to solve an equation involving the unknown $y_{n+1}$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1}=x_n+hv_n,",
+    "after": "x_{n+1}=x_n+hv_n,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v\\_{n+1}=v_n+ha_n.",
+    "after": "v_{n+1}=v_n+ha_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ v\\_{n+1}=v_n+h a(x_n,v_n,t_n) }",
+    "after": "\\boxed{ v_{n+1}=v_n+h a(x_n,v_n,t_n) }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ x\\_{n+1}=x_n+h v\\_{n+1} }.",
+    "after": "\\boxed{ x_{n+1}=x_n+h v_{n+1} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf y\\_{\\mathrm{mid}} = \\mathbf y_n+\\frac h2k_1.",
+    "after": "\\mathbf y_{\\mathrm{mid}} = \\mathbf y_n+\\frac h2k_1.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "k_2=f\\left(t_n+\\frac h2,\\mathbf y\\_{\\mathrm{mid}}\\right).",
+    "after": "k_2=f\\left(t_n+\\frac h2,\\mathbf y_{\\mathrm{mid}}\\right).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf y\\_{n+1}=\\mathbf y_n+hk_2 }.",
+    "after": "\\boxed{ \\mathbf y_{n+1}=\\mathbf y_n+hk_2 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{\\mathrm{mid}} = 1+\\frac{0.1}{2}(-2) =0.9.",
+    "after": "y_{\\mathrm{mid}} = 1+\\frac{0.1}{2}(-2) =0.9.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}=y_n+hk_2.",
+    "after": "y_{n+1}=y_n+hk_2.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1} = y_n+\\frac h2(k_1+k_2) }.",
+    "after": "\\boxed{ y_{n+1} = y_n+\\frac h2(k_1+k_2) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{\\mathrm{predicted}}=1-0.2=0.8.",
+    "after": "y_{\\mathrm{predicted}}=1-0.2=0.8.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "k_i= f\\left( t_n+c_ih,\\\\, y_n+h\\sum\\_{j=1}^{s}a\\_{ij}k_j \\right),",
+    "after": "k_i= f\\left( t_n+c_ih,\\\\, y_n+h\\sum_{j=1}^{s}a_{ij}k_j \\right),",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1} = y_n+h\\sum\\_{i=1}^{s}b_ik_i }.",
+    "after": "\\boxed{ y_{n+1} = y_n+h\\sum_{i=1}^{s}b_ik_i }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "The coefficients $a\\_{ij}$, $b_i$, and $c_i$ define the method.",
+    "after": "The coefficients $a_{ij}$, $b_i$, and $c_i$ define the method.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1} = y_n+\\frac h6(k_1+2k_2+2k_3+k_4) }.",
+    "after": "\\boxed{ y_{n+1} = y_n+\\frac h6(k_1+2k_2+2k_3+k_4) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\sum\\_{i,j}b_i a\\_{ij}c_j=\\frac16.",
+    "after": "\\sum_{i,j}b_i a_{ij}c_j=\\frac16.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}=y_n+h\\lambda y_n.",
+    "after": "y_{n+1}=y_n+h\\lambda y_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1}=(1+h\\lambda)y_n }.",
+    "after": "\\boxed{ y_{n+1}=(1+h\\lambda)y_n }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf y\\_{n+1}=(I+hA)\\mathbf y_n.",
+    "after": "\\mathbf y_{n+1}=(I+hA)\\mathbf y_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v\\_{n+1}=v_n-h\\omega^2x_n,",
+    "after": "v_{n+1}=v_n-h\\omega^2x_n,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1}=x_n+hv\\_{n+1}.",
+    "after": "x_{n+1}=x_n+hv_{n+1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1} =(1-h^2\\omega^2)x_n+hv_n.",
+    "after": "x_{n+1} =(1-h^2\\omega^2)x_n+hv_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ R\\_{\\mathrm{RK2}}(z)=1+z+\\frac{z^2}{2} }.",
+    "after": "\\boxed{ R_{\\mathrm{RK2}}(z)=1+z+\\frac{z^2}{2} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ R\\_{\\mathrm{RK4}}(z)= 1+z+\\frac{z^2}{2} +\\frac{z^3}{6} +\\frac{z^4}{24} }.",
+    "after": "\\boxed{ R_{\\mathrm{RK4}}(z)= 1+z+\\frac{z^2}{2} +\\frac{z^3}{6} +\\frac{z^4}{24} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}=y_n+hf(t_n,y_n),",
+    "after": "y_{n+1}=y_n+hf(t_n,y_n),",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1}=y_n+hf(t\\_{n+1},y\\_{n+1}) }.",
+    "after": "\\boxed{ y_{n+1}=y_n+hf(t_{n+1},y_{n+1}) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "The method is implicit because $y\\_{n+1}$ appears on both sides.",
+    "after": "The method is implicit because $y_{n+1}$ appears on both sides.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}=y_n-h\\alpha y\\_{n+1}.",
+    "after": "y_{n+1}=y_n-h\\alpha y_{n+1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "y\\_{n+1}(1+h\\alpha)=y_n.",
+    "after": "y_{n+1}(1+h\\alpha)=y_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ y\\_{n+1}=\\frac{y_n}{1+h\\alpha} }.",
+    "after": "\\boxed{ y_{n+1}=\\frac{y_n}{1+h\\alpha} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "G(\\mathbf y\\_{n+1}) = \\mathbf y\\_{n+1}-\\mathbf y_n -hf(t\\_{n+1},\\mathbf y\\_{n+1}).",
+    "after": "G(\\mathbf y_{n+1}) = \\mathbf y_{n+1}-\\mathbf y_n -hf(t_{n+1},\\mathbf y_{n+1}).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "G(\\mathbf y\\_{n+1})=0.",
+    "after": "G(\\mathbf y_{n+1})=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1}=2x_n-x\\_{n-1}+h^2a_n.",
+    "after": "x_{n+1}=2x_n-x_{n-1}+h^2a_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1}=x_n+hv_n+\\frac{h^2}{2}a_n,",
+    "after": "x_{n+1}=x_n+hv_n+\\frac{h^2}{2}a_n,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v\\_{n+1}=v_n+\\frac h2(a_n+a\\_{n+1}).",
+    "after": "v_{n+1}=v_n+\\frac h2(a_n+a_{n+1}).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{n+1}=x_n+(x_n-x\\_{n-1})+h^2a_n.",
+    "after": "x_{n+1}=x_n+(x_n-x_{n-1})+h^2a_n.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "f'(x)= \\lim\\_{h\\to0} \\frac{f(x+h)-f(x)}h.",
+    "after": "f'(x)= \\lim_{h\\to0} \\frac{f(x+h)-f(x)}h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{0.1}^+f(1)= \\frac{\\sin(1.1)-\\sin(1)}{0.1}.",
+    "after": "D_{0.1}^+f(1)= \\frac{\\sin(1.1)-\\sin(1)}{0.1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ D\\_{0.1}^+f(1)\\approx0.497363753 }.",
+    "after": "\\boxed{ D_{0.1}^+f(1)\\approx0.497363753 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "v_n\\approx\\frac{x_n-x\\_{n-1}}h.",
+    "after": "v_n\\approx\\frac{x_n-x_{n-1}}h.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{0.1}^-f(1) = \\frac{\\sin1-\\sin0.9}{0.1}.",
+    "after": "D_{0.1}^-f(1) = \\frac{\\sin1-\\sin0.9}{0.1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ D\\_{0.1}^-f(1)\\approx0.581440752 }.",
+    "after": "\\boxed{ D_{0.1}^-f(1)\\approx0.581440752 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{0.1}^0f(1) = \\frac{\\sin1.1-\\sin0.9}{0.2}.",
+    "after": "D_{0.1}^0f(1) = \\frac{\\sin1.1-\\sin0.9}{0.2}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ D\\_{0.1}^0f(1)\\approx0.539402252 }.",
+    "after": "\\boxed{ D_{0.1}^0f(1)\\approx0.539402252 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ E\\_{\\mathrm{total}}(h) \\approx C_1h+C_2\\frac{\\epsilon\\_{\\mathrm{mach}}}{h} }",
+    "after": "\\boxed{ E_{\\mathrm{total}}(h) \\approx C_1h+C_2\\frac{\\epsilon_{\\mathrm{mach}}}{h} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E'(h)= C_1- C_2\\frac{\\epsilon\\_{\\mathrm{mach}}}{h^2}.",
+    "after": "E'(h)= C_1- C_2\\frac{\\epsilon_{\\mathrm{mach}}}{h^2}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "C_1= C_2\\frac{\\epsilon\\_{\\mathrm{mach}}}{h^2}.",
+    "after": "C_1= C_2\\frac{\\epsilon_{\\mathrm{mach}}}{h^2}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ h\\_{\\mathrm{opt}} \\approx \\sqrt{\\frac{C_2\\epsilon\\_{\\mathrm{mach}}}{C_1}} }.",
+    "after": "\\boxed{ h_{\\mathrm{opt}} \\approx \\sqrt{\\frac{C_2\\epsilon_{\\mathrm{mach}}}{C_1}} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "h\\_{\\mathrm{opt}}\\sim\\sqrt{\\epsilon\\_{\\mathrm{mach}}}",
+    "after": "h_{\\mathrm{opt}}\\sim\\sqrt{\\epsilon_{\\mathrm{mach}}}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "E\\_{\\mathrm{central}}(h) \\approx C_1h^2+ C_2\\frac{\\epsilon\\_{\\mathrm{mach}}}{h}.",
+    "after": "E_{\\mathrm{central}}(h) \\approx C_1h^2+ C_2\\frac{\\epsilon_{\\mathrm{mach}}}{h}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "2C_1h- C_2\\frac{\\epsilon\\_{\\mathrm{mach}}}{h^2}=0.",
+    "after": "2C_1h- C_2\\frac{\\epsilon_{\\mathrm{mach}}}{h^2}=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "h^3= \\frac{C_2\\epsilon\\_{\\mathrm{mach}}}{2C_1}.",
+    "after": "h^3= \\frac{C_2\\epsilon_{\\mathrm{mach}}}{2C_1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ h\\_{\\mathrm{opt}}\\sim \\epsilon\\_{\\mathrm{mach}}^{1/3} }.",
+    "after": "\\boxed{ h_{\\mathrm{opt}}\\sim \\epsilon_{\\mathrm{mach}}^{1/3} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\epsilon\\_{\\mathrm{mach}} \\approx2.22\\times10^{-16}.",
+    "after": "\\epsilon_{\\mathrm{mach}} \\approx2.22\\times10^{-16}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "h\\_{\\mathrm{actual}}=\\operatorname{fl}(x+h)-x,",
+    "after": "h_{\\mathrm{actual}}=\\operatorname{fl}(x+h)-x,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ E(\\mathbf x)= \\frac12\\sum\\_{i=1}^{N} \\|\\mathbf r_i(\\mathbf x)\\|\\_2^2 }.",
+    "after": "\\boxed{ E(\\mathbf x)= \\frac12\\sum_{i=1}^{N} \\|\\mathbf r_i(\\mathbf x)\\|\\_2^2 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\min\\_{R,\\mathbf t,f}E(R,\\mathbf t,f)",
+    "after": "\\min_{R,\\mathbf t,f}E(R,\\mathbf t,f)",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathbf d}f = \\nabla f^T(-\\nabla f) = -\\|\\nabla f\\|^2<0.",
+    "after": "D_{\\mathbf d}f = \\nabla f^T(-\\nabla f) = -\\|\\nabla f\\|^2<0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\min\\_{x\\ge0}(x+1)^2,",
+    "after": "\\min_{x\\ge0}(x+1)^2,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\begin{aligned} \\min\\_{\\mathbf x}\\quad &f(\\mathbf x)\\\\ \\text{subject to}\\quad &g_i(\\mathbf x)\\le0,\\quad i=1,\\ldots,m,\\\\ &h_j(\\mathbf x)=0,\\quad j=1,\\ldots,p. \\end{aligned}",
+    "after": "\\begin{aligned} \\min_{\\mathbf x}\\quad &f(\\mathbf x)\\\\ \\text{subject to}\\quad &g_i(\\mathbf x)\\le0,\\quad i=1,\\ldots,m,\\\\ &h_j(\\mathbf x)=0,\\quad j=1,\\ldots,p. \\end{aligned}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf x\\_{k+1} = \\mathbf x_k-\\alpha_k\\nabla f(\\mathbf x_k) }.",
+    "after": "\\boxed{ \\mathbf x_{k+1} = \\mathbf x_k-\\alpha_k\\nabla f(\\mathbf x_k) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k,",
+    "after": "\\mathbf x_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{k+1} = (I-\\alpha A)\\mathbf x_k.",
+    "after": "\\mathbf x_{k+1} = (I-\\alpha A)\\mathbf x_k.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf z\\_{k+1} = (I-\\alpha\\Lambda)\\mathbf z_k.",
+    "after": "\\mathbf z_{k+1} = (I-\\alpha\\Lambda)\\mathbf z_k.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ z\\_{i,k+1}=(1-\\alpha\\lambda_i)z\\_{i,k} }.",
+    "after": "\\boxed{ z_{i,k+1}=(1-\\alpha\\lambda_i)z_{i,k} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ 0<\\alpha<\\frac2{\\lambda\\_{\\max}} }.",
+    "after": "\\boxed{ 0<\\alpha<\\frac2{\\lambda_{\\max}} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\lambda\\_{\\min}=1, \\qquad \\lambda\\_{\\max}=100.",
+    "after": "\\lambda_{\\min}=1, \\qquad \\lambda_{\\max}=100.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "1-\\alpha\\lambda\\_{\\min}=0.99",
+    "after": "1-\\alpha\\lambda_{\\min}=0.99",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{\\kappa(A)=\\frac{\\lambda\\_{\\max}}{\\lambda\\_{\\min}}=100}",
+    "after": "\\boxed{\\kappa(A)=\\frac{\\lambda_{\\max}}{\\lambda_{\\min}}=100}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "q(\\alpha)= \\max\\_{\\lambda\\in[\\mu,L]} |1-\\alpha\\lambda|.",
+    "after": "q(\\alpha)= \\max_{\\lambda\\in[\\mu,L]} |1-\\alpha\\lambda|.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ f(\\mathbf x\\_{k+1}) \\le f(\\mathbf x_k)- \\frac1{2L}\\|\\nabla f(\\mathbf x_k)\\|^2 }.",
+    "after": "\\boxed{ f(\\mathbf x_{k+1}) \\le f(\\mathbf x_k)- \\frac1{2L}\\|\\nabla f(\\mathbf x_k)\\|^2 }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf v\\_{k+1} = \\beta\\mathbf v_k-\\alpha\\nabla f(\\mathbf x_k) }",
+    "after": "\\boxed{ \\mathbf v_{k+1} = \\beta\\mathbf v_k-\\alpha\\nabla f(\\mathbf x_k) }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf x\\_{k+1}=\\mathbf x_k+\\mathbf v\\_{k+1} }.",
+    "after": "\\boxed{ \\mathbf x_{k+1}=\\mathbf x_k+\\mathbf v_{k+1} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf v\\_{k+1} = -\\alpha\\mathbf g_k -\\alpha\\beta\\mathbf g\\_{k-1} -\\alpha\\beta^2\\mathbf g\\_{k-2} -\\cdots",
+    "after": "\\mathbf v_{k+1} = -\\alpha\\mathbf g_k -\\alpha\\beta\\mathbf g_{k-1} -\\alpha\\beta^2\\mathbf g_{k-2} -\\cdots",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf v\\_{k+1} = \\beta\\mathbf v_k-\\alpha\\nabla f(\\mathbf y_k),",
+    "after": "\\mathbf v_{k+1} = \\beta\\mathbf v_k-\\alpha\\nabla f(\\mathbf y_k),",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{k+1}=\\mathbf x_k+\\mathbf v\\_{k+1}.",
+    "after": "\\mathbf x_{k+1}=\\mathbf x_k+\\mathbf v_{k+1}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ x\\_{k+1} = x_k-\\frac{f'(x_k)}{f''(x_k)} }.",
+    "after": "\\boxed{ x_{k+1} = x_k-\\frac{f'(x_k)}{f''(x_k)} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{k+1} = x_k-\\frac{6(x_k-2)}6 =2.",
+    "after": "x_{k+1} = x_k-\\frac{6(x_k-2)}6 =2.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "x\\_{k+1} = x-\\frac{3x^2}{6x} =\\frac x2.",
+    "after": "x_{k+1} = x-\\frac{3x^2}{6x} =\\frac x2.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k.",
+    "after": "\\mathbf x_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "Suppose an optimization step moves from $\\mathbf x_k$ to $\\mathbf x\\_{k+1}$.",
+    "after": "Suppose an optimization step moves from $\\mathbf x_k$ to $\\mathbf x_{k+1}$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf s_k=\\mathbf x\\_{k+1}-\\mathbf x_k }",
+    "after": "\\boxed{ \\mathbf s_k=\\mathbf x_{k+1}-\\mathbf x_k }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf y_k= \\nabla f(\\mathbf x\\_{k+1})- \\nabla f(\\mathbf x_k) }.",
+    "after": "\\boxed{ \\mathbf y_k= \\nabla f(\\mathbf x_{k+1})- \\nabla f(\\mathbf x_k) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ B\\_{k+1}\\mathbf s_k=\\mathbf y_k }.",
+    "after": "\\boxed{ B_{k+1}\\mathbf s_k=\\mathbf y_k }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf s=\\mathbf x\\_{k+1}-\\mathbf x_k,",
+    "after": "\\mathbf s=\\mathbf x_{k+1}-\\mathbf x_k,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf y=\\nabla f(\\mathbf x\\_{k+1})-\\nabla f(\\mathbf x_k).",
+    "after": "\\mathbf y=\\nabla f(\\mathbf x_{k+1})-\\nabla f(\\mathbf x_k).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ B\\_{k+1} = B_k - \\frac{B_k\\mathbf s\\mathbf s^TB_k} {\\mathbf s^TB_k\\mathbf s} + \\frac{\\mathbf y\\mathbf y^T} {\\mathbf y^T\\mathbf s} }.",
+    "after": "\\boxed{ B_{k+1} = B_k - \\frac{B_k\\mathbf s\\mathbf s^TB_k} {\\mathbf s^TB_k\\mathbf s} + \\frac{\\mathbf y\\mathbf y^T} {\\mathbf y^T\\mathbf s} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ M\\_{k+1} = (I-\\rho\\mathbf s\\mathbf y^T) M_k (I-\\rho\\mathbf y\\mathbf s^T) + \\rho\\mathbf s\\mathbf s^T }.",
+    "after": "\\boxed{ M_{k+1} = (I-\\rho\\mathbf s\\mathbf y^T) M_k (I-\\rho\\mathbf y\\mathbf s^T) + \\rho\\mathbf s\\mathbf s^T }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k.",
+    "after": "\\mathbf x_{k+1}=\\mathbf x_k+\\alpha_k\\mathbf p_k.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\alpha^\\star=\\arg\\min\\_{\\alpha\\ge0}\\phi(\\alpha).",
+    "after": "\\alpha^\\star=\\arg\\min_{\\alpha\\ge0}\\phi(\\alpha).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\min\\_{\\|\\mathbf p\\|\\le\\Delta_k}m_k(\\mathbf p) }",
+    "after": "\\boxed{ \\min_{\\|\\mathbf p\\|\\le\\Delta_k}m_k(\\mathbf p) }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\nabla\\_{\\mathbf x}\\mathcal L=0, \\qquad h(\\mathbf x)=0.",
+    "after": "\\nabla_{\\mathbf x}\\mathcal L=0, \\qquad h(\\mathbf x)=0.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\min\\_{\\mathbf x}f(\\mathbf x)",
+    "after": "\\min_{\\mathbf x}f(\\mathbf x)",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\begin{aligned} \\nabla\\_{\\mathbf x}\\mathcal L&=0 &&\\text{stationarity},\\\\ g_i(\\mathbf x)&\\le0 &&\\text{primal inequality feasibility},\\\\ h_j(\\mathbf x)&=0 &&\\text{equality feasibility},\\\\ \\lambda_i&\\ge0 &&\\text{dual feasibility},\\\\ \\lambda_i g_i(\\mathbf x)&=0 &&\\text{complementary slackness}. \\end{aligned} }",
+    "after": "\\boxed{ \\begin{aligned} \\nabla_{\\mathbf x}\\mathcal L&=0 &&\\text{stationarity},\\\\ g_i(\\mathbf x)&\\le0 &&\\text{primal inequality feasibility},\\\\ h_j(\\mathbf x)&=0 &&\\text{equality feasibility},\\\\ \\lambda_i&\\ge0 &&\\text{dual feasibility},\\\\ \\lambda_i g_i(\\mathbf x)&=0 &&\\text{complementary slackness}. \\end{aligned} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J\\_{ij}= \\frac{\\partial r_i}{\\partial x_j}.",
+    "after": "J_{ij}= \\frac{\\partial r_i}{\\partial x_j}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ H_E = J^TJ+ \\sum_i r_iH\\_{r_i} }.",
+    "after": "\\boxed{ H_E = J^TJ+ \\sum_i r_iH_{r_i} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "H\\_{\\mathrm{GN}}=J^TJ.",
+    "after": "H_{\\mathrm{GN}}=J^TJ.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\nabla\\_{\\Delta\\mathbf x}m = J^T\\mathbf r+J^TJ\\Delta\\mathbf x.",
+    "after": "\\nabla_{\\Delta\\mathbf x}m = J^T\\mathbf r+J^TJ\\Delta\\mathbf x.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\min\\_{\\mathbf x} \\frac12\\|A\\mathbf x-\\mathbf b\\|^2 + \\lambda R(\\mathbf x) }.",
+    "after": "\\boxed{ \\min_{\\mathbf x} \\frac12\\|A\\mathbf x-\\mathbf b\\|^2 + \\lambda R(\\mathbf x) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf x\\_{k+1} = S\\_{\\alpha\\lambda} \\left( \\mathbf x_k-\\alpha\\nabla f(\\mathbf x_k) \\right) }.",
+    "after": "\\boxed{ \\mathbf x_{k+1} = S_{\\alpha\\lambda} \\left( \\mathbf x_k-\\alpha\\nabla f(\\mathbf x_k) \\right) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf g\\_{\\mathrm{analytic}}.",
+    "after": "\\mathbf g_{\\mathrm{analytic}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathrm{analytic}} = \\mathbf g\\_{\\mathrm{analytic}}^T\\mathbf d.",
+    "after": "D_{\\mathrm{analytic}} = \\mathbf g_{\\mathrm{analytic}}^T\\mathbf d.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "D\\_{\\mathrm{numeric}} = \\frac{ f(\\mathbf x+h\\mathbf d) - f(\\mathbf x-h\\mathbf d) }{2h}.",
+    "after": "D_{\\mathrm{numeric}} = \\frac{ f(\\mathbf x+h\\mathbf d) - f(\\mathbf x-h\\mathbf d) }{2h}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ e= \\frac{ |D\\_{\\mathrm{analytic}}-D\\_{\\mathrm{numeric}}| }{ \\max(1,|D\\_{\\mathrm{analytic}}|,|D\\_{\\mathrm{numeric}}|) } }.",
+    "after": "\\boxed{ e= \\frac{ |D_{\\mathrm{analytic}}-D_{\\mathrm{numeric}}| }{ \\max(1,|D_{\\mathrm{analytic}}|,|D_{\\mathrm{numeric}}|) } }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\kappa_2(H)= \\frac{\\lambda\\_{\\max}}{\\lambda\\_{\\min}} }",
+    "after": "\\boxed{ \\kappa_2(H)= \\frac{\\lambda_{\\max}}{\\lambda_{\\min}} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\kappa_2(A)= \\frac{\\sigma\\_{\\max}(A)}{\\sigma\\_{\\min}(A)},",
+    "after": "\\kappa_2(A)= \\frac{\\sigma_{\\max}(A)}{\\sigma_{\\min}(A)},",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\nabla\\_{\\mathbf z}\\tilde f = S^T\\nabla\\_{\\mathbf x}f }.",
+    "after": "\\boxed{ \\nabla_{\\mathbf z}\\tilde f = S^T\\nabla_{\\mathbf x}f }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ H\\_{\\mathbf z}=S^TH\\_{\\mathbf x}S }.",
+    "after": "\\boxed{ H_{\\mathbf z}=S^TH_{\\mathbf x}S }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "|f\\_{k+1}-f_k|\\le\\epsilon_f.",
+    "after": "|f_{k+1}-f_k|\\le\\epsilon_f.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\|\\Delta\\mathbf x\\| \\le \\epsilon\\_{\\mathrm{abs}}+ \\epsilon\\_{\\mathrm{rel}}\\|\\mathbf x\\| }.",
+    "after": "\\boxed{ \\|\\Delta\\mathbf x\\| \\le \\epsilon_{\\mathrm{abs}}+ \\epsilon_{\\mathrm{rel}}\\|\\mathbf x\\| }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "|\\Delta x_i| \\le \\epsilon\\_{\\mathrm{abs},i} + \\epsilon\\_{\\mathrm{rel},i}|x_i|.",
+    "after": "|\\Delta x_i| \\le \\epsilon_{\\mathrm{abs},i} + \\epsilon_{\\mathrm{rel},i}|x_i|.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "|f\\_{k+1}-f_k| \\le \\epsilon\\_{\\mathrm{abs},f} + \\epsilon\\_{\\mathrm{rel},f}\\max(|f_k|,|f\\_{k+1}|).",
+    "after": "|f_{k+1}-f_k| \\le \\epsilon_{\\mathrm{abs},f} + \\epsilon_{\\mathrm{rel},f}\\max(|f_k|,|f_{k+1}|).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ [\\Pi\\_{\\mathcal C}(\\mathbf x)]\\_i = \\min(u_i,\\max(l_i,x_i)) }.",
+    "after": "\\boxed{ [\\Pi_{\\mathcal C}(\\mathbf x)]\\_i = \\min(u_i,\\max(l_i,x_i)) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\mathbf x\\_{k+1} = \\Pi\\_{\\mathcal C} \\left( \\mathbf x_k-\\alpha\\nabla f(\\mathbf x_k) \\right) }.",
+    "after": "\\boxed{ \\mathbf x_{k+1} = \\Pi_{\\mathcal C} \\left( \\mathbf x_k-\\alpha\\nabla f(\\mathbf x_k) \\right) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ G\\_\\alpha(\\mathbf x)= \\frac1\\alpha \\left[ \\mathbf x- \\Pi\\_{\\mathcal C} (\\mathbf x-\\alpha\\nabla f(\\mathbf x)) \\right] }.",
+    "after": "\\boxed{ G\\_\\alpha(\\mathbf x)= \\frac1\\alpha \\left[ \\mathbf x- \\Pi_{\\mathcal C} (\\mathbf x-\\alpha\\nabla f(\\mathbf x)) \\right] }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Pi\\_{\\mathbb R^n}(\\mathbf z)=\\mathbf z.",
+    "after": "\\Pi_{\\mathbb R^n}(\\mathbf z)=\\mathbf z.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Pi\\_{\\mathcal C}(3,-2.5)=(1,-0.5).",
+    "after": "\\Pi_{\\mathcal C}(3,-2.5)=(1,-0.5).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf x\\_{\\mathrm{trial}} = \\Pi\\_{\\mathcal C} (\\mathbf x-\\alpha\\mathbf g).",
+    "after": "\\mathbf x_{\\mathrm{trial}} = \\Pi_{\\mathcal C} (\\mathbf x-\\alpha\\mathbf g).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\mathbf d= \\mathbf x\\_{\\mathrm{trial}}-\\mathbf x.",
+    "after": "\\mathbf d= \\mathbf x_{\\mathrm{trial}}-\\mathbf x.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ x_i^{k+1} = \\arg\\min_z f(x_1^{k+1},\\ldots,x\\_{i-1}^{k+1}, z,x\\_{i+1}^{k},\\ldots,x_n^k) }.",
+    "after": "\\boxed{ x_i^{k+1} = \\arg\\min_z f(x_1^{k+1},\\ldots,x_{i-1}^{k+1}, z,x_{i+1}^{k},\\ldots,x_n^k) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\mathbf f}= \\begin{bmatrix} \\frac{\\partial f_1}{\\partial x_1}&\\cdots&\\frac{\\partial f_1}{\\partial x_n}\\\\ \\vdots&\\ddots&\\vdots\\\\ \\frac{\\partial f_m}{\\partial x_1}&\\cdots&\\frac{\\partial f_m}{\\partial x_n} \\end{bmatrix} }.",
+    "after": "\\boxed{ J_{\\mathbf f}= \\begin{bmatrix} \\frac{\\partial f_1}{\\partial x_1}&\\cdots&\\frac{\\partial f_1}{\\partial x_n}\\\\ \\vdots&\\ddots&\\vdots\\\\ \\frac{\\partial f_m}{\\partial x_1}&\\cdots&\\frac{\\partial f_m}{\\partial x_n} \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\delta\\mathbf y\\approx J\\_{\\mathbf f}\\delta\\mathbf x.",
+    "after": "\\delta\\mathbf y\\approx J_{\\mathbf f}\\delta\\mathbf x.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\nabla\\_{\\mathbf x}L = J\\_{\\mathbf f}^T\\nabla\\_{\\mathbf y}L }.",
+    "after": "\\boxed{ \\nabla_{\\mathbf x}L = J_{\\mathbf f}^T\\nabla_{\\mathbf y}L }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\nabla\\_{\\mathbf x}\\|\\mathbf x\\| = \\frac{\\mathbf x}{\\|\\mathbf x\\|} }",
+    "after": "\\boxed{ \\nabla_{\\mathbf x}\\|\\mathbf x\\| = \\frac{\\mathbf x}{\\|\\mathbf x\\|} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ A'(t)= \\begin{bmatrix} a'\\_{11}(t)&\\cdots&a'\\_{1n}(t)\\\\ \\vdots&\\ddots&\\vdots\\\\ a'\\_{m1}(t)&\\cdots&a'\\_{mn}(t) \\end{bmatrix} }.",
+    "after": "\\boxed{ A'(t)= \\begin{bmatrix} a'_{11}(t)&\\cdots&a'_{1n}(t)\\\\ \\vdots&\\ddots&\\vdots\\\\ a'_{m1}(t)&\\cdots&a'_{mn}(t) \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\frac{\\partial F\\_{ij}}{\\partial X\\_{kl}}.",
+    "after": "\\frac{\\partial F_{ij}}{\\partial X_{kl}}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\mathrm{normalize}}(\\mathbf v) = \\frac1{\\|\\mathbf v\\|} (I-\\mathbf n\\mathbf n^T) }.",
+    "after": "\\boxed{ J_{\\mathrm{normalize}}(\\mathbf v) = \\frac1{\\|\\mathbf v\\|} (I-\\mathbf n\\mathbf n^T) }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\mathrm{normalize}}= \\begin{bmatrix} 0.128&-0.096\\\\ -0.096&0.072 \\end{bmatrix} }.",
+    "after": "\\boxed{ J_{\\mathrm{normalize}}= \\begin{bmatrix} 0.128&-0.096\\\\ -0.096&0.072 \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "R\\_{\\mathrm{new}} = \\exp([\\delta\\boldsymbol\\omega]\\_\\times)R.",
+    "after": "R_{\\mathrm{new}} = \\exp([\\delta\\boldsymbol\\omega]\\_\\times)R.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\begin{aligned} \\mathbf p'\\_{\\mathrm{new}} &\\approx (I+[\\delta\\boldsymbol\\omega]\\_\\times)R\\mathbf p\\\\ &=R\\mathbf p+ \\delta\\boldsymbol\\omega\\times(R\\mathbf p). \\end{aligned}",
+    "after": "\\begin{aligned} \\mathbf p'_{\\mathrm{new}} &\\approx (I+[\\delta\\boldsymbol\\omega]\\_\\times)R\\mathbf p\\\\ &=R\\mathbf p+ \\delta\\boldsymbol\\omega\\times(R\\mathbf p). \\end{aligned}",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\frac{\\partial(R\\mathbf p)} {\\partial\\delta\\boldsymbol\\omega\\_{\\mathrm{left}}} = -[R\\mathbf p]\\_\\times }.",
+    "after": "\\boxed{ \\frac{\\partial(R\\mathbf p)} {\\partial\\delta\\boldsymbol\\omega_{\\mathrm{left}}} = -[R\\mathbf p]\\_\\times }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "R\\_{\\mathrm{new}} = R\\exp([\\delta\\boldsymbol\\omega]\\_\\times),",
+    "after": "R_{\\mathrm{new}} = R\\exp([\\delta\\boldsymbol\\omega]\\_\\times),",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\frac{\\partial(R\\mathbf p)} {\\partial\\delta\\boldsymbol\\omega\\_{\\mathrm{right}}} = -R[\\mathbf p]\\_\\times }.",
+    "after": "\\boxed{ \\frac{\\partial(R\\mathbf p)} {\\partial\\delta\\boldsymbol\\omega_{\\mathrm{right}}} = -R[\\mathbf p]\\_\\times }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "T\\_{\\mathrm{new}}= \\exp([\\delta\\boldsymbol\\xi]^\\wedge)T,",
+    "after": "T_{\\mathrm{new}}= \\exp([\\delta\\boldsymbol\\xi]^\\wedge)T,",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\mathrm{pose}} = \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I \\end{bmatrix} }.",
+    "after": "\\boxed{ J_{\\mathrm{pose}} = \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ J\\_{\\mathrm{pixel,pose}} = J\\_{\\mathrm{projection}} \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I \\end{bmatrix} }.",
+    "after": "\\boxed{ J_{\\mathrm{pixel,pose}} = J_{\\mathrm{projection}} \\begin{bmatrix} -[\\mathbf p_c]\\_\\times&I \\end{bmatrix} }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "q\\_{\\mathrm{new}}= \\frac{q+\\delta q}{\\|q+\\delta q\\|}.",
+    "after": "q_{\\mathrm{new}}= \\frac{q+\\delta q}{\\|q+\\delta q\\|}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "q\\_{\\mathrm{new}}= \\delta q(\\delta\\boldsymbol\\omega)\\otimes q.",
+    "after": "q_{\\mathrm{new}}= \\delta q(\\delta\\boldsymbol\\omega)\\otimes q.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J_i= \\begin{bmatrix} j\\_{ix}&j\\_{iz} \\end{bmatrix},",
+    "after": "J_i= \\begin{bmatrix} j_{ix}&j_{iz} \\end{bmatrix},",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J_i^Tr_i= \\begin{bmatrix} j\\_{ix}r_i\\\\ j\\_{iz}r_i \\end{bmatrix}.",
+    "after": "J_i^Tr_i= \\begin{bmatrix} j_{ix}r_i\\\\ j_{iz}r_i \\end{bmatrix}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "J_i^TJ_i= \\begin{bmatrix} j\\_{ix}^2&j\\_{ix}j\\_{iz}\\\\ j\\_{ix}j\\_{iz}&j\\_{iz}^2 \\end{bmatrix}.",
+    "after": "J_i^TJ_i= \\begin{bmatrix} j_{ix}^2&j_{ix}j_{iz}\\\\ j_{ix}j_{iz}&j_{iz}^2 \\end{bmatrix}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "H\\_{\\mathrm{GN}}=\\sum_iJ_i^TJ_i.",
+    "after": "H_{\\mathrm{GN}}=\\sum_iJ_i^TJ_i.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "(H\\_{\\mathrm{GN}}+\\lambda D)\\Delta\\mathbf x=-\\mathbf g.",
+    "after": "(H_{\\mathrm{GN}}+\\lambda D)\\Delta\\mathbf x=-\\mathbf g.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\begin{bmatrix} H\\_{cc}&H\\_{cp}\\\\ H\\_{pc}&H\\_{pp} \\end{bmatrix} \\begin{bmatrix} \\Delta\\mathbf c\\\\ \\Delta\\mathbf p \\end{bmatrix} = - \\begin{bmatrix} \\mathbf g_c\\\\ \\mathbf g_p \\end{bmatrix}.",
+    "after": "\\begin{bmatrix} H_{cc}&H_{cp}\\\\ H_{pc}&H_{pp} \\end{bmatrix} \\begin{bmatrix} \\Delta\\mathbf c\\\\ \\Delta\\mathbf p \\end{bmatrix} = - \\begin{bmatrix} \\mathbf g_c\\\\ \\mathbf g_p \\end{bmatrix}.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "If the point block $H\\_{pp}$ can be solved efficiently, eliminate $\\Delta\\mathbf p$.",
+    "after": "If the point block $H_{pp}$ can be solved efficiently, eliminate $\\Delta\\mathbf p$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "H\\_{pc}\\Delta\\mathbf c+ H\\_{pp}\\Delta\\mathbf p=-\\mathbf g_p.",
+    "after": "H_{pc}\\Delta\\mathbf c+ H_{pp}\\Delta\\mathbf p=-\\mathbf g_p.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\Delta\\mathbf p= -H\\_{pp}^{-1} (\\mathbf g_p+H\\_{pc}\\Delta\\mathbf c).",
+    "after": "\\Delta\\mathbf p= -H_{pp}^{-1} (\\mathbf g_p+H_{pc}\\Delta\\mathbf c).",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ \\left( H\\_{cc}-H\\_{cp}H\\_{pp}^{-1}H\\_{pc} \\right) \\Delta\\mathbf c = -\\mathbf g_c+ H\\_{cp}H\\_{pp}^{-1}\\mathbf g_p }.",
+    "after": "\\boxed{ \\left( H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} \\right) \\Delta\\mathbf c = -\\mathbf g_c+ H_{cp}H_{pp}^{-1}\\mathbf g_p }.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "\\boxed{ S=H\\_{cc}-H\\_{cp}H\\_{pp}^{-1}H\\_{pc} }",
+    "after": "\\boxed{ S=H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} }",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "The implementation should use solves involving $H\\_{pp}$, not necessarily explicit inverse matrices.",
+    "after": "The implementation should use solves involving $H_{pp}$, not necessarily explicit inverse matrices.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ U=\\frac{R\\_{53}}{2^{53}} } ",
+    "after": " \\boxed{ U=\\frac{R_{53}}{2^{53}} } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "where $R\\_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.",
+    "after": "where $R_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{s\\_{n+1}=T(s_n)}. ",
+    "after": " \\boxed{s_{n+1}=T(s_n)}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " s\\_{\\mathrm{pixel}}= H(\\text{seed},x,y), ",
+    "after": " s_{\\mathrm{pixel}}= H(\\text{seed},x,y), ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ x\\_{n+1}=(ax_n+c)\\bmod m }. ",
+    "after": " \\boxed{ x_{n+1}=(ax_n+c)\\bmod m }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x\\_{n+1}=(5x_n+1)\\bmod16. ",
+    "after": " x_{n+1}=(5x_n+1)\\bmod16. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x\\_{n+1}\\equiv x_n+1\\pmod2. ",
+    "after": " x_{n+1}\\equiv x_n+1\\pmod2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ s\\_{n+1}=as_n+c\\pmod{2^w} } ",
+    "after": " \\boxed{ s_{n+1}=as_n+c\\pmod{2^w} } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " s\\_{n+1} = 6364136223846793005\\\\,s_n+c \\pmod{2^{64}}, ",
+    "after": " s_{n+1} = 6364136223846793005\\\\,s_n+c \\pmod{2^{64}}, ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " s_i=H(s\\_{\\mathrm{master}},i). ",
+    "after": " s_i=H(s_{\\mathrm{master}},i). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " r=F(s\\_{\\mathrm{master}},\\text{pixel},\\text{sample},\\text{dimension}), ",
+    "after": " r=F(s_{\\mathrm{master}},\\text{pixel},\\text{sample},\\text{dimension}), ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ I= \\mathbb E\\_{X\\sim p} \\left[ \\frac{f(X)}{p(X)} \\right] }. ",
+    "after": " \\boxed{ I= \\mathbb E_{X\\sim p} \\left[ \\frac{f(X)}{p(X)} \\right] }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\widehat I_N= \\frac1N\\sum\\_{i=1}^{N} \\frac{f(X_i)}{p(X_i)} }. ",
+    "after": " \\boxed{ \\widehat I_N= \\frac1N\\sum_{i=1}^{N} \\frac{f(X_i)}{p(X_i)} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ p_Y(y) = p_X(g^{-1}(y)) \\left|\\det J\\_{g^{-1}}(y)\\right| }. ",
+    "after": " \\boxed{ p_Y(y) = p_X(g^{-1}(y)) \\left|\\det J_{g^{-1}}(y)\\right| }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\widehat I_N= \\frac1N\\sum\\_{i=1}^NY_i }. ",
+    "after": " \\boxed{ \\widehat I_N= \\frac1N\\sum_{i=1}^NY_i }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\widehat\\mu= \\frac1{N+1}\\sum\\_{i=1}^NX_i. ",
+    "after": " \\widehat\\mu= \\frac1{N+1}\\sum_{i=1}^NX_i. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " Y\\_{\\mathrm{clamped}}=\\min(Y,T). ",
+    "after": " Y_{\\mathrm{clamped}}=\\min(Y,T). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " Y\\_{\\mathrm{clamped}}\\le Y ",
+    "after": " Y_{\\mathrm{clamped}}\\le Y ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[Y\\_{\\mathrm{clamped}}] \\le \\mathbb E[Y]. ",
+    "after": " \\mathbb E[Y_{\\mathrm{clamped}}] \\le \\mathbb E[Y]. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{Var}(\\bar Y) = \\frac1{N^2} \\left[ \\sum_i\\operatorname{Var}(Y_i) + 2\\sum\\_{i\\<j}\\operatorname{Cov}(Y_i,Y_j) \\right] }. ",
+    "after": " \\boxed{ \\operatorname{Var}(\\bar Y) = \\frac1{N^2} \\left[ \\sum_i\\operatorname{Var}(Y_i) + 2\\sum_{i\\<j}\\operatorname{Cov}(Y_i,Y_j) \\right] }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\bar X_N= \\frac1N\\sum\\_{i=1}^NX_i \\longrightarrow\\mu \\quad\\text{almost surely} }. ",
+    "after": " \\boxed{ \\bar X_N= \\frac1N\\sum_{i=1}^NX_i \\longrightarrow\\mu \\quad\\text{almost surely} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{Var}(\\bar X_N) = \\frac{\\sigma^2}{N} \\left[ 1+ 2\\sum\\_{k=1}^{N-1} \\left(1-\\frac{k}{N}\\right)\\rho_k \\right] }. ",
+    "after": " \\boxed{ \\operatorname{Var}(\\bar X_N) = \\frac{\\sigma^2}{N} \\left[ 1+ 2\\sum_{k=1}^{N-1} \\left(1-\\frac{k}{N}\\right)\\rho_k \\right] }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " N\\_{\\mathrm{eff}} \\approx \\frac{N}{ 1+2\\sum\\_{k\\ge1}\\rho_k } ",
+    "after": " N_{\\mathrm{eff}} \\approx \\frac{N}{ 1+2\\sum_{k\\ge1}\\rho_k } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\bar x=\\frac1N\\sum\\_{i=1}^{N}x_i }. ",
+    "after": " \\boxed{ \\bar x=\\frac1N\\sum_{i=1}^{N}x_i }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " E(m)= \\sum\\_{i=1}^{N}(x_i-m)^2. ",
+    "after": " E(m)= \\sum_{i=1}^{N}(x_i-m)^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ v_N= \\frac1N \\sum\\_{i=1}^{N}(x_i-\\bar x)^2 }. ",
+    "after": " \\boxed{ v_N= \\frac1N \\sum_{i=1}^{N}(x_i-\\bar x)^2 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ s^2= \\frac1{N-1} \\sum\\_{i=1}^{N}(x_i-\\bar x)^2 } ",
+    "after": " \\boxed{ s^2= \\frac1{N-1} \\sum_{i=1}^{N}(x_i-\\bar x)^2 } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mu_n= \\frac1n\\sum\\_{i=1}^{n}x_i ",
+    "after": " \\mu_n= \\frac1n\\sum_{i=1}^{n}x_i ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "When a new sample $x\\_{n+1}$ arrives:",
+    "after": "When a new sample $x_{n+1}$ arrives:",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mu\\_{n+1} = \\frac{ \\sum\\_{i=1}^{n}x_i+x\\_{n+1} }{ n+1 }. ",
+    "after": " \\mu_{n+1} = \\frac{ \\sum_{i=1}^{n}x_i+x_{n+1} }{ n+1 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\sum\\_{i=1}^{n}x_i=n\\mu_n, ",
+    "after": " \\sum_{i=1}^{n}x_i=n\\mu_n, ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mu\\_{n+1} = \\frac{n\\mu_n+x\\_{n+1}}{n+1}. ",
+    "after": " \\mu_{n+1} = \\frac{n\\mu_n+x_{n+1}}{n+1}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mu\\_{n+1} = \\mu_n+ \\frac{x\\_{n+1}-\\mu_n}{n+1}. ",
+    "after": " \\mu_{n+1} = \\mu_n+ \\frac{x_{n+1}-\\mu_n}{n+1}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\mu\\_{n+1} = \\mu_n+ \\frac{x\\_{n+1}-\\mu_n}{n+1} }. ",
+    "after": " \\boxed{ \\mu_{n+1} = \\mu_n+ \\frac{x_{n+1}-\\mu_n}{n+1} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " M\\_{2,n}= \\sum\\_{i=1}^{n}(x_i-\\mu_n)^2. ",
+    "after": " M_{2,n}= \\sum_{i=1}^{n}(x_i-\\mu_n)^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " s^2=\\frac{M\\_{2,n}}{n-1}. ",
+    "after": " s^2=\\frac{M_{2,n}}{n-1}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\mu\\_{n+1} = \\mu_n+\\frac{\\delta}{n+1} }. ",
+    "after": " \\boxed{ \\mu_{n+1} = \\mu_n+\\frac{\\delta}{n+1} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\delta_2=x-\\mu\\_{n+1} }. ",
+    "after": " \\boxed{ \\delta_2=x-\\mu_{n+1} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ M\\_{2,n+1} = M\\_{2,n}+\\delta\\delta_2 }. ",
+    "after": " \\boxed{ M_{2,n+1} = M_{2,n}+\\delta\\delta_2 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " M\\_{2,n+1} = \\sum\\_{i=1}^{n}(x_i-\\mu\\_{n+1})^2 + (x-\\mu\\_{n+1})^2. ",
+    "after": " M_{2,n+1} = \\sum_{i=1}^{n}(x_i-\\mu_{n+1})^2 + (x-\\mu_{n+1})^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x_i-\\mu\\_{n+1} = (x_i-\\mu_n)-(\\mu\\_{n+1}-\\mu_n). ",
+    "after": " x_i-\\mu_{n+1} = (x_i-\\mu_n)-(\\mu_{n+1}-\\mu_n). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " d=\\mu\\_{n+1}-\\mu_n=\\frac{\\delta}{n+1}. ",
+    "after": " d=\\mu_{n+1}-\\mu_n=\\frac{\\delta}{n+1}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\sum\\_{i=1}^{n}(x_i-\\mu\\_{n+1})^2 = \\sum_i[(x_i-\\mu_n)-d]^2. ",
+    "after": " \\sum_{i=1}^{n}(x_i-\\mu_{n+1})^2 = \\sum_i[(x_i-\\mu_n)-d]^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\sum\\_{i=1}^{n}(x_i-\\mu\\_{n+1})^2 = M\\_{2,n}+nd^2. ",
+    "after": " \\sum_{i=1}^{n}(x_i-\\mu_{n+1})^2 = M_{2,n}+nd^2. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x-\\mu\\_{n+1} = x-\\mu_n-\\frac{\\delta}{n+1}. ",
+    "after": " x-\\mu_{n+1} = x-\\mu_n-\\frac{\\delta}{n+1}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x-\\mu\\_{n+1} = \\delta\\left(1-\\frac1{n+1}\\right) = \\frac{n}{n+1}\\delta. ",
+    "after": " x-\\mu_{n+1} = \\delta\\left(1-\\frac1{n+1}\\right) = \\frac{n}{n+1}\\delta. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\begin{aligned} M\\_{2,n+1} &= M\\_{2,n} +n\\frac{\\delta^2}{(n+1)^2} +\\frac{n^2\\delta^2}{(n+1)^2}\\\\ &= M\\_{2,n} +\\frac{n(n+1)\\delta^2}{(n+1)^2}\\\\ &= M\\_{2,n}+\\frac{n}{n+1}\\delta^2. \\end{aligned} ",
+    "after": " \\begin{aligned} M_{2,n+1} &= M_{2,n} +n\\frac{\\delta^2}{(n+1)^2} +\\frac{n^2\\delta^2}{(n+1)^2}\\\\ &= M_{2,n} +\\frac{n(n+1)\\delta^2}{(n+1)^2}\\\\ &= M_{2,n}+\\frac{n}{n+1}\\delta^2. \\end{aligned} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ M\\_{2,n+1} = M\\_{2,n}+\\delta\\delta_2 }. ",
+    "after": " \\boxed{ M_{2,n+1} = M_{2,n}+\\delta\\delta_2 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " (n_A,\\mu_A,M\\_{2,A}) ",
+    "after": " (n_A,\\mu_A,M_{2,A}) ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " (n_B,\\mu_B,M\\_{2,B}). ",
+    "after": " (n_B,\\mu_B,M_{2,B}). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ M_2= M\\_{2,A}+M\\_{2,B} + \\delta^2\\frac{n_An_B}{n} }. ",
+    "after": " \\boxed{ M_2= M_{2,A}+M_{2,B} + \\delta^2\\frac{n_An_B}{n} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " x\\_{(1)}\\le\\cdots\\le x\\_{(N)}. ",
+    "after": " x_{(1)}\\le\\cdots\\le x_{(N)}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\hat Q(p)=(1-t)x\\_{(i)}+t x\\_{(i+1)} } ",
+    "after": " \\boxed{ \\hat Q(p)=(1-t)x_{(i)}+t x_{(i+1)} } ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\hat\\sigma\\_{\\mathrm{MAD}} \\approx1.4826\\\\,\\operatorname{MAD} }. ",
+    "after": " \\boxed{ \\hat\\sigma_{\\mathrm{MAD}} \\approx1.4826\\\\,\\operatorname{MAD} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " z\\_{0.975}=1.959964. ",
+    "after": " z_{0.975}=1.959964. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\bar x \\pm t\\_{0.975,N-1}\\frac{s}{\\sqrt N} }. ",
+    "after": " \\boxed{ \\bar x \\pm t_{0.975,N-1}\\frac{s}{\\sqrt N} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " t\\_{0.975,5}\\approx2.571. ",
+    "after": " t_{0.975,5}\\approx2.571. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " D_i=E\\_{A,i}-E\\_{B,i}. ",
+    "after": " D_i=E_{A,i}-E_{B,i}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{MSE}\\_{\\mathrm{empirical}} = \\frac1N\\sum\\_{i=1}^{N} (\\hat y_i-y_i)^2 }. ",
+    "after": " \\boxed{ \\operatorname{MSE}_{\\mathrm{empirical}} = \\frac1N\\sum_{i=1}^{N} (\\hat y_i-y_i)^2 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{MAE} = \\frac1N\\sum\\_{i=1}^{N} |\\hat y_i-y_i| }. ",
+    "after": " \\boxed{ \\operatorname{MAE} = \\frac1N\\sum_{i=1}^{N} |\\hat y_i-y_i| }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ e\\_{\\mathrm{rel}} = \\frac{|\\hat x-x|}{|x|} }. ",
+    "after": " \\boxed{ e_{\\mathrm{rel}} = \\frac{|\\hat x-x|}{|x|} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " 100e\\_{\\mathrm{rel}}\\\\%. ",
+    "after": " 100e_{\\mathrm{rel}}\\\\%. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\operatorname{NRMSE} = \\frac{\\operatorname{RMSE}}{s\\_{\\mathrm{reference}}} ",
+    "after": " \\operatorname{NRMSE} = \\frac{\\operatorname{RMSE}}{s_{\\mathrm{reference}}} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "where $s\\_{\\mathrm{reference}}$ is a specified scale.",
+    "after": "where $s_{\\mathrm{reference}}$ is a specified scale.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\det L=\\prod_iL\\_{ii}. ",
+    "after": " \\det L=\\prod_iL_{ii}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\log\\det\\Sigma = 2\\sum_i\\log L\\_{ii} }. ",
+    "after": " \\boxed{ \\log\\det\\Sigma = 2\\sum_i\\log L_{ii} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " S_n= \\sum\\_{i=1}^{n} (\\mathbf x_i-\\boldsymbol\\mu_n) (\\mathbf x_i-\\boldsymbol\\mu_n)^T. ",
+    "after": " S_n= \\sum_{i=1}^{n} (\\mathbf x_i-\\boldsymbol\\mu_n) (\\mathbf x_i-\\boldsymbol\\mu_n)^T. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\boldsymbol\\mu\\_{n+1} = \\boldsymbol\\mu_n+ \\frac{\\boldsymbol\\delta}{n+1} }. ",
+    "after": " \\boxed{ \\boldsymbol\\mu_{n+1} = \\boldsymbol\\mu_n+ \\frac{\\boldsymbol\\delta}{n+1} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ S\\_{n+1} = S_n+ \\boldsymbol\\delta (\\mathbf x-\\boldsymbol\\mu\\_{n+1})^T }. ",
+    "after": " \\boxed{ S_{n+1} = S_n+ \\boldsymbol\\delta (\\mathbf x-\\boldsymbol\\mu_{n+1})^T }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": "This prevents a trivial asymmetry caused by independently accumulating $\\Sigma\\_{01}$ and $\\Sigma\\_{10}$ in different arithmetic orders.",
+    "after": "This prevents a trivial asymmetry caused by independently accumulating $\\Sigma_{01}$ and $\\Sigma_{10}$ in different arithmetic orders.",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\mu\\_{\\mathrm{post}} = \\frac{ y/\\tau^2+\\mu_0/\\sigma_0^2 }{ 1/\\tau^2+1/\\sigma_0^2 } }. ",
+    "after": " \\boxed{ \\mu_{\\mathrm{post}} = \\frac{ y/\\tau^2+\\mu_0/\\sigma_0^2 }{ 1/\\tau^2+1/\\sigma_0^2 } }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\sigma\\_{\\mathrm{post}}^2 = \\left( \\frac1{\\sigma_0^2} +\\frac1{\\tau^2} \\right)^{-1} }. ",
+    "after": " \\boxed{ \\sigma_{\\mathrm{post}}^2 = \\left( \\frac1{\\sigma_0^2} +\\frac1{\\tau^2} \\right)^{-1} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\sigma\\_{\\mathrm{post}}^2= \\left(\\frac14+1\\right)^{-1} =\\boxed{0.8}. ",
+    "after": " \\sigma_{\\mathrm{post}}^2= \\left(\\frac14+1\\right)^{-1} =\\boxed{0.8}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mu\\_{\\mathrm{post}} = 0.8\\left(0+\\frac31\\right) =\\boxed{2.4}. ",
+    "after": " \\mu_{\\mathrm{post}} = 0.8\\left(0+\\frac31\\right) =\\boxed{2.4}. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\Sigma\\_{\\mathrm{predicted}} = J\\_\\pi\\Sigma\\_{3D}J\\_\\pi^T. ",
+    "after": " \\Sigma_{\\mathrm{predicted}} = J\\_\\pi\\Sigma_{3D}J\\_\\pi^T. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " Y\\_{\\mathrm{uniform}} = \\frac z{1/(2\\pi)} =2\\pi z. ",
+    "after": " Y_{\\mathrm{uniform}} = \\frac z{1/(2\\pi)} =2\\pi z. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\mathbb E[Y\\_{\\mathrm{uniform}}] = 2\\pi\\mathbb E[z] =2\\pi\\frac12 =\\pi. ",
+    "after": " \\mathbb E[Y_{\\mathrm{uniform}}] = 2\\pi\\mathbb E[z] =2\\pi\\frac12 =\\pi. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\operatorname{Var}(Y\\_{\\mathrm{uniform}}) = (2\\pi)^2\\operatorname{Var}(z). ",
+    "after": " \\operatorname{Var}(Y_{\\mathrm{uniform}}) = (2\\pi)^2\\operatorname{Var}(z). ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{Var}(Y\\_{\\mathrm{uniform}}) = \\frac{\\pi^2}{3} }. ",
+    "after": " \\boxed{ \\operatorname{Var}(Y_{\\mathrm{uniform}}) = \\frac{\\pi^2}{3} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " Y\\_{\\mathrm{cosine}} = \\frac{\\cos\\theta}{\\cos\\theta/\\pi} =\\boxed{\\pi} ",
+    "after": " Y_{\\mathrm{cosine}} = \\frac{\\cos\\theta}{\\cos\\theta/\\pi} =\\boxed{\\pi} ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\operatorname{Var}(Y\\_{\\mathrm{cosine}})=0 }. ",
+    "after": " \\boxed{ \\operatorname{Var}(Y_{\\mathrm{cosine}})=0 }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  },
+  {
+    "file": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+    "before": " \\boxed{ \\widehat I= \\sum_j\\frac1{n_j} \\sum\\_{i=1}^{n_j} w_j(X\\_{ji}) \\frac{f(X\\_{ji})}{p_j(X\\_{ji})} }. ",
+    "after": " \\boxed{ \\widehat I= \\sum_j\\frac1{n_j} \\sum_{i=1}^{n_j} w_j(X_{ji}) \\frac{f(X_{ji})}{p_j(X_{ji})} }. ",
+    "reason": "Inside a delimited mathematical expression, use TeX subscript _{...}, not the literal-underscore command \\_{...}. Code spans and fences are excluded."
+  }
+]

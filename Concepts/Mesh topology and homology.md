@@ -22,13 +22,13 @@ $$
 H_k=Z_k/B_k.
 $$
 
-The Betti number $\beta_k$ counts independent homology classes over the chosen coefficient field.
+The Betti number $\beta_k=\dim H_k$ counts independent homology classes over the chosen coefficient field (for example, $\mathbb{Z}_2$); $Z_k$ is the kernel of the $k$-boundary map and $B_k$ is the image of the $(k+1)$-boundary map.
 
-For a connected orientable closed surface, $eta_0=1$; $eta_1$ captures independent loops/handles and $eta_2$ captures the enclosed oriented surface class.
+For a connected orientable closed surface, $\beta_0=1$; $\beta_1$ counts independent one-dimensional homology classes (for genus $g$, $\beta_1=2g$); and $\beta_2=1$ represents the surface's fundamental two-dimensional class. With a boundary, $\beta_2$ need not be one.
 
 ## Euler characteristic
 
-For a triangle complex,
+For a finite triangle complex with vertex, edge and face counts $V,E,F$,
 
 $$
 \chi=V-E+F.

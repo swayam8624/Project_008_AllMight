@@ -4,14 +4,14 @@ A 3D Gaussian can carry more than geometry and opacity. In view-dependent Gaussi
 
 ## A directional function in a finite orthonormal basis
 
-For a unit direction $omega$, a scalar directional signal can be approximated by
+For a unit direction $\boldsymbol\omega\in S^2$, a scalar directional signal can be approximated by
 
 $$
-f(omega)
+f(\boldsymbol\omega)
 =
-sum_{ell=0}^{L}
-sum_{m=-ell}^{ell}
-c_{ell m}Y_{ell m}(omega).
+\sum_{\ell=0}^{L}
+\sum_{m=-\ell}^{\ell}
+c_{\ell m}Y_{\ell m}(\boldsymbol\omega).
 $$
 
 For degree $L$, there are $(L+1)^2$ coefficients. Degree 0 carries one direction-independent term. Degrees 1, 2 and 3 add progressively finer angular variation, giving 4, 9 and 16 total basis functions respectively.
@@ -20,13 +20,13 @@ The basis convention matters. Real SH formulas can differ by signs, ordering and
 
 ## Why orthonormality is the useful invariant
 
-For an orthonormal real basis,
+For an orthonormal real basis with solid-angle measure $d\omega$, $i$ and $j$ index basis functions and $\delta_{ij}$ is the Kronecker delta (one when $i=j$, zero otherwise):
 
 $$
-int_{S^2}
-Y_i(omega)Y_j(omega),domega
+\int_{S^2}
+Y_i(\boldsymbol\omega)Y_j(\boldsymbol\omega)\,d\omega
 =
-delta_{ij}.
+\delta_{ij}.
 $$
 
 This means a coefficient measures the projection of the directional function onto one basis mode. It also gives a powerful independent test: numerically integrate pairwise products over many nearly uniform sphere directions and require diagonal entries near one and cross terms near zero.
@@ -34,7 +34,7 @@ This means a coefficient measures the projection of the directional function ont
 The constant basis value
 
 $$
-Y_{00}=rac{1}{2sqrt{pi}}
+Y_{00}=\frac{1}{2\sqrt{\pi}}
 $$
 
 lets a direction-independent scalar $k$ be encoded with coefficient $c_{00}=k/Y_{00}$ when all higher coefficients are zero.

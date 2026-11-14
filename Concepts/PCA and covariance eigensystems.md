@@ -9,7 +9,7 @@ Center sample rows, then find the orthogonal directions of greatest variance. Fo
 
 **Use it when:** describing point clouds, reducing dimensions, or estimating a best-fit plane.
 
-**Developed in Phase 8:** PCA first centers observations so the covariance measures variation around the sample mean. The right singular vectors of centered data give principal directions, $U\Sigma$ gives scores, and squared singular values scaled by sample count give covariance eigenvalues; feature units and small eigengaps affect interpretation. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Centered measurements reveal principal directions|centering and principal axes]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Plane fits, eigengaps, and interpretation of uncertain components|plane fits and eigengaps]]
+**Developed in Phase 8:** PCA first centers observations so the covariance measures variation around the sample mean. The right singular vectors of centered data give principal directions, $U\Sigma$ gives scores, and squared singular values scaled by sample count give covariance eigenvalues; feature units and small eigengaps affect interpretation. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Centered measurements reveal principal directions|centering and principal axes]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Plane fits, eigengaps, and interpretation of uncertain components|plane fits and eigengaps]]
 
 **Phase 9–10 development:** For a random vector $X$ with finite second moments, covariance is $\Sigma=\mathbb E[(X-\mu)(X-\mu)^T]$. For every vector $v$, $v^T\Sigma v=\mathbb E[(v^T(X-\mu))^2]\geq0$, so covariance is positive semidefinite. Its eigenvectors give uncorrelated principal directions and the eigenvalues give variance along them. Whitening rescales nonzero-variance directions and needs a stated policy for zero or tiny eigenvalues. A Gaussian kernel used to model rendering footprints is a spatial distribution model, not automatically a statement about epistemic uncertainty.
 
@@ -25,10 +25,10 @@ Center sample rows, then find the orthogonal directions of greatest variance. Fo
 
 [[Polar decomposition]], [[Matrix factorization choices]].
 
-**Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#PCA turns a cloud of points into measured variation|PCA from data]].
+**Teaching path:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#PCA turns a cloud of points into measured variation|PCA from data]].
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#3. Expected values describe centers; covariance describes dependence|Phase 10 teaching section]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#5. Waiting times, event counts, and covariance geometry|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#3. Expected values describe centers; covariance describes dependence|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#5. Waiting times, event counts, and covariance geometry|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · Phase 10 visual recall

@@ -54,4 +54,4 @@ A penetration normal and depth are not a persistent contact manifold. The physic
 
 Read the connected explanation in [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From a Scene to a Collision Answer: Geometry as a Chain of Contracts]].
 
-Related: [[Continuous collision detection]], [[Minkowski sums and support mappings]], [[Persistent contact manifolds]].
+Related: [[Continuous collision detection]], [[Minkowski sums and support mappings]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Complete persistent-contact implementation and cache policy|Persistent contact manifolds]].

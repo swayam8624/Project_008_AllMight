@@ -30,7 +30,7 @@ Explain the residual equations for span projection and why normal equations can 
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A Gram matrix remembers the geometry of a slanted basis|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A Gram matrix remembers the geometry of a slanted basis|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
 
 
-Expanded direct teaching: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Choose what a length is meant to measure]].
+Expanded direct teaching: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Choose what a length is meant to measure]].

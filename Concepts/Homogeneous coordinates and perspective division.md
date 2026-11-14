@@ -10,7 +10,7 @@ tags:
 
 ## Definition and mechanism
 
-Phase 7 derives the affine block matrix, distinguishes a singular affine map from an invertible frame, and traces model → view → homogeneous clip → NDC using a declared projection. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure M6 - Follow one point through named spaces|The worked figure]] keeps the divisor visible and checks the chosen near/far depth endpoints.
+Phase 7 derives the affine block matrix, distinguishes a singular affine map from an invertible frame, and traces model → view → homogeneous clip → NDC using a declared projection. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure M6 - Follow one point through named spaces|The worked figure]] keeps the divisor visible and checks the chosen near/far depth endpoints.
 
 An affine homogeneous point has last coordinate one; a direction has zero. Nonzero common scale defines projective equivalence, while dehomogenization divides by a nonzero final component. Clip representatives and projective classes have related but distinct semantics.
 
@@ -37,7 +37,7 @@ Explain why perspective division is nonlinear and why clipping must precede casu
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Homogeneous coordinates preserve the role of a location|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Homogeneous coordinates preserve the role of a location|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
 
 ## University course development
 
@@ -47,4 +47,4 @@ Extend the existing account with the geometric reason for the final divide. A 3D
 
 ## Phase 11 camera development
 
-Homogeneous image coordinates represent a ray up to nonzero scale; perspective division produces normalized image coordinates. Monocular reconstruction has a separate physical scale gauge: multiplying all scene points and camera translations by the same positive factor preserves projections. Do not confuse representational scale with unknown metric scale. A known object dimension, baseline, or depth measurement can anchor metres; normalizing a homogeneous vector cannot. This assumes calibrated perspective projection without an external scale prior. The distinction explains why a numerically precise reconstruction can still lack physical units. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].
+Homogeneous image coordinates represent a ray up to nonzero scale; perspective division produces normalized image coordinates. Monocular reconstruction has a separate physical scale gauge: multiplying all scene points and camera translations by the same positive factor preserves projections. Do not confuse representational scale with unknown metric scale. A known object dimension, baseline, or depth measurement can anchor metres; normalizing a homogeneous vector cannot. This assumes calibrated perspective projection without an external scale prior. The distinction explains why a numerically precise reconstruction can still lack physical units. Link: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].

@@ -1,203 +1,45 @@
-That closes the original rigid-body mechanics reconstruction **through Part 1700**. It does **not** close Parts 1701–1800: the supplied lesson-body provenance for that range is still missing, so the following contact/constraint material is an explicit reconstruction and deepening rather than a claim that the original source text was preserved.
+That closes the original rigid-body mechanics reconstruction through Part 1700. The supplied lesson-body provenance for Parts 1701–1800 is missing, so the following contact and constraint material is an explicit reconstruction, not a claim that the original source text was preserved.
 
 ## From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge
 
-A single isolated impact can be solved with one scalar impulse. A resting crate immediately breaks that mental model. Put two contact points under the same rigid body. An impulse at the left point changes the center-of-mass velocity and the angular velocity, so the right point's relative velocity changes too. The two contacts are therefore coupled.
+One isolated impact can be solved with one scalar impulse. A resting crate immediately breaks that model: two contact points belong to one rigid body, and an impulse at either point changes both center velocity and angular velocity. Therefore it changes the normal speed at both points.
 
-For contact (i), let the world point be (mathbf p_i), let the normal (mathbf n_i) point from body (A) toward body (B), and define the lever arms
-
-$$
-mathbf r_{Ai}=mathbf p_i-mathbf x_A,
-qquad
-mathbf r_{Bi}=mathbf p_i-mathbf x_B.
-$$
-
-The point velocities are
+For contact $i$, let $\mathbf p_i$ be the world point and let unit normal $\mathbf n$ point from body $A$ toward body $B$. The lever arms are $\mathbf r_{Ai}=\mathbf p_i-\mathbf x_A$ and $\mathbf r_{Bi}=\mathbf p_i-\mathbf x_B$. Point velocity is $\mathbf v+\boldsymbol\omega\times\mathbf r$, so the pre-solve normal speed is
 
 $$
-mathbf v_{Ai}
-=
-mathbf v_A+oldsymbolomega_A	imesmathbf r_{Ai},
-qquad
-mathbf v_{Bi}
-=
-mathbf v_B+oldsymbolomega_B	imesmathbf r_{Bi},
+u_i=\mathbf n^\mathsf T\left[(\mathbf v_B+\boldsymbol\omega_B\times\mathbf r_{Bi})-(\mathbf v_A+\boldsymbol\omega_A\times\mathbf r_{Ai})\right]
 $$
 
-so the signed normal relative speed is
+Use SI units: positions are metres, linear velocity is metres/second, angular velocity is radians/second, mass is kilograms, inverse inertia is kilogram$^{-1}$ metre$^{-2}$, and impulse is newton-seconds. With the normal from $A$ to $B$, $u_i<0$ means closing. A normal impulse $\lambda_i\ge0$ pushes $B$ along $\mathbf n$ and applies the equal-and-opposite impulse to $A$; ordinary contact does not pull.
+
+Let $u$ collect pre-solve speeds and $\lambda$ collect normal impulses. The contact-space effective-mass matrix maps impulses to speed changes:
 
 $$
-v_{n,i}
-=
-mathbf n_i^mathsf T(mathbf v_{Bi}-mathbf v_{Ai}).
+w=u+K\lambda,\qquad K=JM^{-1}J^\mathsf T.
 $$
 
-With this convention, (v_{n,i}<0) means the points are closing. A normal impulse magnitude (lambda_ige0) applies (lambda_imathbf n_i) to (B) and the equal-and-opposite impulse to (A). The non-negativity is physical: ordinary contact may push, but it may not attract.
-
-Stack the contact impulses into (oldsymbollambda). After applying all of them, the vector of contact normal speeds has the form
+$J^\mathsf T\lambda$ maps contact impulses to generalized body impulses, $M^{-1}$ converts them to changes in linear and angular velocity, and $J$ projects those changes back to contact speeds. Thus $K_{ij}$ measures how impulse $j$ changes speed at contact $i$. For planar rigid bodies with a common normal,
 
 $$
-oxed{
-mathbf w
-=
-mathbf v_n^-+
-Koldsymbollambda
-}
+K_{ij}=m_A^{-1}+m_B^{-1}+I_A^{-1}(\mathbf r_{Ai}\times\mathbf n)(\mathbf r_{Aj}\times\mathbf n)+I_B^{-1}(\mathbf r_{Bi}\times\mathbf n)(\mathbf r_{Bj}\times\mathbf n).
 $$
 
-where (mathbf v_n^-) contains the pre-solve contact speeds and (K) is the contact-space inverse effective-mass matrix. In Jacobian form,
+Off-diagonal terms express coupling. For frictionless zero-restitution contact, solve the complementarity conditions
 
 $$
-oxed{
-K=JM^{-1}J^mathsf T.
-}
+\lambda\ge0,\qquad w=u+K\lambda\ge0,\qquad \lambda_iw_i=0.
 $$
 
-This expression is not decorative notation. (J^mathsf Toldsymbollambda) maps contact impulses into generalized body impulses; (M^{-1}) turns those impulses into generalized velocity changes; (J) projects those changed body velocities back into contact-space velocities. The off-diagonal entry (K_{ij}) therefore measures how impulse (j) changes contact speed (i).
+A positive impulse requires zero residual closing speed; a separating point needs no impulse. For a unit-mass, unit-inertia crate descending at $2\,\mathrm{m/s}$ with contacts at $x=-1$ and $x=1$, $K=\begin{bmatrix}2&0\\0&2\end{bmatrix}$ and $u=(-2,-2)^\mathsf T$, giving $\lambda=(1,1)^\mathsf T\,\mathrm{N\,s}$. Moving the right contact to $x=2$ gives $K=\begin{bmatrix}2&-1\\-1&5\end{bmatrix}$ and $\lambda=(4/3,2/3)^\mathsf T\,\mathrm{N\,s}$. Sequential impulses approximate this coupled solution through repeated projected updates; a block solve handles a small set together.
 
-For a planar two-body problem with a common normal direction, the matrix entry reduces to
+The implementation checks all four two-contact active sets: both points, first only, second only, or neither. It accepts a candidate only when impulses are nonnegative and post-speeds satisfy complementarity within a scale-aware tolerance. A near-singular determinant skips the both-active inverse; a feasible one-point fallback may still exist for duplicate contact rows. If no candidate is feasible, the island is rejected before body mutation. This witness covers normal velocity response only; restitution targets, penetration stabilization, friction, warm-start cache lifetime, and larger islands are separate policies.
 
-$$
-K_{ij}
-=
-m_A^{-1}+m_B^{-1}
-+
-I_A^{-1}
-(mathbf r_{Ai}	imesmathbf n)
-(mathbf r_{Aj}	imesmathbf n)
-+
-I_B^{-1}
-(mathbf r_{Bi}	imesmathbf n)
-(mathbf r_{Bj}	imesmathbf n).
-$$
+### Executable active-set witness with numeric and failure traces
 
-If all off-diagonal entries vanished, the contacts would be independent. A rigid body generally makes them nonzero.
-
-### Contact is a complementarity condition
-
-A resting contact does not mean “always force the normal velocity to zero.” If the bodies are separating, the contact should apply no normal impulse. For the frictionless, zero-restitution velocity problem, the unilateral conditions are
-
-$$
-oxed{
-oldsymbollambdage0,
-qquad
-mathbf wge0,
-qquad
-lambda_i w_i=0.
-}
-$$
-
-The first condition forbids pulling impulses. The second forbids residual closing velocity. The third states that either a contact carries positive impulse and sits on the active boundary (w_i=0), or it is inactive and may separate with (lambda_i=0).
-
-### A symmetric two-point trace
-
-Take a unit-mass planar crate with unit inertia falling at (2,mathrm{m/s}) onto a static floor. Put contacts one metre to the left and right of the center of mass. The matrix is
-
-$$
-K=
-egin{bmatrix}
-2&0\
-0&2
-end{bmatrix},
-qquad
-mathbf v_n^-=
-egin{bmatrix}
--2\
--2
-end{bmatrix}.
-$$
-
-Assuming both contacts are active, solve (mathbf w=0):
-
-$$
-0=
-egin{bmatrix}
--2\
--2
-end{bmatrix}
-+
-egin{bmatrix}
-2&0\
-0&2
-end{bmatrix}
-egin{bmatrix}
-lambda_1\
-lambda_2
-end{bmatrix},
-$$
-
-so
-
-$$
-oxed{lambda_1=lambda_2=1,mathrm{N,s}.}
-$$
-
-Their total upward impulse cancels the crate's downward linear momentum, while their opposite moments cancel angular response.
-
-Now move the right contact to (x=2) while keeping the left at (x=-1). Then
-
-$$
-K=
-egin{bmatrix}
-2&-1\
--1&5
-end{bmatrix}.
-$$
-
-Solving the coupled system gives
-
-$$
-oxed{
-lambda_1=rac43,
-qquad
-lambda_2=rac23.
-}
-$$
-
-The impulses are unequal because the geometry is asymmetric. Treating the contacts as two isolated collisions would miss this coupling.
-
-### Why “invert the matrix” is not the whole algorithm
-
-A candidate two-contact solution can contain a negative impulse, which means the assumed active set is wrong. A complete 2×2 block solver must therefore test the possible active sets: both active, only the first active, only the second active, or neither active. For each candidate it computes
-
-$$
-mathbf w=mathbf v_n^-+Koldsymbollambda
-$$
-
-and accepts only solutions satisfying the complementarity inequalities within a declared numerical tolerance.
-
-A singular (K) also needs an explicit policy. Duplicate contact rows can make the matrix rank deficient because two rows encode the same physical restriction. Blind inversion is numerically invalid, but unconditional rejection is also too crude because one independent row may still satisfy the contact. The executable witness below therefore tries the full two-contact solve only when its determinant is safely nonzero, then falls back to one-active-contact candidates and finally the no-impulse case.
-
-### Sequential impulses and block solving are two views of the same coupled system
-
-The existing persistent-contact laboratory uses projected sequential impulses. It visits one constraint row, changes the body velocity immediately, then evaluates the next row using the updated state. Repeated sweeps approximate the coupled solution. The block solve below instead solves two normal rows together.
-
-The important invariant is not “always use one solver.” Every constraint row must expose a Jacobian, effective mass, target velocity or bias, admissible impulse set, accumulated impulse semantics and lifetime. Once those contracts are explicit, projected Gauss-Seidel, block solving, Jacobi-like variants, direct small systems and more general optimization methods can be compared honestly.
-
-### Restitution, penetration correction and friction are separate policies
-
-This bridge solves only the clean velocity-level normal problem. Restitution changes the target velocity for a new impact. Penetration is positional error and needs a distinct stabilization choice such as Baumgarte bias, split impulses, compliant constraints or position projection. Friction adds tangential constraints bounded by the normal impulse; in 2-D,
-
-$$
--mulambda_n
-le
-lambda_t
-le
-mulambda_n.
-$$
-
-None of these should be silently folded into “the normal impulse formula.” Their energy behavior, timestep dependence and persistence rules differ.
-
-### Complete two-contact executable witness
-
-The following C++20 laboratory is intentionally narrower than a production solver. It proves the algebraic bridge from rigid-body impulse response to a two-contact unilateral block solve, including symmetric and asymmetric traces, one-active-contact behavior, already-separating contacts, a rank-deficient duplicate-contact case, immovable closing geometry and hostile normal input. It does **not** prove 3-D manifold solving, persistent friction, restitution caching, joints, island construction, warm starting across frames, CCD, position stabilization or Kairo integration.
+The following C++20 program implements the two-point block and exercises symmetric, asymmetric, single-active, separating, rank-deficient, immovable, and invalid-normal cases. Its comments state the equations, units, branch rules, and invariants beside the operations they explain.
 
 ```cpp
 {{TWO_POINT_CONTACT_BLOCK_LAB}}
 ```
 
-This section therefore raises one Phase-18 subproblem to **S4 reference depth**: the forcing problem is explicit, the matrix is derived, hand traces are reproducible, alternate branches and degeneracy are represented in executable code, and negative cases exist. It does not make Phase 18 globally S4 or S5.
-
-Most importantly, Parts 1701–1800 retain the provenance limitation identified by the Bible audit. Their original supplied lesson-body source was absent from the retained source batches used for this reconstruction. The current material is therefore labelled as reconstructed canonical teaching built from the mechanics already established, inspected physics sources elsewhere in the repository, and executable reference models. No amount of new prose or passing CPU tests can retroactively prove that the missing original lesson body was preserved.
-
-With that distinction made, the narrative can leave rigid-body mechanics honestly: Part 1700 closes the body-state and integration foundation; this bridge establishes why multiple unilateral contacts become a coupled constraint problem; the deeper Phase-18 source/provenance denominator remains open.
+**Reconstruction check:** explain why the off-diagonal terms couple the contacts, list all four active sets, and say why a singular pair can still have a feasible one-contact solution.

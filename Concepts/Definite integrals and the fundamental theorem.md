@@ -26,7 +26,7 @@ A definite integral accumulates a quantity over an interval, with sign and units
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature|Phase 9 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Integration and quadrature|Phase 9 teaching section]]
 - [[Visual Recall/09 - Calculus and Optimization - Visual Recall.md]] · visual recall
 
 ## Source coverage

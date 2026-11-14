@@ -1,0 +1,874 @@
+{
+  "source_book": "Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography.md",
+  "source_sha256": "594bbfadef67e54ab1f7a5c534a77698236f5b31420f6122864b81b8146ea070",
+  "page_model": "prose400words/page;code48wrappedlines/page;displaymath36lines/page;tables36rows/page;Mermaid/images0.5/0.45page;heading/paragraphspacing;50page target27–83flexibility",
+  "folder": "02 - Graphics Vision and XR",
+  "title": "Graphics, Vision and XR — From Geometry to Images and Perception",
+  "book_introduction": "Follow the image from geometry and light through rendering, inference, captured worlds and perception. The source atlas and extended XR walkthrough are retained explicitly, alongside the technical chapters.",
+  "chapters": [
+    {
+      "number": 1,
+      "start_anchor": {
+        "line": 1,
+        "level": 0,
+        "heading": "BOOK_START",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 2173,
+        "level": 2,
+        "heading": "Surfaces, patches, topology, and parameterization",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.8,
+      "title": "From Worlds to Images and Inference",
+      "entry_bridge": "A graphics system maps a scene description through light and a camera into measured image samples. The opening also runs the inverse direction, showing how those measurements constrain possible scenes.",
+      "learning_goal": "Trace the graphics forward problem and distinguish it from vision’s inverse problem.",
+      "recall_question": "What information must be known to predict an image, and what can an image constrain?"
+    },
+    {
+      "number": 2,
+      "start_anchor": {
+        "line": 2173,
+        "level": 2,
+        "heading": "Surfaces, patches, topology, and parameterization",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 3088,
+        "level": 2,
+        "heading": "Lens optics, focus, and image formation",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.6,
+      "title": "Surfaces, Topology and Parameterization",
+      "entry_bridge": "A surface has both local shape and global connectivity, and one representation rarely serves every operation equally well. This chapter builds the geometric and topological vocabulary used later for meshes, queries and simulation.",
+      "learning_goal": "Choose between parametric, implicit and mesh representations based on the operation required.",
+      "recall_question": "How do parameterization and topology answer different questions about a surface?"
+    },
+    {
+      "number": 3,
+      "start_anchor": {
+        "line": 3088,
+        "level": 2,
+        "heading": "Lens optics, focus, and image formation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 3634,
+        "level": 2,
+        "heading": "Image sampling, filtering, and efficient reconstruction",
+        "occurrence": 1
+      },
+      "estimated_pages": 41.1,
+      "title": "Lens Optics and Image Formation",
+      "entry_bridge": "The camera does not record an abstract ray directly: an optical system forms an image with finite focus and blur. Sensor sampling then turns that image into a raster.",
+      "learning_goal": "Relate focal length, object distance, focus tolerance and image sampling.",
+      "recall_question": "How does changing the focus tolerance alter the acceptable image-distance interval?"
+    },
+    {
+      "number": 4,
+      "start_anchor": {
+        "line": 3634,
+        "level": 2,
+        "heading": "Image sampling, filtering, and efficient reconstruction",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 5493,
+        "level": 2,
+        "heading": "Ask a surface where incoming energy can go",
+        "occurrence": 1
+      },
+      "estimated_pages": 57.3,
+      "title": "Sampling, Filtering and Reconstruction",
+      "entry_bridge": "Once an image is sampled, reconstruction must manage aliasing, filtering, memory layout and execution cost. The practical examples connect signal-processing ideas to real image buffers and render schedules.",
+      "learning_goal": "Explain how sampling and filtering affect image quality and implementation.",
+      "recall_question": "Why can two different continuous signals produce the same samples?"
+    },
+    {
+      "number": 5,
+      "start_anchor": {
+        "line": 5493,
+        "level": 2,
+        "heading": "Ask a surface where incoming energy can go",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 9521,
+        "level": 3,
+        "heading": "Blank-page mastery test",
+        "occurrence": 1
+      },
+      "estimated_pages": 69.2,
+      "title": "Reflectance, Materials and Light Transport",
+      "entry_bridge": "A surface material describes how incoming energy is scattered toward outgoing directions. The chapter derives those responses, connects them to asset data, and checks mathematical properties before relying on rendered appearance.",
+      "learning_goal": "Relate material parameters to a physically meaningful scattering model.",
+      "recall_question": "Which numerical checks can reveal a broken BRDF before a scene render does?"
+    },
+    {
+      "number": 6,
+      "start_anchor": {
+        "line": 9521,
+        "level": 3,
+        "heading": "Blank-page mastery test",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 13372,
+        "level": 2,
+        "heading": "The rendering equation and light transport",
+        "occurrence": 1
+      },
+      "estimated_pages": 61.8,
+      "title": "From Material Data to GPU Bindings",
+      "entry_bridge": "A material authored in an interchange format must be decoded, represented and bound for the GPU. This chapter follows the data path and its scaling choices while preserving the difference between source material values and shader behavior.",
+      "learning_goal": "Trace material data from glTF through engine representation to GPU binding.",
+      "recall_question": "Where can a material pipeline change meaning or cost as assets scale?"
+    },
+    {
+      "number": 7,
+      "start_anchor": {
+        "line": 13372,
+        "level": 2,
+        "heading": "The rendering equation and light transport",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 16535,
+        "level": 3,
+        "heading": "Next — Pass 7: M123 + M124, Parts 2031–2069",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.4,
+      "title": "The Rendering Equation and Path Probabilities",
+      "entry_bridge": "The rendering equation expresses outgoing radiance as an integral over incoming directions. Monte Carlo paths estimate that integral, so probability and estimator structure are part of the rendering model.",
+      "learning_goal": "Interpret path contributions and their probability weights in a Monte Carlo renderer.",
+      "recall_question": "Why must the probability density accompany a sampled light-transport path?"
+    },
+    {
+      "number": 8,
+      "start_anchor": {
+        "line": 16535,
+        "level": 3,
+        "heading": "Next — Pass 7: M123 + M124, Parts 2031–2069",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 19361,
+        "level": 5,
+        "heading": "Point-light sampling",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**Point-light sampling**"
+      },
+      "estimated_pages": 49.0,
+      "title": "Sampling Directions and Light Transport",
+      "entry_bridge": "Uniformly sampling angles is not the same as uniformly sampling directions on a sphere. These chapters derive the relevant distributions and show how practical path-tracer choices affect variance and convergence.",
+      "learning_goal": "Construct and compare directional sampling strategies for path tracing.",
+      "recall_question": "Why does uniform theta sampling overrepresent some regions of a sphere?"
+    },
+    {
+      "number": 9,
+      "start_anchor": {
+        "line": 19361,
+        "level": 5,
+        "heading": "Point-light sampling",
+        "occurrence": 1,
+        "kind": "bold",
+        "raw_marker": "**Point-light sampling**"
+      },
+      "end_anchor": {
+        "line": 22206,
+        "level": 3,
+        "heading": "Next — Pass 8: M125 + M126, Parts 2070–2100",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.1,
+      "title": "Point Lights, MIS and Environment Lighting",
+      "entry_bridge": "Point lights are discrete directional events while environment illumination occupies a continuous distribution. Multiple importance sampling connects competing estimators while keeping each light’s probability model explicit.",
+      "learning_goal": "Compare point-light and environment estimators and explain MIS weighting.",
+      "recall_question": "What makes a point light a delta distribution, and how does MIS use competing PDFs?"
+    },
+    {
+      "number": 10,
+      "start_anchor": {
+        "line": 22206,
+        "level": 3,
+        "heading": "Next — Pass 8: M125 + M126, Parts 2070–2100",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 24622,
+        "level": 3,
+        "heading": "PARTS 2090–2100",
+        "occurrence": 1
+      },
+      "estimated_pages": 37.6,
+      "title": "A Production Path Tracer: Media, Randomness and Validation",
+      "entry_bridge": "A production path tracer must handle nested media, random streams, execution and regression evidence as well as the core estimator. This span joins those engineering contracts to implementation and profiling.",
+      "learning_goal": "Identify the implementation and validation contracts needed for a robust path tracer.",
+      "recall_question": "Which failures require a mathematical oracle, and which require scene-level tests?"
+    },
+    {
+      "number": 11,
+      "start_anchor": {
+        "line": 24622,
+        "level": 3,
+        "heading": "PARTS 2090–2100",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 27311,
+        "level": 2,
+        "heading": "From Random Samples to Deliberate Computation",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.0,
+      "title": "BVH Traversal and Deterministic Evidence",
+      "entry_bridge": "A BVH accelerates ray queries by pruning regions, but its traversal behavior still needs inspection. Heatmaps and deterministic image tests expose performance patterns and regressions that a single final render can hide.",
+      "learning_goal": "Use traversal visualizations and deterministic tests to evaluate a BVH implementation.",
+      "recall_question": "What can a traversal heatmap reveal that a rendered image cannot?"
+    },
+    {
+      "number": 12,
+      "start_anchor": {
+        "line": 27311,
+        "level": 2,
+        "heading": "From Random Samples to Deliberate Computation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 28320,
+        "level": 3,
+        "heading": "View → clip",
+        "occurrence": 1
+      },
+      "estimated_pages": 40.0,
+      "title": "Probability, Statistics and Uncertainty",
+      "entry_bridge": "Probability gives a language for possible observations; statistics summarizes the samples actually collected. The chapter separates counts, averages, spread and uncertainty so later sampling comparisons are interpretable.",
+      "learning_goal": "Distinguish probability models from sample statistics and uncertainty estimates.",
+      "recall_question": "What does a sample mean tell you, and what information does it leave out?"
+    },
+    {
+      "number": 13,
+      "start_anchor": {
+        "line": 28320,
+        "level": 3,
+        "heading": "View → clip",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 31770,
+        "level": 3,
+        "heading": "Blending, transparency, alpha testing, overdraw, early-Z, queries, Hi-Z",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.0,
+      "title": "From View Space to Clip Space",
+      "entry_bridge": "A vertex shader moves positions through a sequence of coordinate spaces before clipping. Homogeneous coordinates make perspective projection possible and explain why clip space has four components.",
+      "learning_goal": "Trace a vertex from view coordinates through clip coordinates and clipping.",
+      "recall_question": "Why can perspective projection not be represented by a 3×3 affine transform in 3D?"
+    },
+    {
+      "number": 14,
+      "start_anchor": {
+        "line": 31770,
+        "level": 3,
+        "heading": "Blending, transparency, alpha testing, overdraw, early-Z, queries, Hi-Z",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 35300,
+        "level": 3,
+        "heading": "What Kairo specifically taught us in this pass",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.4,
+      "title": "Transparency, Blending and Visibility",
+      "entry_bridge": "Transparency changes the order in which fragments contribute to the framebuffer. Alpha conventions, overdraw, depth tests and hierarchy queries determine both correctness and cost.",
+      "learning_goal": "Explain source-over blending and the visibility tradeoffs around transparency.",
+      "recall_question": "Why can ordinary depth writes produce incorrect results for translucent surfaces?"
+    },
+    {
+      "number": 15,
+      "start_anchor": {
+        "line": 35300,
+        "level": 3,
+        "heading": "What Kairo specifically taught us in this pass",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 37332,
+        "level": 3,
+        "heading": "MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING",
+        "occurrence": 1
+      },
+      "estimated_pages": 42.7,
+      "title": "Rasterization Foundations and Renderer Evidence",
+      "entry_bridge": "The renderer snapshot provides concrete evidence about a particular implementation before the text turns to general rasterization principles. This span establishes that distinction and develops the foundational pipeline.",
+      "learning_goal": "Separate implementation-specific renderer evidence from general rasterization concepts.",
+      "recall_question": "Which claims describe this renderer’s state, and which are general pipeline rules?"
+    },
+    {
+      "number": 16,
+      "start_anchor": {
+        "line": 37332,
+        "level": 3,
+        "heading": "MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 40669,
+        "level": 2,
+        "heading": "Build, document, measure, and reproduce the program",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.9,
+      "title": "GPU Memory, Divergence and Execution Order",
+      "entry_bridge": "GPU performance depends on memory traffic, divergent execution and synchronization as well as arithmetic. The chapter links these hardware behaviors to subgroup operations and ordering constraints.",
+      "learning_goal": "Reason about memory access, divergence and synchronization in GPU programs.",
+      "recall_question": "How can divergent control flow reduce subgroup efficiency?"
+    },
+    {
+      "number": 17,
+      "start_anchor": {
+        "line": 40669,
+        "level": 2,
+        "heading": "Build, document, measure, and reproduce the program",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 44665,
+        "level": 2,
+        "heading": "Reconstruct the representation and lifetime proofs",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.2,
+      "title": "Build, Test and Reproduce the Program",
+      "entry_bridge": "A reproducible renderer depends on its build graph, toolchain, tests, logging and packaging boundaries. The span turns a large implementation into a program whose inputs and outputs can be checked.",
+      "learning_goal": "Identify the build and test evidence required to reproduce a program.",
+      "recall_question": "Which build inputs must be pinned to make a result reproducible?"
+    },
+    {
+      "number": 18,
+      "start_anchor": {
+        "line": 44665,
+        "level": 2,
+        "heading": "Reconstruct the representation and lifetime proofs",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 45446,
+        "level": 2,
+        "heading": "Textures and surface detail",
+        "occurrence": 1
+      },
+      "estimated_pages": 32.1,
+      "title": "C++ Representation, Ownership and Lifetime",
+      "entry_bridge": "C++ correctness relies on representation invariants, ownership and object lifetime, not syntax alone. These sections use assignments and no-throw properties to reason about resource-safe changes.",
+      "learning_goal": "Use representation and lifetime invariants to assess C++ resource operations.",
+      "recall_question": "Why can a no-throw move change the safety of container growth?"
+    },
+    {
+      "number": 19,
+      "start_anchor": {
+        "line": 45446,
+        "level": 2,
+        "heading": "Textures and surface detail",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 48180,
+        "level": 2,
+        "heading": "From a Scene to a Collision Answer: Geometry as a Chain of Contracts",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.3,
+      "title": "Textures as Sampled Surface Signals",
+      "entry_bridge": "A texture stores samples of a signal over a surface, and its footprint changes with projection. Filtering must account for that changing footprint to avoid unstable detail and aliasing.",
+      "learning_goal": "Connect texture sampling, surface footprints and filtering choices.",
+      "recall_question": "Why does a minified texture need a different footprint than a magnified one?"
+    },
+    {
+      "number": 20,
+      "start_anchor": {
+        "line": 48180,
+        "level": 2,
+        "heading": "From a Scene to a Collision Answer: Geometry as a Chain of Contracts",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 50455,
+        "level": 3,
+        "heading": "Canonical C++23 implementation and repository comparison",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.1,
+      "title": "Geometry Queries from Scene to Contact",
+      "entry_bridge": "A scene is only the beginning of a geometric query: transforms, representations, predicates and contacts each carry contracts. This chapter organizes collision work as a chain from scene data to a defensible answer.",
+      "learning_goal": "Trace a collision query through geometry conversion, predicates and contact output.",
+      "recall_question": "At which stages can a scene-level query become geometrically ambiguous?"
+    },
+    {
+      "number": 21,
+      "start_anchor": {
+        "line": 50455,
+        "level": 3,
+        "heading": "Canonical C++23 implementation and repository comparison",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 53176,
+        "level": 3,
+        "heading": "Support Mapping",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.8,
+      "title": "Collision Implementations and Repository Comparison",
+      "entry_bridge": "The canonical implementation gives a concrete collision pipeline, and the repository comparison tests whether the existing code satisfies the same contracts. The focus is implementation evidence rather than an abstract list of algorithms.",
+      "learning_goal": "Compare a reference collision implementation with an existing engine implementation.",
+      "recall_question": "What evidence would show that two implementations agree beyond matching one example?"
+    },
+    {
+      "number": 22,
+      "start_anchor": {
+        "line": 53176,
+        "level": 3,
+        "heading": "Support Mapping",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 56088,
+        "level": 3,
+        "heading": "PART IV — M071: Mesh Topology and Connectivity",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.9,
+      "title": "Convex Support Mapping and Distance",
+      "entry_bridge": "Support mapping reduces a convex shape to an extreme point in a requested direction. That operation provides a common interface for distance and collision algorithms across several convex primitives.",
+      "learning_goal": "Compute support points and explain how they enable convex distance queries.",
+      "recall_question": "Why can an extreme-point query represent many different convex shapes uniformly?"
+    },
+    {
+      "number": 23,
+      "start_anchor": {
+        "line": 56088,
+        "level": 3,
+        "heading": "PART IV — M071: Mesh Topology and Connectivity",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 58761,
+        "level": 3,
+        "heading": "PART III — Ray-Triangle Intersection",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.8,
+      "title": "Mesh Topology and Connectivity",
+      "entry_bridge": "Mesh vertices, edges and faces describe connectivity in addition to position. The chapter uses that distinction to reason about adjacency, boundaries and operations on a surface.",
+      "learning_goal": "Explain how mesh connectivity differs from a set of geometric positions.",
+      "recall_question": "What information is lost when a mesh is represented only by independent triangles?"
+    },
+    {
+      "number": 24,
+      "start_anchor": {
+        "line": 58761,
+        "level": 3,
+        "heading": "PART III — Ray-Triangle Intersection",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 61971,
+        "level": 3,
+        "heading": "PART VII — Triangle-AABB SAT and Convex Polygon SAT",
+        "occurrence": 1
+      },
+      "estimated_pages": 53.1,
+      "title": "Ray–Triangle Intersection",
+      "entry_bridge": "A ray first meets the triangle’s plane, then the candidate point must pass a barycentric containment test. Separating those stages clarifies edge cases and numerical contracts.",
+      "learning_goal": "Derive ray–triangle intersection from plane and barycentric tests.",
+      "recall_question": "Why is a plane hit insufficient to establish a triangle hit?"
+    },
+    {
+      "number": 25,
+      "start_anchor": {
+        "line": 61971,
+        "level": 3,
+        "heading": "PART VII — Triangle-AABB SAT and Convex Polygon SAT",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 64644,
+        "level": 3,
+        "heading": "Contact Features and Manifolds",
+        "occurrence": 1
+      },
+      "estimated_pages": 46.3,
+      "title": "SAT for Triangle and Convex Polygon Tests",
+      "entry_bridge": "Separating axis tests turn overlap into a search for a projection axis with disjoint intervals. Triangle–box and convex polygon cases reveal how candidate axes arise from geometry.",
+      "learning_goal": "Apply SAT to triangle–AABB and convex polygon intersection.",
+      "recall_question": "Why can triangle vertices all lie outside a box even when the triangle intersects it?"
+    },
+    {
+      "number": 26,
+      "start_anchor": {
+        "line": 64644,
+        "level": 3,
+        "heading": "Contact Features and Manifolds",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 67890,
+        "level": 3,
+        "heading": "Mesh Ray, Overlap, Containment, Classification and Clipping",
+        "occurrence": 1
+      },
+      "estimated_pages": 64.3,
+      "title": "Contact Features and Manifolds",
+      "entry_bridge": "A collision result needs contact locations and normals, not merely an overlap boolean. Feature recovery and manifold construction provide the data needed by a solver.",
+      "learning_goal": "Explain how contact features become a usable collision manifold.",
+      "recall_question": "Why can a boolean overlap test not provide enough information to resolve a collision?"
+    },
+    {
+      "number": 27,
+      "start_anchor": {
+        "line": 67890,
+        "level": 3,
+        "heading": "Mesh Ray, Overlap, Containment, Classification and Clipping",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 70959,
+        "level": 2,
+        "heading": "Visibility queries and ray intersections",
+        "occurrence": 1
+      },
+      "estimated_pages": 62.9,
+      "title": "Mesh Queries, Classification and Clipping",
+      "entry_bridge": "A primitive intersection test and a scene query solve different problems; meshes add containment, clipping and classification questions. The chapter connects these operations while keeping their assumptions visible.",
+      "learning_goal": "Distinguish primitive tests from mesh-level ray, overlap and classification queries.",
+      "recall_question": "What extra work is required to turn a ray–triangle test into a mesh containment query?"
+    },
+    {
+      "number": 28,
+      "start_anchor": {
+        "line": 70959,
+        "level": 2,
+        "heading": "Visibility queries and ray intersections",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 73707,
+        "level": 2,
+        "heading": "Acceleration structures and robust queries",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.4,
+      "title": "Visibility Queries and Ray Intersections",
+      "entry_bridge": "Visibility queries carry intervals and surface rules that determine what counts as a hit. The span develops those contracts from ray intersections toward practical visibility tests.",
+      "learning_goal": "Specify ray-query intervals and surface behavior for visibility.",
+      "recall_question": "How do the query interval and hit policy change the meaning of a visibility result?"
+    },
+    {
+      "number": 29,
+      "start_anchor": {
+        "line": 73707,
+        "level": 2,
+        "heading": "Acceleration structures and robust queries",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 74456,
+        "level": 2,
+        "heading": "Heat on a rod: why boundaries, modes, and mesh operators belong together",
+        "occurrence": 1
+      },
+      "estimated_pages": 46.6,
+      "title": "Acceleration Structures and Robust Queries",
+      "entry_bridge": "Acceleration structures reduce work only when their bounds and traversal rules preserve query correctness. Robust predicates and invariants keep that optimization from changing the answer.",
+      "learning_goal": "State BVH invariants and connect them to robust geometric queries.",
+      "recall_question": "How can a bounding-volume hierarchy speed up a query without changing its result?"
+    },
+    {
+      "number": 30,
+      "start_anchor": {
+        "line": 74456,
+        "level": 2,
+        "heading": "Heat on a rod: why boundaries, modes, and mesh operators belong together",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 75311,
+        "level": 2,
+        "heading": "Learning a visual classifier from examples",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.0,
+      "title": "Mesh Operators, Boundaries and Diffusion",
+      "entry_bridge": "Discrete operators encode local geometry and boundary behavior on a mesh. Studying heat diffusion through modes shows how eigenstructure and boundary conditions shape the operator’s behavior.",
+      "learning_goal": "Relate mesh operators, boundary conditions and diffusion modes.",
+      "recall_question": "How do boundary conditions change the modes available to a discrete heat problem?"
+    },
+    {
+      "number": 31,
+      "start_anchor": {
+        "line": 75311,
+        "level": 2,
+        "heading": "Learning a visual classifier from examples",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 76247,
+        "level": 2,
+        "heading": "Pose estimation, transforms, and robust fitting",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.8,
+      "title": "Learning a Visual Classifier",
+      "entry_bridge": "A visual classifier begins with data representation, labels and a decision rule. The chapter follows the path from image evidence to a learned model while separating measured behavior from assumptions.",
+      "learning_goal": "Describe the steps that turn labeled examples into a visual classifier.",
+      "recall_question": "Which parts of a classifier’s behavior come from its representation and training data?"
+    },
+    {
+      "number": 32,
+      "start_anchor": {
+        "line": 76247,
+        "level": 2,
+        "heading": "Pose estimation, transforms, and robust fitting",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 76841,
+        "level": 2,
+        "heading": "Real projections add scale, spacing, and incidence geometry",
+        "occurrence": 1
+      },
+      "estimated_pages": 46.0,
+      "title": "Pose Estimation and Robust Fitting",
+      "entry_bridge": "Pose estimation links image measurements to geometric transformations under noise and ambiguity. Robust fitting methods identify a plausible transform while accounting for outliers and camera assumptions.",
+      "learning_goal": "Relate image correspondences, camera transforms and robust pose fitting.",
+      "recall_question": "Why does robust fitting help when some image correspondences are incorrect?"
+    },
+    {
+      "number": 33,
+      "start_anchor": {
+        "line": 76841,
+        "level": 2,
+        "heading": "Real projections add scale, spacing, and incidence geometry",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 77559,
+        "level": 2,
+        "heading": "Learned representations of 3D shape and scenes",
+        "occurrence": 1
+      },
+      "estimated_pages": 58.2,
+      "title": "Projection Scale and Incidence Geometry",
+      "entry_bridge": "Real projections carry scale, spacing and incidence constraints beyond an idealized picture. This span develops the geometric structure that lets measurements constrain real configurations.",
+      "learning_goal": "Use projection, scale and incidence relationships to constrain geometry.",
+      "recall_question": "Which geometric quantities remain invariant under projection, and which do not?"
+    },
+    {
+      "number": 34,
+      "start_anchor": {
+        "line": 77559,
+        "level": 2,
+        "heading": "Learned representations of 3D shape and scenes",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 78470,
+        "level": 2,
+        "heading": "A complete renderer makes the forward model executable",
+        "occurrence": 1
+      },
+      "estimated_pages": 48.8,
+      "title": "Learned 3D Shapes and Scene Representations",
+      "entry_bridge": "Learned 3D systems depend on how shape and scene information are represented. This span surveys data and task choices before examining learned representations and their limits.",
+      "learning_goal": "Compare 3D representations in relation to the tasks they support.",
+      "recall_question": "How does the chosen 3D representation constrain the learning problem?"
+    },
+    {
+      "number": 35,
+      "start_anchor": {
+        "line": 78470,
+        "level": 2,
+        "heading": "A complete renderer makes the forward model executable",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 80439,
+        "level": 2,
+        "heading": "Source legend - actual playlist coverage",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.1,
+      "title": "A Complete Renderer as an Executable Forward Model",
+      "entry_bridge": "A complete renderer makes the forward graphics model executable from camera and geometry through light estimation. The chapter’s value is the end-to-end connection and the evidence it exposes.",
+      "learning_goal": "Trace a renderer from scene inputs to image output and identify its evidence limits.",
+      "recall_question": "Which components must agree for a rendered image to test the intended forward model?"
+    },
+    {
+      "number": 36,
+      "start_anchor": {
+        "line": 80439,
+        "level": 2,
+        "heading": "Source legend - actual playlist coverage",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 82103,
+        "level": 1,
+        "heading": "From an anisotropic kernel to an editable captured world",
+        "occurrence": 1
+      },
+      "estimated_pages": 63.6,
+      "title": "Source Atlas and Reconstruction Checkpoints",
+      "entry_bridge": "This span is a source atlas: it records course coverage, source identity and reconstruction checkpoints alongside the book’s teaching path. Reading it well means distinguishing verified source material, transcript limits and the concepts developed elsewhere in the volume.",
+      "learning_goal": "Use source provenance and reconstruction checkpoints to understand coverage and evidence boundaries.",
+      "recall_question": "What does a source record establish, and what remains unverified by that record?"
+    },
+    {
+      "number": 37,
+      "start_anchor": {
+        "line": 82103,
+        "level": 1,
+        "heading": "From an anisotropic kernel to an editable captured world",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 84850,
+        "level": 3,
+        "heading": "FROM A 3D ELLIPSOID TO A SCREEN-SPACE CONIC",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.8,
+      "title": "Gaussian Splatting and Editable Captured Worlds",
+      "entry_bridge": "Gaussian splatting represents captured scenes with oriented kernels carrying shape and appearance. This span moves from one primitive’s geometry to an editable world and its rendering implications.",
+      "learning_goal": "Explain how anisotropic Gaussian primitives represent and render captured scenes.",
+      "recall_question": "Which parameters determine a Gaussian’s spatial support and appearance?"
+    },
+    {
+      "number": 38,
+      "start_anchor": {
+        "line": 84850,
+        "level": 3,
+        "heading": "FROM A 3D ELLIPSOID TO A SCREEN-SPACE CONIC",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 87885,
+        "level": 2,
+        "heading": "Rasterize kernels at scale and connect their identities",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.7,
+      "title": "Projecting Ellipsoids into Screen-Space Conics",
+      "entry_bridge": "Projecting a 3D ellipsoid requires transforming its center and covariance into camera coordinates. The resulting screen-space conic links 3D shape to a two-dimensional footprint.",
+      "learning_goal": "Derive the screen-space conic induced by a projected ellipsoid.",
+      "recall_question": "Why does translation affect the projected mean while covariance follows the linear transform?"
+    },
+    {
+      "number": 39,
+      "start_anchor": {
+        "line": 87885,
+        "level": 2,
+        "heading": "Rasterize kernels at scale and connect their identities",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 91349,
+        "level": 2,
+        "heading": "Illuminate, reconstruct and animate the surface",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.8,
+      "title": "Tiling, Ordering and Compositing at Scale",
+      "entry_bridge": "Many projected kernels must be assigned to tiles, ordered and composited efficiently. This span connects local footprints to scalable rasterization and identity-aware data flow.",
+      "learning_goal": "Describe the tiling, sorting and compositing stages for large kernel sets.",
+      "recall_question": "Why does ordering matter when overlapping kernels are composited?"
+    },
+    {
+      "number": 40,
+      "start_anchor": {
+        "line": 91349,
+        "level": 2,
+        "heading": "Illuminate, reconstruct and animate the surface",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 94606,
+        "level": 3,
+        "heading": "Per-vertex vs per-corner",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.1,
+      "title": "Lighting, Reconstruction and Surface Motion",
+      "entry_bridge": "Rendering captured kernels still requires lighting, reconstruction and temporal surface behavior. This span considers those extensions and how motion changes the representation over time.",
+      "learning_goal": "Connect lighting and reconstruction choices to animated surface representations.",
+      "recall_question": "What additional information is needed when a captured surface changes over time?"
+    },
+    {
+      "number": 41,
+      "start_anchor": {
+        "line": 94606,
+        "level": 3,
+        "heading": "Per-vertex vs per-corner",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 97864,
+        "level": 1,
+        "heading": "XR: From Light to Perception - Seeing and Representing Reality",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.7,
+      "title": "Per-Vertex and Per-Corner Mesh Attributes",
+      "entry_bridge": "A mesh vertex can carry a single shared value, while a corner can carry values that differ across incident faces. This distinction explains seams, normals, UVs and the relationship between topology and shading.",
+      "learning_goal": "Choose per-vertex or per-corner attributes based on mesh continuity.",
+      "recall_question": "When should two triangles share a vertex position but keep separate corner attributes?"
+    },
+    {
+      "number": 42,
+      "start_anchor": {
+        "line": 97864,
+        "level": 1,
+        "heading": "XR: From Light to Perception - Seeing and Representing Reality",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 99706,
+        "level": 1,
+        "heading": "XR: From Light to Perception - Seeing and Representing Reality",
+        "occurrence": 2
+      },
+      "estimated_pages": 43.6,
+      "title": "XR: Radiometry, Optics and Perception",
+      "entry_bridge": "XR rendering begins with radiometry and optics but succeeds or fails through perception and system timing. This first span builds the conceptual loop from emitted light to an experienced image.",
+      "learning_goal": "Relate display radiometry and optics to perception in an XR system.",
+      "recall_question": "Why can a physically plausible scene still produce a poor XR experience?"
+    },
+    {
+      "number": 43,
+      "start_anchor": {
+        "line": 99706,
+        "level": 1,
+        "heading": "XR: From Light to Perception - Seeing and Representing Reality",
+        "occurrence": 2
+      },
+      "end_anchor": {
+        "line": 101549,
+        "level": 0,
+        "heading": "BOOK_END",
+        "occurrence": 1
+      },
+      "estimated_pages": 43.9,
+      "title": "XR: Extended Walkthrough and Verification Checkpoints",
+      "entry_bridge": "This second XR span deliberately preserves a repeated extended walkthrough and adds verification checkpoints. Use it to revisit radiometry, optics and perception while checking calculations, assumptions and practical limits across a longer worked sequence.",
+      "learning_goal": "Reconstruct and verify the XR walkthrough while distinguishing repeated exposition from its added checkpoints.",
+      "recall_question": "Which quantities and assumptions should be checked when following the extended XR derivation?"
+    }
+  ]
+}

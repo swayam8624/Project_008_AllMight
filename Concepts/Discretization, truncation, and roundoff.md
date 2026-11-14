@@ -25,7 +25,7 @@ Discretization replaces a continuous object or domain with a finite grid; trunca
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Separate discretization, truncation, and roundoff; measure convergence|Separate discretization, truncation, and roundoff; measure convergence]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Separate discretization, truncation, and roundoff; measure convergence|Separate discretization, truncation, and roundoff; measure convergence]]
 
 ## Source coverage
 

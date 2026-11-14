@@ -1,0 +1,790 @@
+{
+  "source_book": "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md",
+  "source_sha256": "9e1f531e4e2cbec46336683a2280e65f551b538cbef03015318fac94d387c238",
+  "page_model": "prose400words/page;code48wrappedlines/page;displaymath36lines/page;tables36rows/page;Mermaid/images0.5/0.45page;heading/paragraphspacing;50page target27–83flexibility",
+  "folder": "01 - Computing Foundations",
+  "title": "Computing Foundations — Bits, C++, Mathematics and Systems",
+  "book_introduction": "Begin with representations and object lifetime, then follow the mathematical and systems contracts needed to build visual software. The major chapters retain the full continuous lessons while making each reading session manageable.",
+  "chapters": [
+    {
+      "number": 1,
+      "start_anchor": {
+        "line": 1,
+        "level": 0,
+        "heading": "BOOK_START",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 1234,
+        "level": 2,
+        "heading": "Where the bytes live",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.5,
+      "title": "From Bits to Running Systems",
+      "entry_bridge": "The volume begins with a saved material appearing correctly after an editor is reopened, then traces the agreements that make that possible: interpretation, representation, storage, identity, and ownership. This chapter establishes the byte-level vocabulary and numeric contracts that later chapters rely on.",
+      "learning_goal": "Explain how state moves from external bytes through interpretation and representation into valid storage, and distinguish a value’s meaning from its encoding.",
+      "recall_question": "Trace one material value from file bytes to the running renderer; at which boundary can the same bytes acquire a different meaning?"
+    },
+    {
+      "number": 2,
+      "start_anchor": {
+        "line": 1234,
+        "level": 2,
+        "heading": "Where the bytes live",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 3651,
+        "level": 2,
+        "heading": "Records acquire their initial state",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.9,
+      "title": "Values at Addresses: Layout, Lifetimes, and Representation",
+      "entry_bridge": "Once a value has a meaning, the program must place it in storage with a valid lifetime and layout. This chapter connects byte order, alignment, pointers, object lifetime, and representation choices to the safety of reading and writing data.",
+      "learning_goal": "Choose and inspect a representation while respecting address, alignment, object lifetime, and validation boundaries.",
+      "recall_question": "Why does knowing a pointer’s numeric address fail to prove that a valid object of the intended type lives there?"
+    },
+    {
+      "number": 3,
+      "start_anchor": {
+        "line": 3651,
+        "level": 2,
+        "heading": "Records acquire their initial state",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 5524,
+        "level": 2,
+        "heading": "The laboratory and the teaching desk",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.1,
+      "title": "Records as Resource Transactions",
+      "entry_bridge": "Simple records and C++ initialization rules lead into ownership transfer, copying, moving, and exception safety. The through-line is how to preserve a resource’s invariants when construction or assignment succeeds, fails, or transfers ownership.",
+      "learning_goal": "Distinguish aggregate and constructor initialization, then design copy/move operations as state transitions with explicit failure guarantees.",
+      "recall_question": "During copy assignment, what must remain true if allocation fails before the new state can be committed?"
+    },
+    {
+      "number": 4,
+      "start_anchor": {
+        "line": 5524,
+        "level": 2,
+        "heading": "The laboratory and the teaching desk",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 7108,
+        "level": 2,
+        "heading": "One asset pipeline, many asset types — generic code without accidental promises",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.8,
+      "title": "Prove C++ Ownership with Runnable Experiments",
+      "entry_bridge": "The previous chapter’s ownership claims become observable through small programs, counters, injected failures, and carefully selected experiments. This lab chapter makes each mechanism testable while separating language guarantees from compiler-dependent measurements.",
+      "learning_goal": "Use executable probes to verify construction, cleanup, borrowing, optimization behavior, and failure guarantees without mistaking one run for a language rule.",
+      "recall_question": "Which observations in the lab are guaranteed by C++, and which depend on compiler, build flags, or the tested machine?"
+    },
+    {
+      "number": 5,
+      "start_anchor": {
+        "line": 7108,
+        "level": 2,
+        "heading": "One asset pipeline, many asset types — generic code without accidental promises",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 8605,
+        "level": 2,
+        "heading": "An asset registry grows while its handles must not change",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.8,
+      "title": "Generic Asset Pipelines without Hidden Contracts",
+      "entry_bridge": "A single loader pattern must serve meshes, textures, and other assets without erasing their different validation and ownership needs. This chapter develops a generic pipeline whose policies preserve caller intent and whose failure boundaries remain visible.",
+      "learning_goal": "Build shared loader structure around type-specific validation, resource ownership, capacity, and copy/transfer policy.",
+      "recall_question": "Which steps can be shared across asset types, and which must remain specific to an asset’s meaning?"
+    },
+    {
+      "number": 6,
+      "start_anchor": {
+        "line": 8605,
+        "level": 2,
+        "heading": "An asset registry grows while its handles must not change",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 9917,
+        "level": 2,
+        "heading": "A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost",
+        "occurrence": 1
+      },
+      "estimated_pages": 60.4,
+      "title": "Grow Registries without Invalidating Identity",
+      "entry_bridge": "A fixed-capacity store is a useful model but cannot serve a growing editor. This chapter connects vector growth and deletion to stable logical identity, generational handles, transactional insertion, lookup, and the boundary between internal storage and external APIs.",
+      "learning_goal": "Design a growing asset registry that tolerates relocation and removal while preventing stale or mis-typed handles from silently naming another object.",
+      "recall_question": "When the vector moves its elements, what must stay stable for a caller holding an asset reference?"
+    },
+    {
+      "number": 7,
+      "start_anchor": {
+        "line": 9917,
+        "level": 2,
+        "heading": "A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 10594,
+        "level": 2,
+        "heading": "From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500",
+        "occurrence": 1
+      },
+      "estimated_pages": 43.5,
+      "title": "Typed Interfaces, Identity, and Data Structures",
+      "entry_bridge": "The registry’s contract now crosses module and ABI boundaries, so type safety and hidden representation matter. The chapter then broadens from identity to filters, trees, heaps, and disjoint sets, showing that each data structure answers a different question.",
+      "learning_goal": "Choose an interface boundary and data structure from the operations and identity guarantees clients actually need.",
+      "recall_question": "What does a heap, Bloom filter, ordered tree, or disjoint-set structure promise—and what does each leave unanswered?"
+    },
+    {
+      "number": 8,
+      "start_anchor": {
+        "line": 10594,
+        "level": 2,
+        "heading": "From an asset map to a correct navigable world — Phase 5, M028–M030, Parts 446–500",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 12838,
+        "level": 3,
+        "heading": "MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.4,
+      "title": "Graphs, Search, and GPU Scheduling",
+      "entry_bridge": "Engine relationships can be represented as graphs, but edge meaning determines the right traversal or ordering proof. This chapter connects reachability and shortest paths to render dependencies, spatial ordering, memory scheduling, and GPU work distribution.",
+      "learning_goal": "Select graph algorithms from edge assumptions, preserve dependency order, and connect spatial or render problems to their graph representation.",
+      "recall_question": "Which property of the edges makes breadth-first search or Dijkstra’s algorithm valid for a particular path problem?"
+    },
+    {
+      "number": 9,
+      "start_anchor": {
+        "line": 12838,
+        "level": 3,
+        "heading": "MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS & ORDERING",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 16175,
+        "level": 2,
+        "heading": "Build, document, measure, and reproduce the program",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.9,
+      "title": "GPU Memory, Divergence, Atomics, and Ordering",
+      "entry_bridge": "The GPU’s memory spaces and execution model shape performance and correctness together. This chapter explains memory access, caches, divergence, subgroups, atomics, and ordering as contracts that kernel authors must reason about.",
+      "learning_goal": "Predict how memory placement, branch divergence, synchronization, and atomic ordering affect a GPU kernel.",
+      "recall_question": "Why can a memory model that appears unified still require explicit reasoning about access cost and visibility?"
+    },
+    {
+      "number": 10,
+      "start_anchor": {
+        "line": 16175,
+        "level": 2,
+        "heading": "Build, document, measure, and reproduce the program",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 20193,
+        "level": 2,
+        "heading": "C++ - Qualification safety and borrow intervals",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.3,
+      "title": "Reproducible Builds, Profiling, and Repository Contracts",
+      "entry_bridge": "A system is only reproducible when its build graph, dependencies, tests, diagnostics, and measurement method are explicit. The chapter follows the source-to-editor-to-runtime path and explains how to report evidence without elevating a repository snapshot into a universal promise.",
+      "learning_goal": "Create build and measurement workflows whose dependencies, configuration, test evidence, and platform boundaries can be reconstructed.",
+      "recall_question": "What evidence would let another engineer distinguish a successful build from a reproducible runtime result?"
+    },
+    {
+      "number": 11,
+      "start_anchor": {
+        "line": 20193,
+        "level": 2,
+        "heading": "C++ - Qualification safety and borrow intervals",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 22552,
+        "level": 3,
+        "heading": "COMMAND EXECUTION, ASYNC WORK & MEMORY LIFETIMES",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.5,
+      "title": "C++ Const, Borrowing, and CPU–GPU Buffering",
+      "entry_bridge": "C++ qualifiers and borrow intervals determine which accesses are legal, while graphics buffers add synchronization and reuse constraints across CPU and GPU work. This chapter follows those ideas into double and triple buffering and makes ownership timing explicit.",
+      "learning_goal": "Reason about qualification, lifetime-bounded views, and buffer reuse when CPU and GPU operations overlap.",
+      "recall_question": "What completion event must be observed before a buffer can be safely reused or released?"
+    },
+    {
+      "number": 12,
+      "start_anchor": {
+        "line": 22552,
+        "level": 3,
+        "heading": "COMMAND EXECUTION, ASYNC WORK & MEMORY LIFETIMES",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 25731,
+        "level": 2,
+        "heading": "Open the device and describe its storage",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.0,
+      "title": "Commands, Async Work, and Resource Lifetimes",
+      "entry_bridge": "GPU command processors execute submitted work asynchronously, so recording a command is not the same as completing it. This chapter connects queue submission, synchronization, memory lifetime, and scheduling to frame-level performance choices.",
+      "learning_goal": "Model when commands are recorded, submitted, executed, and retired, and use synchronization only at real dependency boundaries.",
+      "recall_question": "How does a completion signal change what the CPU may safely read, overwrite, or destroy?"
+    },
+    {
+      "number": 13,
+      "start_anchor": {
+        "line": 25731,
+        "level": 2,
+        "heading": "Open the device and describe its storage",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 30268,
+        "level": 2,
+        "heading": "Record, synchronize and retire explicit work",
+        "occurrence": 1
+      },
+      "estimated_pages": 65.3,
+      "title": "Open Vulkan Devices and Describe Resources",
+      "entry_bridge": "Vulkan begins by making device and presentation choices explicit, then ties resource descriptions to memory properties and descriptors. This chapter moves from instance/device setup through resource creation to the small set of state needed at draw time.",
+      "learning_goal": "Trace Vulkan ownership from instance and device selection through swapchain, memory, descriptors, and draw-ready resource state.",
+      "recall_question": "Which Vulkan objects describe a resource, which hold its bytes, and which make it available to a shader?"
+    },
+    {
+      "number": 14,
+      "start_anchor": {
+        "line": 30268,
+        "level": 2,
+        "heading": "Record, synchronize and retire explicit work",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 34647,
+        "level": 2,
+        "heading": "Execute and measure a Metal frame",
+        "occurrence": 1
+      },
+      "estimated_pages": 63.7,
+      "title": "Submit, Synchronize, and Retire GPU Work",
+      "entry_bridge": "Recorded command buffers and semaphores express dependencies whose completion must be matched to the right frame or image. The chapter then generalizes these rules to dependency and lifetime systems that retire resources only after all users finish.",
+      "learning_goal": "Design submission and retirement paths that account for frame-in-flight state, presentation, errors, and multiple queues.",
+      "recall_question": "Why does a frame fence alone fail to prove that every presentation semaphore or resource use has completed?"
+    },
+    {
+      "number": 15,
+      "start_anchor": {
+        "line": 34647,
+        "level": 2,
+        "heading": "Execute and measure a Metal frame",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 37689,
+        "level": 3,
+        "heading": "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES",
+        "occurrence": 1
+      },
+      "estimated_pages": 44.3,
+      "title": "Execute and Measure a Metal Frame",
+      "entry_bridge": "Metal uses its own command, storage, presentation, and synchronization contracts, with Apple GPU tile behavior affecting practical choices. This chapter treats a Metal frame as an execution pipeline whose correctness and performance need separate evidence.",
+      "learning_goal": "Map Metal device, command, storage, drawable, and synchronization concepts onto a measured frame without importing Vulkan assumptions blindly.",
+      "recall_question": "Which measurements distinguish CPU command encoding cost from GPU execution and presentation delay?"
+    },
+    {
+      "number": 16,
+      "start_anchor": {
+        "line": 37689,
+        "level": 3,
+        "heading": "PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI & THREAD BOUNDARIES",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 40137,
+        "level": 1,
+        "heading": "Python, scientific computing and data analysis as graphics-systems infrastructure",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.5,
+      "title": "Profile GPUs and Respect Apple Ownership Boundaries",
+      "entry_bridge": "Counters and timing tools reveal different parts of a frame, while Objective-C++, Swift, SwiftUI, and threading introduce ownership boundaries around native objects. The chapter connects measurement to safe cross-language and operating-system lifetimes.",
+      "learning_goal": "Interpret GPU profiling evidence and define ownership, threading, and file/network boundaries across Apple platform APIs.",
+      "recall_question": "What does a GPU counter establish, and what does it leave unknown about the full user-visible frame?"
+    },
+    {
+      "number": 17,
+      "start_anchor": {
+        "line": 40137,
+        "level": 1,
+        "heading": "Python, scientific computing and data analysis as graphics-systems infrastructure",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 41804,
+        "level": 2,
+        "heading": "Light uses the same decomposition in a new role",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.0,
+      "title": "Python and Numerical Tools for Graphics Systems",
+      "entry_bridge": "Python can coordinate experiments and asset workflows, but its abstractions still have memory and execution costs. The chapter moves from zero-copy interfaces and vectorization through scientific computation to geometric frames used in reconstruction.",
+      "learning_goal": "Choose where Python is an effective control plane and how to keep data movement, profiling, and numerical assumptions visible.",
+      "recall_question": "When does passing a buffer between Python and native code remain zero-copy, and what evidence would verify that claim?"
+    },
+    {
+      "number": 18,
+      "start_anchor": {
+        "line": 41804,
+        "level": 2,
+        "heading": "Light uses the same decomposition in a new role",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 43227,
+        "level": 2,
+        "heading": "Coordinates can change while the geometric object stays still",
+        "occurrence": 1
+      },
+      "estimated_pages": 50.5,
+      "title": "Vectors for Light and Frames",
+      "entry_bridge": "A shared decomposition of a vector into normal and tangent components explains reflection, refraction, and surface frames. This chapter reuses that geometric tool across optics and local coordinates before composition and inverse transforms.",
+      "learning_goal": "Derive reflection and refraction from vector components, and apply named frames to points and displacements.",
+      "recall_question": "Which component changes under reflection, and how does refraction change the tangent component?"
+    },
+    {
+      "number": 19,
+      "start_anchor": {
+        "line": 43227,
+        "level": 2,
+        "heading": "Coordinates can change while the geometric object stays still",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 44575,
+        "level": 2,
+        "heading": "Structure makes a decomposition a better tool than generic elimination",
+        "occurrence": 1
+      },
+      "estimated_pages": 52.2,
+      "title": "Coordinate Frames and Linear Systems",
+      "entry_bridge": "A geometric object stays fixed while its coordinate tuple changes with basis, camera, tangent, or clip frame. The chapter connects these transformations to matrix structure and linear solving, preserving distinctions among geometric points, coordinates, and numerical factorization.",
+      "learning_goal": "Transform coordinates between named frames and select a stable linear solve from the structure of the system.",
+      "recall_question": "How can two coordinate tuples differ while describing the same geometric vector, and how does a linear solve preserve that distinction?"
+    },
+    {
+      "number": 20,
+      "start_anchor": {
+        "line": 44575,
+        "level": 2,
+        "heading": "Structure makes a decomposition a better tool than generic elimination",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 46370,
+        "level": 2,
+        "heading": "Multivariable derivatives and sensitivity",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.6,
+      "title": "Choose Matrix Factorizations from Structure",
+      "entry_bridge": "Before solving a system, inspect symmetry, definiteness, shape, sparsity, and repeated right-hand sides. This chapter compares decompositions and their domains, then connects those structural promises to downstream numerical tasks.",
+      "learning_goal": "Select a factorization based on the matrix’s verified properties and explain when its assumptions fail.",
+      "recall_question": "What property allows Cholesky factorization, and what should the solver do when that property is absent?"
+    },
+    {
+      "number": 21,
+      "start_anchor": {
+        "line": 46370,
+        "level": 2,
+        "heading": "Multivariable derivatives and sensitivity",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 49358,
+        "level": 2,
+        "heading": "Integration and quadrature",
+        "occurrence": 1
+      },
+      "estimated_pages": 57.0,
+      "title": "Multivariable Derivatives and Sensitivity",
+      "entry_bridge": "Scalar calculus extends to vector-valued quantities through Jacobians, chain rules, and implicit relationships. This chapter uses derivatives to quantify how geometry and model outputs respond to changing inputs, preparing for optimization and simulation.",
+      "learning_goal": "Compute and interpret derivatives of vector functions, normalization, and implicit constraints as local sensitivity information.",
+      "recall_question": "How does a Jacobian describe the first-order change of a vector output when several inputs change?"
+    },
+    {
+      "number": 22,
+      "start_anchor": {
+        "line": 49358,
+        "level": 2,
+        "heading": "Integration and quadrature",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 52397,
+        "level": 2,
+        "heading": "1. A probability model begins with possible outcomes",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.3,
+      "title": "Accumulation, Quadrature, and the Bridge to Probability",
+      "entry_bridge": "Integration accumulates changing quantities and is not limited to geometric area; numerical quadrature approximates that accumulation from samples. The chapter carries the idea into numerical simulation and prepares the transition from deterministic models to uncertain measurements.",
+      "learning_goal": "Relate integrals to accumulation, derive simple antiderivatives, and compare exact quantities with numerical approximations.",
+      "recall_question": "What quantity is being accumulated in a chosen integral, and what assumptions make a quadrature rule accurate enough?"
+    },
+    {
+      "number": 23,
+      "start_anchor": {
+        "line": 52397,
+        "level": 2,
+        "heading": "1. A probability model begins with possible outcomes",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 55712,
+        "level": 2,
+        "heading": "5. Waiting times, event counts, and covariance geometry",
+        "occurrence": 1
+      },
+      "estimated_pages": 57.3,
+      "title": "Probability Models and Measurement Error",
+      "entry_bridge": "Probability begins by naming outcomes and assigning a model, not by treating randomness as an unexplained property. This chapter builds sample spaces, distributions, expectation, variance, and standardized error as tools for reasoning about uncertain graphics measurements.",
+      "learning_goal": "Define a probability model, distinguish discrete outcomes from continuous densities, and interpret uncertainty and standardized residuals.",
+      "recall_question": "Why must a continuous density be integrated over a range before it becomes a probability?"
+    },
+    {
+      "number": 24,
+      "start_anchor": {
+        "line": 55712,
+        "level": 2,
+        "heading": "5. Waiting times, event counts, and covariance geometry",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 57905,
+        "level": 1,
+        "heading": "Continuous models meet numerical computation",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.0,
+      "title": "Waiting Times, Covariance, and Matrix Decomposition",
+      "entry_bridge": "The exponential distribution describes memoryless waiting times, while covariance captures how measurements vary together across dimensions. Matrix decompositions then reveal rotation-like structure, stretch, and numerical limitations in real data.",
+      "learning_goal": "Derive waiting-time quantities and interpret covariance and matrix decompositions without confusing geometry with statistical variation.",
+      "recall_question": "What does covariance’s off-diagonal structure say about two measured components, and when can a decomposition be non-unique?"
+    },
+    {
+      "number": 25,
+      "start_anchor": {
+        "line": 57905,
+        "level": 1,
+        "heading": "Continuous models meet numerical computation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 61008,
+        "level": 2,
+        "heading": "Matrix functions turn repeated linear actions into one operator",
+        "occurrence": 1
+      },
+      "estimated_pages": 59.0,
+      "title": "Continuous Models and Numerical Error",
+      "entry_bridge": "Differential equations and mesh operators model continuous change, but computers must discretize the domain and approximate derivatives. This chapter studies boundaries, modes, finite differences, and step-size limits so that mathematical models are not confused with their numerical approximations.",
+      "learning_goal": "Connect boundary conditions and spatial discretization to a numerical operator, then identify truncation and roundoff limits.",
+      "recall_question": "Why can making a finite-difference step smaller eventually make the derivative estimate worse?"
+    },
+    {
+      "number": 26,
+      "start_anchor": {
+        "line": 61008,
+        "level": 2,
+        "heading": "Matrix functions turn repeated linear actions into one operator",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 63466,
+        "level": 3,
+        "heading": "Gauss–Newton",
+        "occurrence": 1
+      },
+      "estimated_pages": 45.9,
+      "title": "Matrix Functions and Nonlinear Least Squares",
+      "entry_bridge": "Matrix powers and functions describe repeated linear actions and linear differential equations, while nonlinear least squares measures model mismatch through residuals. This chapter connects matrix structure to optimization and prepares the specific Gauss–Newton method that follows.",
+      "learning_goal": "Interpret matrix exponential and related functions, and express nonlinear fitting as minimizing a residual-based objective.",
+      "recall_question": "How does the matrix exponential solve a linear system’s continuous-time evolution, and what makes least-squares residuals informative?"
+    },
+    {
+      "number": 27,
+      "start_anchor": {
+        "line": 63466,
+        "level": 3,
+        "heading": "Gauss–Newton",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 66237,
+        "level": 2,
+        "heading": "Reliable optimization in practice",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.4,
+      "title": "Gauss–Newton for Geometry and Pose",
+      "entry_bridge": "Gauss–Newton replaces the exact Hessian with a residual-Jacobian approximation, then applies parameter updates to geometric models such as camera poses. The chapter connects convergence, rank, observability, and transform conventions to whether an optimization result is meaningful.",
+      "learning_goal": "Derive a Gauss–Newton update from residual linearization and diagnose rank deficiency or an ambiguous pose estimate.",
+      "recall_question": "What information is lost when the exact Hessian is replaced by the Gauss–Newton approximation?"
+    },
+    {
+      "number": 28,
+      "start_anchor": {
+        "line": 66237,
+        "level": 2,
+        "heading": "Reliable optimization in practice",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 69720,
+        "level": 2,
+        "heading": "Separate discretization, truncation, and roundoff; measure convergence",
+        "occurrence": 1
+      },
+      "estimated_pages": 53.0,
+      "title": "Reliable Optimization and Root Finding",
+      "entry_bridge": "A practical optimizer must report why it stopped, whether derivatives agree with independent checks, and how a line search or linear solve failed. This chapter turns optimization into an auditable implementation and extends the same evidence discipline to root-finding certificates.",
+      "learning_goal": "Implement and assess optimization and root-finding procedures with finite checks, stopping criteria, failure statuses, and independent numerical witnesses.",
+      "recall_question": "What evidence distinguishes true convergence from a tiny step, failed line search, or inaccurate derivative?"
+    },
+    {
+      "number": 29,
+      "start_anchor": {
+        "line": 69720,
+        "level": 2,
+        "heading": "Separate discretization, truncation, and roundoff; measure convergence",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 72218,
+        "level": 2,
+        "heading": "8. Monte Carlo estimates trade computation for uncertainty",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.2,
+      "title": "Discretization, Convergence, and Experimental Design",
+      "entry_bridge": "Finite grids and samples change a continuous problem; truncation and floating-point arithmetic add separate errors. This chapter teaches convergence checks and experiment design so an accuracy claim is connected to the actual image or simulation budget.",
+      "learning_goal": "Separate discretization, truncation, and roundoff, and design experiments that measure the error relevant to the application.",
+      "recall_question": "How would you tell whether an observed error comes from grid resolution, numerical arithmetic, or an insufficient sample budget?"
+    },
+    {
+      "number": 30,
+      "start_anchor": {
+        "line": 72218,
+        "level": 2,
+        "heading": "8. Monte Carlo estimates trade computation for uncertainty",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 75692,
+        "level": 2,
+        "heading": "11. Implement probability without losing its numerical contracts",
+        "occurrence": 1
+      },
+      "estimated_pages": 60.2,
+      "title": "Monte Carlo Estimates and Uncertainty Metrics",
+      "entry_bridge": "Monte Carlo methods trade computation for uncertainty, with error shrinking according to sampling assumptions rather than dimension in the same way as grids. This chapter derives the estimator, works numerical examples, and chooses image-error metrics that match the evaluation goal.",
+      "learning_goal": "Estimate expectations from random samples, quantify uncertainty, and select an error metric whose weighting reflects the intended comparison.",
+      "recall_question": "Why does independent Monte Carlo standard error scale as $1/\\sqrt{N}$, and what does that scaling not guarantee?"
+    },
+    {
+      "number": 31,
+      "start_anchor": {
+        "line": 75692,
+        "level": 2,
+        "heading": "11. Implement probability without losing its numerical contracts",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 78258,
+        "level": 1,
+        "heading": "Geometry becomes an image and an inverse problem",
+        "occurrence": 1
+      },
+      "estimated_pages": 44.6,
+      "title": "Implement Probability with Numerical Contracts",
+      "entry_bridge": "Probability and covariance implementations must preserve the mathematical differences among probability mass, density, samples, and estimates. This chapter builds stable representations, tail calculations, tests, and deterministic checks around randomized code.",
+      "learning_goal": "Implement probability and covariance routines while preventing overflow, preserving tail accuracy, and validating random algorithms deterministically.",
+      "recall_question": "How can a randomized routine be tested deterministically without claiming that one seed proves its statistical behavior?"
+    },
+    {
+      "number": 32,
+      "start_anchor": {
+        "line": 78258,
+        "level": 1,
+        "heading": "Geometry becomes an image and an inverse problem",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 80694,
+        "level": 2,
+        "heading": "Projection turns rays into clip coordinates",
+        "occurrence": 1
+      },
+      "estimated_pages": 40.7,
+      "title": "Geometry Becomes an Image and an Inverse Problem",
+      "entry_bridge": "The chapter begins a continuous camera journey from geometric frames through projection, clipping, raster coordinates, and inverse reconstruction. Derivatives, uncertainty, and numerical rank now explain what an image can reveal about the 3D scene that produced it.",
+      "learning_goal": "Carry points and directions through camera transforms and projection, then identify what depth, multiple views, or calibration can recover.",
+      "recall_question": "Which information is lost at projection, and what additional observation is needed to recover depth?"
+    },
+    {
+      "number": 33,
+      "start_anchor": {
+        "line": 80694,
+        "level": 2,
+        "heading": "Projection turns rays into clip coordinates",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 84092,
+        "level": 2,
+        "heading": "A sign can matter more than a coordinate: robust predicates",
+        "occurrence": 1
+      },
+      "estimated_pages": 55.5,
+      "title": "Projection, Clipping, and Raster Sampling",
+      "entry_bridge": "Orthographic and perspective projections map camera-space geometry into clip coordinates, where homogeneous clipping and division establish image position. The chapter continues through pixel and texel sampling, fullscreen rendering, and historical conventions that can invalidate naive offsets.",
+      "learning_goal": "Derive projection mappings and explain clipping, perspective division, raster coordinates, and sample-center conventions.",
+      "recall_question": "Why must clipping occur before perspective division, and when is a half-pixel adjustment incorrect?"
+    },
+    {
+      "number": 34,
+      "start_anchor": {
+        "line": 84092,
+        "level": 2,
+        "heading": "A sign can matter more than a coordinate: robust predicates",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 86865,
+        "level": 2,
+        "heading": "Extrinsics place the optical camera in the world",
+        "occurrence": 1
+      },
+      "estimated_pages": 49.0,
+      "title": "Robust Predicates and Camera Sensitivity",
+      "entry_bridge": "Many geometry decisions need a reliable sign rather than a highly accurate coordinate, so robust predicates can determine topology while constructions calculate positions. The chapter reconnects those decisions to camera sensitivity and uncertainty in image measurements.",
+      "learning_goal": "Distinguish predicates from constructions and analyze how geometric and camera parameters affect a result near a decision boundary.",
+      "recall_question": "Why can a tiny coordinate error change a discrete geometric decision even when the coordinate itself looks accurate?"
+    },
+    {
+      "number": 35,
+      "start_anchor": {
+        "line": 86865,
+        "level": 2,
+        "heading": "Extrinsics place the optical camera in the world",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 89920,
+        "level": 2,
+        "heading": "Model exposure, physical optics, and depth of field",
+        "occurrence": 1
+      },
+      "estimated_pages": 48.8,
+      "title": "Camera Extrinsics and Projection Geometry",
+      "entry_bridge": "Intrinsics describe how a camera forms image measurements, while extrinsics place its optical frame in the world. The chapter derives camera-center and transform conventions, then extends rays to fisheye and XR-oriented sampling geometry.",
+      "learning_goal": "Convert between camera-to-world and world-to-camera conventions and derive rays from image measurements for non-pinhole cameras.",
+      "recall_question": "Why is the translation column of a world-to-camera matrix not generally the camera’s world-space position?"
+    },
+    {
+      "number": 36,
+      "start_anchor": {
+        "line": 89920,
+        "level": 2,
+        "heading": "Model exposure, physical optics, and depth of field",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 92790,
+        "level": 2,
+        "heading": "Make camera conventions explicit and debug the full transform chain",
+        "occurrence": 1
+      },
+      "estimated_pages": 56.5,
+      "title": "Exposure, Physical Optics, and Depth of Field",
+      "entry_bridge": "Camera exposure converts scene radiance into sensor measurements, while aperture and focus shape depth of field and blur. The chapter ties physical optics to rendering and image formation, then connects those models to pose estimation and bundle adjustment.",
+      "learning_goal": "Relate exposure and optical parameters to image formation, and understand how multi-view consistency constrains camera and scene estimates.",
+      "recall_question": "Which camera controls change exposure, which change focus blur, and how can their effects be distinguished in an image?"
+    },
+    {
+      "number": 37,
+      "start_anchor": {
+        "line": 92790,
+        "level": 2,
+        "heading": "Make camera conventions explicit and debug the full transform chain",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 95544,
+        "level": 2,
+        "heading": "Teach the complete journey, then break one assumption at a time",
+        "occurrence": 1
+      },
+      "estimated_pages": 54.5,
+      "title": "Camera Contracts and Transform-Chain Debugging",
+      "entry_bridge": "A safe camera API separates pose, projection, depth, and raster conventions rather than hiding them in one matrix. The chapter turns those distinctions into semantic types, complete scalar laboratories, and checks that identify which transform boundary introduced an error.",
+      "learning_goal": "Design camera interfaces with explicit conventions and debug a point through every transform stage using inspectable values.",
+      "recall_question": "If the final pixel is wrong, what intermediate coordinate should you inspect first, and which contract does it test?"
+    },
+    {
+      "number": 38,
+      "start_anchor": {
+        "line": 95544,
+        "level": 2,
+        "heading": "Teach the complete journey, then break one assumption at a time",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 97116,
+        "level": 1,
+        "heading": "Teaching reconstruction, source records, and research navigation",
+        "occurrence": 1
+      },
+      "estimated_pages": 51.8,
+      "title": "Reconstruct the Complete Geometry Pipeline",
+      "entry_bridge": "The earlier concepts now form one end-to-end route from imported panel measurements to a surface frame, reconstructed fields, and engine-facing state. This chapter combines complete examples and executable laboratories, then deliberately breaks assumptions to show where the proof changes.",
+      "learning_goal": "Reconstruct the full geometry and numerical pipeline while keeping storage, coordinate, interpolation, and ownership assumptions explicit.",
+      "recall_question": "Which assumptions must hold at each stage for the reconstructed value to remain meaningful when it reaches the engine?"
+    },
+    {
+      "number": 39,
+      "start_anchor": {
+        "line": 97116,
+        "level": 1,
+        "heading": "Teaching reconstruction, source records, and research navigation",
+        "occurrence": 1
+      },
+      "end_anchor": {
+        "line": 98918,
+        "level": 0,
+        "heading": "BOOK_END",
+        "occurrence": 1
+      },
+      "estimated_pages": 47.6,
+      "title": "Research Navigation and Source Boundaries",
+      "entry_bridge": "The final chapter preserves research connections, reader routes, provenance, and evidence boundaries behind the teaching chapters. These materials help readers continue investigation while keeping source records distinct from explanations and implementation claims.",
+      "learning_goal": "Use source records and research navigation to verify a claim, identify its limits, and choose a next reading or experiment.",
+      "recall_question": "What primary source, experiment, or runtime evidence would you need before extending one of this volume’s bounded claims?"
+    }
+  ]
+}

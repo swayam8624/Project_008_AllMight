@@ -4816,6 +4816,84 @@ Never return a reference to a local automatic object. A C++23 function returning
 
 Lifetime extension is narrowly useful for local work. For transfer across a function boundary, a returned owning value is usually the clearer starting contract. The cleanup and composition story below develops RAII; owning smart-pointer policies remain later depth, not implied by the word “reference.”
 
+<!-- Bible-final-pass: C++ temporary lifetime -->
+#### Turn the lifetime rule into a scope trace
+
+The preceding example showed that binding a local const reference can extend a temporary, while returning the same reference through a function does not extend it again. The distinction is visible if we count the object while the local binding is active, then watch a non-owning string view observe storage whose owner remains alive. That is a deliberately small witness: it makes the valid timeline executable without dereferencing a dangling observer.
+
+Its comments identify the owner and the exact scope boundary. A pointer, span, iterator, callback capture, or coroutine reference follows the same review question: which object owns the storage, and which event ends its validity?
+
+
+~~~cpp
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+
+struct Tracked {
+    // Count live instances so the program can observe the scope in which the
+    // temporary exists; this is test instrumentation, not ownership logic.
+    int value{};
+    inline static int alive = 0;
+
+    explicit Tracked(int v) : value(v) { ++alive; }
+    // A copy creates another object and therefore another live instance.
+    Tracked(const Tracked& other) : value(other.value) { ++alive; }
+    // Destruction marks the end of this object's lifetime.
+    ~Tracked() { --alive; }
+};
+
+Tracked make_tracked(int v) {
+    // Return an owned value. Copy elision may remove a move, not the object.
+    return Tracked{v};
+}
+
+void require(bool condition, const char* message) {
+    // Keep witness checks active when compiled with NDEBUG.
+    if (!condition) throw std::runtime_error(message);
+}
+
+int main() {
+    require(Tracked::alive == 0, "no tracked object exists before the scope");
+
+    {
+        // Binding a temporary object to this local const reference extends
+        // that temporary's lifetime to the reference's lifetime.
+        const Tracked& ref = make_tracked(42);
+        // Direct local binding extends this temporary to the end of the block.
+        require(ref.value == 42, "bound temporary retains its value");
+        require(Tracked::alive == 1, "one bound temporary is alive");
+    }
+    // The temporary is destroyed when its extending reference leaves scope.
+    require(Tracked::alive == 0, "bound temporary dies at the block boundary");
+
+    {
+        // A string_view is only an observer.  Keeping the owner alive is the
+        // contract that makes this view valid.
+        std::string owner = "render_graph";
+        // The view stores an address and length; owner supplies the storage.
+        std::string_view view = owner;
+        require(view == "render_graph", "view initially observes owner bytes");
+        // Character replacement preserves this string's storage allocation.
+        owner[0] = 'R';
+        require(view == "Render_graph", "view observes the owner's update");
+    }
+
+#if 0
+    // Intentionally NOT executed: returning a reference to a local object
+    // would create a dangling reference.  The source can look plausible while
+    // the lifetime contract is already broken.
+    const Tracked& bad() {
+        Tracked local{7};
+        return local;
+    }
+#endif
+
+    // The dangling example above is disabled: reading it would be undefined.
+    std::cout << "temporary lifetime: 2 executable suites PASS (dangling case is excluded)\n";
+}
+~~~
+
 ## Move permission is not resource transfer
 
 [[Move casts and forwarding references|std::move]] from `<utility>` casts an expression to an xvalue while preserving constness. It does not transfer a resource by itself. `std::move(text);` alone neither clears a string nor creates a destination. A subsequent constructor or assignment chooses an overload and performs whatever operation that type defines.
@@ -45108,7 +45186,7 @@ A point begins in object space, moves into world space, enters camera space, and
 We might describe this as:
 
 $$
-\mathbf p_o \xrightarrow{M} \mathbf p_w \xrightarrow{V} \mathbf p_c \xrightarrow{\pi} \mathbf p\_{\text{image}}.
+\mathbf p_o \xrightarrow{M} \mathbf p_w \xrightarrow{V} \mathbf p_c \xrightarrow{\pi} \mathbf p_{\text{image}}.
 $$
 
 Here $M$ is a model transform, $V$ is a view transform, and $\pi$ is perspective projection.
@@ -45162,7 +45240,7 @@ A limit describes what a function approaches as its input approaches some value.
 The notation is:
 
 $$
-\lim\_{x\to a}f(x)=L.
+\lim_{x\to a}f(x)=L.
 $$
 
 It says that when $x$ is sufficiently close to $a$, $f(x)$ can be made arbitrarily close to $L$.
@@ -45184,7 +45262,7 @@ $$
 Therefore:
 
 $$
-\boxed{\lim\_{x\to2}f(x)=4}.
+\boxed{\lim_{x\to2}f(x)=4}.
 $$
 
 The limit exists although the original expression is undefined at that point.
@@ -45193,7 +45271,7 @@ The limit exists although the original expression is undefined at that point.
 
 To understand limits beyond visual intuition, we need precise control of input and output error.
 
-We say $\lim\_{x\to a}f(x)=L$ if, for every desired output tolerance $\varepsilon>0$, there exists an input tolerance $\delta>0$ such that:
+We say $\lim_{x\to a}f(x)=L$ if, for every desired output tolerance $\varepsilon>0$, there exists an input tolerance $\delta>0$ such that:
 
 $$
 0<|x-a|<\delta \quad\Longrightarrow\quad |f(x)-L|<\varepsilon.
@@ -45244,7 +45322,7 @@ $$
 has a removable singularity at zero because:
 
 $$
-\lim\_{\theta\to0}\frac{\sin\theta}{\theta}=1
+\lim_{\theta\to0}\frac{\sin\theta}{\theta}=1
 $$
 
 when angles are measured in radians.
@@ -45256,7 +45334,7 @@ Expressions of this kind occur in stable small-angle rotation formulas, exponent
 A function $f$ is continuous at $a$ when:
 
 $$
-\lim\_{x\to a}f(x)=f(a).
+\lim_{x\to a}f(x)=f(a).
 $$
 
 This requires three things: $f(a)$ must exist, the limit must exist, and they must be equal.
@@ -45342,7 +45420,7 @@ At $t=2$, its position is $4$ metres. At $t=3$, its position is $9$ metres.
 The average velocity over this one-second interval is:
 
 $$
-v\_{\text{average}}=\frac{9-4}{3-2}=5\ \text{m/s}.
+v_{\text{average}}=\frac{9-4}{3-2}=5\ \text{m/s}.
 $$
 
 But what was its velocity at exactly $t=2$?
@@ -45364,7 +45442,7 @@ $$
 As $h\to0$:
 
 $$
-\boxed{x'(t)=\lim\_{h\to0}\frac{x(t+h)-x(t)}h=2t}.
+\boxed{x'(t)=\lim_{h\to0}\frac{x(t+h)-x(t)}h=2t}.
 $$
 
 At $t=2$, instantaneous velocity is $4\ \text{m/s}$.
@@ -45435,9 +45513,9 @@ $$
 f'(x)\approx\frac{f(x+h)-f(x-h)}{2h}
 $$
 
-has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\epsilon\_{\mathrm{mach}}/h)$ times an appropriate function scale.
+has truncation error of order $O(h^2)$. Under a standard floating-point error model, roundoff-related error often scales roughly as $O(\epsilon_{\mathrm{mach}}/h)$ times an appropriate function scale.
 
-Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\sqrt{\epsilon\_{\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.
+Thus, for forward differences, balancing the leading error terms frequently suggests $h$ of order $\sqrt{\epsilon_{\mathrm{mach}}}$ times a problem-dependent scale; central differences often suggest a cube-root scaling. These are heuristics, not universal fixed step sizes.
 
 We will implement and compare these methods rigorously in M052.
 
@@ -45450,7 +45528,7 @@ The derivative is not merely the slope of a graph. It tells us which linear func
 Suppose $f$ is differentiable at $a$. By definition:
 
 $$
-\lim\_{h\to0} \frac{f(a+h)-f(a)}h=f'(a).
+\lim_{h\to0} \frac{f(a+h)-f(a)}h=f'(a).
 $$
 
 Rearranging the mathematical statement gives:
@@ -45462,7 +45540,7 @@ $$
 where:
 
 $$
-\lim\_{h\to0}\frac{r(h)}h=0.
+\lim_{h\to0}\frac{r(h)}h=0.
 $$
 
 Equivalently:
@@ -45584,7 +45662,7 @@ $$
 For a positive integer $n$:
 
 $$
-\frac d{dx}x^n = \lim\_{h\to0}\frac{(x+h)^n-x^n}{h}.
+\frac d{dx}x^n = \lim_{h\to0}\frac{(x+h)^n-x^n}{h}.
 $$
 
 Using the binomial theorem:
@@ -45638,13 +45716,13 @@ $$
 Start with:
 
 $$
-h'(x)= \lim\_{\Delta x\to0} \frac{f(x+\Delta x)g(x+\Delta x)-f(x)g(x)}{\Delta x}.
+h'(x)= \lim_{\Delta x\to0} \frac{f(x+\Delta x)g(x+\Delta x)-f(x)g(x)}{\Delta x}.
 $$
 
 Insert and subtract the intermediate term $f(x)g(x+\Delta x)$:
 
 $$
-\begin{aligned} h'(x)=\lim\_{\Delta x\to0} \bigg[ &\frac{f(x+\Delta x)-f(x)}{\Delta x}g(x+\Delta x)\\ +{}&f(x)\frac{g(x+\Delta x)-g(x)}{\Delta x} \bigg]. \end{aligned}
+\begin{aligned} h'(x)=\lim_{\Delta x\to0} \bigg[ &\frac{f(x+\Delta x)-f(x)}{\Delta x}g(x+\Delta x)\\ +{}&f(x)\frac{g(x+\Delta x)-g(x)}{\Delta x} \bigg]. \end{aligned}
 $$
 
 Because differentiability implies continuity:
@@ -45852,7 +45930,7 @@ When $a=e$, $\ln e=1$, so the derivative equals the original function.
 We can also understand this from the limit definition:
 
 $$
-\frac d{dx}e^x =e^x\lim\_{h\to0}\frac{e^h-1}{h} =e^x.
+\frac d{dx}e^x =e^x\lim_{h\to0}\frac{e^h-1}{h} =e^x.
 $$
 
 The final limit equals $1$, a defining characteristic of the natural exponential.
@@ -45970,7 +46048,7 @@ This is useful when differentiating products, powers with variable exponents, de
 Consider the product of many small positive probabilities:
 
 $$
-P=\prod\_{i=1}^{N}p_i.
+P=\prod_{i=1}^{N}p_i.
 $$
 
 With thousands of factors, $P$ may underflow to zero in floating-point arithmetic.
@@ -45978,7 +46056,7 @@ With thousands of factors, $P$ may underflow to zero in floating-point arithmeti
 Taking logarithms transforms multiplication into addition:
 
 $$
-\ln P=\sum\_{i=1}^{N}\ln p_i.
+\ln P=\sum_{i=1}^{N}\ln p_i.
 $$
 
 Instead of storing an extremely tiny probability, we can accumulate its log-probability.
@@ -46026,7 +46104,7 @@ Because the length ratio is dimensionless, radians are a natural angular measure
 The standard limits are:
 
 $$
-\lim\_{h\to0}\frac{\sin h}{h}=1, \qquad \lim\_{h\to0}\frac{\cos h-1}{h}=0.
+\lim_{h\to0}\frac{\sin h}{h}=1, \qquad \lim_{h\to0}\frac{\cos h-1}{h}=0.
 $$
 
 These are true in their stated form for radians, not degrees.
@@ -46487,13 +46565,13 @@ Suppose we change $x$ but hold $y$ fixed.
 The [[#Multivariable derivatives and sensitivity|partial derivative]] with respect to $x$ is:
 
 $$
-\frac{\partial f}{\partial x} = \lim\_{h\to0} \frac{f(x+h,y)-f(x,y)}h.
+\frac{\partial f}{\partial x} = \lim_{h\to0} \frac{f(x+h,y)-f(x,y)}h.
 $$
 
 Likewise, the partial derivative with respect to $y$ is:
 
 $$
-\frac{\partial f}{\partial y} = \lim\_{h\to0} \frac{f(x,y+h)-f(x,y)}h.
+\frac{\partial f}{\partial y} = \lim_{h\to0} \frac{f(x,y+h)-f(x,y)}h.
 $$
 
 The symbol $\partial$ is used because we are differentiating with respect to only one of several input coordinates.
@@ -46665,7 +46743,7 @@ The derivative of a scalar function of several variables is formally a linear fu
 For Euclidean coordinates, this linear functional can be represented as a row vector:
 
 $$
-Df(\mathbf x)= \begin{bmatrix} f\_{x_1}&f\_{x_2}&\cdots&f\_{x_n} \end{bmatrix}.
+Df(\mathbf x)= \begin{bmatrix} f_{x_1}&f_{x_2}&\cdots&f_{x_n} \end{bmatrix}.
 $$
 
 The gradient is conventionally written as the corresponding column vector:
@@ -46707,13 +46785,13 @@ But what happens when we move in an arbitrary direction?
 Let $\mathbf u$ be a unit direction vector. The [[#Multivariable derivatives and sensitivity|directional derivative]] is:
 
 $$
-D\_{\mathbf u}f(\mathbf x) = \lim\_{h\to0} \frac{f(\mathbf x+h\mathbf u)-f(\mathbf x)}h.
+D_{\mathbf u}f(\mathbf x) = \lim_{h\to0} \frac{f(\mathbf x+h\mathbf u)-f(\mathbf x)}h.
 $$
 
 When $f$ is differentiable:
 
 $$
-\boxed{ D\_{\mathbf u}f(\mathbf x) = \nabla f(\mathbf x)\cdot\mathbf u }.
+\boxed{ D_{\mathbf u}f(\mathbf x) = \nabla f(\mathbf x)\cdot\mathbf u }.
 $$
 
 This follows by substituting $\Delta\mathbf x=h\mathbf u$ into the local linear approximation:
@@ -46747,7 +46825,7 @@ $$
 Then:
 
 $$
-\begin{aligned} D\_{\mathbf u}f &=4\left(\frac35\right)+10\left(\frac45\right)\\ &=\frac{12}{5}+\frac{40}{5}\\ &=\boxed{10.4}. \end{aligned}
+\begin{aligned} D_{\mathbf u}f &=4\left(\frac35\right)+10\left(\frac45\right)\\ &=\frac{12}{5}+\frac{40}{5}\\ &=\boxed{10.4}. \end{aligned}
 $$
 
 The output increases at a local rate of $10.4$ per unit distance traveled in that direction.
@@ -46811,7 +46889,7 @@ $$
 The directional derivative is:
 
 $$
-D\_{\mathbf u}f=\nabla f\cdot\mathbf u.
+D_{\mathbf u}f=\nabla f\cdot\mathbf u.
 $$
 
 Using the geometric dot-product definition:
@@ -46823,7 +46901,7 @@ $$
 Since $\|\mathbf u\|=1$:
 
 $$
-D\_{\mathbf u}f = \|\nabla f\|\cos\theta.
+D_{\mathbf u}f = \|\nabla f\|\cos\theta.
 $$
 
 Its maximum occurs when:
@@ -46837,13 +46915,13 @@ meaning $\mathbf u$ points in the same direction as the gradient.
 Thus, if $\nabla f\ne0$:
 
 $$
-\boxed{ \mathbf u\_{\max}= \frac{\nabla f}{\|\nabla f\|} }.
+\boxed{ \mathbf u_{\max}= \frac{\nabla f}{\|\nabla f\|} }.
 $$
 
 The steepest-descent direction is the negative:
 
 $$
-\boxed{ \mathbf u\_{\min}= -\frac{\nabla f}{\|\nabla f\|} }.
+\boxed{ \mathbf u_{\min}= -\frac{\nabla f}{\|\nabla f\|} }.
 $$
 
 This is a direct consequence of the Cauchy–Schwarz inequality.
@@ -46869,7 +46947,7 @@ $$
 After normalization in the $G$-metric:
 
 $$
-\mathbf u\_{\max} = \frac{G^{-1}\nabla f} {\sqrt{\nabla f^TG^{-1}\nabla f}}.
+\mathbf u_{\max} = \frac{G^{-1}\nabla f} {\sqrt{\nabla f^TG^{-1}\nabla f}}.
 $$
 
 To see why, substitute $\mathbf v=G^{1/2}\mathbf u$ into the maximization problem. The constraint becomes $\|\mathbf v\|\_2=1$, while the objective becomes $(G^{-1/2}\nabla f)^T\mathbf v$. Ordinary Cauchy–Schwarz then gives the formula.
@@ -47110,7 +47188,7 @@ with the output dimensions as rows and input dimensions as columns.
 Each entry:
 
 $$
-J\_{ij}=\frac{\partial f_i}{\partial x_j}
+J_{ij}=\frac{\partial f_i}{\partial x_j}
 $$
 
 answers: How sensitive is output component $i$ to input component $j$?
@@ -47226,7 +47304,7 @@ $$
 where:
 
 $$
-\lim\_{\|\mathbf h\|\to0} \frac{\|\mathbf r(\mathbf h)\|}{\|\mathbf h\|}=0.
+\lim_{\|\mathbf h\|\to0} \frac{\|\mathbf r(\mathbf h)\|}{\|\mathbf h\|}=0.
 $$
 
 This definition is known as Fréchet differentiability in Euclidean spaces.
@@ -47497,25 +47575,25 @@ The original function is nonlinear, but for this small perturbation, the Jacobia
 The exact horizontal displacement is:
 
 $$
-\Delta u\_{\text{exact}} = f_x\left( \frac{X+\Delta X}{Z+\Delta Z} -\frac XZ \right).
+\Delta u_{\text{exact}} = f_x\left( \frac{X+\Delta X}{Z+\Delta Z} -\frac XZ \right).
 $$
 
 Combine the fractions:
 
 $$
-\Delta u\_{\text{exact}} = f_x\frac{Z\Delta X-X\Delta Z}{Z(Z+\Delta Z)}.
+\Delta u_{\text{exact}} = f_x\frac{Z\Delta X-X\Delta Z}{Z(Z+\Delta Z)}.
 $$
 
 The Jacobian prediction is:
 
 $$
-\Delta u\_{\text{linear}} = f_x\frac{Z\Delta X-X\Delta Z}{Z^2}.
+\Delta u_{\text{linear}} = f_x\frac{Z\Delta X-X\Delta Z}{Z^2}.
 $$
 
 Subtract:
 
 $$
-\boxed{ \Delta u\_{\text{exact}}-\Delta u\_{\text{linear}} = -\frac{f_x(Z\Delta X-X\Delta Z)\Delta Z} {Z^2(Z+\Delta Z)} }.
+\boxed{ \Delta u_{\text{exact}}-\Delta u_{\text{linear}} = -\frac{f_x(Z\Delta X-X\Delta Z)\Delta Z} {Z^2(Z+\Delta Z)} }.
 $$
 
 This is an exact expression for the horizontal [[#Jacobians, curvature, and local approximation|linearization error]], provided both projections are defined.
@@ -47701,7 +47779,7 @@ $$
 The projected-point Jacobian with respect to these six perturbation parameters becomes:
 
 $$
-\boxed{ J\_{\text{pose}} = J\_\pi \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix} }.
+\boxed{ J_{\text{pose}} = J\_\pi \begin{bmatrix} -[\mathbf p_c]\_\times&I_3 \end{bmatrix} }.
 $$
 
 This is a $2\times6$ Jacobian.
@@ -47932,7 +48010,7 @@ $$
 The general degree-$n$ Taylor polynomial is:
 
 $$
-\boxed{ T_n(a+h)= \sum\_{k=0}^{n} \frac{f^{(k)}(a)}{k!}h^k }.
+\boxed{ T_n(a+h)= \sum_{k=0}^{n} \frac{f^{(k)}(a)}{k!}h^k }.
 $$
 
 The factorial appears because differentiating $h^k$ exactly $k$ times produces $k!$.
@@ -48022,22 +48100,22 @@ $$
 The second-order part is:
 
 $$
-\frac12 \begin{bmatrix}h_x&h_y\end{bmatrix} \begin{bmatrix} f\_{xx}&f\_{xy}\\ f\_{yx}&f\_{yy} \end{bmatrix} \begin{bmatrix}h_x\\h_y\end{bmatrix}.
+\frac12 \begin{bmatrix}h_x&h_y\end{bmatrix} \begin{bmatrix} f_{xx}&f_{xy}\\ f_{yx}&f_{yy} \end{bmatrix} \begin{bmatrix}h_x\\h_y\end{bmatrix}.
 $$
 
 Multiplying gives:
 
 $$
-\frac12\left( f\_{xx}h_x^2+ f\_{xy}h_xh_y+ f\_{yx}h_yh_x+ f\_{yy}h_y^2 \right).
+\frac12\left( f_{xx}h_x^2+ f_{xy}h_xh_y+ f_{yx}h_yh_x+ f_{yy}h_y^2 \right).
 $$
 
 When mixed derivatives agree:
 
 $$
-\boxed{ \frac12\left( f\_{xx}h_x^2+ 2f\_{xy}h_xh_y+ f\_{yy}h_y^2 \right) }.
+\boxed{ \frac12\left( f_{xx}h_x^2+ 2f_{xy}h_xh_y+ f_{yy}h_y^2 \right) }.
 $$
 
-The cross term $2f\_{xy}h_xh_y$ describes coupling between the two perturbation directions.
+The cross term $2f_{xy}h_xh_y$ describes coupling between the two perturbation directions.
 
 This is the second-order equivalent of how an off-diagonal matrix element couples coordinates in linear algebra.
 
@@ -48126,7 +48204,7 @@ $$
 Differentiate with respect to $\mathbf h$, assuming symmetric $H$:
 
 $$
-\nabla\_{\mathbf h}m=\nabla f+H\mathbf h.
+\nabla_{\mathbf h}m=\nabla f+H\mathbf h.
 $$
 
 Setting this equal to zero gives:
@@ -48270,7 +48348,7 @@ $$
 when:
 
 $$
-\lim\_{h\to0}\frac{r(h)}{|h|}=0.
+\lim_{h\to0}\frac{r(h)}{|h|}=0.
 $$
 
 A function can satisfy $o(h)$ without an $O(h^2)$ bound.
@@ -48312,13 +48390,13 @@ A large perturbation in a nearly linear region may be acceptable. A tiny perturb
 Absolute error is:
 
 $$
-E\_{\text{abs}}=|\hat y-y|.
+E_{\text{abs}}=|\hat y-y|.
 $$
 
 Relative error is:
 
 $$
-E\_{\text{rel}}=\frac{|\hat y-y|}{|y|},
+E_{\text{rel}}=\frac{|\hat y-y|}{|y|},
 $$
 
 when $y\ne0$.
@@ -48755,7 +48833,7 @@ The implementation also applies a Y-axis sign flip once in its projection matrix
 Meanwhile, [KairoMath/Matrix.cppm](https://github.com/swayam8624/KairoMath/blob/master/Matrix.cppm?utm_source=chatgpt.com), around lines 1758–1781, constructs a right-handed perspective matrix with a zero-to-one depth range and:
 
 $$
-w\_{\text{clip}}=-z\_{\text{view}}.
+w_{\text{clip}}=-z_{\text{view}}.
 $$
 
 This differs in representation from the positive-forward camera-space convention used in our canonical projection derivation.
@@ -48763,7 +48841,7 @@ This differs in representation from the positive-forward camera-space convention
 For an ideal centered projection, we can convert between these conventions by using:
 
 $$
-X=X\_{\text{view}},\quad Y=-Y\_{\text{view}},\quad Z=-Z\_{\text{view}}
+X=X_{\text{view}},\quad Y=-Y_{\text{view}},\quad Z=-Z_{\text{view}}
 $$
 
 when converting to a positive-forward, positive-downward image-camera frame, with the relevant viewport mapping applied.
@@ -48785,7 +48863,7 @@ Why is that the correct gradient for a standard least-squares objective?
 Suppose:
 
 $$
-E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|^2 =\frac12\sum\_{i=1}^m r_i(\mathbf x)^2.
+E(\mathbf x)=\frac12\|\mathbf r(\mathbf x)\|^2 =\frac12\sum_{i=1}^m r_i(\mathbf x)^2.
 $$
 
 Here $\mathbf r$ is a residual vector, such as the difference between predicted and observed image coordinates.
@@ -48793,13 +48871,13 @@ Here $\mathbf r$ is a residual vector, such as the difference between predicted 
 Differentiate with respect to parameter $x_j$:
 
 $$
-\frac{\partial E}{\partial x_j} = \sum\_{i=1}^m r_i \frac{\partial r_i}{\partial x_j}.
+\frac{\partial E}{\partial x_j} = \sum_{i=1}^m r_i \frac{\partial r_i}{\partial x_j}.
 $$
 
 The residual Jacobian has entries:
 
 $$
-J\_{ij}=\frac{\partial r_i}{\partial x_j}.
+J_{ij}=\frac{\partial r_i}{\partial x_j}.
 $$
 
 Collecting all parameter derivatives produces:
@@ -48825,7 +48903,7 @@ $$
 differentiate again:
 
 $$
-\boxed{ \nabla^2E = J^TJ+ \sum\_{i=1}^m r_i\nabla^2r_i }.
+\boxed{ \nabla^2E = J^TJ+ \sum_{i=1}^m r_i\nabla^2r_i }.
 $$
 
 The term $J^TJ$ is positive semidefinite and describes the first-order residual sensitivity.
@@ -48835,7 +48913,7 @@ The remaining term depends on the residual values and second derivatives of the 
 Gauss–Newton approximates the Hessian by:
 
 $$
-H\_{\mathrm{GN}}=J^TJ.
+H_{\mathrm{GN}}=J^TJ.
 $$
 
 This approximation is particularly attractive when the residuals are small near a solution.
@@ -48923,13 +49001,13 @@ $$
 Therefore:
 
 $$
-\boxed{ \Sigma\_{\text{image}} \approx J\_\pi\Sigma J\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J\_\pi\Sigma J\_\pi^T }.
 $$
 
 If the original Gaussian covariance is defined in world space, and $R$ is the linear rotational part of the world-to-camera transformation:
 
 $$
-\boxed{ \Sigma\_{\text{image}} \approx J\_\pi R\Sigma\_{\text{world}}R^TJ\_\pi^T }.
+\boxed{ \Sigma_{\text{image}} \approx J\_\pi R\Sigma_{\text{world}}R^TJ\_\pi^T }.
 $$
 
 This is the first-order covariance projection used in 3D Gaussian splatting formulations. A survey of the field expresses this same Jacobian-based transformation and explains its role in approximating projective geometry.&#x20;
@@ -48963,7 +49041,7 @@ $$
 Compute:
 
 $$
-\Sigma\_{\text{image}}=J\_\pi\Sigma J\_\pi^T.
+\Sigma_{\text{image}}=J\_\pi\Sigma J\_\pi^T.
 $$
 
 The top-left entry is:
@@ -48987,7 +49065,7 @@ $$
 Thus:
 
 $$
-\boxed{ \Sigma\_{\text{image}}= \begin{bmatrix} 20&2.05\\ 2.05&68.290625 \end{bmatrix} \text{ pixels}^2 }.
+\boxed{ \Sigma_{\text{image}}= \begin{bmatrix} 20&2.05\\ 2.05&68.290625 \end{bmatrix} \text{ pixels}^2 }.
 $$
 
 Even though the original 3D covariance was diagonal, its image-space covariance contains an off-diagonal component.
@@ -49071,7 +49149,7 @@ This reveals something the first-order approximation misses: a nonlinear transfo
 For the horizontal projection $u=f_xX/Z+c_x$, the nonzero second derivatives include:
 
 $$
-u\_{XZ}=u\_{ZX}=-\frac{f_x}{Z^2}, \qquad u\_{ZZ}=\frac{2f_xX}{Z^3}.
+u_{XZ}=u_{ZX}=-\frac{f_x}{Z^2}, \qquad u_{ZZ}=\frac{2f_xX}{Z^3}.
 $$
 
 The second-order mean correction is:
@@ -49103,7 +49181,7 @@ $$
 Differentiating again:
 
 $$
-\boxed{ H\_{g\circ F} = J_F^TH_gJ_F + \sum\_{k=1}^{m} \frac{\partial g}{\partial y_k}H\_{F_k} }.
+\boxed{ H_{g\circ F} = J_F^TH_gJ_F + \sum_{k=1}^{m} \frac{\partial g}{\partial y_k}H_{F_k} }.
 $$
 
 The first term transports the outer function's curvature through the inner Jacobian.
@@ -49127,7 +49205,7 @@ has an invertible Jacobian at a point and satisfies the assumptions of the inver
 Then the inverse mapping exists locally, and:
 
 $$
-\boxed{ J\_{F^{-1}}(F(\mathbf x))= [J_F(\mathbf x)]^{-1} }.
+\boxed{ J_{F^{-1}}(F(\mathbf x))= [J_F(\mathbf x)]^{-1} }.
 $$
 
 This is the multidimensional counterpart of:
@@ -49151,7 +49229,7 @@ Treating its nine entries as independent optimization variables ignores the orth
 A more appropriate local update uses a three-dimensional tangent-space perturbation:
 
 $$
-R\_{\text{new}}=\exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\text{new}}=\exp([\delta\boldsymbol\omega]\_\times)R.
 $$
 
 The gradient and Jacobian are then expressed with respect to the local perturbation coordinates, rather than nine unconstrained matrix entries.
@@ -49177,13 +49255,13 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \nabla\_{\mathbf z}\tilde f = A^T\nabla\_{\mathbf x}f }.
+\boxed{ \nabla_{\mathbf z}\tilde f = A^T\nabla_{\mathbf x}f }.
 $$
 
 If $A$ is constant, the Hessian transforms as:
 
 $$
-\boxed{ H\_{\mathbf z}=A^TH\_{\mathbf x}A }.
+\boxed{ H_{\mathbf z}=A^TH_{\mathbf x}A }.
 $$
 
 These formulas show how gradients and Hessians depend on parameterization.
@@ -49203,7 +49281,7 @@ Knowing the correct derivatives is only half the engineering problem. We must al
 | Gradient descent moves uphill                                    | Incorrect sign or gradient                             | Evaluate directional derivative against actual objective change             |
 | Derivatives explode near zero depth                              | Perspective singularity                                | Monitor $Z$, clipping, and Jacobian norms                               |
 | Normal derivatives become unstable                               | Division by near-zero vector length                    | Test zero and near-zero vectors                                             |
-| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H\_{ij}$ and $H\_{ji}$, inspect regularity                 |
+| Hessian unexpectedly asymmetric                                  | Incorrect mixed derivatives or numerical approximation | Compare $H_{ij}$ and $H_{ji}$, inspect regularity                 |
 | Finite differences disagree at tiny step sizes                   | Floating-point cancellation                            | Sweep step size logarithmically                                             |
 | Linearization accurate nearby but fails farther away             | Neglected nonlinear terms                              | Plot error versus perturbation magnitude                                    |
 | Gradient is zero but result is not a minimum                     | Stationary saddle or maximum                           | Inspect Hessian eigenvalues or directional behavior                         |
@@ -49246,7 +49324,7 @@ The complete progression from Parts 801–831 can be expressed as one chain:
 The following formulas are the most important reconstruction anchors:
 
 $$
-\boxed{ \begin{aligned} f'(x)&=\lim\_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J\_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma\_{\text{image}}&\approx J\_\pi\Sigma J\_\pi^T \end{aligned} }
+\boxed{ \begin{aligned} f'(x)&=\lim_{h\to0}\frac{f(x+h)-f(x)}h\\[3pt] Df(\mathbf x)[\mathbf h]&=\nabla f(\mathbf x)^T\mathbf h\\[3pt] F(\mathbf x+\mathbf h)&\approx F(\mathbf x)+J_F(\mathbf x)\mathbf h\\[3pt] J_{G\circ F}&=J_GJ_F\\[3pt] f(\mathbf x+\mathbf h)&\approx f(\mathbf x)+\nabla f^T\mathbf h+ \frac12\mathbf h^TH_f\mathbf h\\[3pt] \Sigma_{\text{image}}&\approx J\_\pi\Sigma J\_\pi^T \end{aligned} }
 $$
 
 Every formula is a different expression of how local changes propagate through a system.
@@ -49309,7 +49387,7 @@ $$
 Add all the displacements:
 
 $$
-\Delta x\approx\sum\_{i=0}^{N-1}v(t_i)\Delta t.
+\Delta x\approx\sum_{i=0}^{N-1}v(t_i)\Delta t.
 $$
 
 If we make the intervals increasingly small, their accumulated contribution approaches the definite integral:
@@ -49339,7 +49417,7 @@ An integral can represent accumulated displacement, work, mass, electric charge,
 For instance, work done by a variable force along a one-dimensional path is:
 
 $$
-W=\int\_{x_0}^{x_1}F(x)\\,dx.
+W=\int_{x_0}^{x_1}F(x)\\,dx.
 $$
 
 If force is measured in newtons and position in metres, the integral has units of newton-metres, or joules.
@@ -49347,7 +49425,7 @@ If force is measured in newtons and position in metres, the integral has units o
 The impulse delivered by a time-varying force is:
 
 $$
-\mathbf J=\int\_{t_0}^{t_1}\mathbf F(t)\\,dt,
+\mathbf J=\int_{t_0}^{t_1}\mathbf F(t)\\,dt,
 $$
 
 with units of newton-seconds, equal to the change in linear momentum.
@@ -49439,21 +49517,21 @@ $$
 Define the width of the $i$-th interval as:
 
 $$
-\Delta x_i=x\_{i+1}-x_i.
+\Delta x_i=x_{i+1}-x_i.
 $$
 
-Choose a sampling point $\xi_i\in[x_i,x\_{i+1}]$.
+Choose a sampling point $\xi_i\in[x_i,x_{i+1}]$.
 
 Then the Riemann sum is:
 
 $$
-S_N=\sum\_{i=0}^{N-1}f(\xi_i)\Delta x_i.
+S_N=\sum_{i=0}^{N-1}f(\xi_i)\Delta x_i.
 $$
 
 For a Riemann-integrable function, as the maximum subinterval width tends to zero, the sum approaches the integral:
 
 $$
-\boxed{ \int_a^b f(x)\\,dx = \lim\_{\|\mathcal P\|\to0} \sum\_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
+\boxed{ \int_a^b f(x)\\,dx = \lim_{\|\mathcal P\|\to0} \sum_{i=0}^{N-1}f(\xi_i)\Delta x_i }.
 $$
 
 Here $\mathcal P$ denotes the partition, and its mesh width is:
@@ -49487,19 +49565,19 @@ $$
 A left-endpoint Riemann sum is:
 
 $$
-L_N=h\sum\_{i=0}^{N-1}f(x_i).
+L_N=h\sum_{i=0}^{N-1}f(x_i).
 $$
 
 A right-endpoint sum is:
 
 $$
-R_N=h\sum\_{i=1}^{N}f(x_i).
+R_N=h\sum_{i=1}^{N}f(x_i).
 $$
 
 A midpoint sum is:
 
 $$
-M_N=h\sum\_{i=0}^{N-1}f\left(x_i+\frac h2\right).
+M_N=h\sum_{i=0}^{N-1}f\left(x_i+\frac h2\right).
 $$
 
 All three approximate the same integral, but their error differs because they choose different representatives of the function within each interval.
@@ -49605,7 +49683,7 @@ The dummy variable $t$ names the points being accumulated; the upper endpoint $x
 For a physical trajectory:
 
 $$
-x(t)=x(t_0)+\int\_{t_0}^{t}v(s)\\,ds,
+x(t)=x(t_0)+\int_{t_0}^{t}v(s)\\,ds,
 $$
 
 we recover:
@@ -49617,7 +49695,7 @@ $$
 For velocity obtained by accumulating acceleration:
 
 $$
-v(t)=v(t_0)+\int\_{t_0}^{t}a(s)\\,ds,
+v(t)=v(t_0)+\int_{t_0}^{t}a(s)\\,ds,
 $$
 
 differentiating recovers acceleration.
@@ -49681,7 +49759,7 @@ $$
 Integrate over $s\in[0,h]$:
 
 $$
-\int\_{x_i}^{x_i+h}f(x)\\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
+\int_{x_i}^{x_i+h}f(x)\\,dx = hf(x_i)+\frac{h^2}{2}f'(x_i)+O(h^3)
 $$
 
 under sufficient smoothness assumptions.
@@ -49719,7 +49797,7 @@ for $s\in[-h/2,h/2]$.
 Integrating the linear term:
 
 $$
-\int\_{-h/2}^{h/2}f'(m_i)s\\,ds=0.
+\int_{-h/2}^{h/2}f'(m_i)s\\,ds=0.
 $$
 
 The positive and negative contributions cancel.
@@ -49727,7 +49805,7 @@ The positive and negative contributions cancel.
 Consequently:
 
 $$
-\int\_{x_i}^{x\_{i+1}}f(x)\\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
+\int_{x_i}^{x_{i+1}}f(x)\\,dx = hf(m_i)+\frac{h^3}{24}f''(m_i)+O(h^5)
 $$
 
 for sufficiently smooth $f$.
@@ -49783,7 +49861,7 @@ $$
 For a uniform partition, adding the trapezoids gives:
 
 $$
-\boxed{ T_N= h\left[ \frac{f(a)}2+ \sum\_{i=1}^{N-1}f(x_i)+ \frac{f(b)}2 \right] }.
+\boxed{ T_N= h\left[ \frac{f(a)}2+ \sum_{i=1}^{N-1}f(x_i)+ \frac{f(b)}2 \right] }.
 $$
 
 Interior sample points have weight one because each is shared by neighboring trapezoids. The two boundary points appear only once, so they have weight one-half.
@@ -49801,7 +49879,7 @@ The exact value is $2.6666667$.
 For a twice continuously differentiable function, the global error of the composite trapezoidal rule is bounded by:
 
 $$
-\boxed{ |I-T_N| \le \frac{(b-a)h^2}{12} \max\_{x\in[a,b]}|f''(x)| }.
+\boxed{ |I-T_N| \le \frac{(b-a)h^2}{12} \max_{x\in[a,b]}|f''(x)| }.
 $$
 
 Thus, trapezoidal integration is globally second-order accurate under these assumptions.
@@ -49861,7 +49939,7 @@ $$
 Because $dx=h\\,du$:
 
 $$
-\int\_{x_0}^{x_2}p(x)\\,dx = h\int_0^2p(u)\\,du.
+\int_{x_0}^{x_2}p(x)\\,dx = h\int_0^2p(u)\\,du.
 $$
 
 Evaluate each basis integral:
@@ -49889,7 +49967,7 @@ $$
 For an even number $N$ of uniformly spaced intervals:
 
 $$
-\boxed{ S_N= \frac h3 \left[ f_0+f_N+ 4\sum\_{\substack{i=1\\\i\text{ odd}}}^{N-1}f_i+ 2\sum\_{\substack{i=2\\\i\text{ even}}}^{N-2}f_i \right] }.
+\boxed{ S_N= \frac h3 \left[ f_0+f_N+ 4\sum_{\substack{i=1\\\i\text{ odd}}}^{N-1}f_i+ 2\sum_{\substack{i=2\\\i\text{ even}}}^{N-2}f_i \right] }.
 $$
 
 The number of subintervals must be even for the standard composite Simpson's $1/3$ rule because each quadratic interpolant spans two intervals.
@@ -49907,7 +49985,7 @@ An interesting result is that Simpson's rule is exact for polynomials through de
 Under sufficient smoothness:
 
 $$
-\boxed{ |I-S_N| \le \frac{(b-a)h^4}{180} \max\_{x\in[a,b]}|f^{(4)}(x)| }.
+\boxed{ |I-S_N| \le \frac{(b-a)h^4}{180} \max_{x\in[a,b]}|f^{(4)}(x)| }.
 $$
 
 Simpson's rule is therefore globally fourth-order accurate, compared with second order for midpoint and trapezoidal rules and first order for left/right rectangle rules.
@@ -50076,10 +50154,10 @@ $$
 \boxed{ \frac{d\mathbf y}{dt} = \begin{bmatrix} v\\ -\frac{k}{m}x \end{bmatrix} }.
 $$
 
-For a damped spring receiving an external force $F\_{\mathrm{ext}}(t)$:
+For a damped spring receiving an external force $F_{\mathrm{ext}}(t)$:
 
 $$
-\boxed{ \frac{d}{dt} \begin{bmatrix} x\\v \end{bmatrix} = \begin{bmatrix} v\\ \frac{F\_{\mathrm{ext}}(t)-cv-kx}{m} \end{bmatrix} }.
+\boxed{ \frac{d}{dt} \begin{bmatrix} x\\v \end{bmatrix} = \begin{bmatrix} v\\ \frac{F_{\mathrm{ext}}(t)-cv-kx}{m} \end{bmatrix} }.
 $$
 
 This representation is fundamental to simulation architecture.
@@ -50205,7 +50283,7 @@ This issue has practical analogues in discontinuous contact laws, friction model
 From the fundamental theorem of calculus:
 
 $$
-\boxed{ \mathbf y(t) = \mathbf y_0+ \int\_{t_0}^{t}f(s,\mathbf y(s))\\,ds }.
+\boxed{ \mathbf y(t) = \mathbf y_0+ \int_{t_0}^{t}f(s,\mathbf y(s))\\,ds }.
 $$
 
 This is a particularly powerful expression.
@@ -50310,7 +50388,7 @@ $$
 The chain rule predicts:
 
 $$
-\frac{d}{dh}L(\mathbf x+h\mathbf d)\bigg|\_{h=0} = \nabla L(\mathbf x)^T\mathbf d.
+\frac{d}{dh}L(\mathbf x+h\mathbf d)\bigg|_{h=0} = \nabla L(\mathbf x)^T\mathbf d.
 $$
 
 Estimate the same quantity numerically:
@@ -50336,13 +50414,13 @@ Randomized directions provide broad coverage. However, a finite collection of ch
 Absolute error is:
 
 $$
-E\_{\mathrm{abs}}= |D_h-\mathbf g^T\mathbf d|.
+E_{\mathrm{abs}}= |D_h-\mathbf g^T\mathbf d|.
 $$
 
 A scaled comparison can use:
 
 $$
-\boxed{ E\_{\mathrm{scaled}} = \frac{ |D_h-\mathbf g^T\mathbf d| }{ \max(s,\ |D_h|,\ |\mathbf g^T\mathbf d|) } }
+\boxed{ E_{\mathrm{scaled}} = \frac{ |D_h-\mathbf g^T\mathbf d| }{ \max(s,\ |D_h|,\ |\mathbf g^T\mathbf d|) } }
 $$
 
 where $s>0$ is a scale chosen for the problem.
@@ -50412,13 +50490,13 @@ Automatic differentiation combines these local rules along the actual computatio
 Suppose:
 
 $$
-F=F_k\circ F\_{k-1}\circ\cdots\circ F_1.
+F=F_k\circ F_{k-1}\circ\cdots\circ F_1.
 $$
 
 The Jacobian chain rule gives:
 
 $$
-J_F = J\_{F_k}\cdots J\_{F_2}J\_{F_1}.
+J_F = J_{F_k}\cdots J_{F_2}J_{F_1}.
 $$
 
 There are two major strategies for computing the resulting derivative.
@@ -51075,13 +51153,13 @@ $$
 Thus:
 
 $$
-\bar x\_{\text{product}} = \bar a\\,y = 13.818594853(3).
+\bar x_{\text{product}} = \bar a\\,y = 13.818594853(3).
 $$
 
 So:
 
 $$
-\bar x\_{\text{product}} \approx41.455784560.
+\bar x_{\text{product}} \approx41.455784560.
 $$
 
 The gradient contribution to $y$ is:
@@ -51107,7 +51185,7 @@ $$
 Its contribution to $x$ is:
 
 $$
-\bar x\_{\text{sine}} = \bar b\cos x.
+\bar x_{\text{sine}} = \bar b\cos x.
 $$
 
 At $x=2$, $\cos2\approx-0.416146837$, producing a negative contribution of approximately $-5.750565$.
@@ -51119,7 +51197,7 @@ The variable $x$ influences the loss through multiplication and sine.
 Therefore:
 
 $$
-\bar x = \bar x\_{\text{product}} + \bar x\_{\text{sine}}.
+\bar x = \bar x_{\text{product}} + \bar x_{\text{sine}}.
 $$
 
 The final result is:
@@ -51199,7 +51277,6 @@ This implementation stores graph nodes in a contiguous `std::vector`, addressing
 #include <limits>
 #include <stdexcept>
 #include <vector>
-```
 
 class Tape {
 public:
@@ -51627,7 +51704,7 @@ This is why modern deep-learning systems invest so heavily in efficient matrix k
 Suppose a matrix $X\in\mathbb R^{N\times D}$ receives a row-wise bias:
 
 $$
-Y\_{ij}=X\_{ij}+b_j.
+Y_{ij}=X_{ij}+b_j.
 $$
 
 Here:
@@ -51641,19 +51718,19 @@ Every row uses the same bias element.
 Let the upstream gradient be:
 
 $$
-G\_{ij}=\frac{\partial L}{\partial Y\_{ij}}.
+G_{ij}=\frac{\partial L}{\partial Y_{ij}}.
 $$
 
 The input gradient is:
 
 $$
-\frac{\partial L}{\partial X\_{ij}}=G\_{ij}.
+\frac{\partial L}{\partial X_{ij}}=G_{ij}.
 $$
 
 But the bias gradient is:
 
 $$
-\boxed{ \frac{\partial L}{\partial b_j} = \sum\_{i=1}^{N}G\_{ij} }.
+\boxed{ \frac{\partial L}{\partial b_j} = \sum_{i=1}^{N}G_{ij} }.
 $$
 
 Why do we sum over rows?
@@ -51709,7 +51786,7 @@ These are related, but not always numerically identical.
 Suppose:
 
 $$
-\mathbf y\_{n+1} = \mathbf y_n+ h f(t_n,\mathbf y_n,\boldsymbol\theta).
+\mathbf y_{n+1} = \mathbf y_n+ h f(t_n,\mathbf y_n,\boldsymbol\theta).
 $$
 
 Differentiate with respect to one parameter $\theta$.
@@ -51725,7 +51802,7 @@ Assume, for now, that the timestep is constant and independent of $\theta$.
 Then:
 
 $$
-\frac{\partial\mathbf y\_{n+1}}{\partial\theta} = \frac{\partial\mathbf y_n}{\partial\theta} + h\frac{d}{d\theta} f(t_n,\mathbf y_n,\theta).
+\frac{\partial\mathbf y_{n+1}}{\partial\theta} = \frac{\partial\mathbf y_n}{\partial\theta} + h\frac{d}{d\theta} f(t_n,\mathbf y_n,\theta).
 $$
 
 The total derivative of $f$ is:
@@ -51737,7 +51814,7 @@ $$
 Therefore:
 
 $$
-\boxed{ S\_{n+1} = S_n+ h\left(J_fS_n+f\_\theta\right) }.
+\boxed{ S_{n+1} = S_n+ h\left(J_fS_n+f\_\theta\right) }.
 $$
 
 Here $J_f=\partial f/\partial\mathbf y$ is the Jacobian of the dynamics with respect to state, and $f\_\theta=\partial f/\partial\theta$ is the direct parameter derivative.
@@ -51847,7 +51924,7 @@ Both derivations agree.
 Explicit Euler gives:
 
 $$
-y\_{n+1}=(1-\lambda h)y_n.
+y_{n+1}=(1-\lambda h)y_n.
 $$
 
 After $N$ steps:
@@ -51897,7 +51974,7 @@ $$
 Introduce an adjoint variable $\boldsymbol\lambda(t)$ with terminal condition:
 
 $$
-\boxed{ \boldsymbol\lambda(T)= \nabla\_{\mathbf y}\ell(\mathbf y(T)) }.
+\boxed{ \boldsymbol\lambda(T)= \nabla_{\mathbf y}\ell(\mathbf y(T)) }.
 $$
 
 The continuous adjoint satisfies:
@@ -52019,7 +52096,7 @@ That gives us a direct connection between the mathematics and physical tensor ac
 For example, the left operand's gradient entry is accumulated using:
 
 $$
-(\nabla_A L)\_{ri} = \sum_cG\_{rc}B\_{ic}.
+(\nabla_A L)_{ri} = \sum_cG_{rc}B_{ic}.
 $$
 
 This is exactly the corresponding element of $GB^T$.
@@ -52027,7 +52104,7 @@ This is exactly the corresponding element of $GB^T$.
 The right operand's gradient is:
 
 $$
-(\nabla_B L)\_{ic} = \sum_rA\_{ri}G\_{rc}.
+(\nabla_B L)_{ic} = \sum_rA_{ri}G_{rc}.
 $$
 
 That is the corresponding element of $A^TG$.
@@ -52166,7 +52243,7 @@ Suppose a soft body has unknown stiffness $k$ and damping $c$.
 We can observe its positions at selected times:
 
 $$
-\mathbf x\_{\mathrm{observed}}(t_1),\ldots, \mathbf x\_{\mathrm{observed}}(t_N).
+\mathbf x_{\mathrm{observed}}(t_1),\ldots, \mathbf x_{\mathrm{observed}}(t_N).
 $$
 
 We simulate the soft body using parameters:
@@ -52178,13 +52255,13 @@ $$
 The simulator produces:
 
 $$
-\mathbf x\_{\mathrm{simulated}}(t_i;\boldsymbol\theta).
+\mathbf x_{\mathrm{simulated}}(t_i;\boldsymbol\theta).
 $$
 
 Define an objective:
 
 $$
-\boxed{ L(\boldsymbol\theta)= \frac12\sum\_{i=1}^{N} \left\| \mathbf x\_{\mathrm{simulated}}(t_i;\boldsymbol\theta) - \mathbf x\_{\mathrm{observed}}(t_i) \right\|^2 }.
+\boxed{ L(\boldsymbol\theta)= \frac12\sum_{i=1}^{N} \left\| \mathbf x_{\mathrm{simulated}}(t_i;\boldsymbol\theta) - \mathbf x_{\mathrm{observed}}(t_i) \right\|^2 }.
 $$
 
 The forward problem is to simulate motion from material parameters.
@@ -52194,7 +52271,7 @@ The inverse problem is to recover material parameters from observed motion.
 The combined pipeline is:
 
 $$
-\boldsymbol\theta \rightarrow \text{forces} \rightarrow \text{ODE integration} \rightarrow \text{trajectory} \rightarrow L \rightarrow \nabla\_{\boldsymbol\theta}L.
+\boldsymbol\theta \rightarrow \text{forces} \rightarrow \text{ODE integration} \rightarrow \text{trajectory} \rightarrow L \rightarrow \nabla_{\boldsymbol\theta}L.
 $$
 
 Forward simulation and differentiation are now connected.
@@ -52628,7 +52705,7 @@ One of the model's permitted outcomes occurs.
 For pairwise disjoint events $A_1,A_2,\ldots$:
 
 $$
- \boxed{ P\left(\bigcup\_{i=1}^{\infty}A_i\right) = \sum\_{i=1}^{\infty}P(A_i) }. 
+ \boxed{ P\left(\bigcup_{i=1}^{\infty}A_i\right) = \sum_{i=1}^{\infty}P(A_i) }. 
 $$
 
 This is stronger than merely requiring probabilities of two disjoint events to add.
@@ -52712,7 +52789,7 @@ A larger event cannot have a smaller probability than an event entirely containe
 For arbitrary events $A_1,\ldots,A_n$:
 
 $$
- \boxed{ P\left(\bigcup\_{i=1}^{n}A_i\right) \le \sum\_{i=1}^{n}P(A_i) }. 
+ \boxed{ P\left(\bigcup_{i=1}^{n}A_i\right) \le \sum_{i=1}^{n}P(A_i) }. 
 $$
 
 The right side may overcount overlapping outcomes, but it provides an upper bound.
@@ -52818,7 +52895,7 @@ These two expressions describe the same joint event from different directions.
 For several events:
 
 $$
- \boxed{ P(A_1\cap\cdots\cap A_n) = P(A_1) \prod\_{k=2}^{n} P(A_k\mid A_1\cap\cdots\cap A\_{k-1}) } 
+ \boxed{ P(A_1\cap\cdots\cap A_n) = P(A_1) \prod_{k=2}^{n} P(A_k\mid A_1\cap\cdots\cap A_{k-1}) } 
 $$
 
 provided the conditioning events have positive probability.
@@ -53004,7 +53081,7 @@ This is Bayes' theorem.
 The terminology is:
 
 $$
- \underbrace{P(A\mid B)}\_{\text{posterior}} = \frac{ \underbrace{P(B\mid A)}\_{\text{likelihood}} \underbrace{P(A)}\_{\text{prior}} }{ \underbrace{P(B)}\_{\text{evidence}} }. 
+ \underbrace{P(A\mid B)}_{\text{posterior}} = \frac{ \underbrace{P(B\mid A)}_{\text{likelihood}} \underbrace{P(A)}_{\text{prior}} }{ \underbrace{P(B)}_{\text{evidence}} }. 
 $$
 
 The prior describes the probability before seeing the new information.
@@ -53540,7 +53617,7 @@ $$
 Normalization requires:
 
 $$
- \boxed{ \int\_{-\infty}^{\infty}p_X(x)\\,dx=1 }. 
+ \boxed{ \int_{-\infty}^{\infty}p_X(x)\\,dx=1 }. 
 $$
 
 #### 1 A density can exceed one
@@ -53582,13 +53659,13 @@ The approximation error depends on how much the density varies over the interval
 In several dimensions:
 
 $$
- P(\mathbf X\in R) = \int_Rp\_{\mathbf X}(\mathbf x)\\,d\mathbf x. 
+ P(\mathbf X\in R) = \int_Rp_{\mathbf X}(\mathbf x)\\,d\mathbf x. 
 $$
 
 If $R$ is sufficiently small, we may approximate:
 
 $$
- P(\mathbf X\in R) \approx p\_{\mathbf X}(\mathbf x_0)\operatorname{Volume}(R) 
+ P(\mathbf X\in R) \approx p_{\mathbf X}(\mathbf x_0)\operatorname{Volume}(R) 
 $$
 
 when the density is nearly constant over that region.
@@ -53632,7 +53709,7 @@ $$
 For an invertible multivariable mapping $\mathbf y=g(\mathbf x)$:
 
 $$
- \boxed{ p\_{\mathbf Y}(\mathbf y) = p\_{\mathbf X}(g^{-1}(\mathbf y)) \left| \det J\_{g^{-1}}(\mathbf y) \right| }. 
+ \boxed{ p_{\mathbf Y}(\mathbf y) = p_{\mathbf X}(g^{-1}(\mathbf y)) \left| \det J_{g^{-1}}(\mathbf y) \right| }. 
 $$
 
 These formulas follow from conservation of probability under a change of variables. More general transformations may require summing contributions from multiple inverse branches.
@@ -53662,17 +53739,17 @@ $$
 It is right-continuous, and:
 
 $$
- \lim\_{x\to-\infty}F_X(x)=0, 
+ \lim_{x\to-\infty}F_X(x)=0, 
 $$
 
 $$
- \lim\_{x\to+\infty}F_X(x)=1. 
+ \lim_{x\to+\infty}F_X(x)=1. 
 $$
 
 For a continuous distribution with density:
 
 $$
- \boxed{ F_X(x)=\int\_{-\infty}^{x}p_X(t)\\,dt }. 
+ \boxed{ F_X(x)=\int_{-\infty}^{x}p_X(t)\\,dt }. 
 $$
 
 Where differentiable:
@@ -53704,7 +53781,7 @@ The density is constant in the interval, so cumulative probability increases lin
 For a discrete random variable:
 
 $$
- F_X(x)= \sum\_{t\le x}p_X(t). 
+ F_X(x)= \sum_{t\le x}p_X(t). 
 $$
 
 Its graph contains jumps at values with nonzero probability mass.
@@ -53769,7 +53846,7 @@ when the sum is well defined.
 For a continuous variable with PDF:
 
 $$
- \boxed{ \mathbb E[X]= \int\_{-\infty}^{\infty}x\\,p_X(x)\\,dx } 
+ \boxed{ \mathbb E[X]= \int_{-\infty}^{\infty}x\\,p_X(x)\\,dx } 
 $$
 
 when the expectation exists.
@@ -53847,7 +53924,7 @@ This is one of the most useful probability rules in algorithm analysis.
 Suppose:
 
 $$
- X=\sum\_{i=1}^NI_i 
+ X=\sum_{i=1}^NI_i 
 $$
 
 where each indicator $I_i\in\{0,1\}$ represents whether a ray hits a surface.
@@ -53901,7 +53978,7 @@ $$
 More generally, if a PDF $p(x)>0$ wherever the integrand contributes:
 
 $$
- \boxed{ I= \mathbb E\_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
+ \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
 $$
 
 This identity is the mathematical foundation of Monte Carlo integration and importance sampling. It does not yet tell us how many samples we need, how accurate an estimator is, or how to minimize its variance; those belong to the sampling and Monte Carlo chapters.
@@ -54249,13 +54326,13 @@ $$
 The entries are:
 
 $$
- \Sigma\_{ij}=\operatorname{Cov}(X_i,X_j). 
+ \Sigma_{ij}=\operatorname{Cov}(X_i,X_j). 
 $$
 
 Diagonal entries are variances:
 
 $$
- \Sigma\_{ii}=\operatorname{Var}(X_i). 
+ \Sigma_{ii}=\operatorname{Var}(X_i). 
 $$
 
 Off-diagonal entries are pairwise covariances.
@@ -54277,7 +54354,7 @@ It is difficult to compare such raw covariances across unrelated measurement sca
 The Pearson correlation coefficient normalizes covariance by the standard deviations:
 
 $$
- \boxed{ \rho\_{XY}= \frac{ \operatorname{Cov}(X,Y) }{ \sigma_X\sigma_Y } }. 
+ \boxed{ \rho_{XY}= \frac{ \operatorname{Cov}(X,Y) }{ \sigma_X\sigma_Y } }. 
 $$
 
 It is defined when both standard deviations are finite and strictly positive.
@@ -54305,7 +54382,7 @@ $$
 Divide by the positive product:
 
 $$
- \boxed{ -1\le\rho\_{XY}\le1 }. 
+ \boxed{ -1\le\rho_{XY}\le1 }. 
 $$
 
 Correlation $+1$ or $-1$ corresponds to an exact affine relationship almost surely when both variances are positive.
@@ -54351,7 +54428,7 @@ $$
 Thus:
 
 $$
- \boxed{\rho\_{XY}=0} 
+ \boxed{\rho_{XY}=0} 
 $$
 
 even though $Y=X^2$.
@@ -54371,13 +54448,13 @@ A joint distribution describes multiple variables together.
 For discrete $X,Y$, define:
 
 $$
- \boxed{ p\_{X,Y}(x,y)=P(X=x,Y=y) }. 
+ \boxed{ p_{X,Y}(x,y)=P(X=x,Y=y) }. 
 $$
 
 For continuous variables with a joint density:
 
 $$
- \boxed{ P((X,Y)\in R) = \iint_Rp\_{X,Y}(x,y)\\,dx\\,dy }. 
+ \boxed{ P((X,Y)\in R) = \iint_Rp_{X,Y}(x,y)\\,dx\\,dy }. 
 $$
 
 #### 1 A complete joint distribution example
@@ -54467,13 +54544,13 @@ A marginal distribution describes one variable without retaining the detailed va
 For discrete random variables:
 
 $$
- \boxed{ p_X(x)=\sum_yp\_{X,Y}(x,y) }. 
+ \boxed{ p_X(x)=\sum_yp_{X,Y}(x,y) }. 
 $$
 
 For continuous variables:
 
 $$
- \boxed{ p_X(x)= \int\_{-\infty}^{\infty} p\_{X,Y}(x,y)\\,dy }. 
+ \boxed{ p_X(x)= \int_{-\infty}^{\infty} p_{X,Y}(x,y)\\,dy }. 
 $$
 
 We are summing or integrating over the variables we no longer want to represent explicitly.
@@ -54537,7 +54614,7 @@ A conditional distribution describes one variable after accounting for informati
 For discrete variables:
 
 $$
- \boxed{ p\_{Y\mid X}(y\mid x) = \frac{p\_{X,Y}(x,y)}{p_X(x)} } 
+ \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} } 
 $$
 
 when $p_X(x)>0$.
@@ -54545,7 +54622,7 @@ when $p_X(x)>0$.
 For continuous variables with a joint density:
 
 $$
- \boxed{ p\_{Y\mid X}(y\mid x) = \frac{p\_{X,Y}(x,y)}{p_X(x)} } 
+ \boxed{ p_{Y\mid X}(y\mid x) = \frac{p_{X,Y}(x,y)}{p_X(x)} } 
 $$
 
 where the marginal density is positive and the relevant conditional density exists.
@@ -54865,7 +54942,7 @@ for $i=1,\ldots,n$, with the $X_i$ independent.
 Define:
 
 $$
- K=\sum\_{i=1}^nX_i. 
+ K=\sum_{i=1}^nX_i. 
 $$
 
 Then:
@@ -54995,7 +55072,7 @@ The expected number of successes need not be an integer.
 If the trials are dependent:
 
 $$
- \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i) + 2\sum\_{i\<j}\operatorname{Cov}(X_i,X_j). 
+ \operatorname{Var}(K)= \sum_i\operatorname{Var}(X_i) + 2\sum_{i\<j}\operatorname{Cov}(X_i,X_j). 
 $$
 
 The usual binomial variance no longer applies unless those covariance terms vanish under the relevant assumptions.
@@ -55285,7 +55362,7 @@ is essential for turning the bell-shaped exponential into a probability density.
 Consider:
 
 $$
- I=\int\_{-\infty}^{\infty}e^{-x^2/2}\\,dx. 
+ I=\int_{-\infty}^{\infty}e^{-x^2/2}\\,dx. 
 $$
 
 This integral is not evaluated using an elementary antiderivative.
@@ -55293,13 +55370,13 @@ This integral is not evaluated using an elementary antiderivative.
 Instead, square it:
 
 $$
- I^2= \left(\int\_{-\infty}^{\infty}e^{-x^2/2}\\,dx\right) \left(\int\_{-\infty}^{\infty}e^{-y^2/2}\\,dy\right). 
+ I^2= \left(\int_{-\infty}^{\infty}e^{-x^2/2}\\,dx\right) \left(\int_{-\infty}^{\infty}e^{-y^2/2}\\,dy\right). 
 $$
 
 Combine the independent integration variables:
 
 $$
- I^2= \iint\_{\mathbb R^2} e^{-(x^2+y^2)/2}\\,dx\\,dy. 
+ I^2= \iint_{\mathbb R^2} e^{-(x^2+y^2)/2}\\,dx\\,dy. 
 $$
 
 Switch to polar coordinates:
@@ -55377,7 +55454,7 @@ $$
 We can evaluate:
 
 $$
- \mathbb E[Z^2] = \frac1{\sqrt{2\pi}} \int\_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz. 
+ \mathbb E[Z^2] = \frac1{\sqrt{2\pi}} \int_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz. 
 $$
 
 Use integration by parts with:
@@ -55397,7 +55474,7 @@ The boundary term vanishes because $ze^{-z^2/2}\to0$ as $|z|\to\infty$.
 We obtain:
 
 $$
- \int\_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz = \int\_{-\infty}^{\infty}e^{-z^2/2}\\,dz =\sqrt{2\pi}. 
+ \int_{-\infty}^{\infty}z^2e^{-z^2/2}\\,dz = \int_{-\infty}^{\infty}e^{-z^2/2}\\,dz =\sqrt{2\pi}. 
 $$
 
 Thus:
@@ -55497,7 +55574,7 @@ $$
 Its CDF is conventionally denoted:
 
 $$
- \boxed{ \Phi(z)= \int\_{-\infty}^{z}\phi(t)\\,dt }. 
+ \boxed{ \Phi(z)= \int_{-\infty}^{z}\phi(t)\\,dt }. 
 $$
 
 #### 1 Standardization
@@ -55957,7 +56034,7 @@ This is the Poisson limit of the binomial distribution.
 Start with:
 
 $$
- \mathbb E[K] = \sum\_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}. 
+ \mathbb E[K] = \sum_{k=0}^\infty k e^{-\lambda}\frac{\lambda^k}{k!}. 
 $$
 
 The $k=0$ term vanishes.
@@ -55971,7 +56048,7 @@ $$
 Therefore:
 
 $$
- \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum\_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum\_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned} 
+ \begin{aligned} \mathbb E[K] &= e^{-\lambda} \sum_{k=1}^\infty \frac{\lambda^k}{(k-1)!}\\ &= \lambda e^{-\lambda} \sum_{j=0}^\infty \frac{\lambda^j}{j!}\\ &=\lambda e^{-\lambda}e^\lambda. \end{aligned} 
 $$
 
 Thus:
@@ -55991,7 +56068,7 @@ $$
 Using the PMF:
 
 $$
- \mathbb E[K(K-1)] = \sum\_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}. 
+ \mathbb E[K(K-1)] = \sum_{k=2}^\infty k(k-1)e^{-\lambda} \frac{\lambda^k}{k!}. 
 $$
 
 Because:
@@ -56003,7 +56080,7 @@ $$
 we obtain:
 
 $$
- \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum\_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2. 
+ \mathbb E[K(K-1)] = \lambda^2e^{-\lambda} \sum_{j=0}^{\infty}\frac{\lambda^j}{j!} =\lambda^2. 
 $$
 
 Now use:
@@ -56163,13 +56240,13 @@ where each $Z_i\sim\mathcal N(0,1)$, and the components are independent.
 Their joint density is the product of the scalar densities:
 
 $$
- p\_{\mathbf Z}(\mathbf z)= \prod\_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}. 
+ p_{\mathbf Z}(\mathbf z)= \prod_{i=1}^{n} \frac1{\sqrt{2\pi}}e^{-z_i^2/2}. 
 $$
 
 Multiply the normalizing factors:
 
 $$
- \prod\_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}. 
+ \prod_{i=1}^{n}\frac1{\sqrt{2\pi}} = \frac1{(2\pi)^{n/2}}. 
 $$
 
 Combine the exponents:
@@ -56187,7 +56264,7 @@ $$
 the joint density becomes:
 
 $$
- \boxed{ p\_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }. 
+ \boxed{ p_{\mathbf Z}(\mathbf z)= \frac1{(2\pi)^{n/2}} e^{-\frac12\mathbf z^T\mathbf z} }. 
 $$
 
 This is the standard multivariate Gaussian with zero mean and identity covariance.
@@ -56253,13 +56330,13 @@ $$
 The density transformation formula is:
 
 $$
- p\_{\mathbf X}(\mathbf x) = p\_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|. 
+ p_{\mathbf X}(\mathbf x) = p_{\mathbf Z}(A^{-1}(\mathbf x-\boldsymbol\mu)) |\det A^{-1}|. 
 $$
 
 Substitute the standard Gaussian density:
 
 $$
- p\_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \\|A^{-1}(\mathbf x-\boldsymbol\mu)\\|^2 \right]. 
+ p_{\mathbf X}(\mathbf x) = \frac{|\det A^{-1}|}{(2\pi)^{n/2}} \exp\left[ -\frac12 \\|A^{-1}(\mathbf x-\boldsymbol\mu)\\|^2 \right]. 
 $$
 
 Now expand the squared norm:
@@ -56371,7 +56448,7 @@ $$
 The squared Mahalanobis distance becomes:
 
 $$
- \boxed{ d_M^2= \sum\_{i=1}^{n}\frac{z_i^2}{\lambda_i} }. 
+ \boxed{ d_M^2= \sum_{i=1}^{n}\frac{z_i^2}{\lambda_i} }. 
 $$
 
 A constant-density surface satisfies:
@@ -56593,19 +56670,19 @@ $$
 and covariance:
 
 $$
- \Sigma= \begin{bmatrix} \Sigma\_{aa}&\Sigma\_{ab}\\ \Sigma\_{ba}&\Sigma\_{bb} \end{bmatrix}. 
+ \Sigma= \begin{bmatrix} \Sigma_{aa}&\Sigma_{ab}\\ \Sigma_{ba}&\Sigma_{bb} \end{bmatrix}. 
 $$
 
-If $\Sigma\_{aa}$ is positive definite, then:
+If $\Sigma_{aa}$ is positive definite, then:
 
 $$
- \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma\_{ba}\Sigma\_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) } 
+ \boxed{ \mathbb E[\mathbf X_b\mid\mathbf X_a=\mathbf a] = \boldsymbol\mu_b+ \Sigma_{ba}\Sigma_{aa}^{-1} (\mathbf a-\boldsymbol\mu_a) } 
 $$
 
 and:
 
 $$
- \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma\_{bb} - \Sigma\_{ba}\Sigma\_{aa}^{-1}\Sigma\_{ab} }. 
+ \boxed{ \operatorname{Cov}(\mathbf X_b\mid\mathbf X_a) = \Sigma_{bb} - \Sigma_{ba}\Sigma_{aa}^{-1}\Sigma_{ab} }. 
 $$
 
 For any vector $v$, set $u=-\Sigma_{aa}^{-1}\Sigma_{ab}v$. Then
@@ -56780,7 +56857,7 @@ $$
 Each matrix entry is:
 
 $$
- \Sigma\_{ij}=\mathbb E[Z_iZ_j]. 
+ \Sigma_{ij}=\mathbb E[Z_iZ_j]. 
 $$
 
 #### 1 Covariance is symmetric
@@ -56930,10 +57007,10 @@ The approximation becomes less reliable when uncertainty is large relative to lo
 A second-order Taylor expansion can also introduce a correction to the predicted mean:
 
 $$
- \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H\_{f_i}\Sigma). 
+ \mathbb E[f_i(\mathbf X)] \approx f_i(\boldsymbol\mu) + \frac12\operatorname{tr}(H_{f_i}\Sigma). 
 $$
 
-Here $H\_{f_i}$ is the Hessian of output component $i$.
+Here $H_{f_i}$ is the Hessian of output component $i$.
 
 Thus nonlinear transformations can change both the covariance and the mean in ways that first-order propagation does not fully capture.
 
@@ -56942,31 +57019,31 @@ Thus nonlinear transformations can change both the covariance and the mean in wa
 A 3D Gaussian representation may have a mean position:
 
 $$
- \boldsymbol\mu\_{3D} 
+ \boldsymbol\mu_{3D} 
 $$
 
 and covariance:
 
 $$
- \Sigma\_{3D}. 
+ \Sigma_{3D}. 
 $$
 
 A camera rotation maps its covariance into camera coordinates:
 
 $$
- \Sigma_c=R\Sigma\_{3D}R^T. 
+ \Sigma_c=R\Sigma_{3D}R^T. 
 $$
 
 A local perspective-projection Jacobian then gives an approximate image-space covariance:
 
 $$
- \boxed{ \Sigma\_{2D}\approx J\_\pi\Sigma_cJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J\_\pi\Sigma_cJ\_\pi^T }. 
 $$
 
 Combining:
 
 $$
- \boxed{ \Sigma\_{2D}\approx J\_\pi R\Sigma\_{3D}R^TJ\_\pi^T }. 
+ \boxed{ \Sigma_{2D}\approx J\_\pi R\Sigma_{3D}R^TJ\_\pi^T }. 
 $$
 
 This formula is directly relevant to projected Gaussian footprints.
@@ -58306,6 +58383,72 @@ Contour integration then turns analyticity into global identities. Cauchy’s th
 
 For engineering mathematics, the point is not to replace numerical integration with clever contours everywhere. The pole/singularity structure often reveals system behavior directly. Inverse Laplace transforms, linear-system responses, wave propagation, and asymptotic integrals can all be interpreted through complex singularities.
 
+<!-- Book-completion teaching addition b4f78aa52ff8b1cd -->
+
+### A contour calculation with its missing limit made explicit
+
+The residue theorem becomes useful for a real integral when we can add a complex-plane path whose contribution tends to zero. Consider the convergent improper integral
+
+$$
+I=\int_{-\infty}^{\infty}\frac{dx}{x^2+1}.
+$$
+
+Use the complex function $f(z)=1/[(z-i)(z+i)]$, where $i^2=-1$. For $R>1$, travel from $-R$ to $R$ on the real axis, then return on the upper semicircle $\Gamma_R$, parametrized by $z=Re^{i\theta}$ for $0\leq\theta\leq\pi$. This closed path is counterclockwise. It encloses $i$ and excludes $-i$. The factor $(z-i)^{-1}$ makes $i$ a simple pole: multiplying by $z-i$ removes that first-order singularity. Its residue is
+
+$$
+\operatorname{Res}(f,i)
+=\lim_{z\to i}(z-i)f(z)
+=\frac{1}{2i}.
+$$
+
+There is no singularity on this contour. The theorem gives, at each $R>1$,
+
+$$
+\int_{-R}^{R}\frac{dx}{x^2+1}
++\int_{\Gamma_R}\frac{dz}{z^2+1}
+=2\pi i\frac{1}{2i}=\pi.
+$$
+
+We cannot simply erase the arc term. On the arc, the reverse triangle inequality gives $|z^2+1|\geq ||z|^2-1|=R^2-1$, while the arc length is $\pi R$. Bounding an integral by path length times the largest integrand magnitude yields
+
+$$
+\left|\int_{\Gamma_R}\frac{dz}{z^2+1}\right|
+\leq\frac{\pi R}{R^2-1}\longrightarrow0.
+$$
+
+Taking $R\to\infty$ now proves $I=\pi$. Evenness gives the half-line value $\pi/2$. The vanishing-arc argument is part of the proof; another integrand or another closing half-plane needs its own bound.
+
+**Independent real-variable solution.** On the positive half-line substitute $x=\tan\theta$. Then $dx=\sec^2\theta\,d\theta$ and $1+x^2=\sec^2\theta$, so the integral becomes $\int_0^{\pi/2}d\theta=\pi/2$. Doubling recovers the full-line answer.
+
+**Exercise: a double pole.** Evaluate
+
+$$
+J=\int_{-\infty}^{\infty}\frac{x^2}{(x^2+1)^2}\,dx
+$$
+
+with the same contour, and justify the arc limit. A double pole has a $(z-i)^{-2}$ leading singularity; its residue is still the coefficient of $(z-i)^{-1}$, not that leading coefficient.
+
+**Worked solution.** Put $g(z)=z^2/[(z-i)^2(z+i)^2]$. Removing the double pole leaves an analytic function, whose first derivative supplies the residue:
+
+$$
+\begin{aligned}
+\operatorname{Res}(g,i)
+&=\left.\frac{d}{dz}\big[(z-i)^2g(z)\big]\right|_{z=i}\\
+&=\left.\left(\frac{2z}{(z+i)^2}-\frac{2z^2}{(z+i)^3}\right)\right|_{z=i}
+=-\frac{i}{4}.
+\end{aligned}
+$$
+
+For $R>1$, the arc contribution is bounded by $\pi R^3/(R^2-1)^2$, which tends to zero. Hence $J=2\pi i(-i/4)=\pi/2$. Independently,
+
+$$
+\frac{x^2}{(x^2+1)^2}=\frac{1}{x^2+1}-\frac{1}{(x^2+1)^2}.
+$$
+
+The first full-line integral is $\pi$. In the second, the tangent substitution gives twice $\int_0^{\pi/2}\cos^2\theta\,d\theta=\pi/4$, so that full-line value is $\pi/2$. The difference is again $\pi/2$.
+
+The source comparison for this worked practice used Riley, Hobson and Bence, *Mathematical Methods for Physics and Engineering*, third edition, §24.13, physical PDF pages 891–900. This is one inspected section, not a claim that the entire book has been reviewed.
+
 When an integral contains a rapidly varying phase or exponential,
 
 \[
@@ -58331,7 +58474,7 @@ $$
 We want to advance from time $t_n$ to:
 
 $$
-t\_{n+1}=t_n+h,
+t_{n+1}=t_n+h,
 $$
 
 where $h>0$ is the timestep.
@@ -58351,14 +58494,14 @@ $$
 discarding second-order and higher terms gives:
 
 $$
-\boxed{ y\_{n+1}=y_n+h f(t_n,y_n) }.
+\boxed{ y_{n+1}=y_n+h f(t_n,y_n) }.
 $$
 
 This is explicit Euler integration.
 
 It is called explicit because the right side depends only on information already available at the current step.
 
-The solver does not need to solve an equation involving the unknown $y\_{n+1}$.
+The solver does not need to solve an equation involving the unknown $y_{n+1}$.
 
 ##### The algorithmic state transition
 
@@ -58500,11 +58643,11 @@ $$
 Explicit Euler updates both position and velocity using the old state:
 
 $$
-x\_{n+1}=x_n+hv_n,
+x_{n+1}=x_n+hv_n,
 $$
 
 $$
-v\_{n+1}=v_n+ha_n.
+v_{n+1}=v_n+ha_n.
 $$
 
 At the initial state:
@@ -59186,13 +59329,13 @@ Source basis: V. I. Arnold, *Mathematical Methods of Classical Mechanics*, espec
 For our constant-mass spring, the velocity-first form is:
 
 $$
-\boxed{ v\_{n+1}=v_n+h a(x_n,v_n,t_n) }
+\boxed{ v_{n+1}=v_n+h a(x_n,v_n,t_n) }
 $$
 
 followed by:
 
 $$
-\boxed{ x\_{n+1}=x_n+h v\_{n+1} }.
+\boxed{ x_{n+1}=x_n+h v_{n+1} }.
 $$
 
 Compare this with explicit Euler, where position uses $v_n$.
@@ -59314,19 +59457,19 @@ $$
 Predict a half-step state using Euler:
 
 $$
-\mathbf y\_{\mathrm{mid}} = \mathbf y_n+\frac h2k_1.
+\mathbf y_{\mathrm{mid}} = \mathbf y_n+\frac h2k_1.
 $$
 
 Evaluate the derivative there:
 
 $$
-k_2=f\left(t_n+\frac h2,\mathbf y\_{\mathrm{mid}}\right).
+k_2=f\left(t_n+\frac h2,\mathbf y_{\mathrm{mid}}\right).
 $$
 
 Finally, use that midpoint slope for the full update:
 
 $$
-\boxed{ \mathbf y\_{n+1}=\mathbf y_n+hk_2 }.
+\boxed{ \mathbf y_{n+1}=\mathbf y_n+hk_2 }.
 $$
 
 This is the explicit midpoint method, a second-order Runge–Kutta method.
@@ -59398,7 +59541,7 @@ $$
 Midpoint state:
 
 $$
-y\_{\mathrm{mid}} = 1+\frac{0.1}{2}(-2) =0.9.
+y_{\mathrm{mid}} = 1+\frac{0.1}{2}(-2) =0.9.
 $$
 
 Midpoint slope:
@@ -59434,7 +59577,7 @@ k_2=f(t_n+h/2,y_n+hk_1/2),
 $$
 
 $$
-y\_{n+1}=y_n+hk_2.
+y_{n+1}=y_n+hk_2.
 $$
 
 Heun's explicit trapezoidal method instead predicts the endpoint slope:
@@ -59450,7 +59593,7 @@ $$
 then averages the two slopes:
 
 $$
-\boxed{ y\_{n+1} = y_n+\frac h2(k_1+k_2) }.
+\boxed{ y_{n+1} = y_n+\frac h2(k_1+k_2) }.
 $$
 
 For $y'=-2y$, $y_0=1$, and $h=0.1$:
@@ -59462,7 +59605,7 @@ $$
 The predicted endpoint is:
 
 $$
-y\_{\mathrm{predicted}}=1-0.2=0.8.
+y_{\mathrm{predicted}}=1-0.2=0.8.
 $$
 
 The endpoint derivative is:
@@ -59492,14 +59635,14 @@ A general Runge–Kutta method uses several derivative evaluations, called stage
 The generic equations are:
 
 $$
-k_i= f\left( t_n+c_ih,\\, y_n+h\sum\_{j=1}^{s}a\_{ij}k_j \right),
+k_i= f\left( t_n+c_ih,\\, y_n+h\sum_{j=1}^{s}a_{ij}k_j \right),
 $$
 
 $$
-\boxed{ y\_{n+1} = y_n+h\sum\_{i=1}^{s}b_ik_i }.
+\boxed{ y_{n+1} = y_n+h\sum_{i=1}^{s}b_ik_i }.
 $$
 
-The coefficients $a\_{ij}$, $b_i$, and $c_i$ define the method.
+The coefficients $a_{ij}$, $b_i$, and $c_i$ define the method.
 
 For explicit methods, stage $i$ depends only on earlier stages $j\<i$, so its coefficient matrix is strictly lower triangular.
 
@@ -59534,7 +59677,7 @@ $$
 The final update is:
 
 $$
-\boxed{ y\_{n+1} = y_n+\frac h6(k_1+2k_2+2k_3+k_4) }.
+\boxed{ y_{n+1} = y_n+\frac h6(k_1+2k_2+2k_3+k_4) }.
 $$
 
 The weights are $1,2,2,1$, divided by six.
@@ -59642,7 +59785,7 @@ $$
 Additional coupled conditions are needed because the stages depend on the state as well as time, such as:
 
 $$
-\sum\_{i,j}b_i a\_{ij}c_j=\frac16.
+\sum_{i,j}b_i a_{ij}c_j=\frac16.
 $$
 
 These are examples of Runge–Kutta order conditions. The full fourth-order conditions ensure the method agrees with the appropriate rooted-tree terms of the exact solution expansion.
@@ -59694,13 +59837,13 @@ A sensible numerical method should reproduce that decay for appropriate timestep
 Explicit Euler gives:
 
 $$
-y\_{n+1}=y_n+h\lambda y_n.
+y_{n+1}=y_n+h\lambda y_n.
 $$
 
 Factor out $y_n$:
 
 $$
-\boxed{ y\_{n+1}=(1+h\lambda)y_n }.
+\boxed{ y_{n+1}=(1+h\lambda)y_n }.
 $$
 
 Define:
@@ -59822,7 +59965,7 @@ $$
 Explicit Euler produces:
 
 $$
-\mathbf y\_{n+1}=(I+hA)\mathbf y_n.
+\mathbf y_{n+1}=(I+hA)\mathbf y_n.
 $$
 
 Its update matrix is:
@@ -59858,17 +60001,17 @@ Making the timestep smaller slows the energy growth, but does not remove the und
 The velocity-first update is:
 
 $$
-v\_{n+1}=v_n-h\omega^2x_n,
+v_{n+1}=v_n-h\omega^2x_n,
 $$
 
 $$
-x\_{n+1}=x_n+hv\_{n+1}.
+x_{n+1}=x_n+hv_{n+1}.
 $$
 
 Substitute the velocity update into position:
 
 $$
-x\_{n+1} =(1-h^2\omega^2)x_n+hv_n.
+x_{n+1} =(1-h^2\omega^2)x_n+hv_n.
 $$
 
 The matrix is:
@@ -59922,13 +60065,13 @@ It is not merely an implementation preference.
 For the scalar linear test equation $y'=\lambda y$, explicit midpoint and Heun's RK2 both have stability function:
 
 $$
-\boxed{ R\_{\mathrm{RK2}}(z)=1+z+\frac{z^2}{2} }.
+\boxed{ R_{\mathrm{RK2}}(z)=1+z+\frac{z^2}{2} }.
 $$
 
 Classical RK4 has:
 
 $$
-\boxed{ R\_{\mathrm{RK4}}(z)= 1+z+\frac{z^2}{2} +\frac{z^3}{6} +\frac{z^4}{24} }.
+\boxed{ R_{\mathrm{RK4}}(z)= 1+z+\frac{z^2}{2} +\frac{z^3}{6} +\frac{z^4}{24} }.
 $$
 
 These are truncated exponential series.
@@ -60026,16 +60169,16 @@ The practical stiffness criterion depends on the numerical method, requested acc
 Instead of evaluating the derivative at the current state:
 
 $$
-y\_{n+1}=y_n+hf(t_n,y_n),
+y_{n+1}=y_n+hf(t_n,y_n),
 $$
 
 backward Euler evaluates it at the unknown future state:
 
 $$
-\boxed{ y\_{n+1}=y_n+hf(t\_{n+1},y\_{n+1}) }.
+\boxed{ y_{n+1}=y_n+hf(t_{n+1},y_{n+1}) }.
 $$
 
-The method is implicit because $y\_{n+1}$ appears on both sides.
+The method is implicit because $y_{n+1}$ appears on both sides.
 
 For:
 
@@ -60046,19 +60189,19 @@ $$
 we obtain:
 
 $$
-y\_{n+1}=y_n-h\alpha y\_{n+1}.
+y_{n+1}=y_n-h\alpha y_{n+1}.
 $$
 
 Collect the future-state terms:
 
 $$
-y\_{n+1}(1+h\alpha)=y_n.
+y_{n+1}(1+h\alpha)=y_n.
 $$
 
 Therefore:
 
 $$
-\boxed{ y\_{n+1}=\frac{y_n}{1+h\alpha} }.
+\boxed{ y_{n+1}=\frac{y_n}{1+h\alpha} }.
 $$
 
 Its stability function is:
@@ -60100,13 +60243,13 @@ It can still be useful when that transient is intentionally unresolved and accur
 For a general vector ODE, define:
 
 $$
-G(\mathbf y\_{n+1}) = \mathbf y\_{n+1}-\mathbf y_n -hf(t\_{n+1},\mathbf y\_{n+1}).
+G(\mathbf y_{n+1}) = \mathbf y_{n+1}-\mathbf y_n -hf(t_{n+1},\mathbf y_{n+1}).
 $$
 
 We need to solve:
 
 $$
-G(\mathbf y\_{n+1})=0.
+G(\mathbf y_{n+1})=0.
 $$
 
 Newton's method linearizes this nonlinear equation.
@@ -60166,7 +60309,7 @@ Adaptive timestep control estimates local numerical error and adjusts $h$. If th
 Verlet integration uses a position-based recurrence. For constant timestep and suitable acceleration evaluation:
 
 $$
-x\_{n+1}=2x_n-x\_{n-1}+h^2a_n.
+x_{n+1}=2x_n-x_{n-1}+h^2a_n.
 $$
 
 It can provide useful time-reversible and long-term behavior for certain mechanical systems, but variable timesteps, damping, constraints, and velocity reconstruction require additional care.
@@ -60174,11 +60317,11 @@ It can provide useful time-reversible and long-term behavior for certain mechani
 Velocity Verlet updates position with current velocity and acceleration, then evaluates the new acceleration to update velocity:
 
 $$
-x\_{n+1}=x_n+hv_n+\frac{h^2}{2}a_n,
+x_{n+1}=x_n+hv_n+\frac{h^2}{2}a_n,
 $$
 
 $$
-v\_{n+1}=v_n+\frac h2(a_n+a\_{n+1}).
+v_{n+1}=v_n+\frac h2(a_n+a_{n+1}).
 $$
 
 For forces depending only on position in standard separable Hamiltonian systems, it is a second-order symplectic method.
@@ -60425,7 +60568,7 @@ That is an API coverage distinction, not a claim that the existing implementatio
 Another detail worth preserving in your tests is that `VerletPosition` uses the recurrence:
 
 $$
-x\_{n+1}=x_n+(x_n-x\_{n-1})+h^2a_n.
+x_{n+1}=x_n+(x_n-x_{n-1})+h^2a_n.
 $$
 
 This is the standard constant-timestep position Verlet structure. Applying it unchanged to varying timesteps does not generally preserve the intended approximation order.
@@ -60461,7 +60604,7 @@ They have different accuracy properties, computational costs, memory requirement
 In M049, we defined the derivative as a limit:
 
 $$
-f'(x)= \lim\_{h\to0} \frac{f(x+h)-f(x)}h.
+f'(x)= \lim_{h\to0} \frac{f(x+h)-f(x)}h.
 $$
 
 This is an exact mathematical definition.
@@ -60563,7 +60706,7 @@ Take $h=0.1$.
 The forward difference is:
 
 $$
-D\_{0.1}^+f(1)= \frac{\sin(1.1)-\sin(1)}{0.1}.
+D_{0.1}^+f(1)= \frac{\sin(1.1)-\sin(1)}{0.1}.
 $$
 
 Using:
@@ -60579,7 +60722,7 @@ $$
 we obtain:
 
 $$
-\boxed{ D\_{0.1}^+f(1)\approx0.497363753 }.
+\boxed{ D_{0.1}^+f(1)\approx0.497363753 }.
 $$
 
 The error is approximately:
@@ -60625,7 +60768,7 @@ They are especially useful when only past samples exist, such as when estimating
 For example:
 
 $$
-v_n\approx\frac{x_n-x\_{n-1}}h.
+v_n\approx\frac{x_n-x_{n-1}}h.
 $$
 
 This estimates velocity using the current and previous positions.
@@ -60637,7 +60780,7 @@ It is a numerical approximation, not a literal replacement for instantaneous vel
 At $x=1$, with $h=0.1$:
 
 $$
-D\_{0.1}^-f(1) = \frac{\sin1-\sin0.9}{0.1}.
+D_{0.1}^-f(1) = \frac{\sin1-\sin0.9}{0.1}.
 $$
 
 With:
@@ -60649,7 +60792,7 @@ $$
 we obtain:
 
 $$
-\boxed{ D\_{0.1}^-f(1)\approx0.581440752 }.
+\boxed{ D_{0.1}^-f(1)\approx0.581440752 }.
 $$
 
 The true derivative is approximately $0.540302306$.
@@ -60709,13 +60852,13 @@ $$
 Then:
 
 $$
-D\_{0.1}^0f(1) = \frac{\sin1.1-\sin0.9}{0.2}.
+D_{0.1}^0f(1) = \frac{\sin1.1-\sin0.9}{0.2}.
 $$
 
 Numerically:
 
 $$
-\boxed{ D\_{0.1}^0f(1)\approx0.539402252 }.
+\boxed{ D_{0.1}^0f(1)\approx0.539402252 }.
 $$
 
 The true derivative is:
@@ -60763,7 +60906,7 @@ Their individual rounding errors may not cancel.
 A simplified error model is:
 
 $$
-\boxed{ E\_{\mathrm{total}}(h) \approx C_1h+C_2\frac{\epsilon\_{\mathrm{mach}}}{h} }
+\boxed{ E_{\mathrm{total}}(h) \approx C_1h+C_2\frac{\epsilon_{\mathrm{mach}}}{h} }
 $$
 
 for forward differentiation, with constants depending on the function scale, curvature, arithmetic, and evaluation accuracy.
@@ -60781,25 +60924,25 @@ The best step size balances them.
 Differentiate the error model with respect to positive $h$:
 
 $$
-E'(h)= C_1- C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}.
+E'(h)= C_1- C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}.
 $$
 
 Set it to zero:
 
 $$
-C_1= C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}.
+C_1= C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}.
 $$
 
 Therefore:
 
 $$
-\boxed{ h\_{\mathrm{opt}} \approx \sqrt{\frac{C_2\epsilon\_{\mathrm{mach}}}{C_1}} }.
+\boxed{ h_{\mathrm{opt}} \approx \sqrt{\frac{C_2\epsilon_{\mathrm{mach}}}{C_1}} }.
 $$
 
 The characteristic scaling is:
 
 $$
-h\_{\mathrm{opt}}\sim\sqrt{\epsilon\_{\mathrm{mach}}}
+h_{\mathrm{opt}}\sim\sqrt{\epsilon_{\mathrm{mach}}}
 $$
 
 after suitable nondimensionalization.
@@ -60807,31 +60950,31 @@ after suitable nondimensionalization.
 For central differences, the truncation term is proportional to $h^2$:
 
 $$
-E\_{\mathrm{central}}(h) \approx C_1h^2+ C_2\frac{\epsilon\_{\mathrm{mach}}}{h}.
+E_{\mathrm{central}}(h) \approx C_1h^2+ C_2\frac{\epsilon_{\mathrm{mach}}}{h}.
 $$
 
 Differentiate:
 
 $$
-2C_1h- C_2\frac{\epsilon\_{\mathrm{mach}}}{h^2}=0.
+2C_1h- C_2\frac{\epsilon_{\mathrm{mach}}}{h^2}=0.
 $$
 
 Thus:
 
 $$
-h^3= \frac{C_2\epsilon\_{\mathrm{mach}}}{2C_1}.
+h^3= \frac{C_2\epsilon_{\mathrm{mach}}}{2C_1}.
 $$
 
 The characteristic scaling is:
 
 $$
-\boxed{ h\_{\mathrm{opt}}\sim \epsilon\_{\mathrm{mach}}^{1/3} }.
+\boxed{ h_{\mathrm{opt}}\sim \epsilon_{\mathrm{mach}}^{1/3} }.
 $$
 
 For IEEE-754 binary64:
 
 $$
-\epsilon\_{\mathrm{mach}} \approx2.22\times10^{-16}.
+\epsilon_{\mathrm{mach}} \approx2.22\times10^{-16}.
 $$
 
 The cube root is of order $6\times10^{-6}$.
@@ -60863,7 +61006,7 @@ even when the true derivative is nonzero.
 A robust finite-difference implementation can inspect the actual representable displacement:
 
 $$
-h\_{\mathrm{actual}}=\operatorname{fl}(x+h)-x,
+h_{\mathrm{actual}}=\operatorname{fl}(x+h)-x,
 $$
 
 where $\operatorname{fl}$ denotes floating-point rounding.
@@ -61066,7 +61209,7 @@ A residual is the signed difference between a prediction and a target. For repro
 We could minimize the sum of squared residual magnitudes:
 
 $$
-\boxed{ E(\mathbf x)= \frac12\sum\_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|\_2^2 }.
+\boxed{ E(\mathbf x)= \frac12\sum_{i=1}^{N} \|\mathbf r_i(\mathbf x)\|\_2^2 }.
 $$
 
 Why square the residuals?
@@ -61098,7 +61241,7 @@ A mathematical optimization problem specifies its decision variables, objective,
 For example, if our unknowns are a camera rotation $R$, camera translation $\mathbf t$, and positive focal length $f$, the problem could be:
 
 $$
-\min\_{R,\mathbf t,f}E(R,\mathbf t,f)
+\min_{R,\mathbf t,f}E(R,\mathbf t,f)
 $$
 
 subject to:
@@ -61212,7 +61355,7 @@ $$
 would have directional derivative:
 
 $$
-D\_{\mathbf d}f = \nabla f^T(-\nabla f) = -\|\nabla f\|^2<0.
+D_{\mathbf d}f = \nabla f^T(-\nabla f) = -\|\nabla f\|^2<0.
 $$
 
 A sufficiently small movement along that direction would decrease the objective, contradicting local minimality.
@@ -61262,7 +61405,7 @@ Second-order information cannot distinguish these cases.
 For a constrained problem:
 
 $$
-\min\_{x\ge0}(x+1)^2,
+\min_{x\ge0}(x+1)^2,
 $$
 
 the optimum is:
@@ -61402,7 +61545,7 @@ Boyd and Vandenberghe+1
 A general constrained problem can be expressed as:
 
 $$
-\begin{aligned} \min\_{\mathbf x}\quad &f(\mathbf x)\\ \text{subject to}\quad &g_i(\mathbf x)\le0,\quad i=1,\ldots,m,\\ &h_j(\mathbf x)=0,\quad j=1,\ldots,p. \end{aligned}
+\begin{aligned} \min_{\mathbf x}\quad &f(\mathbf x)\\ \text{subject to}\quad &g_i(\mathbf x)\le0,\quad i=1,\ldots,m,\\ &h_j(\mathbf x)=0,\quad j=1,\ldots,p. \end{aligned}
 $$
 
 Inequalities restrict the permissible region. Equalities restrict the solution to a surface or a lower-dimensional subset.
@@ -61452,7 +61595,7 @@ $$
 we obtain the gradient-descent update:
 
 $$
-\boxed{ \mathbf x\_{k+1} = \mathbf x_k-\alpha_k\nabla f(\mathbf x_k) }.
+\boxed{ \mathbf x_{k+1} = \mathbf x_k-\alpha_k\nabla f(\mathbf x_k) }.
 $$
 
 Here $\alpha_k>0$ is the step size, also called the learning rate in machine learning.
@@ -61564,7 +61707,7 @@ This is why choosing the direction and choosing the step length are separate opt
 An optimization update can be written:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k,
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k,
 $$
 
 where $\mathbf p_k$ is a chosen search direction.
@@ -61592,7 +61735,7 @@ $$
 Gradient descent becomes:
 
 $$
-\mathbf x\_{k+1} = (I-\alpha A)\mathbf x_k.
+\mathbf x_{k+1} = (I-\alpha A)\mathbf x_k.
 $$
 
 Diagonalize $A$:
@@ -61612,13 +61755,13 @@ $$
 Then:
 
 $$
-\mathbf z\_{k+1} = (I-\alpha\Lambda)\mathbf z_k.
+\mathbf z_{k+1} = (I-\alpha\Lambda)\mathbf z_k.
 $$
 
 Every eigenvector component evolves independently:
 
 $$
-\boxed{ z\_{i,k+1}=(1-\alpha\lambda_i)z\_{i,k} }.
+\boxed{ z_{i,k+1}=(1-\alpha\lambda_i)z_{i,k} }.
 $$
 
 For convergence to zero, each component must contract:
@@ -61636,7 +61779,7 @@ $$
 To satisfy every direction, we require:
 
 $$
-\boxed{ 0<\alpha<\frac2{\lambda\_{\max}} }.
+\boxed{ 0<\alpha<\frac2{\lambda_{\max}} }.
 $$
 
 This is not an arbitrary tuning recommendation. It is a stability condition derived from the eigenvalues of the objective's curvature matrix.
@@ -61646,7 +61789,7 @@ This is not an arbitrary tuning recommendation. It is a stability condition deri
 Suppose the eigenvalues of $A$ are:
 
 $$
-\lambda\_{\min}=1, \qquad \lambda\_{\max}=100.
+\lambda_{\min}=1, \qquad \lambda_{\max}=100.
 $$
 
 A step size must be below $0.02$ to satisfy the strict contraction condition for the steep direction.
@@ -61654,7 +61797,7 @@ A step size must be below $0.02$ to satisfy the strict contraction condition for
 But with $\alpha=0.01$, the shallow direction contracts by only:
 
 $$
-1-\alpha\lambda\_{\min}=0.99
+1-\alpha\lambda_{\min}=0.99
 $$
 
 each iteration.
@@ -61664,7 +61807,7 @@ The steep direction contracts rapidly, while the shallow direction makes slow pr
 The ratio:
 
 $$
-\boxed{\kappa(A)=\frac{\lambda\_{\max}}{\lambda\_{\min}}=100}
+\boxed{\kappa(A)=\frac{\lambda_{\max}}{\lambda_{\min}}=100}
 $$
 
 quantifies this curvature anisotropy for a positive-definite quadratic.
@@ -61678,7 +61821,7 @@ Let the eigenvalues lie in $[\mu,L]$, with $0<\mu\le L$.
 For a fixed step $\alpha$, the worst-case linear contraction factor is:
 
 $$
-q(\alpha)= \max\_{\lambda\in[\mu,L]} |1-\alpha\lambda|.
+q(\alpha)= \max_{\lambda\in[\mu,L]} |1-\alpha\lambda|.
 $$
 
 The optimal minimax choice balances the two endpoint factors:
@@ -61758,7 +61901,7 @@ the upper bound guarantees a decrease whenever $\mathbf g\ne0$.
 For the common choice $\alpha=1/L$:
 
 $$
-\boxed{ f(\mathbf x\_{k+1}) \le f(\mathbf x_k)- \frac1{2L}\|\nabla f(\mathbf x_k)\|^2 }.
+\boxed{ f(\mathbf x_{k+1}) \le f(\mathbf x_k)- \frac1{2L}\|\nabla f(\mathbf x_k)\|^2 }.
 $$
 
 This gives a quantitative decrease per step.
@@ -61808,13 +61951,13 @@ Momentum introduces a persistent update state.
 A common heavy-ball formulation is:
 
 $$
-\boxed{ \mathbf v\_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf x_k) }
+\boxed{ \mathbf v_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf x_k) }
 $$
 
 followed by:
 
 $$
-\boxed{ \mathbf x\_{k+1}=\mathbf x_k+\mathbf v\_{k+1} }.
+\boxed{ \mathbf x_{k+1}=\mathbf x_k+\mathbf v_{k+1} }.
 $$
 
 Here $\beta$ is the momentum coefficient, often chosen between zero and one.
@@ -61828,7 +61971,7 @@ Suppose the gradient repeatedly points in approximately the same direction.
 The recurrence adds new gradient contributions to a decaying history:
 
 $$
-\mathbf v\_{k+1} = -\alpha\mathbf g_k -\alpha\beta\mathbf g\_{k-1} -\alpha\beta^2\mathbf g\_{k-2} -\cdots
+\mathbf v_{k+1} = -\alpha\mathbf g_k -\alpha\beta\mathbf g_{k-1} -\alpha\beta^2\mathbf g_{k-2} -\cdots
 $$
 
 when initialized at zero, with the appropriate finite-history truncation.
@@ -61920,11 +62063,11 @@ $$
 $$
 
 $$
-\mathbf v\_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf y_k),
+\mathbf v_{k+1} = \beta\mathbf v_k-\alpha\nabla f(\mathbf y_k),
 $$
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\mathbf v\_{k+1}.
+\mathbf x_{k+1}=\mathbf x_k+\mathbf v_{k+1}.
 $$
 
 The gradient is evaluated at $\mathbf y_k$, not at $\mathbf x_k$.
@@ -61998,7 +62141,7 @@ $$
 Since $g=f'$ and $g'=f''$:
 
 $$
-\boxed{ x\_{k+1} = x_k-\frac{f'(x_k)}{f''(x_k)} }.
+\boxed{ x_{k+1} = x_k-\frac{f'(x_k)}{f''(x_k)} }.
 $$
 
 ##### Quadratic example
@@ -62018,7 +62161,7 @@ $$
 Newton's update is:
 
 $$
-x\_{k+1} = x_k-\frac{6(x_k-2)}6 =2.
+x_{k+1} = x_k-\frac{6(x_k-2)}6 =2.
 $$
 
 For any starting point, one exact Newton step reaches the minimizer $x=2$, assuming exact arithmetic.
@@ -62042,7 +62185,7 @@ $$
 For $x\ne0$:
 
 $$
-x\_{k+1} = x-\frac{3x^2}{6x} =\frac x2.
+x_{k+1} = x-\frac{3x^2}{6x} =\frac x2.
 $$
 
 The iterates approach zero.
@@ -62090,7 +62233,7 @@ $$
 The next iterate is:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
 $$
 
 Classical undamped Newton uses $\alpha_k=1$. A damped or line-search [[#Optimization and inverse problems|Newton method]] chooses $\alpha_k$ to improve robustness.
@@ -62221,18 +62364,18 @@ A direct dense factorization typically requires $O(n^3)$ arithmetic, although st
 
 Quasi-Newton methods attempt to learn useful curvature information from changes in gradients instead of constructing the exact Hessian at every iteration.
 
-Suppose an optimization step moves from $\mathbf x_k$ to $\mathbf x\_{k+1}$.
+Suppose an optimization step moves from $\mathbf x_k$ to $\mathbf x_{k+1}$.
 
 Define:
 
 $$
-\boxed{ \mathbf s_k=\mathbf x\_{k+1}-\mathbf x_k }
+\boxed{ \mathbf s_k=\mathbf x_{k+1}-\mathbf x_k }
 $$
 
 and:
 
 $$
-\boxed{ \mathbf y_k= \nabla f(\mathbf x\_{k+1})- \nabla f(\mathbf x_k) }.
+\boxed{ \mathbf y_k= \nabla f(\mathbf x_{k+1})- \nabla f(\mathbf x_k) }.
 $$
 
 The letter $\mathbf y$ here denotes a gradient difference, not the function output from previous examples.
@@ -62254,7 +62397,7 @@ This relationship is the basis of the secant condition.
 Instead of computing the true Hessian, maintain an approximation $B_k$ satisfying:
 
 $$
-\boxed{ B\_{k+1}\mathbf s_k=\mathbf y_k }.
+\boxed{ B_{k+1}\mathbf s_k=\mathbf y_k }.
 $$
 
 This forces the new approximation to agree with the observed gradient change along the most recent step.
@@ -62274,17 +62417,17 @@ Let $B_k$ approximate the Hessian.
 Define:
 
 $$
-\mathbf s=\mathbf x\_{k+1}-\mathbf x_k,
+\mathbf s=\mathbf x_{k+1}-\mathbf x_k,
 $$
 
 $$
-\mathbf y=\nabla f(\mathbf x\_{k+1})-\nabla f(\mathbf x_k).
+\mathbf y=\nabla f(\mathbf x_{k+1})-\nabla f(\mathbf x_k).
 $$
 
 The BFGS Hessian update is:
 
 $$
-\boxed{ B\_{k+1} = B_k - \frac{B_k\mathbf s\mathbf s^TB_k} {\mathbf s^TB_k\mathbf s} + \frac{\mathbf y\mathbf y^T} {\mathbf y^T\mathbf s} }.
+\boxed{ B_{k+1} = B_k - \frac{B_k\mathbf s\mathbf s^TB_k} {\mathbf s^TB_k\mathbf s} + \frac{\mathbf y\mathbf y^T} {\mathbf y^T\mathbf s} }.
 $$
 
 The update changes the curvature estimate in directions informed by the observed step and gradient difference.
@@ -62306,7 +62449,7 @@ $$
 Then:
 
 $$
-\boxed{ M\_{k+1} = (I-\rho\mathbf s\mathbf y^T) M_k (I-\rho\mathbf y\mathbf s^T) + \rho\mathbf s\mathbf s^T }.
+\boxed{ M_{k+1} = (I-\rho\mathbf s\mathbf y^T) M_k (I-\rho\mathbf y\mathbf s^T) + \rho\mathbf s\mathbf s^T }.
 $$
 
 The search direction is:
@@ -62356,7 +62499,7 @@ In research code, L-BFGS can be attractive when reliable gradients are available
 So far, our update has the form:
 
 $$
-\mathbf x\_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
+\mathbf x_{k+1}=\mathbf x_k+\alpha_k\mathbf p_k.
 $$
 
 Suppose a method has already selected a direction $\mathbf p_k$, perhaps from gradient descent, Newton, or BFGS.
@@ -62388,7 +62531,7 @@ If this quantity is negative, the direction is descending.
 An exact line search would choose:
 
 $$
-\alpha^\star=\arg\min\_{\alpha\ge0}\phi(\alpha).
+\alpha^\star=\arg\min_{\alpha\ge0}\phi(\alpha).
 $$
 
 But solving this one-dimensional problem exactly can be expensive. It may require many evaluations of a costly objective.
@@ -62629,7 +62772,7 @@ Here $B_k$ approximates the Hessian.
 We solve:
 
 $$
-\boxed{ \min\_{\|\mathbf p\|\le\Delta_k}m_k(\mathbf p) }
+\boxed{ \min_{\|\mathbf p\|\le\Delta_k}m_k(\mathbf p) }
 $$
 
 where $\Delta_k>0$ is the trust-region radius.
@@ -62801,7 +62944,7 @@ $$
 The first-order equations are:
 
 $$
-\nabla\_{\mathbf x}\mathcal L=0, \qquad h(\mathbf x)=0.
+\nabla_{\mathbf x}\mathcal L=0, \qquad h(\mathbf x)=0.
 $$
 
 ##### Worked example: constrained optimum on the unit circle
@@ -62951,7 +63094,7 @@ Lagrange multipliers handle equality constraints. KKT conditions extend first-or
 Consider:
 
 $$
-\min\_{\mathbf x}f(\mathbf x)
+\min_{\mathbf x}f(\mathbf x)
 $$
 
 subject to:
@@ -62975,7 +63118,7 @@ $$
 The KKT conditions are:
 
 $$
-\boxed{ \begin{aligned} \nabla\_{\mathbf x}\mathcal L&=0 &&\text{stationarity},\\ g_i(\mathbf x)&\le0 &&\text{primal inequality feasibility},\\ h_j(\mathbf x)&=0 &&\text{equality feasibility},\\ \lambda_i&\ge0 &&\text{dual feasibility},\\ \lambda_i g_i(\mathbf x)&=0 &&\text{complementary slackness}. \end{aligned} }
+\boxed{ \begin{aligned} \nabla_{\mathbf x}\mathcal L&=0 &&\text{stationarity},\\ g_i(\mathbf x)&\le0 &&\text{primal inequality feasibility},\\ h_j(\mathbf x)&=0 &&\text{equality feasibility},\\ \lambda_i&\ge0 &&\text{dual feasibility},\\ \lambda_i g_i(\mathbf x)&=0 &&\text{complementary slackness}. \end{aligned} }
 $$
 
 ##### Complementary slackness intuition
@@ -63341,7 +63484,7 @@ $$
 Let the residual Jacobian be:
 
 $$
-J\_{ij}= \frac{\partial r_i}{\partial x_j}.
+J_{ij}= \frac{\partial r_i}{\partial x_j}.
 $$
 
 The gradient is:
@@ -63373,7 +63516,7 @@ $$
 Collecting the entries:
 
 $$
-\boxed{ H_E = J^TJ+ \sum_i r_iH\_{r_i} }.
+\boxed{ H_E = J^TJ+ \sum_i r_iH_{r_i} }.
 $$
 
 The first term depends only on the residual Jacobian.
@@ -63399,7 +63542,7 @@ But the exact Hessian contains second derivatives of every residual.
 Gauss–Newton replaces it with:
 
 $$
-H\_{\mathrm{GN}}=J^TJ.
+H_{\mathrm{GN}}=J^TJ.
 $$
 
 The resulting step solves:
@@ -63431,7 +63574,7 @@ $$
 Differentiate with respect to the step:
 
 $$
-\nabla\_{\Delta\mathbf x}m = J^T\mathbf r+J^TJ\Delta\mathbf x.
+\nabla_{\Delta\mathbf x}m = J^T\mathbf r+J^TJ\Delta\mathbf x.
 $$
 
 Set this to zero:
@@ -63775,7 +63918,7 @@ Even when the solution is unique, it may be highly sensitive to measurement nois
 Regularization modifies the optimization problem by expressing an additional preference:
 
 $$
-\boxed{ \min\_{\mathbf x} \frac12\|A\mathbf x-\mathbf b\|^2 + \lambda R(\mathbf x) }.
+\boxed{ \min_{\mathbf x} \frac12\|A\mathbf x-\mathbf b\|^2 + \lambda R(\mathbf x) }.
 $$
 
 Here $R(\mathbf x)$ is a regularizer, and $\lambda\ge0$ controls its influence.
@@ -64001,7 +64144,7 @@ $$
 where $f$ is smooth, a proximal-gradient step is:
 
 $$
-\boxed{ \mathbf x\_{k+1} = S\_{\alpha\lambda} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
+\boxed{ \mathbf x_{k+1} = S_{\alpha\lambda} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
 $$
 
 Soft-thresholding is applied componentwise.
@@ -64117,19 +64260,19 @@ We covered finite differences and automatic differentiation in M052, so here the
 Suppose an implementation returns:
 
 $$
-\mathbf g\_{\mathrm{analytic}}.
+\mathbf g_{\mathrm{analytic}}.
 $$
 
 For a randomly selected direction $\mathbf d$, compute:
 
 $$
-D\_{\mathrm{analytic}} = \mathbf g\_{\mathrm{analytic}}^T\mathbf d.
+D_{\mathrm{analytic}} = \mathbf g_{\mathrm{analytic}}^T\mathbf d.
 $$
 
 Then compute the central finite-difference estimate:
 
 $$
-D\_{\mathrm{numeric}} = \frac{ f(\mathbf x+h\mathbf d) - f(\mathbf x-h\mathbf d) }{2h}.
+D_{\mathrm{numeric}} = \frac{ f(\mathbf x+h\mathbf d) - f(\mathbf x-h\mathbf d) }{2h}.
 $$
 
 We compare them across several reasonable values of $h$.
@@ -64137,7 +64280,7 @@ We compare them across several reasonable values of $h$.
 A useful scale-aware metric is:
 
 $$
-\boxed{ e= \frac{ |D\_{\mathrm{analytic}}-D\_{\mathrm{numeric}}| }{ \max(1,|D\_{\mathrm{analytic}}|,|D\_{\mathrm{numeric}}|) } }.
+\boxed{ e= \frac{ |D_{\mathrm{analytic}}-D_{\mathrm{numeric}}| }{ \max(1,|D_{\mathrm{analytic}}|,|D_{\mathrm{numeric}}|) } }.
 $$
 
 The constant one here assumes the derivatives have been suitably nondimensionalized or that a unit-scale comparison is meaningful. For a general physical model, choose a reference scale compatible with the derivative's units.
@@ -64221,7 +64364,7 @@ This is why nearly flat optimization valleys can be difficult even when the obje
 The spectral condition number is:
 
 $$
-\boxed{ \kappa_2(H)= \frac{\lambda\_{\max}}{\lambda\_{\min}} }
+\boxed{ \kappa_2(H)= \frac{\lambda_{\max}}{\lambda_{\min}} }
 $$
 
 for symmetric positive-definite $H$.
@@ -64231,7 +64374,7 @@ A large value means the curvature scales are very different.
 For general invertible matrices:
 
 $$
-\kappa_2(A)= \frac{\sigma\_{\max}(A)}{\sigma\_{\min}(A)},
+\kappa_2(A)= \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)},
 $$
 
 where $\sigma_i$ are singular values.
@@ -64369,13 +64512,13 @@ $$
 By the chain rule:
 
 $$
-\boxed{ \nabla\_{\mathbf z}\tilde f = S^T\nabla\_{\mathbf x}f }.
+\boxed{ \nabla_{\mathbf z}\tilde f = S^T\nabla_{\mathbf x}f }.
 $$
 
 For a twice-differentiable objective with constant $S$:
 
 $$
-\boxed{ H\_{\mathbf z}=S^TH\_{\mathbf x}S }.
+\boxed{ H_{\mathbf z}=S^TH_{\mathbf x}S }.
 $$
 
 Thus, normalization changes both the gradient and Hessian representation.
@@ -64551,7 +64694,7 @@ Therefore a tiny step should not automatically be called convergence.
 A common criterion is:
 
 $$
-|f\_{k+1}-f_k|\le\epsilon_f.
+|f_{k+1}-f_k|\le\epsilon_f.
 $$
 
 This can be useful, but a small objective change may mean the algorithm is stuck rather than near a solution.
@@ -64575,7 +64718,7 @@ Relative tolerances scale comparisons by a reference quantity.
 A common parameter-step criterion is:
 
 $$
-\boxed{ \|\Delta\mathbf x\| \le \epsilon\_{\mathrm{abs}}+ \epsilon\_{\mathrm{rel}}\|\mathbf x\| }.
+\boxed{ \|\Delta\mathbf x\| \le \epsilon_{\mathrm{abs}}+ \epsilon_{\mathrm{rel}}\|\mathbf x\| }.
 $$
 
 This allows a fixed minimum precision requirement while accounting for the scale of the current parameter vector.
@@ -64585,13 +64728,13 @@ However, for parameters with different units, a raw Euclidean norm can be physic
 A better approach is to use normalized coordinates or componentwise tolerances:
 
 $$
-|\Delta x_i| \le \epsilon\_{\mathrm{abs},i} + \epsilon\_{\mathrm{rel},i}|x_i|.
+|\Delta x_i| \le \epsilon_{\mathrm{abs},i} + \epsilon_{\mathrm{rel},i}|x_i|.
 $$
 
 For objective changes, one might use:
 
 $$
-|f\_{k+1}-f_k| \le \epsilon\_{\mathrm{abs},f} + \epsilon\_{\mathrm{rel},f}\max(|f_k|,|f\_{k+1}|).
+|f_{k+1}-f_k| \le \epsilon_{\mathrm{abs},f} + \epsilon_{\mathrm{rel},f}\max(|f_k|,|f_{k+1}|).
 $$
 
 The choice depends on whether the objective has a meaningful absolute scale.
@@ -64675,7 +64818,7 @@ $$
 For box constraints, Euclidean projection is componentwise clipping:
 
 $$
-\boxed{ [\Pi\_{\mathcal C}(\mathbf x)]\_i = \min(u_i,\max(l_i,x_i)) }.
+\boxed{ [\Pi_{\mathcal C}(\mathbf x)]\_i = \min(u_i,\max(l_i,x_i)) }.
 $$
 
 This is the closest feasible point to $\mathbf x$ under Euclidean distance.
@@ -64725,7 +64868,7 @@ This motivates projected-gradient methods and constrained stationarity measureme
 The projected-gradient update is:
 
 $$
-\boxed{ \mathbf x\_{k+1} = \Pi\_{\mathcal C} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
+\boxed{ \mathbf x_{k+1} = \Pi_{\mathcal C} \left( \mathbf x_k-\alpha\nabla f(\mathbf x_k) \right) }.
 $$
 
 It first computes an unconstrained gradient step, then projects the candidate into the feasible set.
@@ -64735,13 +64878,13 @@ It first computes an unconstrained gradient step, then projects the candidate in
 Define:
 
 $$
-\boxed{ G\_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi\_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
+\boxed{ G\_\alpha(\mathbf x)= \frac1\alpha \left[ \mathbf x- \Pi_{\mathcal C} (\mathbf x-\alpha\nabla f(\mathbf x)) \right] }.
 $$
 
 For an unconstrained problem, projection is the identity:
 
 $$
-\Pi\_{\mathbb R^n}(\mathbf z)=\mathbf z.
+\Pi_{\mathbb R^n}(\mathbf z)=\mathbf z.
 $$
 
 Therefore:
@@ -64815,7 +64958,7 @@ $$
 Project back into the box:
 
 $$
-\Pi\_{\mathcal C}(3,-2.5)=(1,-0.5).
+\Pi_{\mathcal C}(3,-2.5)=(1,-0.5).
 $$
 
 Therefore:
@@ -64831,13 +64974,13 @@ This correctly identifies a constrained stationary point despite the nonzero ord
 When using line search with a projected method, the trial update is:
 
 $$
-\mathbf x\_{\mathrm{trial}} = \Pi\_{\mathcal C} (\mathbf x-\alpha\mathbf g).
+\mathbf x_{\mathrm{trial}} = \Pi_{\mathcal C} (\mathbf x-\alpha\mathbf g).
 $$
 
 The actual displacement is:
 
 $$
-\mathbf d= \mathbf x\_{\mathrm{trial}}-\mathbf x.
+\mathbf d= \mathbf x_{\mathrm{trial}}-\mathbf x.
 $$
 
 It is generally not equal to $-\alpha\mathbf g$, because projection may alter individual components.
@@ -64861,7 +65004,7 @@ $$
 a coordinate update solves or approximates:
 
 $$
-\boxed{ x_i^{k+1} = \arg\min_z f(x_1^{k+1},\ldots,x\_{i-1}^{k+1}, z,x\_{i+1}^{k},\ldots,x_n^k) }.
+\boxed{ x_i^{k+1} = \arg\min_z f(x_1^{k+1},\ldots,x_{i-1}^{k+1}, z,x_{i+1}^{k},\ldots,x_n^k) }.
 $$
 
 This is a cyclic coordinate descent update when coordinates are processed in a fixed order.
@@ -64963,13 +65106,13 @@ $$
 the derivative is represented by a Jacobian:
 
 $$
-\boxed{ J\_{\mathbf f}= \begin{bmatrix} \frac{\partial f_1}{\partial x_1}&\cdots&\frac{\partial f_1}{\partial x_n}\\ \vdots&\ddots&\vdots\\ \frac{\partial f_m}{\partial x_1}&\cdots&\frac{\partial f_m}{\partial x_n} \end{bmatrix} }.
+\boxed{ J_{\mathbf f}= \begin{bmatrix} \frac{\partial f_1}{\partial x_1}&\cdots&\frac{\partial f_1}{\partial x_n}\\ \vdots&\ddots&\vdots\\ \frac{\partial f_m}{\partial x_1}&\cdots&\frac{\partial f_m}{\partial x_n} \end{bmatrix} }.
 $$
 
 Its meaning is:
 
 $$
-\delta\mathbf y\approx J\_{\mathbf f}\delta\mathbf x.
+\delta\mathbf y\approx J_{\mathbf f}\delta\mathbf x.
 $$
 
 This is the forward sensitivity calculation.
@@ -64977,7 +65120,7 @@ This is the forward sensitivity calculation.
 If a scalar loss $L$ depends on $\mathbf y=\mathbf f(\mathbf x)$, the gradient propagates backward:
 
 $$
-\boxed{ \nabla\_{\mathbf x}L = J\_{\mathbf f}^T\nabla\_{\mathbf y}L }.
+\boxed{ \nabla_{\mathbf x}L = J_{\mathbf f}^T\nabla_{\mathbf y}L }.
 $$
 
 These two operations are essential to differentiable programming.
@@ -65073,7 +65216,7 @@ $$
 Therefore:
 
 $$
-\boxed{ \nabla\_{\mathbf x}\|\mathbf x\| = \frac{\mathbf x}{\|\mathbf x\|} }
+\boxed{ \nabla_{\mathbf x}\|\mathbf x\| = \frac{\mathbf x}{\|\mathbf x\|} }
 $$
 
 when $\mathbf x\ne0$.
@@ -65099,7 +65242,7 @@ $$
 has derivative:
 
 $$
-\boxed{ A'(t)= \begin{bmatrix} a'\_{11}(t)&\cdots&a'\_{1n}(t)\\ \vdots&\ddots&\vdots\\ a'\_{m1}(t)&\cdots&a'\_{mn}(t) \end{bmatrix} }.
+\boxed{ A'(t)= \begin{bmatrix} a'_{11}(t)&\cdots&a'_{1n}(t)\\ \vdots&\ddots&\vdots\\ a'_{m1}(t)&\cdots&a'_{mn}(t) \end{bmatrix} }.
 $$
 
 The derivative is computed elementwise, but it also follows matrix-level rules.
@@ -65197,7 +65340,7 @@ then its complete derivative formally contains relationships between every input
 Written entrywise:
 
 $$
-\frac{\partial F\_{ij}}{\partial X\_{kl}}.
+\frac{\partial F_{ij}}{\partial X_{kl}}.
 $$
 
 This is a fourth-order tensor if the matrix indices remain explicit.
@@ -65423,7 +65566,7 @@ $$
 we obtain:
 
 $$
-\boxed{ J\_{\mathrm{normalize}}(\mathbf v) = \frac1{\|\mathbf v\|} (I-\mathbf n\mathbf n^T) }.
+\boxed{ J_{\mathrm{normalize}}(\mathbf v) = \frac1{\|\mathbf v\|} (I-\mathbf n\mathbf n^T) }.
 $$
 
 ##### Geometric interpretation
@@ -65497,7 +65640,7 @@ $$
 Divide by five:
 
 $$
-\boxed{ J\_{\mathrm{normalize}}= \begin{bmatrix} 0.128&-0.096\\ -0.096&0.072 \end{bmatrix} }.
+\boxed{ J_{\mathrm{normalize}}= \begin{bmatrix} 0.128&-0.096\\ -0.096&0.072 \end{bmatrix} }.
 $$
 
 A perturbation:
@@ -65667,7 +65810,7 @@ $$
 A small left-applied rotation perturbation is:
 
 $$
-R\_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]\_\times)R.
+R_{\mathrm{new}} = \exp([\delta\boldsymbol\omega]\_\times)R.
 $$
 
 For a small perturbation:
@@ -65679,7 +65822,7 @@ $$
 Then:
 
 $$
-\begin{aligned} \mathbf p'\_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]\_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
+\begin{aligned} \mathbf p'_{\mathrm{new}} &\approx (I+[\delta\boldsymbol\omega]\_\times)R\mathbf p\\ &=R\mathbf p+ \delta\boldsymbol\omega\times(R\mathbf p). \end{aligned}
 $$
 
 Using:
@@ -65691,19 +65834,19 @@ $$
 we obtain:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega\_{\mathrm{left}}} = -[R\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{left}}} = -[R\mathbf p]\_\times }.
 $$
 
 For a right-applied perturbation:
 
 $$
-R\_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]\_\times),
+R_{\mathrm{new}} = R\exp([\delta\boldsymbol\omega]\_\times),
 $$
 
 the corresponding Jacobian is:
 
 $$
-\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega\_{\mathrm{right}}} = -R[\mathbf p]\_\times }.
+\boxed{ \frac{\partial(R\mathbf p)} {\partial\delta\boldsymbol\omega_{\mathrm{right}}} = -R[\mathbf p]\_\times }.
 $$
 
 These matrices are generally different.
@@ -65727,7 +65870,7 @@ $$
 For a left perturbation of the full rigid transform:
 
 $$
-T\_{\mathrm{new}}= \exp([\delta\boldsymbol\xi]^\wedge)T,
+T_{\mathrm{new}}= \exp([\delta\boldsymbol\xi]^\wedge)T,
 $$
 
 the first-order point variation is:
@@ -65739,7 +65882,7 @@ $$
 Therefore:
 
 $$
-\boxed{ J\_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pose}} = \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
 $$
 
 This is a $3\times6$ matrix.
@@ -65747,7 +65890,7 @@ This is a $3\times6$ matrix.
 If the resulting camera-space point is projected into image space, the complete Jacobian is:
 
 $$
-\boxed{ J\_{\mathrm{pixel,pose}} = J\_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
+\boxed{ J_{\mathrm{pixel,pose}} = J_{\mathrm{projection}} \begin{bmatrix} -[\mathbf p_c]\_\times&I \end{bmatrix} }.
 $$
 
 The result is $2\times6$.
@@ -65797,7 +65940,7 @@ Optimizing the four components as unconstrained variables may violate the unit-l
 One option is to normalize after updates:
 
 $$
-q\_{\mathrm{new}}= \frac{q+\delta q}{\|q+\delta q\|}.
+q_{\mathrm{new}}= \frac{q+\delta q}{\|q+\delta q\|}.
 $$
 
 But this update is not equivalent to an intrinsic three-dimensional rotation update in every respect.
@@ -65805,7 +65948,7 @@ But this update is not equivalent to an intrinsic three-dimensional rotation upd
 Another option is to use a local rotation perturbation and compose it with the existing orientation:
 
 $$
-q\_{\mathrm{new}}= \delta q(\delta\boldsymbol\omega)\otimes q.
+q_{\mathrm{new}}= \delta q(\delta\boldsymbol\omega)\otimes q.
 $$
 
 The small rotation vector $\delta\boldsymbol\omega\in\mathbb R^3$ is converted into a unit quaternion through an exponential-map-like construction.
@@ -65835,6 +65978,328 @@ A particularly useful test would compare the analytical pose Jacobian with finit
 <!-- end V09.07 -->
 
 <!-- begin V09.08 -->
+
+<!-- Bible-final-pass: SE3 exp log -->
+#### From a six-number pose update to an actual rigid transform
+
+The previous section derived the tangent space of SO(3) and showed how a small rotational perturbation changes a point. One bridge was still missing: how a six-component local pose update becomes a finite rigid transform, and how a nearby rigid transform becomes a six-component update again.
+
+A rigid transform $T\in SE(3)$ contains a rotation $R\in SO(3)$ and a translation $t$:
+
+$$
+T=\begin{bmatrix}R&t\\0&1\end{bmatrix}
+$$
+
+A local six-vector is commonly written as:
+
+$$
+\xi=\begin{bmatrix}\omega\\\rho\end{bmatrix}
+$$
+
+$\omega$ is a three-component local rotation vector measured in radians. $\rho$ is the translational part of the tangent coordinate. In general, $\rho$ is not the final translation column $t$ when rotation is nonzero.
+
+The wedge form is:
+
+$$
+\widehat{\xi}=\begin{bmatrix}[\omega]_\times&\rho\\0&0\end{bmatrix}
+$$
+
+The group exponential gives:
+
+$$
+\exp(\widehat{\xi})=\begin{bmatrix}\exp([\omega]_\times)&V(\omega)\rho\\0&1\end{bmatrix}
+$$
+
+Let $\theta=\lVert\omega\rVert$. Rodrigues' formula is:
+
+$$
+R=I+\frac{\sin\theta}{\theta}[\omega]_\times+
+\frac{1-\cos\theta}{\theta^2}[\omega]_\times^2
+$$
+
+The translation uses the SO(3) left Jacobian:
+
+$$
+V(\omega)=I+\frac{1-\cos\theta}{\theta^2}[\omega]_\times+
+\frac{\theta-\sin\theta}{\theta^3}[\omega]_\times^2
+$$
+
+The matrix $V$ is the coupling that is easy to miss. When $\omega=0$, $V=I$ and $t=\rho$. With rotation, the finite translation is $t=V(\omega)\rho$. Rotation and translation are therefore not six unrelated scalar slots.
+
+Near $\theta=0$, the direct fractions lose numerical accuracy through cancellation. Use the series:
+
+$$
+R\approx I+[\omega]_\times+\tfrac12[\omega]_\times^2,
+\qquad
+V\approx I+\tfrac12[\omega]_\times+\tfrac16[\omega]_\times^2
+$$
+
+The logarithm reverses the construction. First recover $\omega=\operatorname{Log}(R)$, then recover $\rho$ from:
+
+$$
+\rho=V(\omega)^{-1}t
+$$
+
+For ordinary non-singular angles:
+
+$$
+V^{-1}=I-\tfrac12[\omega]_\times+
+\left(\frac1{\theta^2}-\frac{1+\cos\theta}{2\theta\sin\theta}\right)
+[\omega]_\times^2
+$$
+
+Near zero:
+
+$$
+V^{-1}\approx I-\tfrac12[\omega]_\times+\tfrac1{12}[\omega]_\times^2
+$$
+
+Now the earlier pose Jacobian has a precise update convention. A left update is:
+
+$$T_{\text{new}}=\exp(\widehat{\delta\xi})T$$
+
+A right update is:
+
+$$T_{\text{new}}=T\exp(\widehat{\delta\xi})$$
+
+These are not interchangeable. They express the increment in different frames, so the Jacobians differ. Any paper or implementation that says only "we optimize six pose parameters" is incomplete until it states component ordering, units, frame convention, and left-versus-right composition.
+
+A simple hand trace makes the coupling visible. Let $\omega=(0,0,0.6)$ radians and $\rho=(1,0,0)$ length unit. The resulting translation is $V(\omega)\rho$, not simply $(1,0,0)$. The finite motion means "advance while rotating," so the displacement follows the geometry of the rigid-motion group.
+
+This is why bundle adjustment, visual odometry, XR tracking, camera calibration, robotics, and inverse graphics commonly update a pose through a local Lie-algebra increment instead of adding values directly to a 4 by 4 matrix.
+
+The executable witness implements Rodrigues' formula, an SO(3) logarithm for ordinary non-pi cases, V, inverse(V), and SE(3) round trips. Its code comments identify the small-angle series and the deliberate near-pi rejection. That rejection is a scope boundary: a production implementation needs a branch-aware axis recovery near pi, zero/tiny/ordinary/near-pi tests, inverse/composition checks, and analytic Jacobians compared against finite differences.
+
+
+~~~cpp
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <iostream>
+#include <numbers>
+#include <stdexcept>
+
+struct Vec3 {
+    // Rotation vectors use radians; rho and t use the same length unit.
+    double x{}, y{}, z{};
+};
+
+Vec3 operator+(Vec3 a, Vec3 b) { return {a.x+b.x, a.y+b.y, a.z+b.z}; }
+Vec3 operator-(Vec3 a, Vec3 b) { return {a.x-b.x, a.y-b.y, a.z-b.z}; }
+Vec3 operator*(double s, Vec3 v) { return {s*v.x, s*v.y, s*v.z}; }
+double dot(Vec3 a, Vec3 b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
+double norm(Vec3 v) { return std::sqrt(dot(v,v)); }
+
+struct Mat3 {
+    // Row-major storage; multiplication consistently treats vectors as columns.
+    std::array<std::array<double,3>,3> a{};
+};
+
+Mat3 identity() {
+    // Zero initialization supplies off-diagonal zeros; set the identity diagonal.
+    Mat3 M{};
+    for (int i=0;i<3;++i) M.a[i][i]=1.0;
+    return M;
+}
+Mat3 operator+(Mat3 A, Mat3 B) {
+    Mat3 C{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) C.a[r][c]=A.a[r][c]+B.a[r][c];
+    return C;
+}
+Mat3 operator-(Mat3 A, Mat3 B) {
+    Mat3 C{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) C.a[r][c]=A.a[r][c]-B.a[r][c];
+    return C;
+}
+Mat3 operator*(double s, Mat3 A) {
+    for(auto& row:A.a) for(double& v:row) v*=s;
+    return A;
+}
+Mat3 operator*(Mat3 A, Mat3 B) {
+    // Standard row-by-column composition; k sums the shared dimension.
+    Mat3 C{};
+    for(int r=0;r<3;++r)
+        for(int c=0;c<3;++c)
+            for(int k=0;k<3;++k)
+                C.a[r][c]+=A.a[r][k]*B.a[k][c];
+    return C;
+}
+Vec3 operator*(Mat3 A, Vec3 v) {
+    return {
+        A.a[0][0]*v.x + A.a[0][1]*v.y + A.a[0][2]*v.z,
+        A.a[1][0]*v.x + A.a[1][1]*v.y + A.a[1][2]*v.z,
+        A.a[2][0]*v.x + A.a[2][1]*v.y + A.a[2][2]*v.z
+    };
+}
+Mat3 transpose(Mat3 A) {
+    Mat3 T{};
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c) T.a[r][c]=A.a[c][r];
+    return T;
+}
+double trace(Mat3 A) { return A.a[0][0]+A.a[1][1]+A.a[2][2]; }
+
+Mat3 hat(Vec3 w) {
+    // hat(w) is skew-symmetric and maps v to the cross product w cross v.
+    Mat3 W{};
+    W.a[0][1] = -w.z;
+    W.a[0][2] =  w.y;
+    W.a[1][0] =  w.z;
+    W.a[1][2] = -w.x;
+    W.a[2][0] = -w.y;
+    W.a[2][1] =  w.x;
+    return W;
+}
+Vec3 vee(Mat3 W) {
+    // Read the three independent skew entries, inverse to hat() on skew matrices.
+    return {W.a[2][1], W.a[0][2], W.a[1][0]};
+}
+
+Mat3 so3_exp(Vec3 w) {
+    // Rodrigues' formula evaluates exp(hat(w)); theta is measured in radians.
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) {
+        // The direct fractions cancel near zero; use their limiting series.
+        return identity() + W + 0.5*W2;
+    }
+    const double A=std::sin(theta)/theta;
+    const double B=(1.0-std::cos(theta))/(theta*theta);
+    return identity() + A*W + B*W2;
+}
+
+Vec3 so3_log(Mat3 R) {
+    // Precondition: R is a valid proper rotation. This compact witness does
+    // not project or repair malformed matrices before applying the log.
+    // Trace yields cos(theta); clamp roundoff into acos's valid domain [-1,1].
+    const double cos_theta=std::clamp((trace(R)-1.0)*0.5,-1.0,1.0);
+    const double theta=std::acos(cos_theta);
+    if(theta < 1e-8) {
+        // The antisymmetric part is 2*hat(w) to first order near identity.
+        return vee(0.5*(R-transpose(R)));
+    }
+    // The principal logarithm has a delicate axis branch near pi; reject that
+    // region rather than divide by a nearly zero sin(theta) and fake support.
+    if (std::abs(std::numbers::pi-theta) <= 1e-5)
+        throw std::domain_error("compact SO(3) log witness does not support theta near pi");
+    return vee((theta/(2.0*std::sin(theta)))*(R-transpose(R)));
+}
+
+Mat3 left_jacobian_so3(Vec3 w) {
+    // V maps tangent translation rho to the finite transform translation t.
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) {
+        // Taylor limit avoids subtracting nearly equal trigonometric values.
+        return identity() + 0.5*W + (1.0/6.0)*W2;
+    }
+    const double t2=theta*theta, t3=t2*theta;
+    return identity()
+         + ((1.0-std::cos(theta))/t2)*W
+         + ((theta-std::sin(theta))/t3)*W2;
+}
+
+Mat3 left_jacobian_so3_inverse(Vec3 w) {
+    // Invert V to recover rho after the logarithm has recovered omega.
+    const double theta=norm(w);
+    const Mat3 W=hat(w);
+    const Mat3 W2=W*W;
+    if(theta < 1e-8) {
+        // Use the inverse series because the closed-form coefficient is fragile.
+        return identity() - 0.5*W + (1.0/12.0)*W2;
+    }
+    const double s=std::sin(theta), c=std::cos(theta);
+    const double coeff=1.0/(theta*theta) - (1.0+c)/(2.0*theta*s);
+    return identity() - 0.5*W + coeff*W2;
+}
+
+struct SE3 {
+    // This transform maps a point p to R*p + t.
+    Mat3 R;
+    Vec3 t;
+};
+
+SE3 se3_exp(Vec3 omega, Vec3 rho) {
+    // The group exponential couples translation to rotation through V(omega).
+    const Mat3 R=so3_exp(omega);
+    const Mat3 V=left_jacobian_so3(omega);
+    return {R, V*rho};
+}
+
+std::pair<Vec3,Vec3> se3_log(SE3 T) {
+    // Assume T contains a valid SE(3) rotation. Rotation is recovered first
+    // because its Jacobian determines translation rho; near-pi input throws.
+    const Vec3 omega=so3_log(T.R);
+    const Mat3 Vinv=left_jacobian_so3_inverse(omega);
+    return {omega, Vinv*T.t};
+}
+
+bool near(double a,double b,double eps=1e-9){ return std::abs(a-b)<=eps; }
+bool near(Vec3 a,Vec3 b,double eps=1e-9){
+    return near(a.x,b.x,eps)&&near(a.y,b.y,eps)&&near(a.z,b.z,eps);
+}
+bool near(Mat3 A,Mat3 B,double eps=1e-9){
+    for(int r=0;r<3;++r) for(int c=0;c<3;++c)
+        if(!near(A.a[r][c],B.a[r][c],eps)) return false;
+    return true;
+}
+
+void require(bool condition, const char* message) {
+    // Unlike assert, these checks remain active in optimized NDEBUG builds.
+    if (!condition) throw std::runtime_error(message);
+}
+
+int main() {
+    {
+        // Ordinary-angle round trip checks both the recovered twist and SO(3) shape.
+        const Vec3 w{0.2,-0.3,0.1};
+        const Mat3 R=so3_exp(w);
+        require(near(transpose(R)*R, identity(), 1e-10), "R must remain orthogonal");
+        require(near(so3_log(R), w, 1e-10), "ordinary SO(3) exp/log round trip");
+    }
+    {
+        // Select the small-angle Taylor branch explicitly.
+        const Vec3 w{1e-10,-2e-10,3e-10};
+        const Mat3 R=so3_exp(w);
+        require(near(so3_log(R), w, 1e-9), "small-angle SO(3) exp/log round trip");
+    }
+    {
+        // Both angular and translational tangent coordinates round-trip.
+        const Vec3 omega{0.25,-0.15,0.05};
+        const Vec3 rho{1.2,-0.4,0.7};
+        const SE3 T=se3_exp(omega,rho);
+        const auto [omega2,rho2]=se3_log(T);
+        require(near(omega2,omega,1e-10), "SE(3) rotational coordinate round trip");
+        require(near(rho2,rho,1e-10), "SE(3) translational coordinate round trip");
+    }
+    {
+        // A nonzero omega makes t differ from rho, exposing the coupling.
+        // Translation and rotation are coupled by V(omega): t is not generally rho.
+        const Vec3 omega{0.0,0.0,0.6};
+        const Vec3 rho{1.0,0.0,0.0};
+        const SE3 T=se3_exp(omega,rho);
+        require(!near(T.t,rho,1e-6), "finite rigid motion must expose V(omega) translation coupling");
+        const auto [w2,r2]=se3_log(T);
+        require(near(w2,omega,1e-10), "coupled example rotational round trip");
+        require(near(r2,rho,1e-10), "coupled example translational round trip");
+    }
+    {
+        // The compact logarithm promises to reject its unsupported near-pi
+        // branch before its sin(theta) denominator becomes numerically unsafe.
+        const Vec3 near_pi{std::numbers::pi - 5e-6, 0.0, 0.0};
+        bool rejected = false;
+        try {
+            (void)so3_log(so3_exp(near_pi));
+        } catch (const std::domain_error&) {
+            rejected = true;
+        }
+        require(rejected, "near-pi logarithm must take its documented rejection branch");
+    }
+    std::cout << "se3 exp/log: 5 suites PASS\n";
+}
+~~~
+
 ## Reliable optimization in practice
 ### Building a numerically tested gradient-based optimizer
 
@@ -65991,19 +66456,19 @@ The code evaluates these derivatives for every observation, forming gradient and
 For each residual $r_i$ with Jacobian row:
 
 $$
-J_i= \begin{bmatrix} j\_{ix}&j\_{iz} \end{bmatrix},
+J_i= \begin{bmatrix} j_{ix}&j_{iz} \end{bmatrix},
 $$
 
 the gradient contribution is:
 
 $$
-J_i^Tr_i= \begin{bmatrix} j\_{ix}r_i\\ j\_{iz}r_i \end{bmatrix}.
+J_i^Tr_i= \begin{bmatrix} j_{ix}r_i\\ j_{iz}r_i \end{bmatrix}.
 $$
 
 The normal-matrix contribution is:
 
 $$
-J_i^TJ_i= \begin{bmatrix} j\_{ix}^2&j\_{ix}j\_{iz}\\ j\_{ix}j\_{iz}&j\_{iz}^2 \end{bmatrix}.
+J_i^TJ_i= \begin{bmatrix} j_{ix}^2&j_{ix}j_{iz}\\ j_{ix}j_{iz}&j_{iz}^2 \end{bmatrix}.
 $$
 
 Accumulate these over all observations:
@@ -66013,13 +66478,13 @@ $$
 $$
 
 $$
-H\_{\mathrm{GN}}=\sum_iJ_i^TJ_i.
+H_{\mathrm{GN}}=\sum_iJ_i^TJ_i.
 $$
 
 Then solve:
 
 $$
-(H\_{\mathrm{GN}}+\lambda D)\Delta\mathbf x=-\mathbf g.
+(H_{\mathrm{GN}}+\lambda D)\Delta\mathbf x=-\mathbf g.
 $$
 
 The implementation uses a diagonal scaling matrix $D$ and a small positive-definite linear solve tailored to the two-parameter teaching example.
@@ -66442,38 +66907,38 @@ Suppose the unknowns are divided into camera variables $\mathbf c$ and 3D point 
 A linearized normal system may have block structure:
 
 $$
-\begin{bmatrix} H\_{cc}&H\_{cp}\\ H\_{pc}&H\_{pp} \end{bmatrix} \begin{bmatrix} \Delta\mathbf c\\ \Delta\mathbf p \end{bmatrix} = - \begin{bmatrix} \mathbf g_c\\ \mathbf g_p \end{bmatrix}.
+\begin{bmatrix} H_{cc}&H_{cp}\\ H_{pc}&H_{pp} \end{bmatrix} \begin{bmatrix} \Delta\mathbf c\\ \Delta\mathbf p \end{bmatrix} = - \begin{bmatrix} \mathbf g_c\\ \mathbf g_p \end{bmatrix}.
 $$
 
-If the point block $H\_{pp}$ can be solved efficiently, eliminate $\Delta\mathbf p$.
+If the point block $H_{pp}$ can be solved efficiently, eliminate $\Delta\mathbf p$.
 
 From the second equation:
 
 $$
-H\_{pc}\Delta\mathbf c+ H\_{pp}\Delta\mathbf p=-\mathbf g_p.
+H_{pc}\Delta\mathbf c+ H_{pp}\Delta\mathbf p=-\mathbf g_p.
 $$
 
 Thus:
 
 $$
-\Delta\mathbf p= -H\_{pp}^{-1} (\mathbf g_p+H\_{pc}\Delta\mathbf c).
+\Delta\mathbf p= -H_{pp}^{-1} (\mathbf g_p+H_{pc}\Delta\mathbf c).
 $$
 
 Substitute into the first equation:
 
 $$
-\boxed{ \left( H\_{cc}-H\_{cp}H\_{pp}^{-1}H\_{pc} \right) \Delta\mathbf c = -\mathbf g_c+ H\_{cp}H\_{pp}^{-1}\mathbf g_p }.
+\boxed{ \left( H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} \right) \Delta\mathbf c = -\mathbf g_c+ H_{cp}H_{pp}^{-1}\mathbf g_p }.
 $$
 
 The matrix:
 
 $$
-\boxed{ S=H\_{cc}-H\_{cp}H\_{pp}^{-1}H\_{pc} }
+\boxed{ S=H_{cc}-H_{cp}H_{pp}^{-1}H_{pc} }
 $$
 
 is the Schur complement.
 
-The implementation should use solves involving $H\_{pp}$, not necessarily explicit inverse matrices.
+The implementation should use solves involving $H_{pp}$, not necessarily explicit inverse matrices.
 
 This block reduction is fundamental in large-scale bundle adjustment and similar problems where some variable blocks can be eliminated efficiently.
 
@@ -69840,10 +70305,10 @@ For a `double`, this conversion can preserve those 32 random bits exactly becaus
 A higher-resolution approach can use 53 random bits:
 
 $$
- \boxed{ U=\frac{R\_{53}}{2^{53}} } 
+ \boxed{ U=\frac{R_{53}}{2^{53}} } 
 $$
 
-where $R\_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.
+where $R_{53}$ is a uniformly distributed integer from zero through $2^{53}-1$.
 
 This provides samples in the half-open interval $[0,1)$ on a grid compatible with binary64 precision.
 
@@ -69950,7 +70415,7 @@ A pseudorandom-number generator, or PRNG, is a deterministic algorithm designed 
 At its simplest, it has an internal state $s_n$ and a state transition:
 
 $$
- \boxed{s\_{n+1}=T(s_n)}. 
+ \boxed{s_{n+1}=T(s_n)}. 
 $$
 
 An output function maps the state to a generated value:
@@ -70076,7 +70541,7 @@ One strategy assigns each pixel a stream derived from its coordinates and a glob
 For example:
 
 $$
- s\_{\mathrm{pixel}}= H(\text{seed},x,y), 
+ s_{\mathrm{pixel}}= H(\text{seed},x,y), 
 $$
 
 where $H$ is a mixing function.
@@ -70094,7 +70559,7 @@ That leads to stateless generation.
 A linear congruential generator, or LCG, uses:
 
 $$
- \boxed{ x\_{n+1}=(ax_n+c)\bmod m }. 
+ \boxed{ x_{n+1}=(ax_n+c)\bmod m }. 
 $$
 
 Here $a$ is the multiplier, $c$ is the increment, and $m$ is the modulus.
@@ -70108,7 +70573,7 @@ This is among the simplest possible PRNG designs.
 Consider the toy generator:
 
 $$
- x\_{n+1}=(5x_n+1)\bmod16. 
+ x_{n+1}=(5x_n+1)\bmod16. 
 $$
 
 Let:
@@ -70188,7 +70653,7 @@ Look at the least significant bit.
 When $a$ and $c$ are odd:
 
 $$
- x\_{n+1}\equiv x_n+1\pmod2. 
+ x_{n+1}\equiv x_n+1\pmod2. 
 $$
 
 Therefore the lowest bit alternates between zero and one.
@@ -70312,7 +70777,7 @@ The central design idea is to combine a simple state transition, often based on 
 Conceptually:
 
 $$
- \boxed{ s\_{n+1}=as_n+c\pmod{2^w} } 
+ \boxed{ s_{n+1}=as_n+c\pmod{2^w} } 
 $$
 
 followed by:
@@ -70338,7 +70803,7 @@ A representative PCG32-style generator uses 64-bit internal state and emits 32-b
 Its state transition may use:
 
 $$
- s\_{n+1} = 6364136223846793005\\,s_n+c \pmod{2^{64}}, 
+ s_{n+1} = 6364136223846793005\\,s_n+c \pmod{2^{64}}, 
 $$
 
 with an odd increment $c$.
@@ -70394,7 +70859,7 @@ A good experiment should record the master seed, generator algorithm and version
 A practical system can derive stream identifiers from a master seed:
 
 $$
- s_i=H(s\_{\mathrm{master}},i). 
+ s_i=H(s_{\mathrm{master}},i). 
 $$
 
 Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing function.
@@ -70402,7 +70867,7 @@ Here $i$ identifies a worker or logical stream, and $H$ is a suitable mixing fun
 If the application also uses sample indices and dimensions:
 
 $$
- r=F(s\_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}), 
+ r=F(s_{\mathrm{master}},\text{pixel},\text{sample},\text{dimension}), 
 $$
 
 the generated value can be independent of execution scheduling.
@@ -71078,13 +71543,13 @@ $$
 Recognize the expectation:
 
 $$
- \boxed{ I= \mathbb E\_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
+ \boxed{ I= \mathbb E_{X\sim p} \left[ \frac{f(X)}{p(X)} \right] }. 
 $$
 
 Given $N$ independent samples $X_1,\ldots,X_N\sim p$, the Monte Carlo estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum\_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^{N} \frac{f(X_i)}{p(X_i)} }. 
 $$
 
 The division by the actual sampling PDF is essential.
@@ -71348,7 +71813,7 @@ $$
 If $g$ is differentiable, invertible, and has a nonzero Jacobian determinant, the transformed PDF is:
 
 $$
- \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J\_{g^{-1}}(y)\right| }. 
+ \boxed{ p_Y(y) = p_X(g^{-1}(y)) \left|\det J_{g^{-1}}(y)\right| }. 
 $$
 
 Equivalently, at corresponding points $y=g(x)$:
@@ -71837,7 +72302,7 @@ $$
 The sample-mean estimator is:
 
 $$
- \boxed{ \widehat I_N= \frac1N\sum\_{i=1}^NY_i }. 
+ \boxed{ \widehat I_N= \frac1N\sum_{i=1}^NY_i }. 
 $$
 
 If the expectation exists, this is a natural estimator.
@@ -72079,7 +72544,7 @@ Suppose $X_i$ have mean $\mu$.
 Define:
 
 $$
- \widehat\mu= \frac1{N+1}\sum\_{i=1}^NX_i. 
+ \widehat\mu= \frac1{N+1}\sum_{i=1}^NX_i. 
 $$
 
 Then:
@@ -72105,19 +72570,19 @@ Large contributions occasionally occur.
 To reduce visible fireflies, an implementation may clamp:
 
 $$
- Y\_{\mathrm{clamped}}=\min(Y,T). 
+ Y_{\mathrm{clamped}}=\min(Y,T). 
 $$
 
 Since:
 
 $$
- Y\_{\mathrm{clamped}}\le Y 
+ Y_{\mathrm{clamped}}\le Y 
 $$
 
 for every sample:
 
 $$
- \mathbb E[Y\_{\mathrm{clamped}}] \le \mathbb E[Y]. 
+ \mathbb E[Y_{\mathrm{clamped}}] \le \mathbb E[Y]. 
 $$
 
 Unless no contributions exceed $T$, the inequality is strict under suitable integrability conditions.
@@ -72261,7 +72726,7 @@ $$
 the general variance formula is:
 
 $$
- \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum\_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }. 
+ \boxed{ \operatorname{Var}(\bar Y) = \frac1{N^2} \left[ \sum_i\operatorname{Var}(Y_i) + 2\sum_{i\<j}\operatorname{Cov}(Y_i,Y_j) \right] }. 
 $$
 
 The familiar:
@@ -72287,7 +72752,7 @@ The law of large numbers explains why sample averages can approach expected valu
 For independent identically distributed random variables with finite mean $\mu$, the strong law states under its standard assumptions:
 
 $$
- \boxed{ \bar X_N= \frac1N\sum\_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }. 
+ \boxed{ \bar X_N= \frac1N\sum_{i=1}^NX_i \longrightarrow\mu \quad\text{almost surely} }. 
 $$
 
 Almost-sure convergence means that, with probability one, the infinite sequence of sample averages converges to the expectation.
@@ -72473,7 +72938,7 @@ For a path tracer, rare high-energy contributions can produce strongly skewed or
 For a stationary sequence with variance $\sigma^2$ and lag-$k$ autocorrelation $\rho_k$, the variance of the sample mean is:
 
 $$
- \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum\_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }. 
+ \boxed{ \operatorname{Var}(\bar X_N) = \frac{\sigma^2}{N} \left[ 1+ 2\sum_{k=1}^{N-1} \left(1-\frac{k}{N}\right)\rho_k \right] }. 
 $$
 
 When the autocorrelations vanish, we recover $\sigma^2/N$.
@@ -72483,7 +72948,7 @@ For persistent positive correlations, the bracketed factor is greater than one.
 A heuristic effective sample size is:
 
 $$
- N\_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum\_{k\ge1}\rho_k } 
+ N_{\mathrm{eff}} \approx \frac{N}{ 1+2\sum_{k\ge1}\rho_k } 
 $$
 
 when the relevant series converges and the approximation is appropriate.
@@ -72918,7 +73383,7 @@ $$
 Their arithmetic sample mean is:
 
 $$
- \boxed{ \bar x=\frac1N\sum\_{i=1}^{N}x_i }. 
+ \boxed{ \bar x=\frac1N\sum_{i=1}^{N}x_i }. 
 $$
 
 This is a descriptive statistic of the observed data.
@@ -72974,7 +73439,7 @@ There is an important connection to Phase 9.
 Consider choosing one number $m$ to represent all observations, minimizing squared error:
 
 $$
- E(m)= \sum\_{i=1}^{N}(x_i-m)^2. 
+ E(m)= \sum_{i=1}^{N}(x_i-m)^2. 
 $$
 
 Differentiate:
@@ -73020,13 +73485,13 @@ Sample variance measures the spread of observed values around their sample mean.
 One natural descriptive version is:
 
 $$
- \boxed{ v_N= \frac1N \sum\_{i=1}^{N}(x_i-\bar x)^2 }. 
+ \boxed{ v_N= \frac1N \sum_{i=1}^{N}(x_i-\bar x)^2 }. 
 $$
 
 If our goal is to estimate the variance of an underlying population from IID samples, the conventional unbiased estimator is:
 
 $$
- \boxed{ s^2= \frac1{N-1} \sum\_{i=1}^{N}(x_i-\bar x)^2 } 
+ \boxed{ s^2= \frac1{N-1} \sum_{i=1}^{N}(x_i-\bar x)^2 } 
 $$
 
 for $N\ge2$.
@@ -73220,39 +73685,39 @@ We may not want to store every sample just to calculate the mean.
 Let:
 
 $$
- \mu_n= \frac1n\sum\_{i=1}^{n}x_i 
+ \mu_n= \frac1n\sum_{i=1}^{n}x_i 
 $$
 
 be the mean after $n$ observations.
 
-When a new sample $x\_{n+1}$ arrives:
+When a new sample $x_{n+1}$ arrives:
 
 $$
- \mu\_{n+1} = \frac{ \sum\_{i=1}^{n}x_i+x\_{n+1} }{ n+1 }. 
+ \mu_{n+1} = \frac{ \sum_{i=1}^{n}x_i+x_{n+1} }{ n+1 }. 
 $$
 
 Since:
 
 $$
- \sum\_{i=1}^{n}x_i=n\mu_n, 
+ \sum_{i=1}^{n}x_i=n\mu_n, 
 $$
 
 we have:
 
 $$
- \mu\_{n+1} = \frac{n\mu_n+x\_{n+1}}{n+1}. 
+ \mu_{n+1} = \frac{n\mu_n+x_{n+1}}{n+1}. 
 $$
 
 Rearrange:
 
 $$
- \mu\_{n+1} = \mu_n+ \frac{x\_{n+1}-\mu_n}{n+1}. 
+ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1}. 
 $$
 
 Thus:
 
 $$
- \boxed{ \mu\_{n+1} = \mu_n+ \frac{x\_{n+1}-\mu_n}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+ \frac{x_{n+1}-\mu_n}{n+1} }. 
 $$
 
 This is the online mean update.
@@ -73345,13 +73810,13 @@ $$
 $$
 
 $$
- M\_{2,n}= \sum\_{i=1}^{n}(x_i-\mu_n)^2. 
+ M_{2,n}= \sum_{i=1}^{n}(x_i-\mu_n)^2. 
 $$
 
 The sample variance will later be:
 
 $$
- s^2=\frac{M\_{2,n}}{n-1}. 
+ s^2=\frac{M_{2,n}}{n-1}. 
 $$
 
 #### 1 Derive the update
@@ -73367,19 +73832,19 @@ $$
 The new mean is:
 
 $$
- \boxed{ \mu\_{n+1} = \mu_n+\frac{\delta}{n+1} }. 
+ \boxed{ \mu_{n+1} = \mu_n+\frac{\delta}{n+1} }. 
 $$
 
 Define the difference from the new mean:
 
 $$
- \boxed{ \delta_2=x-\mu\_{n+1} }. 
+ \boxed{ \delta_2=x-\mu_{n+1} }. 
 $$
 
 Welford's scatter update is:
 
 $$
- \boxed{ M\_{2,n+1} = M\_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }. 
 $$
 
 Let's derive why.
@@ -73389,25 +73854,25 @@ Let's derive why.
 By definition:
 
 $$
- M\_{2,n+1} = \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 + (x-\mu\_{n+1})^2. 
+ M_{2,n+1} = \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 + (x-\mu_{n+1})^2. 
 $$
 
 For old samples:
 
 $$
- x_i-\mu\_{n+1} = (x_i-\mu_n)-(\mu\_{n+1}-\mu_n). 
+ x_i-\mu_{n+1} = (x_i-\mu_n)-(\mu_{n+1}-\mu_n). 
 $$
 
 Define:
 
 $$
- d=\mu\_{n+1}-\mu_n=\frac{\delta}{n+1}. 
+ d=\mu_{n+1}-\mu_n=\frac{\delta}{n+1}. 
 $$
 
 Then:
 
 $$
- \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = \sum_i[(x_i-\mu_n)-d]^2. 
 $$
 
 Expand:
@@ -73425,25 +73890,25 @@ $$
 Thus:
 
 $$
- \sum\_{i=1}^{n}(x_i-\mu\_{n+1})^2 = M\_{2,n}+nd^2. 
+ \sum_{i=1}^{n}(x_i-\mu_{n+1})^2 = M_{2,n}+nd^2. 
 $$
 
 The new sample's deviation from the new mean is:
 
 $$
- x-\mu\_{n+1} = x-\mu_n-\frac{\delta}{n+1}. 
+ x-\mu_{n+1} = x-\mu_n-\frac{\delta}{n+1}. 
 $$
 
 Because $\delta=x-\mu_n$:
 
 $$
- x-\mu\_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta. 
+ x-\mu_{n+1} = \delta\left(1-\frac1{n+1}\right) = \frac{n}{n+1}\delta. 
 $$
 
 Therefore:
 
 $$
- \begin{aligned} M\_{2,n+1} &= M\_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M\_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M\_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned} 
+ \begin{aligned} M_{2,n+1} &= M_{2,n} +n\frac{\delta^2}{(n+1)^2} +\frac{n^2\delta^2}{(n+1)^2}\\ &= M_{2,n} +\frac{n(n+1)\delta^2}{(n+1)^2}\\ &= M_{2,n}+\frac{n}{n+1}\delta^2. \end{aligned} 
 $$
 
 But:
@@ -73455,7 +73920,7 @@ $$
 Therefore:
 
 $$
- \boxed{ M\_{2,n+1} = M\_{2,n}+\delta\delta_2 }. 
+ \boxed{ M_{2,n+1} = M_{2,n}+\delta\delta_2 }. 
 $$
 
 This is the Welford recurrence.
@@ -73567,13 +74032,13 @@ Suppose worker A processes $n_A$ samples and worker B processes $n_B$.
 Their summaries are:
 
 $$
- (n_A,\mu_A,M\_{2,A}) 
+ (n_A,\mu_A,M_{2,A}) 
 $$
 
 and:
 
 $$
- (n_B,\mu_B,M\_{2,B}). 
+ (n_B,\mu_B,M_{2,B}). 
 $$
 
 We want to combine them without replaying individual samples.
@@ -73597,7 +74062,7 @@ $$
 The merged scatter is:
 
 $$
- \boxed{ M_2= M\_{2,A}+M\_{2,B} + \delta^2\frac{n_An_B}{n} }. 
+ \boxed{ M_2= M_{2,A}+M_{2,B} + \delta^2\frac{n_An_B}{n} }. 
 $$
 
 The additional term accounts for the difference between the workers' mean values.
@@ -73729,7 +74194,7 @@ for the 95th percentile.
 For a finite sample, sort the observations:
 
 $$
- x\_{(1)}\le\cdots\le x\_{(N)}. 
+ x_{(1)}\le\cdots\le x_{(N)}. 
 $$
 
 Different software libraries use different interpolation conventions for sample quantiles.
@@ -73749,7 +74214,7 @@ $$
 Using zero-based sorted indices:
 
 $$
- \boxed{ \hat Q(p)=(1-t)x\_{(i)}+t x\_{(i+1)} } 
+ \boxed{ \hat Q(p)=(1-t)x_{(i)}+t x_{(i+1)} } 
 $$
 
 with appropriate endpoint handling.
@@ -73945,7 +74410,7 @@ The outlier at 100 has little influence on this result.
 For an approximately Gaussian distribution, MAD can be scaled to estimate standard deviation:
 
 $$
- \boxed{ \hat\sigma\_{\mathrm{MAD}} \approx1.4826\\,\operatorname{MAD} }. 
+ \boxed{ \hat\sigma_{\mathrm{MAD}} \approx1.4826\\,\operatorname{MAD} }. 
 $$
 
 The factor comes from the standard normal distribution's median absolute deviation:
@@ -74102,7 +74567,7 @@ has a standard-normal distribution exactly under normal sampling, or approximate
 For a two-sided 95% interval, the standard-normal critical value is approximately:
 
 $$
- z\_{0.975}=1.959964. 
+ z_{0.975}=1.959964. 
 $$
 
 Thus:
@@ -74136,7 +74601,7 @@ degrees of freedom.
 The corresponding interval is:
 
 $$
- \boxed{ \bar x \pm t\_{0.975,N-1}\frac{s}{\sqrt N} }. 
+ \boxed{ \bar x \pm t_{0.975,N-1}\frac{s}{\sqrt N} }. 
 $$
 
 For large $N$, the t critical value approaches the normal critical value.
@@ -74192,7 +74657,7 @@ $$
 But with only six observations, and assuming IID normal sampling, the appropriate exact t critical value for five degrees of freedom is about:
 
 $$
- t\_{0.975,5}\approx2.571. 
+ t_{0.975,5}\approx2.571. 
 $$
 
 Therefore the t interval is approximately:
@@ -74332,7 +74797,7 @@ Suppose both algorithms are evaluated on the same scenes and corresponding seeds
 Define a difference for each trial:
 
 $$
- D_i=E\_{A,i}-E\_{B,i}. 
+ D_i=E_{A,i}-E_{B,i}. 
 $$
 
 Then analyze:
@@ -74413,6 +74878,255 @@ Report effect sizes, uncertainty intervals, workload characteristics, and comput
 
 For an engineering research claim, those quantities are often more informative than a p-value alone.
 
+<!-- Bible-final-pass: research inference -->
+#### A research claim needs more than a p-value
+
+The paired t-test above is useful, but a paper-quality result needs four separate questions:
+
+1. How large is the effect?
+2. How uncertain is that estimate?
+3. How surprising would the data be under a stated null model?
+4. Was the experiment powerful enough to detect an effect that would actually matter?
+
+For paired measurements, keep the per-unit difference in the original unit:
+
+~~~text
+D_i = E_A,i - E_B,i
+~~~
+
+The mean difference $\overline{D}$ is the effect in the original engineering unit. Do not throw that away. A standardized paired effect size is often:
+
+~~~text
+d_z = mean(D) / standard_deviation(D)
+~~~
+
+The standardized value helps compare scales, but it does not replace the original unit. "0.8 standard deviations" and "0.18 ms" answer different questions.
+
+When a normal model for paired differences is doubtful, a paired sign-flip/randomization test can be useful if its design assumption is justified. Under the sharp paired null, keep each observed magnitude but flip its sign. Recompute the statistic for all sign choices, or for a large random sample of them, and measure how often the null statistic is at least as extreme as the observed one.
+
+This is not assumption-free. Its validity comes from the sign-exchangeability or randomization argument. If the experimental design does not justify that exchangeability, the resulting p-value does not have the claimed interpretation. The code comments keep this assumption attached to the exact enumeration rather than presenting it as a generic test.
+
+A paired bootstrap answers a different question. Resample the pairs, or equivalently their paired differences, together with replacement. Recompute the statistic on each bootstrap sample. If the design was paired, do not independently resample algorithm A and algorithm B; that destroys the covariance that made pairing useful.
+
+Power asks whether the experiment could detect a meaningful effect. Formally:
+
+~~~text
+power = P(reject H0 | a specified alternative is true)
+~~~
+
+Power depends on the effect regarded as important, the variability, the test, the significance level, the design, and the sample size. A study that has only 20 percent power to detect the improvement it cares about cannot conclude "there is no difference" merely because p is above 0.05.
+
+For complex graphics/XR experiments, simulation-based power analysis is often clearer than forcing a closed-form formula. Specify a realistic effect and noise model, generate many complete synthetic studies, rerun the entire analysis pipeline, and count how often the decision rule detects the effect.
+
+Multiple comparisons add another contract. Holm's step-down procedure controls the familywise error rate without using the single blunt Bonferroni threshold for every hypothesis. False-discovery-rate procedures answer a different question. The correction strategy should be chosen before inspecting which comparison looks favorable whenever the analysis is confirmatory.
+
+A strong result table therefore reports more than a p-value: effect in the original unit, uncertainty interval, experimental unit and sample count, pairing/blocking structure, exact test or interval construction, multiple-comparison policy, and the compute/time/memory cost needed to obtain the effect.
+
+The executable witness below preserves pairing, computes d_z, performs an exact sign-flip test for a small sample, forms a paired bootstrap percentile interval, and applies Holm adjustment. Code comments retain the exchangeability assumption, the exponential enumeration cap, and the fact that a percentile interval is not guaranteed to have nominal coverage for every small or skewed sample.
+
+
+~~~python
+#!/usr/bin/env python3
+"""Small deterministic inference witness for paired graphics/engine experiments.
+
+It intentionally uses only the Python standard library.  The goal is to make
+the research contracts executable: preserve pairing, report an effect size,
+obtain a randomization p-value without a normality assumption, build a paired
+bootstrap interval, and correct a family of p-values with Holm's procedure.
+"""
+
+from __future__ import annotations
+import itertools
+import math
+import random
+import statistics
+
+
+def paired_differences(a: list[float], b: list[float]) -> list[float]:
+    # Position i must name the same scene/run/block in both conditions; unequal
+    # or empty arrays do not define the requested paired comparison.
+    if len(a) != len(b) or not a:
+        raise ValueError("paired samples must be non-empty and have equal length")
+    if any(not math.isfinite(x) for x in a + b):
+        raise ValueError("paired observations must be finite")
+    differences = [x - y for x, y in zip(a, b)]
+    if any(not math.isfinite(x) for x in differences):
+        raise ValueError("paired differences overflowed the finite range")
+    return differences
+
+
+def finite_differences(d: list[float]) -> list[float]:
+    """Validate and normalize differences without changing their signs or ratios."""
+    if not d or any(not math.isfinite(x) for x in d):
+        raise ValueError("paired differences must be non-empty and finite")
+    scale = max(abs(x) for x in d)
+    return [x / scale for x in d] if scale else [0.0] * len(d)
+
+
+def cohen_dz(d: list[float]) -> float:
+    # Standardize the mean paired change by its sample spread. Constant effects
+    # need an explicit result because division by zero is otherwise undefined.
+    if len(d) < 2:
+        raise ValueError("need at least two paired differences")
+    normalized = finite_differences(d)
+    sd = statistics.stdev(normalized)
+    if sd == 0.0:
+        # Reporting convention for a degenerate denominator: no changes report
+        # zero, while a constant nonzero change flags signed infinity. This is
+        # not a finite effect-size estimate; preserve the improvement's sign.
+        mean = statistics.fmean(normalized)
+        return math.copysign(math.inf, mean) if mean != 0.0 else 0.0
+    return statistics.fmean(normalized) / sd
+
+
+def exact_sign_flip_pvalue(d: list[float]) -> float:
+    """Two-sided exact randomization test under sign-exchangeability.
+
+    Under the sharp paired null, each difference may have either sign with
+    equal probability.  This is exact only when that sign-flip null is a
+    defensible design/model assumption.
+    """
+    normalized = finite_differences(d)
+    n = len(normalized)
+    # Exact enumeration costs 2**n; fail clearly above this teaching cap.
+    if n > 20:
+        raise ValueError("exact enumeration is intentionally capped at n<=20")
+    observed = abs(math.fsum(normalized))
+    # Compare dimensionless signed sums. A few local ULPs cover only addition
+    # roundoff; unlike a fixed epsilon, this tolerance does not depend on the
+    # measurement unit or the magnitude of the original observations.
+    extreme = 0
+    total = 0
+    for signs in itertools.product((-1.0, 1.0), repeat=n):
+        candidate = abs(math.fsum(s * x for s, x in zip(signs, normalized)))
+        tolerance = 4.0 * max(math.ulp(observed), math.ulp(candidate))
+        extreme += candidate >= observed or observed - candidate <= tolerance
+        total += 1
+    return extreme / total
+
+
+def paired_bootstrap_mean_ci(
+    d: list[float], *, confidence: float = 0.95, draws: int = 20_000, seed: int = 7
+) -> tuple[float, float]:
+    if not (0.0 < confidence < 1.0):
+        raise ValueError("confidence must lie in (0,1)")
+    if draws < 100:
+        raise ValueError("use enough bootstrap draws to estimate quantiles")
+    normalized = finite_differences(d)
+    rng = random.Random(seed)
+    n = len(normalized)
+    scale = max(abs(x) for x in d)
+    # Resampling differences is equivalent to resampling intact pairs and
+    # retains the covariance that independent marginal resampling would lose.
+    means = []
+    for _ in range(draws):
+        # One bootstrap draw contains n sampled indices, with replacement.
+        means.append(statistics.fmean(normalized[rng.randrange(n)] for _ in range(n)))
+    means.sort()
+    # Percentile order statistics are an interval construction, not a universal
+    # small-sample coverage guarantee.
+    alpha = 1.0 - confidence
+    lo = means[int((alpha / 2.0) * (draws - 1))]
+    hi = means[int((1.0 - alpha / 2.0) * (draws - 1))]
+    return lo * scale, hi * scale
+
+
+def holm_adjust(pvalues: list[float]) -> list[float]:
+    """Holm step-down adjusted p-values preserving original order."""
+    # Invalid inputs should not turn into plausible-looking adjusted values.
+    if any(not math.isfinite(p) or not 0.0 <= p <= 1.0 for p in pvalues):
+        raise ValueError("p-values must be finite and lie in [0,1]")
+    m = len(pvalues)
+    order = sorted(range(m), key=pvalues.__getitem__)
+    adjusted = [0.0] * m
+    running = 0.0
+    for rank, idx in enumerate(order):
+        # The running maximum enforces monotone step-down adjusted p-values.
+        candidate = (m - rank) * pvalues[idx]
+        running = max(running, candidate)
+        adjusted[idx] = min(1.0, running)
+    return adjusted
+
+
+def expect_value_error(operation, *args) -> None:
+    """Make negative-contract checks survive python -O."""
+    try:
+        operation(*args)
+    except ValueError:
+        return
+    raise RuntimeError(f"{operation.__name__} accepted invalid input")
+
+
+def main() -> None:
+    # Same six scenes, same measurement units, same pairing.
+    baseline = [10.4, 8.8, 12.1, 9.7, 11.5, 10.0]
+    proposed = [9.8, 8.3, 11.2, 9.5, 10.7, 9.2]
+    d = paired_differences(baseline, proposed)
+
+    mean_gain = statistics.mean(d)
+    effect = cohen_dz(d)
+    p = exact_sign_flip_pvalue(d)
+    ci = paired_bootstrap_mean_ci(d)
+
+    require(mean_gain > 0.0, "paired mean should favor proposed method")
+    require(effect > 1.0, "synthetic paired effect should be large")
+    require(0.0 <= p <= 1.0, "randomization p-value lies in [0,1]")
+    require(ci[0] > 0.0, "synthetic paired interval should exclude zero")
+
+    raw = [0.004, 0.018, 0.041, 0.20]
+    adj = holm_adjust(raw)
+    require(all(a >= p0 for a, p0 in zip(adj, raw)), "adjustment cannot lower p-values")
+    require(adj[0] <= adj[1] <= adj[2] <= adj[3], "sorted Holm results are monotone")
+
+    # Scaling an engineering measurement changes its unit, not its exact
+    # sign-flip inference. Normalization plus relative ULP ties preserves p.
+    for unit_scale in (1e-20, 1.0, 1e20):
+        scaled = [value * unit_scale for value in d]
+        require(exact_sign_flip_pvalue(scaled) == p,
+                "sign-flip p-value changed when only the measurement unit changed")
+
+    # Negative contracts demonstrate that invalid pair shapes and p-values
+    # fail loudly rather than yielding a result that looks statistically valid.
+    invalid_calls = (
+        (paired_differences, ([1.0], [])),
+        (paired_differences, ([math.nan], [0.0])),
+        (paired_differences, ([math.inf], [0.0])),
+        (paired_differences, ([1e308], [-1e308])),
+        (cohen_dz, ([1.0, math.nan],)),
+        (cohen_dz, ([1.0, math.inf],)),
+        (exact_sign_flip_pvalue, ([],)),
+        (exact_sign_flip_pvalue, ([math.nan],)),
+        (exact_sign_flip_pvalue, ([math.inf],)),
+        (paired_bootstrap_mean_ci, ([math.nan],)),
+        (paired_bootstrap_mean_ci, ([math.inf],)),
+        (holm_adjust, ([1.1],)),
+    )
+    for operation, args in invalid_calls:
+        expect_value_error(operation, *args)
+
+    # Constant differences have no estimated spread. Check both directions so
+    # an all-negative effect cannot accidentally be reported as improvement.
+    require(cohen_dz([2.0, 2.0]) == math.inf, "positive degenerate effect sign")
+    require(cohen_dz([-2.0, -2.0]) == -math.inf, "negative degenerate effect sign")
+    require(cohen_dz([0.0, 0.0]) == 0.0, "zero-change reporting convention")
+
+    print(f"paired mean improvement: {mean_gain:.6f}")
+    print(f"Cohen dz: {effect:.6f}")
+    print(f"exact sign-flip p-value: {p:.6f}")
+    print(f"95% paired bootstrap percentile CI: [{ci[0]:.6f}, {ci[1]:.6f}]")
+    print("Holm adjusted:", ", ".join(f"{x:.6f}" for x in adj))
+    print("research inference: paired, finite, scale, degenerate, interval and Holm checks PASS")
+
+
+def require(condition: bool, message: str) -> None:
+    # Explicit checks survive python -O, which removes assert statements.
+    if not condition:
+        raise RuntimeError(message)
+
+
+if __name__ == "__main__":
+    main()
+~~~
 
 ### Likelihood turns a forward probability model into an inverse estimation rule
 
@@ -74653,7 +75367,7 @@ $$
 In model evaluation, we often calculate the empirical average squared prediction error:
 
 $$
- \boxed{ \operatorname{MSE}\_{\mathrm{empirical}} = \frac1N\sum\_{i=1}^{N} (\hat y_i-y_i)^2 }. 
+ \boxed{ \operatorname{MSE}_{\mathrm{empirical}} = \frac1N\sum_{i=1}^{N} (\hat y_i-y_i)^2 }. 
 $$
 
 The first is a theoretical performance quantity of a random estimator.
@@ -74799,7 +75513,7 @@ A benchmark must specify the aggregation procedure.
 Mean absolute error, or MAE, is:
 
 $$
- \boxed{ \operatorname{MAE} = \frac1N\sum\_{i=1}^{N} |\hat y_i-y_i| }. 
+ \boxed{ \operatorname{MAE} = \frac1N\sum_{i=1}^{N} |\hat y_i-y_i| }. 
 $$
 
 Instead of squaring errors, it takes their absolute magnitudes.
@@ -74880,13 +75594,13 @@ Relative error attempts to express the error compared with a meaningful referenc
 For an approximation $\hat x$ to a nonzero true value $x$:
 
 $$
- \boxed{ e\_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }. 
+ \boxed{ e_{\mathrm{rel}} = \frac{|\hat x-x|}{|x|} }. 
 $$
 
 The corresponding percentage error is:
 
 $$
- 100e\_{\mathrm{rel}}\\%. 
+ 100e_{\mathrm{rel}}\\%. 
 $$
 
 #### 1 Numerical example: relative error metrics
@@ -74992,10 +75706,10 @@ Despite its name, sMAPE does not eliminate every undesirable property of percent
 A benchmark may report:
 
 $$
- \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s\_{\mathrm{reference}}} 
+ \operatorname{NRMSE} = \frac{\operatorname{RMSE}}{s_{\mathrm{reference}}} 
 $$
 
-where $s\_{\mathrm{reference}}$ is a specified scale.
+where $s_{\mathrm{reference}}$ is a specified scale.
 
 Possible choices include the reference mean, range, standard deviation, or another characteristic magnitude.
 
@@ -75333,13 +76047,13 @@ $$
 Because $L$ is triangular:
 
 $$
- \det L=\prod_iL\_{ii}. 
+ \det L=\prod_iL_{ii}. 
 $$
 
 Therefore:
 
 $$
- \boxed{ \log\det\Sigma = 2\sum_i\log L\_{ii} }. 
+ \boxed{ \log\det\Sigma = 2\sum_i\log L_{ii} }. 
 $$
 
 These identities lead to the stable log-density expression:
@@ -75462,7 +76176,7 @@ $$
 and centred scatter matrix:
 
 $$
- S_n= \sum\_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T. 
+ S_n= \sum_{i=1}^{n} (\mathbf x_i-\boldsymbol\mu_n) (\mathbf x_i-\boldsymbol\mu_n)^T. 
 $$
 
 When a new sample $\mathbf x$ arrives, define:
@@ -75474,13 +76188,13 @@ $$
 Update the mean:
 
 $$
- \boxed{ \boldsymbol\mu\_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }. 
+ \boxed{ \boldsymbol\mu_{n+1} = \boldsymbol\mu_n+ \frac{\boldsymbol\delta}{n+1} }. 
 $$
 
 The scatter update is:
 
 $$
- \boxed{ S\_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu\_{n+1})^T }. 
+ \boxed{ S_{n+1} = S_n+ \boldsymbol\delta (\mathbf x-\boldsymbol\mu_{n+1})^T }. 
 $$
 
 The sample covariance estimate is:
@@ -75617,7 +76331,7 @@ struct OnlineCovariance2D {
 
 The off-diagonal value is stored once and copied symmetrically into the resulting matrix.
 
-This prevents a trivial asymmetry caused by independently accumulating $\Sigma\_{01}$ and $\Sigma\_{10}$ in different arithmetic orders.
+This prevents a trivial asymmetry caused by independently accumulating $\Sigma_{01}$ and $\Sigma_{10}$ in different arithmetic orders.
 
 The update requires constant storage independent of the number of samples.
 
@@ -75718,13 +76432,13 @@ $$
 Therefore:
 
 $$
- \boxed{ \mu\_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }. 
+ \boxed{ \mu_{\mathrm{post}} = \frac{ y/\tau^2+\mu_0/\sigma_0^2 }{ 1/\tau^2+1/\sigma_0^2 } }. 
 $$
 
 The posterior variance is:
 
 $$
- \boxed{ \sigma\_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }. 
+ \boxed{ \sigma_{\mathrm{post}}^2 = \left( \frac1{\sigma_0^2} +\frac1{\tau^2} \right)^{-1} }. 
 $$
 
 Notice that inverse variance acts like information or precision.
@@ -75756,13 +76470,13 @@ $$
 The posterior variance is:
 
 $$
- \sigma\_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}. 
+ \sigma_{\mathrm{post}}^2= \left(\frac14+1\right)^{-1} =\boxed{0.8}. 
 $$
 
 The posterior mean is:
 
 $$
- \mu\_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}. 
+ \mu_{\mathrm{post}} = 0.8\left(0+\frac31\right) =\boxed{2.4}. 
 $$
 
 The observation says three, but the prior was centered at zero.
@@ -75812,7 +76526,7 @@ Vary their mean depth, depth variance, anisotropy, orientation, and position rel
 For each configuration, calculate the first-order projected covariance:
 
 $$
- \Sigma\_{\mathrm{predicted}} = J\_\pi\Sigma\_{3D}J\_\pi^T. 
+ \Sigma_{\mathrm{predicted}} = J\_\pi\Sigma_{3D}J\_\pi^T. 
 $$
 
 Then generate samples from the 3D distribution, project samples satisfying a defined visibility and clipping policy, and estimate their empirical image-space covariance.
@@ -75901,25 +76615,25 @@ $$
 the Monte Carlo contribution becomes:
 
 $$
- Y\_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z. 
+ Y_{\mathrm{uniform}} = \frac z{1/(2\pi)} =2\pi z. 
 $$
 
 The expected contribution is:
 
 $$
- \mathbb E[Y\_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi. 
+ \mathbb E[Y_{\mathrm{uniform}}] = 2\pi\mathbb E[z] =2\pi\frac12 =\pi. 
 $$
 
 Its variance is:
 
 $$
- \operatorname{Var}(Y\_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z). 
+ \operatorname{Var}(Y_{\mathrm{uniform}}) = (2\pi)^2\operatorname{Var}(z). 
 $$
 
 Because a uniform $[0,1]$ variable has variance $1/12$:
 
 $$
- \boxed{ \operatorname{Var}(Y\_{\mathrm{uniform}}) = \frac{\pi^2}{3} }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{uniform}}) = \frac{\pi^2}{3} }. 
 $$
 
 #### 2 Cosine-weighted hemisphere sampling
@@ -75939,7 +76653,7 @@ $$
 The weighted contribution becomes:
 
 $$
- Y\_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi} 
+ Y_{\mathrm{cosine}} = \frac{\cos\theta}{\cos\theta/\pi} =\boxed{\pi} 
 $$
 
 where the PDF is positive.
@@ -75949,7 +76663,7 @@ Every ideal sample gives exactly $\pi$.
 Therefore:
 
 $$
- \boxed{ \operatorname{Var}(Y\_{\mathrm{cosine}})=0 }. 
+ \boxed{ \operatorname{Var}(Y_{\mathrm{cosine}})=0 }. 
 $$
 
 That explains the program output of $3.141592654$.
@@ -76047,7 +76761,7 @@ Suppose technique $j$ draws $n_j$ samples from $p_j(x)$.
 A general MIS estimator is:
 
 $$
- \boxed{ \widehat I= \sum_j\frac1{n_j} \sum\_{i=1}^{n_j} w_j(X\_{ji}) \frac{f(X\_{ji})}{p_j(X\_{ji})} }. 
+ \boxed{ \widehat I= \sum_j\frac1{n_j} \sum_{i=1}^{n_j} w_j(X_{ji}) \frac{f(X_{ji})}{p_j(X_{ji})} }. 
 $$
 
 The weights must satisfy suitable conditions, including:
@@ -95481,7 +96195,7 @@ Then deliberately break one promise: exchange storage layout without changing ac
 
 The missing 635–650 lesson texts remain visible in the coverage ledger. The reconstructed bridge keeps this teaching narrative usable now and can be deepened when those sources arrive. Later numerical linear algebra can extend pivoting, conditioning, orthogonal factorizations, eigenstructure and decomposition without changing the representation contracts established here.
 
-[[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Compact linked recall]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Exact coverage]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 7 - Transform reconstruction proofs|Extended reconstruction]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Extended traces]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]] · [[Keyword Index]] · [[Dependency Map]]
+[[Visual Recall/07 - Matrices, Transforms and Quaternions - Visual Recall|Compact linked recall]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Exact coverage]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Phase 7 - Transform reconstruction proofs|Extended reconstruction]] · [[Supplementary/Worked Traces#Phase 7 - The moving-panel tracebook|Extended traces]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]] · [[Keyword Index]] · [[Dependency Map]]
 
 ### Where transforms lead next
 
@@ -96465,6 +97179,76 @@ The trace prints a sequential sum of zero beside a compensated sum of 10000, a b
 <!-- end V10.25 -->
 
 
+<!-- Book-completion teaching addition 3ac34baaafad1663 -->
+
+## A mastery ladder for the whole foundations journey
+
+The chapters have already supplied local laboratories: byte codecs, ownership traces, an asset registry, explicit GPU work, numerical routines and camera reconstruction. This ladder makes their dependency chain visible. Each rung leaves behind a small artifact that the next rung must use. A learner may complete the CPU-only rungs without a graphics device; the last rung must label its evidence honestly.
+
+Use one running object: a saved checkerboard material assigned to a movable panel. Its file contains a version, dimensions, pixel format and texels. The panel has a stable entity handle, a world transform and a camera image. The renderer eventually samples the uploaded texture. The task is to reopen, move, display and revise that panel without confusing bytes, objects, identities, measurements or GPU completion.
+
+### Rung 1 — Decode a bounded asset
+
+**Problem.** The file begins with a fixed 16-byte header: four ASCII magic bytes `TXR1`, a 32-bit little-endian width, a 32-bit little-endian height and a 32-bit little-endian format code. Format code `1` means tightly packed RGBA8: four unsigned eight-bit channels per texel, in red, green, blue, alpha order. Other format codes are unsupported in this exercise. The payload therefore requires $4wh$ bytes. A corrupt file may request dimensions whose product overflows `size_t`, truncate the payload, or contain an unknown format.
+
+**Exercise.** Write a decoder that takes a read-only span of bytes and returns either an owned `Texture` or a named `DecodeError`. In C++23 that result can use `std::expected`; a C++20 solution can use an explicit tagged success/error result. Reject short headers, wrong magic, zero dimensions, unsupported formats, arithmetic overflow and a payload length other than exactly $4wh$. Explain why copying the first bytes into a C++ struct is not a portable decoder.
+
+**Worked solution.** Read each integer byte-by-byte after checking that its range is inside the input. Before computing the pixel count, require $w \le \lfloor\text{SIZE_MAX}/h\rfloor$; before multiplying by four, require $wh \le \lfloor\text{SIZE_MAX}/4\rfloor$. Call the validated payload length $N=4wh$. Require $N\leq\mathrm{SIZE\_MAX}-16$ before forming the total, then require `input.size() == 16 + N`. Separately enforce the application's declared maximum dimensions and allocation budget: arithmetic safety does not make a very large request affordable. Only after these tests construct an owned texture. The solution preserves the invariant that every later texel index is below a validated extent. Struct copying would additionally assume host endianness, padding, alignment and object representation match the file contract.
+
+**Check your work.** Hand-trace width $w=2$ and height $h=3$: payload length must be $24$ bytes. Flip one magic byte, remove the last payload byte, set width to zero, and choose dimensions that overflow multiplication. Each failure must be reported before allocation.
+
+### Rung 2 — Give the panel a stable identity and a safe borrow
+
+**Problem.** The editor stores panels densely in a `vector`. Deleting one panel and adding another can reuse its slot; vector growth can also move every object. A raw pointer or array index retained by an asynchronous upload callback may now refer to a different panel or to dead storage.
+
+**Exercise.** Implement a handle with `{slot, generation}` and a registry whose `get(handle)` returns a checked borrow. Removing an item invalidates its generation; reusing a slot must not make an old handle valid. State exactly how long a returned pointer may be kept.
+
+**Worked solution.** Separate logical identity from dense storage. Each logical slot stores a generation and either a dense-array index or an unoccupied marker; each dense value stores its owning slot. A handle resolves only when its slot is in range, occupied, and has the matching generation. When deleting by swapping the last dense value into a hole, update the moved value's logical slot to its new dense index. Removing an array element without this reverse update leaves a valid-looking handle pointing at the wrong object. Increment the generation on removal, with an explicit policy for generation exhaustion (retire that slot rather than wrap). The simplest safe borrow contract is “valid until the next registry mutation”; callers needing longer use a copied value or a separately owned stable object. The upload callback captures the handle and resolves it on the main thread when publishing, rather than capturing a pointer into a growable vector.
+
+**Hand trace.** A occupies logical slot 0, generation 0, dense index 0; B occupies slot 1, generation 0, dense index 1. Delete A, move B to dense index 0, update slot 1 to index 0, and increment slot 0 to generation 1. Creating C may reuse slot 0 with generation 1 and dense index 1. A's old `{0,0}` handle fails; B's `{1,0}` still resolves to B.
+
+**Failure test.** Create `h0`, remove its object, reuse the slot to create `h1`, then require `get(h0)` to fail and `get(h1)` to succeed. Force vector growth after obtaining a borrow and verify that the old borrow is never dereferenced.
+
+### Rung 3 — Publish asynchronous work without racing ownership
+
+**Problem.** A worker decodes a texture while the main thread edits or deletes its panel. A successful decode does not imply that the result still belongs to a live object, and a GPU upload submission does not imply that the GPU has finished reading the staging bytes.
+
+**Exercise.** Draw a state timeline from request through decode, upload, completion and publication. Identify the owner of each buffer and the event that permits its reuse.
+
+**Worked solution.** The request owns immutable input bytes. The worker owns a decode result and publishes a value message containing the panel handle plus a request/version number. The main thread rejects the message if either the handle is stale or a newer version was requested. It transfers the validated pixels to an upload operation. The staging allocation remains alive until the fence/timeline value for that submission is complete; only then may it be recycled. The destination image remains alive until all submitted work that references it has completed. The main thread publishes the new texture descriptor only at a frame boundary where the renderer's resource-version contract permits the change.
+
+The state progression is therefore `Requested -> Decoded -> Submitted(value) -> Complete(value) -> Published`; failures branch to a recorded error and release only resources whose completion conditions are satisfied. A cancellation flag alone cannot free storage already referenced by submitted GPU work.
+
+### Rung 4 — Reconstruct a measured panel position
+
+**Problem.** A camera reports a pixel location for the panel's known world point. We want to estimate a small two-dimensional translation $q=(t_x,t_y)$ from noisy image measurements while keeping coordinate conventions explicit.
+
+**Exercise.** For a pinhole camera looking along negative camera $z$, use a point $(X,Y,Z)$ with $Z<0$, focal lengths $(f_x,f_y)$ and principal point $(c_x,c_y)$. In this small exercise, both camera $y$ and image coordinate $v$ increase upward; an image buffer whose rows increase downward needs the corresponding sign change. Derive the pixel prediction and its Jacobian with respect to translation parallel to camera $x,y$. For observations $z_i$, set residual $r_i(q)=\pi_i(q)-z_i$ and solve a weighted least-squares step.
+
+**Worked derivation.** With translated camera-space point $(X+t_x,Y+t_y,Z)$,
+
+$$
+u=f_x\frac{X+t_x}{-Z}+c_x,\qquad v=f_y\frac{Y+t_y}{-Z}+c_y.
+$$
+
+Thus the local Jacobian is
+
+$$
+J_i=\begin{bmatrix}-f_x/Z&0\\0&-f_y/Z\end{bmatrix}.
+$$
+
+Stack the residuals and Jacobians, and let $W$ contain the declared inverse pixel-variance weights. A Gauss–Newton step solves $(J^TWJ)\,\delta=-J^TWr$; compute it through the whitened least-squares system $A=W^{1/2}J$, $b=-W^{1/2}r$, solving $A\delta\approx b$ with QR or SVD rather than explicitly inverting $J^TWJ$. If the columns are rank deficient, report which translation is unobservable instead of returning a confident number. Check the derivative by a central finite difference and check the final residual in pixels. This tiny model estimates translation only: it does not estimate depth, rotation, distortion, rolling shutter or a full scene.
+
+For a numerical solution, take $(X,Y,Z)=(0,0,-2)$, $f_x=f_y=100$, zero principal point, identity weights, and observed pixel $(100,-50)$. Starting at $q=(0,0)$ gives residual $(-100,50)$ and $J=50I$, hence $\delta=(2,-1)$. The updated prediction is $(100,-50)$ and the residual is zero in this deliberately linear model. A perturbation of $10^{-4}$ in either translation changes its pixel coordinate by $0.005$, confirming the derivative $50$ pixels per world unit.
+
+### Rung 5 — Integrate and make a bounded claim
+
+**Exercise.** Connect the decoder, registry, worker message, upload lifetime, camera prediction and renderer-facing publication. Write one end-to-end test that deletes the panel while decode is in flight, requests a newer material, forces registry growth, and delays GPU completion. State which parts can be verified on a CPU and which need a real device/API validation layer.
+
+**Solution outline.** Keep the decoded texture as an owned CPU value. Publish only after resolving the generation-aware handle and matching the latest request version. Retain staging data through the submitted completion value. Associate the visible texture with a resource generation so recorded draws cannot accidentally mix the old descriptor with the new image. The camera check uses a finite-difference Jacobian oracle and synthetic observations with known translation. The CPU test can establish decoding, overflow rejection, stale-message rejection, registry invalidation, residual calculation and the program's simulated completion-state logic. A mocked fence cannot prove Vulkan or Metal synchronization correctness; that requires validation on a named API/device configuration. A CPU timing cannot establish GPU performance.
+
+**Exit test.** Without looking at the preceding chapters, explain the invariant protected at each boundary: file-to-value, slot-to-identity, borrow-to-lifetime, submit-to-completion, world-to-camera, and residual-to-estimate. For every invariant, give one counterexample that breaks it, one test that detects the break, and the strongest evidence that test actually provides. If the answer collapses two boundaries into “the pointer is valid” or “the upload succeeded,” revisit that rung.
+
 # Teaching reconstruction, source records, and research navigation
 
 The following source navigation, research connections, coverage boundaries and provenance are retained in full. These records preserve the evidence behind the teaching text; they do not replace the explanations in the preceding chapters.
@@ -96484,7 +97268,7 @@ When reading a paper, record the input assumptions, measured outcome, adversaria
 
 This phase's achievement is a connected model: numbers provide scalars; vector laws provide movement; bases provide descriptions; inner products provide measurement; exterior products provide orientation; affine weights provide locations; projective representatives support perspective; and types preserve the distinctions at computational boundaries. The implementation is valuable because we can now explain both what it computes and why it sometimes must refuse to compute it.
 
-[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]] · [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Visual-recall board]]
+[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Phase 6 - Geometry reconstruction proofs|Extended proofs]] · [[Supplementary/Worked Traces#Phase 6 - The robot panel tracebook|Extended traces]] · [[Visual Recall/06 - Geometry and Vector Implementation - Visual Recall|Visual-recall board]]
 
 ### Where measurement geometry leads next
 
@@ -96572,7 +97356,7 @@ All seven supplied Phase 8 excerpts are integrated: Parts 701–736, 737–769, 
 
 The chapter explains the mathematics and algorithm choices but does not implement a complete dense or sparse solver library. It does not claim a GPU run, production performance, a universal rank threshold, certification of every residual, or proof of personal mastery. Those claims require separate implementation, target, and workload evidence.
 
-[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Phase 8 - Linear systems and decompositions|Extended derivations]] · [[Supplementary/Worked Traces#Phase 8 - From constraints to a stable SVD contract|Worked trace]] · [[Visual Recall/08 - Linear Algebra - Visual Recall|Visual recall]]
+[[Graphics Engine Mastery - Continuous Notes]] · [[Dependency Map]] · [[Keyword Index]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Phase 8 - Linear systems and decompositions|Extended derivations]] · [[Supplementary/Worked Traces#Phase 8 - From constraints to a stable SVD contract|Worked trace]] · [[Visual Recall/08 - Linear Algebra - Visual Recall|Visual recall]]
 
 <!-- end V08.85 -->
 
@@ -97501,7 +98285,7 @@ These complete proof sections are recovered from the retained pre-cleanup deriva
 
 ## Phase 8 - Linear systems and decompositions
 
-These compact reconstructions support [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The graphics problem hiding inside a matrix equation|the full Phase 8 narrative]].
+These compact reconstructions support [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The graphics problem hiding inside a matrix equation|the full Phase 8 narrative]].
 
 ### The solution set is one solution plus the null space
 
@@ -97573,7 +98357,7 @@ The method chooses $s$ so a rational or polynomial approximation is accurate for
 
 ## Phase 7 - Transform reconstruction proofs
 
-Essential proofs are in [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
+Essential proofs are in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|the continuous chapter]]. These exercises deepen the same contracts rather than introduce prerequisites hidden in this supplement.
 
 ### A change of basis changes a map on both sides
 
@@ -97613,7 +98397,7 @@ The recovered $2d'r'^*$ has zero scalar part, as a translation pure quaternion r
 
 ## Phase 6 - Geometry reconstruction proofs
 
-These extensions belong to [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The panel gives us a reason to learn|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
+These extensions belong to [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The panel gives us a reason to learn|the Phase 6 story]]. Essential derivations remain in that volume. This section adds reconstruction exercises, not prerequisites hidden outside the teaching narrative.
 
 ### Why projection is an orthogonal decomposition
 

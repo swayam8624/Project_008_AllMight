@@ -30,7 +30,7 @@ A random variable is a measurable mapping from outcomes to numerical values; its
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#2. Random quantities and their probability laws|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#2. Random quantities and their probability laws|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

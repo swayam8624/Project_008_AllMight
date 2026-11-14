@@ -10,7 +10,7 @@ An **engine** is the reusable machinery that supports that cycle. The game suppl
 
 This is the cumulative home for game-engine teaching in this vault. Future supplied engine lessons belong in this same volume, woven into the relevant explanation. Existing curriculum part numbers remain their own source records; independent video and book study does not manufacture missing curriculum coverage. [[Supplementary/Game Engine - Sources and Coverage|The source ledger]] records the enumerated videos, caption availability, reading status, book passages, and remaining gaps.
 
-Read a concept where it first helps solve a problem. If a word is unfamiliar, its first useful appearance should supply enough explanation to continue. The mathematics volume and C++ volume are deeper companions, but a link does not replace the explanation needed here: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing]] and [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs]].
+Read a concept where it first helps solve a problem. If a word is unfamiliar, its first useful appearance should supply enough explanation to continue. Mathematics, C++ and systems now share [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|the Computing Foundations book]]; the explanation needed to follow this Engine narrative still belongs here.
 
 
 > [!info] Source coverage
@@ -9571,6 +9571,32 @@ A persistent **thread pool** keeps a bounded set of workers alive and reuses the
 
 The Phase 4 lab constructs a real small worker pool with a shared mutex-protected deque, a condition variable and packaged_task-backed futures. Callers submit jobs; each worker removes a job under the lock and executes it outside the lock. Exceptions thrown by a user job are stored in the packaged task and can be rethrown by future.get() in the caller. Shutdown changes a protected stop flag, wakes the workers, permits queued work to drain and joins all worker threads. These choices are correct for the exercised protocol; they are **not** work stealing or a complete dependency-aware production scheduler.
 
+<!-- Book-completion teaching addition 46d4ea4d700f480a -->
+
+### A bounded priority scheduler from Kohi #067 — and the limits of what it proves
+
+The Phase 4 worker-pool laboratory establishes one useful design: a shared mutex-protected deque, a condition variable, packaged tasks and futures. A historical Kohi episode provides a contrasting scheduler that makes different tradeoffs. Treat the following as a reconstruction of the episode's narrated design, not a source-code audit: its available transcript is noisy automatic English captions, and the retained source metadata does not pin the matching Kohi repository revision. The episode is [Kohi #067, “Job System”](https://www.youtube.com/watch?v=3JbLqoDubIY), especially 00:10:50–01:39:08. The current Kohi GitHub README says GitHub is now a periodically updated mirror and points to SVN as the source of truth, so current repository code cannot silently stand in for the episode's historical snapshot.
+
+Before introducing the scheduler, the episode clears fixed mesh-name/material-path buffers. An empty C string needs a terminating zero byte; clearing a buffer establishes initial contents but does not make a later copy length-safe. Capacity checks and the lifetime of any borrowed pointer remain separate obligations. That distinction reappears in the scheduler's copied payloads.
+
+The task begins with a fixed-capacity circular FIFO. With capacity four, enqueue `A, B, C`, dequeue `A, B`, then enqueue `D, E`: the logical queue is `C, D, E` even though its occupied storage wraps across the array boundary. The queue copies one fixed-size record and advances indices modulo capacity; it does not shift the remaining records. Empty and full are distinct states, and insertion into a full queue must return or record failure. This container is not inherently thread-safe: Kohi's narrated system places a mutex around each priority queue because multiple workers and task submitters can touch them. The ring removes element-shifting work; it does not remove synchronization, capacity planning, or a full-queue policy.
+
+Kohi's narrated scheduler has three such queues—high, normal and low—and workers advertise task-type masks. A task is eligible for a worker only when its type intersects that worker's mask. `process_queue` scans a priority queue and searches for an eligible free worker. That lets a renderer-affine operation be kept away from workers that cannot perform it, but it also creates a head-of-line case: an ineligible task at the front can delay later work that some idle worker could do. The presenter explicitly recognizes that the fixed FIFO cannot select a compatible item from the middle and leaves that improvement for later. The same queue capacity and task type must be validated at submission, not guessed from the fact that some worker thread exists.
+
+High priority has a special fast path in the narrated design: if a compatible worker is already free, the submitter assigns the task directly instead of waiting for the next frame's queue-processing pass. If none is free, the task is enqueued. This improves start latency for genuinely urgent work, but it is not preemption: it cannot interrupt a running task, create capacity, or guarantee a deadline. Overuse can starve normal and low priority work. The claimed priority ordering is therefore a scheduling preference, not a real-time guarantee; aging, budgets or reserved capacity would need their own policy and tests.
+
+Each worker has a current-task record guarded by its own mutex, a stable worker identity and a supported-type mask. The narrated lifecycle creates a bounded set of persistent workers, each loops until shutdown, snapshots its assigned task while holding the record lock, releases the lock before invoking user work, and marks itself available afterward. On shutdown the system stops admission, signals or otherwise wakes workers, joins them, then destroys queue storage and synchronization state. Keep the lock scope around publication and state changes; never hold a queue or worker mutex while invoking arbitrary task code or a completion callback. The transcript is unclear about the exact idle-wait primitive and wake-up sequence, so this chapter specifies the invariant rather than claiming the episode implemented a particular semaphore/condition-variable protocol.
+
+The task record in the captions carries a type, priority, entry function, optional success/failure callbacks, and byte counts plus pointers for input and result data. The narrated constructor copies input bytes into owned storage; the worker runs the entry function; a completed result record is copied into a bounded result array and delivered during a later system update. This separates worker completion from callback execution and can keep renderer or game-state callbacks on the update thread. It also creates explicit ownership questions: reject a submission if input/result allocation or queue insertion fails; define what happens when the fixed result array is full; free copied input after execution; and free result storage only after its callback has returned. A byte copy is not a deep copy of pointed-to objects and does not run C++ constructors or destructors. The payload contract must therefore be restricted to bytewise-copyable data with a documented pointer-lifetime rule, or replaced with an ownership-aware typed message.
+
+The task-type mask is Kohi's scheduler policy, not a Vulkan feature query and not a universal rule that a GPU resource task belongs to one particular worker. Vulkan permits host work to be multithreaded subject to the external-synchronization requirements of each API object and command. For example, host access to a `VkQueue` is externally synchronized unless a supported and enabled `VK_KHR_internally_synchronized_queues` path uses `VK_DEVICE_QUEUE_CREATE_INTERNALLY_SYNCHRONIZED_BIT_KHR` for that queue; that optional host-side guarantee does not replace device execution or memory synchronization. Command pools are externally synchronized, so per-thread command pools are a common way to record command buffers concurrently. A queue-family capability, a `VkQueue`, a host worker and an engine task type are four different things. The chapter's own renderer flag should be read as an engine/backend capability seam; it does not prove that a device reports a general “multithreaded renderer” feature.
+
+This case study complements the Phase 4 pool but does not claim work stealing, task-dependency scheduling, cancellation, preemption, lock-free queues, GPU-completion tracking or production-grade backpressure. The episode itself flags its queue head-of-line limitation and describes the next episode as the place where mesh and texture loading will use the system. For a reconstructable exercise, trace the wrapped `C, D, E` queue; then place a GPU-affine task at the front and a CPU-only task behind it while the GPU-capable worker is busy and a CPU worker is idle. State why the CPU worker cannot legally take the first, GPU-affine item under the mask policy, why a fixed FIFO may then stall other work, and compare three repairs: scan/skip incompatible entries, use per-type queues, or express dependencies/readiness separately. For each repair, test full-queue rejection, worker shutdown with pending work, exactly-once callback delivery, callback-thread ownership, and freeing payloads only after their last reader finishes. A CPU simulation can validate those scheduler contracts; Vulkan validation on a named device is still required for real API-object synchronization, and neither test alone demonstrates a performance gain.
+
+**Evidence boundary.** This reconstruction uses the full retained 88-span automatic-caption transcript (01:39:08 of timestamped material) and the existing Foundations/Engine chapters. It is a source-unit review of those transcript spans, not verification against the spoken audio, the exact historical repository commit, or the later jobified-loading episode. The current [Kohi repository README](https://github.com/travisvroman/kohi) states that its GitHub repository is a mirror and SVN is now the single source of truth. Vulkan constraints above are checked against the current [Khronos Vulkan threading guide](https://docs.vulkan.org/guide/latest/threading.html), [queue guide](https://docs.vulkan.org/guide/latest/queues.html) and [specification device/queue chapter](https://docs.vulkan.org/spec/latest/chapters/devsandqueues.html).
+
+
+
 The test first partitions a 10,000-element array into fixed chunks, submits independent reductions and combines the returned subtotals in a fixed order. It uses values exactly representable as double, so the oracle is an exact integer-valued total of 15,000. It tests grain sizes 1, 127 and 4,096. That demonstrates correctness over different task partitions. It does not demonstrate that creating 10,000 tiny tasks is efficient. The cost of packaging, queueing, waking and collecting those tasks may dominate the few arithmetic operations each job performs.
 
 A practical scheduler chooses **grain size** so each task contains enough useful work to amortize scheduling overhead but not so much that one worker remains busy after others finish. If a task costs c units of useful work and incurs overhead h, then for n tasks
@@ -10477,6 +10503,237 @@ Entity references in a saved scene need a save-time mapping from runtime handles
 
 Loading a scene should also be transactional. Parse and validate the descriptor, allocate candidate entity/component state, resolve references, validate hierarchy cycles and assets, then publish the scene. If step three fails, discard candidate state rather than leave a half-loaded world. Saving a runtime scene back to authoring is a separate policy: some runtime state is transient and must never overwrite authored data. Play mode may use a copy-on-play world, a command diff, or an explicit apply-changes operation.
 
+<!-- Engine-scene-persistence -->
+#### Serialize scene meaning through stable identities
+
+Saving a scene must preserve authored meaning across process lifetimes. Runtime pointers and dense ECS slots are temporary, so each serialized entity and asset needs a stable ID. Each field must be written deliberately; dumping a C++ object layout would also persist padding, compiler ABI, and endianness accidents.
+
+A safe loader first checks byte and record bounds and parses into a candidate scene. It validates unique entity IDs and asset IDs, builds the complete ID table, then resolves parent references in a second pass so forward references work. Only a fully validated candidate can replace the live scene. Version migration supplies defined defaults for fields added later. The small text fixture below demonstrates round-trip, a version-1 migration, and rejection of unsupported versions, oversized counts, malformed coordinates, duplicate IDs, missing assets, and dangling parents. Its codec is intentionally portable and dependency-free; it does not promise filesystem atomicity, crash durability, checksums, escaping for arbitrary strings, or a production binary schema.
+
+```mermaid
+flowchart LR
+  A[Versioned scene bytes] --> B[Bound tokens and migrate fields]
+  B --> C[Build candidate IDs and resolve references]
+  C --> D[Reject missing assets and hierarchy cycles]
+  D --> E[Swap fully valid candidate into live scene]
+  B -->|invalid| F[Keep previous live scene]
+  C -->|invalid| F
+  D -->|invalid| F
+  classDef valid fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef fail fill:#ffedd5,stroke:#c2410c,color:#7c2d12
+  class E valid
+  class F fail
+```
+
+The candidate is private until every gate succeeds. A failed parse, unresolved reference or cycle leaves the old live scene available; the comments in the program explain how the checks and final swap enforce that boundary.
+
+```cpp
+// C++20 portable scene persistence witness; text framing and explicit field codecs.
+// Build: c++ -std=c++20 -Wall -Wextra -Wpedantic -Werror tools/labs/scene_persistence_lab.cpp -o /tmp/scene_persistence && /tmp/scene_persistence
+#include <charconv>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <system_error>
+#include <vector>
+
+// A file ID is stable authored identity. It is intentionally distinct from a
+// process-local ECS slot or pointer, neither of which survives a reload.
+using Id = std::uint64_t;
+struct Entity { Id id{}; Id asset{}; Id parent{}; std::int32_t x{}, y{}; };
+struct Scene { std::vector<Entity> entities; };
+struct Asset { Id id{}; std::string name; };
+
+void require(bool ok, const char* message) {
+    if (!ok) throw std::runtime_error(message);
+}
+
+// Validate only scene-local invariants: the writer has no asset catalog, while
+// asset existence is checked by the reader against the catalog it receives.
+void validate_identity_and_hierarchy(const Scene& scene) {
+    require(scene.entities.size() <= 10000, "too many entities");
+    std::map<Id, std::size_t> by_id;
+    for (std::size_t i = 0; i < scene.entities.size(); ++i) {
+        const Entity& e = scene.entities[i];
+        require(e.id != 0 && by_id.emplace(e.id, i).second,
+                "zero or duplicate entity ID");
+    }
+    for (const Entity& e : scene.entities) {
+        require(e.parent == 0 || (e.parent != e.id && by_id.contains(e.parent)),
+                "dangling or self parent reference");
+    }
+
+    // Identity lookup proves that each edge names a record; it does not prove
+    // the parent graph is acyclic. A bounded color walk checks that separately.
+    // Each entity has at most one parent, so every walk follows one outgoing edge.
+    std::vector<unsigned char> color(scene.entities.size(), 0); // white, gray, black
+    for (std::size_t start = 0; start < scene.entities.size(); ++start) {
+        if (color[start] == 2) continue;
+        std::vector<std::size_t> path;
+        std::size_t at = start;
+        while (color[at] == 0) {
+            color[at] = 1;
+            path.push_back(at);
+            const Id parent = scene.entities[at].parent;
+            if (parent == 0) break;
+            at = by_id.at(parent);
+        }
+        if (color[at] == 1) {
+            const bool ended_at_root = scene.entities[at].parent == 0 && path.back() == at;
+            require(ended_at_root, "parent cycle");
+        }
+        // Every visited node becomes complete before the next bounded walk.
+        for (std::size_t index : path) color[index] = 2;
+    }
+}
+
+// The deliberately small text codec makes field order, units, and version
+// visible. Positions are signed integer scene units; IDs are unsigned decimal.
+// Production formats should set explicit byte order, limits, and escaping too.
+std::string save(const Scene& scene) {
+    // Apply the same local identity/hierarchy rules as load before emitting bytes.
+    validate_identity_and_hierarchy(scene);
+    std::string out = "SCENE 2\n";
+    out += "COUNT " + std::to_string(scene.entities.size()) + "\n";
+    for (const Entity& e : scene.entities) {
+        out += "ENTITY " + std::to_string(e.id) + " " + std::to_string(e.asset) +
+               " " + std::to_string(e.parent) + " " + std::to_string(e.x) +
+               " " + std::to_string(e.y) + "\n";
+    }
+    return out;
+}
+
+// Parse into a candidate. Nothing in the caller's live scene changes until the
+// complete file, all IDs, assets, and references have passed validation.
+Scene load(std::string_view bytes, const std::map<Id, Asset>& assets) {
+    require(bytes.size() <= 1'000'000, "scene exceeds byte limit");
+    std::size_t cursor = 0;
+    auto token = [&]() -> std::string_view {
+        // This format permits only ASCII space and LF separators. A tab or CR
+        // stays inside a token and is rejected instead of silently normalized.
+        while (cursor < bytes.size() && (bytes[cursor] == ' ' || bytes[cursor] == '\n')) ++cursor;
+        require(cursor < bytes.size(), "truncated scene");
+        const std::size_t start = cursor;
+        while (cursor < bytes.size() && bytes[cursor] != ' ' && bytes[cursor] != '\n') ++cursor;
+        return bytes.substr(start, cursor - start);
+    };
+    auto unsigned_number = [&]() -> std::uint64_t {
+        const std::string_view field = token();
+        std::uint64_t value{};
+        const auto [end, error] = std::from_chars(field.data(), field.data() + field.size(), value, 10);
+        // from_chars rejects leading '+'; checking both error and end rejects
+        // overflow, signs, and trailing junk without locale-sensitive parsing.
+        require(error == std::errc{} && end == field.data() + field.size(),
+                "malformed unsigned decimal field");
+        return value;
+    };
+    auto signed_position = [&]() -> std::int32_t {
+        const std::string_view field = token();
+        std::int32_t value{};
+        const auto [end, error] = std::from_chars(field.data(), field.data() + field.size(), value, 10);
+        require(error == std::errc{} && end == field.data() + field.size(),
+                "malformed or out-of-range position");
+        return value;
+    };
+
+    require(token() == "SCENE", "wrong file type");
+    const auto version = unsigned_number();
+    require(version == 1 || version == 2, "unsupported scene version");
+    require(token() == "COUNT", "missing entity count");
+    const auto count = unsigned_number();
+    require(count <= 10000, "entity count exceeds limit");
+
+    // Candidate construction is transactional: failures cannot mutate live state.
+    Scene candidate;
+    candidate.entities.reserve(static_cast<std::size_t>(count));
+    for (std::uint64_t i = 0; i < count; ++i) {
+        require(token() == "ENTITY", "missing entity record");
+        Entity e;
+        e.id = unsigned_number();
+        e.asset = unsigned_number();
+        if (version == 2) e.parent = unsigned_number(); // v1 migration defaults parent to root.
+        e.x = signed_position();
+        e.y = signed_position();
+        require(assets.contains(e.asset), "dangling asset reference");
+        candidate.entities.push_back(e);
+    }
+    while (cursor < bytes.size() && bytes[cursor] == '\n') ++cursor;
+    require(cursor == bytes.size(), "trailing bytes after scene");
+    // Shared validation builds the complete ID map before checking parent edges,
+    // then runs the separate iterative cycle walk; forward references are valid.
+    validate_identity_and_hierarchy(candidate);
+    return candidate;
+}
+
+// Commit only after parsing/validation succeeds. std::vector::swap with the
+// default allocator is noexcept, so the live scene changes in one commit step.
+void load_into(Scene& live, std::string_view bytes, const std::map<Id, Asset>& assets) {
+    Scene candidate = load(bytes, assets);
+    live.entities.swap(candidate.entities);
+}
+
+int main() {
+    const std::map<Id, Asset> assets{{42, {42, "crate.mesh"}}, {77, {77, "lamp.mesh"}}};
+    Scene live{{Entity{1001, 42, 1002, -12, 35}, Entity{1002, 77, 0, 0, 80}}};
+    const std::string original_bytes = save(live);
+    const Scene restored = load(original_bytes, assets);
+    require(save(restored) == original_bytes, "round trip changed canonical scene data");
+    require(restored.entities[0].parent == 1002, "forward reference was not restored");
+
+    // A version-1 fixture migrates by assigning the absent parent field to root.
+    const Scene migrated = load("SCENE 1\nCOUNT 1\nENTITY 5 42 -3 9\n", assets);
+    require(migrated.entities[0].parent == 0, "version-1 migration failed");
+
+    const std::vector<std::string> malformed{
+        "SCENE 9\nCOUNT 0\n",                                      // unsupported version
+        "SCENE 2\nCOUNT 10001\n",                                 // count bound
+        "SCENE 2\nCOUNT 1\nENTITY 1 42 0 2147483648 0\n",        // position overflow
+        "SCENE 2\nCOUNT 2\nENTITY 1 42 0 0 0\nENTITY 1 42 0 0 0\n", // duplicate ID
+        "SCENE 2\nCOUNT 1\nENTITY 1 999 0 0 0\n",                 // unknown asset
+        "SCENE 2\nCOUNT 1\nENTITY 1 42 900 0 0\n",                // dangling parent
+        "SCENE 2\nCOUNT 2\nENTITY 1 42 2 0 0\nENTITY 2 42 1 0 0\n", // 2-node cycle
+        "SCENE 2\nCOUNT 3\nENTITY 1 42 2 0 0\nENTITY 2 42 3 0 0\nENTITY 3 42 1 0 0\n", // 3-node cycle
+        "SCENE 2\nCOUNT 1\nENTITY +1 42 0 0 0\n",               // plus sign is not decimal grammar
+        "SCENE 2\nCOUNT 1\nENTITY 1junk 42 0 0 0\n",           // trailing junk inside a number
+        "\tSCENE 2\nCOUNT 0\n",                                   // leading tab
+        "SCENE 2\nCOUNT 18446744073709551616\n",                   // uint64 overflow
+        "SCENE 2\nCOUNT 1\nENTITY 1 42 0 0",                       // truncated record
+        "SCENE 2\nCOUNT 0\nGARBAGE\n"                             // trailing token
+    };
+    for (const std::string& bad : malformed) {
+        bool rejected = false;
+        try { (void)load(bad, assets); } catch (const std::exception&) { rejected = true; }
+        require(rejected, "malformed scene was accepted");
+    }
+
+    // The writer applies shared local validation even without an asset catalog.
+    for (const Scene& bad : {
+             Scene{{Entity{1, 42, 2, 0, 0}, Entity{2, 42, 1, 0, 0}}},
+             Scene{{Entity{1, 42, 0, 0, 0}, Entity{1, 42, 0, 0, 0}}},
+             Scene{{Entity{1, 42, 999, 0, 0}}}}) {
+        bool rejected = false;
+        try { (void)save(bad); } catch (const std::exception&) { rejected = true; }
+        require(rejected, "writer accepted invalid local hierarchy or identity");
+    }
+
+    // Failed replacement leaves the old live document byte-for-byte unchanged.
+    const std::string before_failed_load = save(live);
+    bool failed = false;
+    try { load_into(live, malformed[6], assets); } catch (const std::exception&) { failed = true; }
+    require(failed && save(live) == before_failed_load,
+            "failed load changed the live scene");
+
+    // A valid candidate commits through vector::swap after every validation succeeds.
+    const std::string replacement = "SCENE 2\nCOUNT 1\nENTITY 2001 77 0 5 -8\n";
+    load_into(live, replacement, assets);
+    require(save(live) == replacement, "valid scene replacement did not commit");
+    std::cout << "scene persistence: round-trip, migration, cycles, strict parsing, transaction PASS\n";
+}
+```
+
 ### 6. Dependencies, composition, and the build graph
 
 Engine architecture contains several related DAGs. The source dependency graph answers which modules may depend on which. The runtime initialization graph orders services. The asset graph describes import and package closure. The build graph orders generated files and targets. A cycle in one graph may be legal in another, but confusing them creates fragile systems. Source layering should make high-level policy depend on stable mechanisms or abstractions. A composition root—the application entry point that constructs concrete services—chooses backends and injects them into the runtime. A service locator hides those dependencies behind global lookup; that may be useful in narrow contexts but makes tests and ownership harder to see.
@@ -10939,6 +11196,20 @@ Some games intentionally leave uncertainty. A mystery may not tell the player wh
 
 By contrast, accidental ambiguity arises when feedback contradicts the rule, the control fails without reason, or two similar actions produce different results with no perceivable distinction. The job of architecture is not to make the game predictable in every outcome. It is to make the designed uncertainty legible enough that player choices remain meaningful.
 
+<!-- Supervised source-review addition b8b7b75be97cafeb -->
+
+### Rules are shared agreements that make play possible
+
+A game’s rules are a formal model of what players may do, what the system does in response, and how the state changes toward an outcome. They constrain action, but they do not describe every quality of the experience. A card’s color or illustration can carry meaning without changing the rules; by contrast, “draw two cards when you land here” changes the state and belongs to the formal system. Players can invent free play around a toy, while a game’s rules establish the particular structure that makes a round of that play recognizable as this game.
+
+Useful rules are **explicit** enough to answer relevant cases, **shared** in the sense that participants can refer to a common procedure, **stable during a round**, **binding** within the play they have accepted, and **repeatable** as a procedure. These are design goals, not guarantees that people interpret every sentence identically. A rulebook may be public while players disagree about whether a move was legal; examples, demonstrations, referee decisions, interface feedback, and social convention all help settle interpretation. Repeatable means the same procedure can be applied again, not that a game with shuffled cards or dice must produce the same outcome. A game may also contain randomness as an explicit rule.
+
+“Fixed” should be read at the right level. A group can agree on a variant before play, tournament rules can permit a referee to resolve an unusual case, and a designer can revise the rules between editions. During a round, however, participants need to know which agreed version governs a disputed action. If rules may change mid-round, the game needs a higher-level procedure that says who may change them, when the change takes effect, and how players learn it. Otherwise, an apparent exception can feel arbitrary.
+
+A simple example is a cooperative card game in which players may discuss their hands but may not show them. The restriction is explicit; every player needs to know it; it binds behavior for that round; and it can be applied repeatedly. The group can still interpret “discuss” differently, so the design may need a concrete example or a referee convention. If the group wants an open-hand variant, it can agree before starting. The variant changes the play, but the players still share a clear rule for which version is active.
+
+The “magic circle” is a useful way to analyze the temporary frame in which game rules organize activity; it is not a literal wall that prevents a game from affecting life outside play. A match can shape friendships, reputation, time, money, or community norms. DeKoven’s description of rules as creating a common goal with no external impact is a theoretical framing from the cited discussion, not a universal fact about games. Formal rules may be enforced by software, a referee, or a group’s social practice, and those forms of enforcement can carry consequences beyond the play session. [Rules of Play, physical PDF pp. 121–132]
+
 ### Specify both allowed actions and boundaries
 
 Players learn a game by forming expectations. Rouse’s chapter on player expectations includes consistency, understandable boundaries, reasonable solutions working, direction, gradual achievement, fairness, and avoiding situations where the player becomes hopelessly stuck (Ch. 1, PDF pp. 33–40). Requirements should therefore describe both positive actions and limits. “The player can attack” is incomplete. Specify when attack is accepted, what interrupts it, whether holding the button repeats it, what happens when the target leaves range, and which cues signal those cases.
@@ -11049,6 +11320,16 @@ The opening Hazel captions explicitly take time to define and plan. The author p
 
 A practical first scope statement might read: “This engine will support a desktop 2D game with a window, keyboard and mouse input, layered application code, a sprite renderer, editable scenes, save/load, and a runtime Play mode. It will target one rendering backend first. 3D, networking, audio, multiple backends, and mobile deployment are future decisions.” The statement is neither a product promise nor a permanent limit. It is a way to make costs visible. If the game later needs 3D lighting, you can add it against a working 2D application rather than trying to validate every system at once.
 
+<!-- Supervised source-review addition 2d78e4994fec4bff -->
+
+### Design by connecting play, technology, and story
+
+A game concept can begin with a mechanic, a technical opportunity, or a story. Whichever comes first, test the connections among all three: what the player repeatedly does, what technology is needed to make that action work, and what the story lets the player understand those actions to mean. The connections are constraints, not a formula that assigns each story to one genre. A gameplay loop may demand simulation, networking, authored animation, or only a few carefully timed state changes; the right choice depends on the experience the game needs to deliver.
+
+Consider a rescue game set in a flooded city. The story promises that a small team reaches isolated families before water closes the routes. If the central play is to steer several rescuers in real time through changing streets, the design needs legible commands, pathfinding or direct control, route hazards, and feedback about the rising water. Those choices imply technical work: multiple agents, navigation around blocked streets, a changing environment, and performance on the target hardware. If the target device cannot support that many active agents and simulation steps, the team has several honest design options: let the player directly control one rescuer and issue simple orders to the rest; use a tactical pause so orders can be planned; make distant civilians and distant water changes scripted rather than fully simulated; or reduce district size while keeping the same rescue dilemma. Each option changes pacing and player agency, so the team should test whether it preserves the story’s promise rather than treating the engine limit as an invisible implementation detail.
+
+The iteration can start at any corner. A technical prototype for water flow may suggest a new evacuation mechanic; a story about divided loyalties may motivate a shared-resource rule; a tested mechanic may reveal that the original plot needs a different point of view. Record the assumption, build the smallest prototype that could disprove it, and revise the other corners when evidence demands it. “Gameplay, technology, and story constrain one another” is the reusable model. The book’s examples that pair Greek mythology with a narrow set of genres, or reject mythology in a flight simulator, are the author’s period-specific design illustrations, not laws: a contemporary flight game could use mythology if its mechanics and presentation make that combination coherent. [Game Design Theory and Practice, physical PDF pp. 61–72]
+
 #### Choose the game you want to make before choosing how much engine to build
 
 A game engine and a game are related but different products. A team making a game needs rules, content, interaction, and a way to ship them; an engine team builds reusable technology and tools that let games do those things. If the goal is to ship a game with a small team, rebuilding graphics, asset management, animation, and platform layers can consume the time that should go to the game. If the goal is to study engine technology, the engine itself may be the intended result. This is the creator’s opinion in an older vlog, but it yields a practical question: what is the actual deliverable, and which layer is the user trying to learn? ([Do you want to make GAMES or game ENGINES?](https://www.youtube.com/watch?v=Y4J4ZdQGEgo&t=0m20s), [Why you NEED to use a GAME ENGINE!](https://www.youtube.com/watch?v=QQ9MTzrsldo&t=0m1s)).
@@ -11067,6 +11348,286 @@ Playback channels are not the same as output channels. The source describes 16 p
 
 Short effects can load as one decoded buffer. Long music or voice tracks can reuse two buffers: queue both, unqueue each after playback, refill it with the next samples, then queue it again. The source reports a worker per playback source guarded by a mutex and a brief sleep between work checks; its reason that audio playback blocks is specific narration, not a general OpenAL contract. The implementation uses stb_vorbis and minimp3, and MP3 cleanup remains flagged. Error recovery, format coverage, and stress behavior are not established by the stream. [Kohi #142](https://www.youtube.com/watch?v=xb23Y9o7tP4)
 
+<!-- Bible-final-pass: real-time audio runtime -->
+#### Turn the audio front end into a real-time voice and mixing system
+
+The front-end/backend split above tells us who owns the public API. We still need the runtime path that turns many play requests into the sample block consumed by the device.
+
+Separate four meanings:
+
+~~~text
+audio asset
+  decoded or compressed sound data
+
+voice
+  one active playback instance of an asset
+
+mixer
+  combines active voices into output buses
+
+device backend
+  delivers final sample blocks to the platform audio API
+~~~
+
+One explosion asset can have twenty simultaneous voices. Asset identity and playback identity are different.
+
+#### The audio callback is a deadline boundary
+
+Many audio APIs periodically request the next block of samples. Missing the deadline creates an audible underrun, click, or gap.
+
+Treat the callback more strictly than a normal update. Avoid filesystem/network I/O, unpredictable decoding, waiting on game-thread mutexes, unbounded heap allocation, blocking logging, or complex destruction in the callback path.
+
+A common structure is:
+
+~~~text
+game thread:
+  enqueue Play(sound, gain, position, priority)
+
+audio thread:
+  consume bounded commands
+  update preallocated voice slots
+  mix next block
+  submit samples
+~~~
+
+The exact queue can vary. The important contract is that audio completion does not depend on a slow editor or gameplay operation.
+
+#### A voice owns playback state, not the asset
+
+A voice may contain an asset reference, sample cursor, gain, playback rate, loop state, priority, spatial parameters, bus routing, fade/envelope state, and start sequence.
+
+The cursor is per voice. Two enemies playing the same footstep asset at different times must not share one cursor.
+
+When a non-looping cursor reaches the end, the slot becomes reusable. A loop wraps according to its loop range. A streamed voice may point at decoded chunks rather than one fully resident PCM buffer.
+
+#### Mixing is addition plus a level policy
+
+For mono voices x_j[n] and gains g_j:
+
+~~~text
+y[n] = sum_j g_j x_j[n]
+~~~
+
+Several individually legal samples can sum outside the final range. Hard clipping is easy but distorts. A production engine may keep floating-point headroom, use bus gains, compression/limiting, or another mastering policy.
+
+The witness hard-clips only to keep its small test output bounded. That is a test policy, not a recommendation for final mastering.
+
+#### Voice capacity needs an overload rule
+
+CPU and hardware budgets limit active voices. When all slots are occupied, an engine can reject the new sound, steal the oldest, steal the quietest, steal the lowest priority, or virtualize inaudible voices.
+
+The policy is player-visible. Critical dialogue should not disappear because many low-priority debris sounds started first.
+
+The witness uses a deterministic rule: steal the lowest-priority voice; for equal priority, steal the oldest. If the new request is lower priority than every active voice, reject it.
+
+#### Streaming separates decoding from playback
+
+A long track need not be fully decoded into memory. Keep a small queue of PCM blocks:
+
+~~~text
+compressed asset
+  -> worker fills block A
+  -> worker fills block B
+
+audio consumes A
+worker refills retired A
+audio consumes B
+...
+~~~
+
+The decoder must stay ahead of playback. If it falls behind, report an underrun. Seek, pause, loop, and device changes all belong to this state machine.
+
+#### Resampling is part of correct playback
+
+A 44.1 kHz source mixed into a 48 kHz device cannot advance one source sample per output sample without changing speed.
+
+The source-position increment is approximately:
+
+~~~text
+source_rate / output_rate
+~~~
+
+That gives a fractional cursor. A reconstruction filter estimates values between stored samples. Linear interpolation is simple; higher-quality resamplers spend more work for better frequency behavior.
+
+Changing playback rate also changes pitch and duration. Time stretching without changing pitch is a different algorithm.
+
+#### Spatial audio consumes published world meaning
+
+The game owns emitter and listener transforms. Publish a compact timestamped snapshot for audio rather than letting the callback query arbitrary ECS state. Occlusion queries can run at a safe cadence elsewhere and publish their results to the mixer.
+
+It does not implement HRTF processing, resampling, streaming decode, effects buses, device hot-swap, or thread-safe command publication. Those now have explicit architectural homes instead of being hidden behind a single play-sound call.
+
+The executable witness below owns a fixed voice pool and performs no allocation inside its mixing function. It verifies summation, natural voice retirement, looping, deterministic voice stealing, rejection of an unimportant sound when all slots are more important, and bounded output.
+
+
+~~~cpp
+/*
+Teaching contract: Clip contains mono floating-point samples; cursor is a
+per-playback frame index, gain is dimensionless, and a fixed pool bounds active
+voices. For every frame, the mixer sums sample*gain across active voices, then
+this witness clamps to [-1,1]. A finished non-looping voice retires; a looping
+voice wraps; a full pool steals the oldest voice among the lowest priority, but
+rejects a lower-priority request. The mixing call uses fixed arrays and existing
+clip storage, so it allocates no memory. Device callbacks, command concurrency,
+spatialization, resampling and perceptual loudness policy are outside this CPU
+contract; hard clipping is used only to make output bounds testable.
+*/
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+
+struct Clip {
+    std::vector<float> mono;
+};
+
+struct Voice {
+    const Clip* clip = nullptr;
+    std::size_t cursor = 0;
+    float gain = 1.0f;
+    int priority = 0;
+    std::uint64_t age = 0;
+    bool loop = false;
+    bool active = false;
+};
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+template <std::size_t N>
+class Mixer {
+public:
+    // In a production audio callback, clip memory and voice storage must already
+    // exist. This teaching mixer performs no allocation in mix_block().
+    bool play(const Clip& clip, float gain, int priority, bool loop) {
+        if (clip.mono.empty()) return false;
+
+        Voice* slot = nullptr;
+        for (auto& v : voices_) {
+            if (!v.active) { slot = &v; break; }
+        }
+
+        if (!slot) {
+            // Steal the least-important voice. For equal priority, steal the
+            // oldest one so the rule is deterministic and inspectable.
+            // Deterministic overload rule: lowest priority loses, then oldest.
+            auto it = std::min_element(
+                voices_.begin(), voices_.end(),
+                [](const Voice& a, const Voice& b) {
+                    if (a.priority != b.priority) return a.priority < b.priority;
+                    return a.age < b.age;
+                });
+            if (priority < it->priority) return false;
+            slot = &*it;
+        }
+
+        *slot = Voice{&clip, 0, gain, priority, next_age_++, loop, true};
+        return true;
+    }
+
+    template <std::size_t Frames>
+    std::array<float, Frames> mix_block() {
+        std::array<float, Frames> out{};
+        for (std::size_t frame = 0; frame < Frames; ++frame) {
+            float sample = 0.0f;
+            for (auto& voice : voices_) {
+                if (!voice.active) continue;
+
+                // Each overlapping voice owns its own cursor into shared clip samples.
+                sample += voice.clip->mono[voice.cursor] * voice.gain;
+                ++voice.cursor;
+
+                if (voice.cursor == voice.clip->mono.size()) {
+                    if (voice.loop) {
+                        voice.cursor = 0;
+                    } else {
+                        voice.active = false;
+                    }
+                }
+            }
+            // This witness uses hard clipping only so the output contract is
+            // bounded. A real engine may use headroom, limiters and mastering.
+            out[frame] = std::clamp(sample, -1.0f, 1.0f);
+        }
+        return out;
+    }
+
+    std::size_t active_voices() const {
+        return std::count_if(voices_.begin(), voices_.end(),
+                             [](const Voice& v){ return v.active; });
+    }
+
+    bool has_priority(int p) const {
+        return std::any_of(voices_.begin(), voices_.end(),
+                           [=](const Voice& v){ return v.active && v.priority == p; });
+    }
+
+private:
+    std::array<Voice, N> voices_{};
+    std::uint64_t next_age_ = 0;
+};
+
+bool near(float a, float b, float eps=1e-6f) {
+    return std::fabs(a-b) <= eps;
+}
+
+int main() {
+    const Clip a{{0.25f, 0.25f, 0.25f}};
+    const Clip b{{0.50f, -0.50f}};
+    const Clip loop{{0.10f, 0.20f}};
+
+    {
+        Mixer<4> m;
+        require(m.play(a, 1.0f, 1, false), "first voice should start");
+        require(m.play(b, 0.5f, 2, false), "second voice should start");
+        const auto out = m.mix_block<3>();
+        require(near(out[0], 0.25f + 0.25f), "voices must sum into the same sample");
+        require(near(out[1], 0.25f - 0.25f), "signed PCM samples must mix correctly");
+        require(near(out[2], 0.25f), "finished short voice must stop contributing");
+        require(m.active_voices() == 0, "non-looping voices should retire at end");
+    }
+
+    {
+        Mixer<1> m;
+        require(m.play(loop, 1.0f, 1, true), "looping voice should start");
+        const auto out = m.mix_block<5>();
+        require(near(out[0],0.10f) && near(out[1],0.20f) &&
+                near(out[2],0.10f) && near(out[3],0.20f) && near(out[4],0.10f),
+                "looping cursor must wrap exactly");
+        require(m.active_voices() == 1, "loop remains active");
+    }
+
+    {
+        Mixer<2> m;
+        require(m.play(a, 1.0f, 1, true), "low-priority voice A");
+        require(m.play(b, 1.0f, 5, true), "high-priority voice B");
+        require(m.play(loop, 1.0f, 3, true), "new medium voice steals least priority");
+        require(!m.has_priority(1) && m.has_priority(3) && m.has_priority(5),
+                "voice stealing must preserve more important voices");
+        require(!m.play(a, 1.0f, 0, true),
+                "lower-priority request should be rejected when all slots are more important");
+    }
+
+    {
+        Mixer<2> m;
+        const Clip loud{{0.9f}};
+        require(m.play(loud,1.0f,1,false) && m.play(loud,1.0f,1,false),
+                "two loud voices should start");
+        const auto out=m.mix_block<1>();
+        require(near(out[0],1.0f), "output contract must remain bounded");
+    }
+
+    std::cout << "audio voice mixer: 4 suites PASS\n";
+}
+~~~
+
+
+**Reconstruct without reading:** distinguish an asset from a voice, explain why the callback should not wait on the game thread, derive the basic mix equation, state a voice-stealing rule, and explain how streaming buffers stay ahead of playback.
 
 #### Shared systems should pay for themselves
 
@@ -34411,6 +34972,12 @@ This is already a strong subsystem-neutral event representation.
 The next bridge should translate those runtime physics IDs into ECS entities.
 
 Do not make gameplay search all bodies to discover their owner.
+
+<!-- Book-completion teaching addition 0d8e550c33bfdbb5 -->
+
+\n\n### Decide which pairs may interact, then publish overlap transitions safely\n\nThe existing `PhysicsContactEventType` has `Begin`, `Stay`, and `End`, and the event record already carries body and collider identifiers plus trigger/response flags. The missing mechanism is how the engine decides that a pair is eligible, maintains its overlap state across ticks, and delivers a transition without exposing live physics storage to gameplay mutation. These are three separate decisions: **filtering** decides whether a pair may proceed; **narrow phase and simulation** decide what actually overlaps or touches; **event delivery** tells gameplay how the relation changed. A filter pass is not a collision test, and an overlap notification is not an impulse.\n\n#### A category and mask rule is reciprocal\n\nAssign each shape a category bit set $C$ and an accepted-category mask $M$. For shapes $A$ and $B$, the ordinary rule is\n\n$$\operatorname{maskPass}(A,B) = (C_A \mathbin{\&} M_B \ne 0) \land (C_B \mathbin{\&} M_A \ne 0).$$\n\nBoth directions must agree. If a player accepts walls but a wall rejects players, the pair is rejected by this policy. Categories describe what a shape *is*; masks describe which categories that shape *accepts*. Choose bits for interaction classes, not unique instances, and keep this rule at the broad-phase candidate boundary so rejected pairs do not reach narrow phase or solver construction. Other engine rules may also reject a pair, including body-type compatibility, same-body suppression, joints that disable connected-body collision, or a custom filter. State that policy separately; passing category and mask is not a promise that the pair will contact.\n\nA small example uses `PLAYER=0x1`, `WORLD=0x2`, `ENEMY=0x4`, and `PICKUP=0x8`. Set the player's category to `PLAYER` and mask to `WORLD | ENEMY | PICKUP`. Set a pickup's category to `PICKUP` and mask to `PLAYER`. Then both intersections are nonzero, so they pass. If the pickup mask becomes zero, the first test passes but the reciprocal test fails; no pair is emitted. When a category is a bit set, one accepted shared bit suffices. A default mask must be deliberate: zero disables all ordinary pairs, while an all-bits mask accepts every category that the other shape permits.\n\n#### Same nonzero groups can override the masks\n\nBox2D's documented rule gives a same, nonzero group index priority over the category/mask test: an equal positive group forces collision eligibility, and an equal negative group forbids it. If the group indexes differ or either is zero, evaluate the reciprocal mask rule. In pseudocode:\n\n```cpp\nbool filter_allows(const Filter& a, const Filter& b) {\n    // Box2D 3.1 policy: an equal nonzero group overrides both masks.\n    if (a.group != 0 && a.group == b.group)\n        return a.group > 0;\n\n    // Each shape must accept the other shape's category.\n    return (a.category & b.mask) != 0 &&\n           (b.category & a.mask) != 0;\n}\n```\n\nFor example, two parts assigned group `+12` remain eligible even if both masks are zero; two parts assigned group `-12` are rejected even if both masks accept everything. `+12` and `-12` are different groups, so their pair falls back to masks. This group rule is an engine-specific override convention, not a universal meaning of “group.” Box2D's current versioned documentation identifies itself as **Box2D 3.1.0**: its filter categories and masks are 64-bit, and it documents the equal nonzero group override above. Box2D 2.4 uses narrower category/mask fields, despite a similar group policy. Pin the engine/library version and adapt field widths and event APIs to that version; do not copy these semantics into another physics engine without checking its contract. The 3.1 policy also includes body-type rules beyond category/mask/group.\n\n| Pair | $C_A \& M_B$ | $C_B \& M_A$ | Same nonzero group? | Result under the Box2D 3.1 filter rule |\n|---|---:|---:|---|---|\n| Player / pickup | nonzero | nonzero | no | pass |\n| Player / enemy with enemy mask zero | nonzero | zero | no | reject |\n| Two `+12` group parts, both masks zero | zero | zero | positive override | pass |\n| Two `-12` group parts, both masks all bits | nonzero | nonzero | negative override | reject |\n| `+12` part / `-12` part with reciprocal bits | nonzero | nonzero | indexes differ | pass |\n\nA filter edit changes which pairs are eligible; it may invalidate contacts and generate end transitions. Treat it as a state change that needs reconciliation at a defined simulation boundary. Avoid changing filters in the middle of narrow-phase iteration or from a callback that is walking physics-owned arrays.\n\n#### A sensor detects overlap and skips physical response\n\nA **sensor** uses the collision pipeline to ask whether shapes overlap, but it contributes no collision impulse or physical blocking response. A plate sensor can therefore register a crate without stopping it. A sensor still needs a geometry test and normally uses the same pair-filter policy; “sensor” does not mean “ignore all masks.” Its event path is conceptually:\n\n```text\nconservative pair candidates\n    -> category/mask/group and engine-rule filters\n    -> exact overlap test\n    -> record sensor overlap transition\n    -> do not create a physical response row for this sensor pair\n```\n\nThe Box2D 3.1 reference separates sensor events from contact events and requires sensor-event generation to be enabled on both involved shapes. Its buffered sensor API reports begin/end overlaps after the step. Fast-moving sensors can still miss an overlap under discrete sampling; use a suitable shape cast or continuous query if the gameplay rule requires detecting a crossing between samples. A trigger used only for gameplay should not be presented as a solid contact, and a physical contact may be relevant even when the game has no trigger behavior.\n\n#### Derive begin, stay, and end from stable pair sets\n\nStore the set of logical overlaps from the last completed fixed step as $P_k$ and the freshly validated overlap set for the new step as $P_{k+1}$. Give each collider a stable identity that includes a slot or index and a generation, such as `ColliderId{slot, generation}`. Form each unordered pair in canonical order, so `(A,B)` and `(B,A)` hash to the same key. Then:\n\n$$\begin{aligned}\mathrm{Begin}_{k+1} &= P_{k+1} \setminus P_k,\\\mathrm{Stay}_{k+1} &= P_{k+1} \cap P_k,\\\mathrm{End}_{k+1} &= P_k \setminus P_{k+1}.\end{aligned}$$\n\nThese set equations avoid firing `Begin` every frame an object remains in a trigger. The existing Kairo event enum calls the continuing state `Stay`; that is an application-level policy derived from set intersection. Box2D 3.1 documents buffered sensor/contact begin and end events (and contact hit events), not a universal stay callback. An engine may omit `Stay` to reduce event volume; if gameplay needs it, derive it from persistent state rather than assuming the physics library emits it.\n\nA complete plate trace makes the transitions concrete. Let the plate be `ColliderId{5,7}`, category `PICKUP`, mask `PLAYER`; let the crate be `ColliderId{2,4}`, category `PLAYER`, mask `PICKUP`. Their reciprocal mask checks pass.\n\n| Fixed tick | Validated overlap set | Derived event | Gameplay effect\n|---:|---|---|---|\n| 40 | empty | none | door remains closed |\n| 41 | `{(2:4, 5:7)}` | `Begin` | add crate 2:4 to plate occupancy; door begins opening |\n| 42 | `{(2:4, 5:7)}` | `Stay` | keep occupancy; do not add a duplicate |\n| 43 | `{(2:4, 5:7)}` | `Stay` | no repeated begin-side sound or reward |\n| 44 | empty because the crate leaves | `End(Separated)` | remove crate 2:4; close if the plate is now empty |\n\nNow replace tick 44 with a filter edit or destruction while overlapping. Reconciliation still emits an `End`, with a reason such as `FilterChanged` or `Destroyed`. That reason lets the consumer distinguish ordinary motion from forced invalidation if its gameplay policy cares. Do not silently erase the pair from the saved set: that leaves a door count, pickup state, or audio loop latched. If a collider goes to sleep, sleep alone is not an overlap exit. Preserve its logical pair state; when it wakes or moves, revalidate geometry and filters, emitting a transition only if the relation actually changed. If an engine destroys contacts as part of sleep/wake or filter changes, normalize those implementation events back into logical pair state to avoid duplicate `Begin` events.\n\n#### Queue copied events, then resolve at a safe boundary\n\nPhysics may run worker tasks or traverse internal arrays while producing contacts. Do not destroy a body, edit a collider, or mutate ECS structure from inside a narrow-phase, solver, or worker callback. During the physics step, collect compact event values (pair IDs, event kind, reason, and any small immutable measurement the consumer needs). Once the step and its storage traversal finish, map physics IDs to gameplay entities, dispatch read-only gameplay responses, and queue structural changes for an explicit synchronization point:\n\n```text\nfixed-step input and forces\n    -> physics step and pair reconciliation\n    -> copy contact/sensor event values\n    -> resolve generation-checked collider-to-entity mappings\n    -> gameplay event systems\n    -> deferred create/destroy/component/filter commands\n    -> structural commit at the declared boundary\n```\n\nThe event queue owns its values. Never retain a pointer into a physics library's transient event arrays; Box2D documents its event arrays as invalidated by later world changes and warns that end events may refer to shapes or contacts already destroyed. If an end handler needs information after deletion, copy the stable gameplay owner ID and the small required payload into the event before processing the structural change. On resolution, check that the collider/entity generation still matches. If the old entity has already died, run cleanup using the copied old owner identity or discard according to explicit policy; never look up the slot alone and deliver the event to a new occupant.\n\nA wake, deletion, teleport, body-type change, or filter edit can invalidate cached pair state. Reconcile at the fixed-step boundary and label forced end reasons when known. Deletion must emit or synthesize the end transition before removing the old pair from the logical set. A slot reused afterward increments its generation, so an old `(slot=2,generation=4)` event cannot resolve to the new `(slot=2,generation=5)` entity. This is the same identity rule used by generational registries: a memory slot is a location, not a lasting object identity.\n\n#### Exercise with a complete solution\n\nA sensor gate has category `GATE=0x10`, mask `PLAYER | KEY = 0x21`, and group zero. A player has category `PLAYER=0x1`, mask `GATE=0x10`, group zero. A key has category `KEY=0x20`, mask `GATE=0x10`, group zero. A decoration has category `DECOR=0x40`, mask all bits, group zero. A pair of moving platform shapes both use group `-5`; a player/platform pair uses group indices `-5` and `+5`. Determine eligible pairs, then process the following gate observations: step 0 none; step 1 player overlaps gate; step 2 same overlap; step 3 player is destroyed; slot 3 is immediately reused for a decoration with a higher generation before queued gameplay events dispatch.\n\n**Solution.** Gate/player passes because `GATE & player.mask = 0x10` and `PLAYER & gate.mask = 0x1`; gate/key passes because `GATE & key.mask = 0x10` and `KEY & gate.mask = 0x20`. Gate/decoration fails because `DECOR & gate.mask = 0`, even though decoration accepts all categories. Two platform shapes with matching group `-5` are rejected regardless of masks. Player/platform groups `-5` and `+5` differ, so group override does not apply; use both reciprocal mask tests. If those bits are set, they pass this filter stage.\n\nFor the gate trace, step 0 has no event. Step 1 adds the stable pair `(player slot 3, generation g; gate ID)`, so emit exactly one `Begin` and insert that generation-qualified player into the gate's occupancy set. Step 2 intersects the previous and current sets, so emit `Stay` only if this engine's gameplay layer requests it; do not emit another `Begin`. At step 3 destruction removes the old pair and produces `End(Destroyed)` carrying the old generation and copied gameplay owner ID. The slot reuse creates a different identity `(3,g+1)`. When the deferred queue drains, generation validation rejects the stale physics handle as a reference to the new decoration; cleanup uses the copied old owner data. The new decoration receives no gate event. The listener does not mutate the physics world while the event arrays or solver are being traversed.\n\n#### Bounded executable witness\n\nThe adjacent private C++20 laboratory implements the reciprocal bit test, positive/negative same-group overrides, differing-group fallback, begin/stay/end set transitions, filter-change/destruction reasons, and slot reuse with generation validation. Compile it with `c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror collision_filter_event_lab.cpp -o collision_filter_event_lab` and run `./collision_filter_event_lab`; all nine bounded assertions pass. The code comments state the policy represented and exclusions. This is a teaching model, not an integration test for Kairo, Box2D, broad-phase traversal, multithreaded dispatch, or production event delivery.\n\n**Versioned source policy.** The filter precedence and 64-bit widths above follow the official [Box2D 3.1.0 simulation documentation](https://box2d.org/documentation/md_simulation.html) and its [3.1.0 release notes](https://box2d.org/documentation/md_release__notes__v310.html). The event-array lifetime and invalidation details follow its [3.1.0 events reference](https://box2d.org/documentation/group__events.html). These are a named reference policy for this example; a consuming project must pin and verify its actual engine version, because category widths, default event settings, same-body/body-type rules, sensor event enablement, callback constraints, and lifecycle APIs differ across releases and engines.\n
+
+
 
 ---
 
@@ -78605,6 +79172,20 @@ The early Hazel playtest described in the fully read captions explicitly still u
 
 The same scene reveals another useful split: a render mesh supplies visible detail, while a collision representation supplies the geometry used for interaction. A decorative plant may need many visible triangles but only a simple collision shape, or no blocking collider at all. Conversely, a thin visible surface may need a deliberately more robust gameplay boundary. Choose the collision shape for the intended interaction and query precision. Simplification saves work but changes where contact happens, so show the collider in the editor and test walking, jumping, and object placement against it. The video identifies separating render and collision geometry as work still needed, rather than a completed feature.
 
+<!-- Supervised source-review addition fed24c18e31fccdd -->
+
+#### Mesh-local geometry and entity transforms must agree
+
+An imported mesh contains vertex positions in a mesh-local coordinate system; a scene entity supplies the transform that places those vertices in the world. Using homogeneous column-vector points $\mathbf{x}_m=(x,y,z,1)^T$ and a $4\times4$ placement matrix $M_e$, write that relationship as $\mathbf{x}_w = M_e\mathbf{x}_m$, where $\mathbf{x}_m$ is a vertex in mesh space and $M_e$ is the entity transform. Moving the entity changes $M_e$. A translation can hide an offset in one instance, but it does not change the authored mesh-local vertices or pivot, so later rotation, instancing and collider alignment may still expose the mismatch.
+
+A Hazel mesh-workflow session shows this failure with a fractured cube and an orange reference cube: the engine places the objects at the same nominal transform, but their geometry does not line up. The creator identifies the fractured geometry as misaligned, reworks it in Blender, and uses a reset/update-transform-from-mesh operation across the selected entities before updating the prefab. Grid snapping is attempted, but the session does not establish it as a reliable general repair. ([Making Games with Hazel + More Mesh Workflow](https://www.youtube.com/watch?v=GjqDjvNssOM))
+
+For a simple trace, a vertex at mesh-local $x=2$ placed by an entity translation of $5$ appears at world $x=7$. If the intended pivot-relative vertex was $x=0$, translating this instance by $3$ puts that vertex at world $x=5$, but also moves the entity origin: it has compensated the visible position rather than repaired the asset convention. Choose deliberately between correcting the authored geometry and retaining a documented import/root transform; do not bake a correction into a skinned mesh without keeping its bind transforms consistent.
+
+For a reusable import pipeline, make the local origin and transform convention explicit. Inspect the mesh-space bounds and pivot, apply the intended authoring transform before export, then verify the imported world-space result against a known reference before saving the prefab. Treat “reset transform from mesh” as a tool-specific workflow; this video does not specify its implementation, units, error tolerance, or behavior for every asset type.
+
+
+
 
 #### Separate editable assets from runtime-ready data
 During development, keep an asset in the format the artist or tool can still edit. At packaging time, convert it into a representation the runtime can load directly, and place those payloads in a container with an index. A compact header can identify the container and its format version; scene and asset handles can map to byte offsets and sizes. Load the index up front, then read only the payload needed by the active scene. This design trades packaging work and format maintenance for less runtime conversion. It also makes explicit the evidence needed for future changes: version compatibility, malformed-file handling, and actual load-time measurements are separate questions. (Full caption read: [caption source](https://www.youtube.com/watch?v=_k4TaZmSteY).)
@@ -79421,6 +80002,46 @@ Penetration correction is separate. One can shift positions apart by a bounded a
 
 Contact order matters when many contacts interact. A stack of crates can be unstable if each pair is resolved once in a poor order. Sequential iterative solving revisits constraints, but consumes time and remains approximate. Resting contacts need special care because gravity continually pushes objects into support surfaces. Friction adds a tangential constraint: static friction resists sliding up to a limit; dynamic friction opposes motion while sliding. Millington’s contents locate resting forces, micro-collisions and friction in Ch. 15, and stability/optimizations in Ch. 16 (PDF p.15). Those topics deserve focused follow-up reading before implementing production stacking, joints, or high-speed contact.
 
+<!-- Supervised source-review addition ee1d00bff2b64930 -->
+
+#### Particle cables and rods are distance constraints represented as contacts
+
+The particle engine’s cable and rod examples turn a distance relationship into a contact record that the existing contact resolver can process. They are hard constraints with different admissible states rather than collision shapes. The contact record describes both a velocity response and a separate positional-error correction; those solve different problems.
+
+Let particles A and B have positions $\mathbf{x}_A$ and $\mathbf{x}_B$, inverse masses $w_A=1/m_A$ and $w_B=1/m_B$, separation vector $\mathbf{r}=\mathbf{x}_B-\mathbf{x}_A$, and distance $d=\lVert\mathbf{r}\rVert$. When $d>0$, define $\mathbf{n}=\mathbf{r}/d$, a unit vector from A to B. Let $L$ be the permitted distance and let $C=d-L$ be the signed length error. If $w_A+w_B>0$, the positional-error portion of contact resolution can use a single inverse-mass-weighted correction: this equation describes the geometry of that correction, not a complete velocity or energy solver. It is
+
+$$
+\mathbf{x}_A' = \mathbf{x}_A + \frac{w_A C}{w_A+w_B}\mathbf{n}, \qquad
+\mathbf{x}_B' = \mathbf{x}_B - \frac{w_B C}{w_A+w_B}\mathbf{n}.
+$$
+
+For a cable, apply this positional correction only when $C>0$: the line is slack while $d<L$, so there is no length error to correct. At $d=L$, however, outward relative velocity would stretch the cable in the next instant, so an active contact can still be needed for its velocity response. The supplied cable code emits a contact at $d\geq L$, including zero penetration at the taut boundary; an outward relative velocity $(\mathbf v_B-\mathbf v_A)\cdot\mathbf n>0$ is the direction that tension must oppose. For example, if $\mathbf{x}_A=(0,0)$, $\mathbf{x}_B=(3,0)$, $L=2$, $w_A=0.25$, and $w_B=0.75$, then $d=3$, $\mathbf{n}=(1,0)$ and $C=1$. The correction moves A right by $0.25$ and B left by $0.75$, leaving their distance at $2$. A cable’s velocity response can use restitution to decide whether tightening produces rebound; a taut-rope design usually chooses little or no bounce.
+
+A rod requires $d=L$ in both directions. Generate a contact for either $C>0$ (too long) or $C<0$ (too short); the sign of $C$ makes the correction pull together or push apart. For a rod of target length $2$ with the same particles compressed to distance $1.5$, $C=-0.5$: A moves left by $0.125$ and B right by $0.375$, restoring distance $2$. Use zero restitution to avoid intentionally turning a rod correction into a bounce. That choice does not guarantee zero vibration: timestep size, contact ordering, repeated corrections, tolerances, and iteration budget still affect stability. The source has a discrepancy here: its prose recommends two opposing contacts every frame, but the displayed `ParticleRod::fillContact` returns zero at exact target length and otherwise emits only one contact, choosing the normal from the sign of the length error. Do not describe that displayed implementation as generating two contacts. A solver that maintains a bilateral rod constraint can instead enforce the permitted relative velocity at the boundary directly; whichever representation is chosen must agree with the actual resolver and iteration policy.
+
+Guard the degenerate cases: if $d=0$, the direction $\mathbf{n}$ is undefined and needs a stable fallback direction or a reported invalid constraint; if $w_A+w_B=0$, both particles are immovable and no mass-weighted correction is possible. A production implementation also needs consistent normal conventions and a defined policy for impossible constraints.
+
+This contact-based solver differs from time-division collision handling. A time-of-impact loop predicts candidate collision times over the remaining frame interval, advances to the earliest event, resolves that collision, then recomputes motion and candidate times because the changed velocity can change later events. It repeats until the interval is consumed or a bounded event budget is reached. In ideal arithmetic, resolving exactly at the first contact avoids stepping through each impact; in a real engine, numerical error, simultaneous contacts, and resting contact can repeatedly report an event at nearly the same time. The loop therefore needs progress limits and a persistent/resting-contact or discrete-step fallback. Recomputing after each impact can represent a sequence of separated impacts such as idealized pool balls, but does not by itself solve simultaneous or sustained contacts and can be costly as a general game-world method. [Game Physics Engine Development, PDF pp. 145–156 / printed pp. 122–133]
+
+<!-- Supervised source-review addition ee9d62417b59bce5 -->
+
+#### What changes when the solver works directly on predicted positions
+
+**Position-based dynamics (PBD)** predicts positions, projects constraint violations toward admissible positions, and then reconstructs velocities from the corrected displacement over the step. A distance projection can therefore resemble the positional correction above, while the full update method differs from a solver organized around velocity impulses and separate penetration repair. The original [PBD paper](https://doi.org/10.2312/PE/vriphys/vriphys06/071-080) develops this position-centered formulation.
+
+**Extended PBD (XPBD)** introduces compliance, the inverse of stiffness, into that projection. For the distance constraint $C=d-L$, let $h>0$ be the step, $k>0$ the stiffness in newtons per metre, $\alpha=1/k$ the compliance in metres per newton, and $\widetilde\alpha=\alpha/h^2$. Accumulate a multiplier $\lambda$ across solver iterations within the step:
+
+$$
+\Delta\lambda=\frac{-C-\widetilde\alpha\lambda}{w_A+w_B+\widetilde\alpha},\qquad
+\lambda\leftarrow\lambda+\Delta\lambda.
+$$
+
+With the earlier normal from A to B, apply $\Delta\mathbf x_A=-w_A\mathbf n\Delta\lambda$ and $\Delta\mathbf x_B=w_B\mathbf n\Delta\lambda$. Setting $\alpha=0$ recovers the hard distance correction when the denominator is nonzero. Positive compliance permits extension; it is a different physical model, not merely a slower hard rod. A cable additionally needs an inequality and an admissible tension multiplier. [XPBD](https://mmacklin.com/xpbd.pdf) addresses the stiffness dependence of ordinary PBD on timestep and iteration count; finite convergence error still depends on the solver budget. Multiplier initialization, inter-step warm starting, contact handling and velocity reconstruction remain explicit implementation choices.
+
+
+
+
+
 #### 4.4 Discrete time can miss collisions
 
 A body can move from one side of a thin wall to the other between two samples. Neither sampled position overlaps the wall. This is tunneling, and no amount of better contact resolution fixes it if detection never reports a contact. The remedies include smaller fixed steps, swept tests/continuous collision detection for selected fast bodies, thicker collision geometry, or game-specific speed limits. Each costs something. A racing game may need continuous checks for a few fast vehicles; a slow puzzle game may not. Collision tests should include maximum speeds and thinnest obstacles, not only ordinary scenes.
@@ -79669,9 +80290,9 @@ $$
 
 This arithmetic illustrates interpolation; it is not a measured flight model or proof that every implementation maps input linearly. The worked blend uses $u\in[-1,1]$; handling values outside the documented range is an implementation contract that must be checked. Its sail and rudder also change orientation relative to the rigid body; the `AngledAero` listing combines surface orientation with body orientation while keeping one tensor. The printed declaration names the constructor `Aero` inside `AngledAero`, which looks inconsistent with ordinary C++ constructor syntax. Treat it as an apparent excerpt defect, not a tested compiler result.
 
-A boat adds **buoyancy**, the upward force associated with displaced water. This excerpt approximates it as increasing with submersion until a maximum, then staying capped rather than increasing without limit at greater depth. The point where the force acts matters. The **center of buoyancy** is the center of mass of the displaced water; for one force applied at an offset from the boat’s center of mass, the moment is $\boldsymbol{\tau}=\mathbf{r}\times\mathbf{F}$, using the [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#The cross product and its definition|cross product]]. The book’s fixed-center approximation says the relative placement of center of mass and center of buoyancy can produce a righting or toppling torque; that is a property of this toy attachment model, not a general floating-stability test. In an actual hull, the center of buoyancy moves as the hull tilts and the displaced volume changes. A single force’s instantaneous torque depends on the full offset vector and force direction, not height alone.
+A boat adds **buoyancy**, the upward force associated with displaced water. This excerpt approximates it as increasing with submersion until a maximum, then staying capped rather than increasing without limit at greater depth. The point where the force acts matters. The **center of buoyancy** is the center of mass of the displaced water; for one force applied at an offset from the boat’s center of mass, the moment is $\boldsymbol{\tau}=\mathbf{r}\times\mathbf{F}$, using the [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#The cross product and its definition|cross product]]. The book’s fixed-center approximation says the relative placement of center of mass and center of buoyancy can produce a righting or toppling torque; that is a property of this toy attachment model, not a general floating-stability test. In an actual hull, the center of buoyancy moves as the hull tilts and the displaced volume changes. A single force’s instantaneous torque depends on the full offset vector and force direction, not height alone.
 
-A small derived example makes the scale concrete. Under the idealized Archimedes relation, displacing $0.01\,\mathrm{m^3}$ of fresh water at $1000\,\mathrm{kg/m^3}$ corresponds to $10\,\mathrm{kg}$ of water, or about $98\,\mathrm{N}$ of upward force using $g=9.8\,\mathrm{m/s^2}$. For this force-moment example, take the lever arm $\mathbf r$ in world coordinates ([[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10.5 Higher precision and local coordinate frames|a named coordinate frame]]) from the center of mass to the force point, and take $\mathbf F=(0,98,0)\,\mathrm{N}$. Then the out-of-plane $z$ moment component is $\tau_z=r_xF_y-r_yF_x$:
+A small derived example makes the scale concrete. Under the idealized Archimedes relation, displacing $0.01\,\mathrm{m^3}$ of fresh water at $1000\,\mathrm{kg/m^3}$ corresponds to $10\,\mathrm{kg}$ of water, or about $98\,\mathrm{N}$ of upward force using $g=9.8\,\mathrm{m/s^2}$. For this force-moment example, take the lever arm $\mathbf r$ in world coordinates ([[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#10.5 Higher precision and local coordinate frames|a named coordinate frame]]) from the center of mass to the force point, and take $\mathbf F=(0,98,0)\,\mathrm{N}$. Then the out-of-plane $z$ moment component is $\tau_z=r_xF_y-r_yF_x$:
 
 | World-space offset $\mathbf r$ (m) | Upward force $\mathbf F$ (N) | Moment about center of mass |
 | --- | --- | --- |
@@ -79899,6 +80520,18 @@ so $\dot{\boldsymbol\omega}_b=I_b^{-1}[\boldsymbol\tau_b-\boldsymbol\omega_b\tim
 
 Millington’s particle and rigid-body development uses **force generators** to separate a force law from the object receiving it. Gravity, drag, springs, anchored springs, bungees, buoyancy, thrusters, aerodynamic forces, or a game-specific field can all answer the same conceptual question: given the body and the current environment, what force and possibly torque should be accumulated for this interval? The body owns mass and dynamic state; the generator owns or references the parameters of the law. A registry or system decides which generators affect which bodies.
 
+<!-- Supervised source-review addition 98a31c389dc685e0 -->
+
+#### A particle aggregate is a useful model for connected, flexible geometry
+
+A particle physics world can represent a rope, cable, bridge, or soft body as point masses joined by constraints and spring forces. A typical step clears each particle’s force accumulator, applies registered force generators, integrates particle state, asks contact generators to fill a bounded contact array, then resolves the contacts; `startFrame()` must occur before the forces for that interval are accumulated. In the cited `ParticleWorld`, particle and contact-generator registrations are linked lists, the force registry separately uses a vector, and a full contact array can omit later generated contacts. Those are concrete choices from Millington’s implementation, not required container designs ( *Game Physics Engine Development*, physical PDF pp. 157–168 / printed pp. 134–145).
+
+The examples show what this representation buys and what its collision tests mean. A bridge uses particles connected by rods and cables; a character is approximated by a sphere tested against each plank segment, with a contact sent to the nearest plank particle. Fixed pivot particles make a platform stay anchored. Spring-connected particles can form a soft blob, with a rendering method such as metaballs needed to turn the point set into a surface. These are application sketches, not complete general collision or surface-rendering algorithms.
+
+The representation has a useful boundary: the cited contact model omits friction, so objects slide, and large sets of stiff constraints can flex, bend, or vibrate as competing corrections are resolved. Use particle aggregates when their deformable or cable-like behavior is the intended model; for general solid objects that need stable rotation and contact response, a rigid-body representation is the more appropriate next step. The numerical limits and tradeoffs belong beside the particle-world architecture, rather than being hidden by the visual plausibility of a demo.
+
+
+
 This separation is more than an object-oriented pattern. It prevents a common temporal error: treating a force as though it were a durable velocity change. A force accumulator should normally represent contributions for the current integration interval, then be cleared after integration. Persistent influences are represented by persistent **relationships or generators** that reapply the correct force on the next step. Gravity remains active because the gravity rule runs again, not because last frame’s force vector was accidentally left in memory. An impulse is different: it changes momentum at an event and should not be re-applied every tick.
 
 The distinction also makes testing easier. A gravity generator can be checked against mass policy; a drag law can be checked for direction, magnitude, units, and zero-velocity behavior; a spring can be checked at compressed, rest, and stretched lengths; buoyancy can be checked above, partially within, and below a fluid plane. Then the integrator can be tested independently with known accumulated forces. If a body explodes numerically, this separation helps ask whether the law produced an unreasonable force or whether integration mishandled a valid one.
@@ -79906,6 +80539,51 @@ The distinction also makes testing easier. A gravity generator can be checked ag
 Millington invokes d’Alembert’s principle while developing these mechanics. For engine work, the practical lesson is not to turn that name into mystique: forces, constraints, and inertial response can be reorganized mathematically, but the discrete engine still needs explicit state, units, sign conventions, and a stepping method. Later contact solvers may treat constraints through impulses or Lagrange-multiplier-like quantities instead of ordinary force generators. Keeping external force accumulation separate from contact resolution makes that architectural difference visible.
 
 Source basis: Millington, *Game Physics Engine Development*, Chapters 5–7 and 10, including general force generators, gravity/drag, springs and buoyancy, hard constraints, and rigid-body force/torque accumulation.
+
+<!-- Supervised source-review addition e09aaa7375d2e035 -->
+
+### A staged explosion is a timed game force field, not a blast simulation
+
+A force generator can produce a designed explosion response without claiming to simulate explosive chemistry, compressible air, fire, or structural damage. Millington’s game-physics example layers three effects: a short inward implosion, an outward-moving concussion front, and a weak convection chimney. They are artistic force fields for rigid bodies and particles. The parameters shape a visual/gameplay result; they are not calibrated blast physics, a prediction of real pressure. (Millington, *Game Physics Engine Development*, §17.2.3, printed pp. 411–418; retained physical-PDF block 433–444.)
+
+Let the detonation point be $\mathbf{x}_0$, the body’s selected force-application point be $\mathbf{x}$, and its distance from the center be $r=\lVert\mathbf{x}-\mathbf{x}_0\rVert$. For $r>0$, define the outward radial direction as
+
+$$
+\mathbf{n}=(\mathbf{x}-\mathbf{x}_0)/r.
+$$
+
+At the exact detonation point, $r=0$ and this direction is undefined. A safe implementation applies no radial component there (or uses an explicitly designed, deterministic fallback); it never normalizes the zero vector. This sign convention makes an implosion use $-\mathbf n$ and the concussion use $+\mathbf n$. Choose radii in metres, durations in seconds, front speed in metres per second, and force magnitudes in newtons. Clamp the spatial and temporal envelopes so the generator cannot apply an unbounded force.
+
+During an implosion interval $0\leq  t<T_i$, apply a modest inward force only in a selected annulus, such as $r_{min}<r<r_{max}$:
+
+$$
+\mathbf F_i=-\mathbf n\,F_i^{\max}S_i(r)G_i(t).
+$$
+
+Here $S_i(r)$ is a bounded radial falloff that reaches zero at the configured inner and outer limits, and $G_i(t)$ fades the effect to zero over its finite duration. The inner radius leaves the immediate center unaffected, while the force cap and fade reduce the chance that the simplified inward pull drags a body through the origin. A step-boundary test should check both radii and times immediately before, at, and after $T_i$.
+
+For a moving concussion front, let $s(t)=c_wt$ be its radius, where $c_w$ is a chosen game parameter. A simple bounded band is
+
+$$
+W(r,t)=\max\left(0,1-\frac{|r-s(t)|}{w}\right),\qquad
+\mathbf F_c=+\mathbf n F_c^{\max}W(r,t)G_c(t),
+$$
+
+where $w$ is the band half-width and $G_c(t)$ limits the active lifetime. This triangular envelope is a clear teaching model for a force peak near the front with falloff on either side; it is not a unique or physically validated shock profile. A discrete step can otherwise skip a thin band when the front travels farther than its width between evaluations. For a stationary sample radius, a conservative choice is $w\geq c_w h$, where $h$ is the physics step. Moving bodies require testing the relative separation $r(t)-s(t)$ across the interval, or sufficient substeps; front speed alone does not bound that relative motion. A swept test can detect that the band crossed the body even when neither endpoint lies in it, but the response must also declare how it integrates the time spent inside the band. If desired, the peak may depend on relative radial velocity, as the source discusses, but that response needs its own bounded, tested policy rather than an invented aerodynamic guarantee.
+
+After the outward front, a low-magnitude convection effect can lift light bodies and particles within a bounded vertical cylinder. For horizontal radius $r_{xz}$ and height $y-y_0$, use a nonnegative envelope $S_u(r_{xz},y)$ that vanishes outside the chosen chimney radius and height, then apply
+
+$$
+\mathbf F_u=+\hat{\mathbf y}F_u^{\max}S_u(r_{xz},y)G_u(t).
+$$
+
+The source describes this as a weak, long-lived upward force; an artist may angle it outward to suggest a mushroom-shaped plume, but the result is still a visual convention. Keep it small, time-bounded, and separately testable. It can affect particles even when the rigid-body response is negligible. Fire, smoke, lighting flashes, and post-processing remain presentation effects with their own state; they do not follow from this force model.
+
+**Numeric trace.** Put a $5\,\mathrm{kg}$ body at $(6,0)\,\mathrm m$, with detonation at $(0,0)\,\mathrm m$. Then $r=6\,\mathrm m$ and $\mathbf n=(1,0)$. Let $c_w=10\,\mathrm{m/s}$, $t=0.50\,\mathrm s$, and $w=2\,\mathrm m$. The front is at $s=5\,\mathrm m$, so $W=1-|6-5|/2=0.5$. With illustrative $F_c^{\max}=100\,\mathrm N$ and a fully active time envelope, the applied force is $(50,0)\,\mathrm N$. Holding this sampled force constant for a $0.01\,\mathrm s$ explicit integration step contributes impulse $(0.5,0)\,\mathrm{N\,s}$ and, before any other forces or solver effects, changes the body’s velocity by $(0.1,0)\,\mathrm{m/s}$. These are chosen game parameters, not a real-world blast estimate.
+
+Apply the force at a deterministic body-local point, transformed to world space each step, for each body if the demo needs rotation: $\boldsymbol\tau=(\mathbf{x}-\mathbf{x}_{COM})\times\mathbf F$. Re-selecting a random point every frame makes torque jitter and can spin a body without a stable cause. The generator contributes force for the current integration interval; do not accidentally retain it as a permanent velocity change. Test the radial sign, zero-distance case, radius and duration boundaries, a wavefront crossing between steps, a static body, off-center torque, repeated runs with the same seed, and force/impulse units. Keep this example separate from the fracture sample’s mass-properties code: that excerpt’s box-volume and inertia expressions require correction before reuse.
+
+
 
 ### Force acts over an interval; impulse acts at an event
 
@@ -80061,19 +80739,41 @@ The pressure-plate crate from our workshop game is now the engineering test case
 
 ### Follow one crate through the complete physical argument
 
-Suppose our crate is a homogeneous rectangular box with mass $m=2\\,\\mathrm{kg}$, width $a=2\\,\\mathrm m$, height $b=1\\,\\mathrm m$, and depth $c=1\\,\\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.
+Suppose our crate is a homogeneous rectangular box with mass $m=2\,\mathrm{kg}$, width $a=2\,\mathrm m$, height $b=1\,\mathrm m$, and depth $c=1\,\mathrm m$. We choose the world frame to have $y$ upward and represent local body axes by the columns of a rotation $R$. The body's centre of mass $x$ has units metres; linear velocity $v$ has units m/s; angular velocity $\omega$ has units rad/s. Those declarations let us distinguish positions from displacements, degrees from radians, and a world vector from body-local coordinates *before* an implementation mixes them.
 
 For a homogeneous axis-aligned box the centre-of-mass inertia tensor in its local principal frame is diagonal:
 
-$
-I_{\\mathrm{body}}=\\frac{m}{12}\\operatorname{diag}(b^2+c^2,\\;a^2+c^2,\\;a^2+b^2)=\\operatorname{diag}(1/3,5/6,5/6)\\;\\mathrm{kg\\,m^2}.
-$
+$$
+I_{\mathrm{body}}=\frac{m}{12}\operatorname{diag}(b^2+c^2,\;a^2+c^2,\;a^2+b^2)=\operatorname{diag}(1/3,5/6,5/6)\;\mathrm{kg\,m^2}.
+$$
 
-Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\\,\\mathrm N$ acting $0.5\\,\\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\\,\\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\\,\\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\\tau=r\\times F=(0,0,-5)\\,\\mathrm{N\\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\\alpha_z=\\tau_z/I_{zz}=-6\\,\\mathrm{rad/s^2}$ because $I_{zz}=5/6\\,\\mathrm{kg\\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\\omega\\times(I\\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.
+Why is this mass-dependent matrix necessary? Consider a world-space horizontal force $F=(10,0,0)\,\mathrm N$ acting $0.5\,\mathrm m$ above the centre, at lever arm $r=(0,0.5,0)\,\mathrm m$. Its linear acceleration contribution is $F/m=(5,0,0)\,\mathrm{m/s^2}$, regardless of the contact point. But the same force exerts torque $\tau=r\times F=(0,0,-5)\,\mathrm{N\,m}$. With the body axes initially aligned to world axes, the instantaneous angular acceleration about the principal $z$ axis is $\alpha_z=\tau_z/I_{zz}=-6\,\mathrm{rad/s^2}$ because $I_{zz}=5/6\,\mathrm{kg\,m^2}$. This last scalar division is valid *here*, at the specified aligned orientation and initial zero angular velocity: in general the rotational equation also includes the gyroscopic term $\omega\times(I\omega)$, and the world inertia is $I_{world}=R I_{body}R^T$.
 
-At a fixed timestep $h=0.01\\,\\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\\,\\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\\,\\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.
+At a fixed timestep $h=0.01\,\mathrm s$, an isolated semi-implicit first step from zero velocity would change the linear velocity by $(0.05,0,0)\,\mathrm{m/s}$ and, under the stated initial-axis assumptions, the angular velocity about $z$ by $-0.06\,\mathrm{rad/s}$. These are *one-step numerical approximations*, not exact long-duration predictions: as the orientation and velocities evolve, inertia, collision and solver forces change. Integrating orientation therefore requires a declared quaternion or rotation-matrix convention and an update consistent with the world/local angular-velocity frame.
 
-When the crate touches the plate or floor, the contact impulse must change both $v$ and $\\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.
+When the crate touches the plate or floor, the contact impulse must change both $v$ and $\omega$ through the lever arm. This motivates the effective inverse mass of the contact and ultimately the accumulated, clamped normal impulse of the persistent solver. A complete, continuous derivation from point velocity to contact constraints and warm starting is available in [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Physical Foundations — Rigid Bodies, Extended Motion, and Contact Constraints|Rigid Bodies - From Extended Motion to Contact Constraints]]; the steps immediately below retain the supplied full derivations and engine code evidence. The standalone [C++20 contact laboratory](../tools/labs/rigid_body_contact_lab.cpp) checks the simpler, central-contact limit; it does not establish correctness of the 3D angular solver.
+
+<!-- Book-completion teaching addition f825d990f828525a -->
+
+#### Derive the contact response before solving a stack
+
+At a world contact point $p$, a rigid body's point velocity is $v_p=v+\omega\times r$, where $r=p-x_{COM}$. For bodies $A$ and $B$, choose unit normal $n$ from $A$ to $B$ and define closing speed with sign intact: $u=n^T(v_{Bp}-v_{Ap})$. Then $u<0$ means the surfaces are approaching. In a planar solver, the scalar cross product $r\times n$ is the signed moment arm.
+
+A normal impulse $\lambda n$ on $B$ is paired with $-\lambda n$ on $A$. It changes the center velocities by $\Delta v_A=-m_A^{-1}\lambda n$ and $\Delta v_B=m_B^{-1}\lambda n$, and angular velocities by $\Delta\omega_A=-I_A^{-1}(r_A\times n)\lambda$ and $\Delta\omega_B=I_B^{-1}(r_B\times n)\lambda$. Projecting the resulting point-velocity changes back onto $n$ gives $\Delta u=K\lambda$, where
+
+$$
+K=m_A^{-1}+m_B^{-1}+I_A^{-1}(r_A\times n)^2+I_B^{-1}(r_B\times n)^2.
+$$
+
+$K$ is the effective inverse mass at this contact, measured in $\mathrm{kg}^{-1}$. For one frictionless, zero-restitution contact with $u<0$ and $K>0$, the impulse that stops closing is $\lambda=-u/K$; unilateral contact clamps that result to $\lambda\ge0$, because the surface can push but cannot pull. Restitution changes the target speed only for a newly impacting contact; penetration correction is a separate position or bias policy and must not be mistaken for this velocity derivation.
+
+**Hand trace.** Let $A$ have $m_A=1\,\mathrm{kg}$, $I_A^{-1}=3\,\mathrm{kg}^{-1}\mathrm m^{-2}$, $r_A=(0,0.5)\,\mathrm m$, and let $B$ be fixed. Set $n=(1,0)$ and $u=-2\,\mathrm{m/s}$. Then $(r_A\times n)=-0.5\,\mathrm m$ and $K=1+3(0.5)^2=1.75\,\mathrm{kg}^{-1}$. The stopping impulse is $\lambda=2/1.75=8/7\,\mathrm{N\,s}$. Body $A$ receives $-8/7\,\mathrm{N\,s}$ along $x$, so $\Delta v_{Ax}=-8/7\,\mathrm{m/s}$; its angular change is $-3(-0.5)(8/7)=12/7\,\mathrm{rad/s}$. The contact-point normal-speed increase is $K\lambda=2\,\mathrm{m/s}$, taking $u$ to zero. The equal-and-opposite impulse is applied to $B$ in a two-dynamic-body case; this trace holds $B$ fixed to isolate the algebra.
+
+**Solved check.** Move the same impulse line through $A$'s centre, so $r_A\times n=0$. Now $K=1\,\mathrm{kg}^{-1}$, $\lambda=2\,\mathrm{N\,s}$, and $\Delta\omega_A=0$. The larger impulse is required because the off-centre contact in the first case could use rotation as well as translation to remove closing speed. If the initial speed instead is $u=+0.3\,\mathrm{m/s}$, the unilateral solution is $\lambda=0$; a repulsive contact must not attract separating bodies.
+
+This scalar derivation is the base case. With two contacts, an impulse at one point changes speed at the other, so the scalar $K$ becomes a matrix and row order matters at finite iteration counts. The later active-set witness solves the two-point block; the sequential solver and cached impulses then provide an iterative policy. The original supplied Parts 1701–1800 lesson body was not received, so that later material remains labeled reconstruction rather than source-preserved lecture content.
+
+
 
 The sequence below keeps the source's Part 1601–1700 labels for provenance, but those numbers do not divide the reasoning into separate lessons. Keep asking what the crate needs *next* to remain a physically and numerically coherent part of the game.
 
@@ -98610,7 +99310,263 @@ It is judged by whether you can state **which equations are being solved, which 
 
 For Kairo specifically, the physics foundation is already much stronger than a toy engine: it has proper mass/inertia structures, immediate impulses, fixed-step runtime integration, deterministic snapshot/replay hashing, stable sleeping semantics, exponential damping, CCD support, conservation-friendly equal-and-opposite solver machinery, and renderer-independent debug geometry. The remaining improvements exposed across Passes 16–18 are now sharply defined rather than vague: **fix general non-diagonal inertia inversion, formalize COM-relative runtime geometry, add child orientation to compound mass construction, optionally add full gyroscopic dynamics, move orientation integration to the exponential map, expose first-class kinematic targets, add clamp diagnostics, visualize COM/principal inertia axes, and add quantitative energy/momentum regression suites.**
 
-That closes the **entire 18-pass run**.
+That closes the original rigid-body mechanics reconstruction through Part 1700. The supplied lesson-body provenance for Parts 1701–1800 is missing, so the following contact and constraint material is an explicit reconstruction, not a claim that the original source text was preserved.
+
+## From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge
+
+One isolated impact can be solved with one scalar impulse. A resting crate immediately breaks that model: two contact points belong to one rigid body, and an impulse at either point changes both center velocity and angular velocity. Therefore it changes the normal speed at both points.
+
+For contact $i$, let $\mathbf p_i$ be the world point and let unit normal $\mathbf n$ point from body $A$ toward body $B$. The lever arms are $\mathbf r_{Ai}=\mathbf p_i-\mathbf x_A$ and $\mathbf r_{Bi}=\mathbf p_i-\mathbf x_B$. Point velocity is $\mathbf v+\boldsymbol\omega\times\mathbf r$, so the pre-solve normal speed is
+
+$$
+u_i=\mathbf n^\mathsf T\left[(\mathbf v_B+\boldsymbol\omega_B\times\mathbf r_{Bi})-(\mathbf v_A+\boldsymbol\omega_A\times\mathbf r_{Ai})\right]
+$$
+
+Use SI units: positions are metres, linear velocity is metres/second, angular velocity is radians/second, mass is kilograms, inverse inertia is kilogram$^{-1}$ metre$^{-2}$, and impulse is newton-seconds. With the normal from $A$ to $B$, $u_i<0$ means closing. A normal impulse $\lambda_i\ge0$ pushes $B$ along $\mathbf n$ and applies the equal-and-opposite impulse to $A$; ordinary contact does not pull.
+
+Let $u$ collect pre-solve speeds and $\lambda$ collect normal impulses. The contact-space effective-mass matrix maps impulses to speed changes:
+
+$$
+w=u+K\lambda,\qquad K=JM^{-1}J^\mathsf T.
+$$
+
+$J^\mathsf T\lambda$ maps contact impulses to generalized body impulses, $M^{-1}$ converts them to changes in linear and angular velocity, and $J$ projects those changes back to contact speeds. Thus $K_{ij}$ measures how impulse $j$ changes speed at contact $i$. For planar rigid bodies with a common normal,
+
+$$
+K_{ij}=m_A^{-1}+m_B^{-1}+I_A^{-1}(\mathbf r_{Ai}\times\mathbf n)(\mathbf r_{Aj}\times\mathbf n)+I_B^{-1}(\mathbf r_{Bi}\times\mathbf n)(\mathbf r_{Bj}\times\mathbf n).
+$$
+
+Off-diagonal terms express coupling. For frictionless zero-restitution contact, solve the complementarity conditions
+
+$$
+\lambda\ge0,\qquad w=u+K\lambda\ge0,\qquad \lambda_iw_i=0.
+$$
+
+A positive impulse requires zero residual closing speed; a separating point needs no impulse. For a unit-mass, unit-inertia crate descending at $2\,\mathrm{m/s}$ with contacts at $x=-1$ and $x=1$, $K=\begin{bmatrix}2&0\\0&2\end{bmatrix}$ and $u=(-2,-2)^\mathsf T$, giving $\lambda=(1,1)^\mathsf T\,\mathrm{N\,s}$. Moving the right contact to $x=2$ gives $K=\begin{bmatrix}2&-1\\-1&5\end{bmatrix}$ and $\lambda=(4/3,2/3)^\mathsf T\,\mathrm{N\,s}$. Sequential impulses approximate this coupled solution through repeated projected updates; a block solve handles a small set together.
+
+The implementation checks all four two-contact active sets: both points, first only, second only, or neither. It accepts a candidate only when impulses are nonnegative and post-speeds satisfy complementarity within a scale-aware tolerance. A near-singular determinant skips the both-active inverse; a feasible one-point fallback may still exist for duplicate contact rows. If no candidate is feasible, the island is rejected before body mutation. This witness covers normal velocity response only; restitution targets, penetration stabilization, friction, warm-start cache lifetime, and larger islands are separate policies.
+
+### Executable active-set witness with numeric and failure traces
+
+The following C++20 program implements the two-point block and exercises symmetric, asymmetric, single-active, separating, rank-deficient, immovable, and invalid-normal cases. Its comments state the equations, units, branch rules, and invariants beside the operations they explain.
+
+```cpp
+/*
+Teaching contract: this is a 2-D rigid-body velocity solve for two unilateral
+normal contacts on one body pair. Positions are metres, linear speeds m/s,
+angular speed rad/s, inverse mass kg^-1, inverse inertia kg^-1 m^-2, and each
+normal impulse is kg m/s. The unit normal points from A toward B; a positive
+relative normal speed means separation. The contact-point velocity is
+v + omega x r, so rotating bodies can close at one point and separate at the
+other even when their centers move together.
+
+For contact i, let J_i be its normal-velocity row. The effective-mass block
+K_ij = J_i M^-1 J_j^T maps impulse j into speed change at point i. We solve
+w = u + K lambda >= 0, lambda >= 0, lambda_i*w_i = 0. The four active sets
+(both, left, right, neither) are enumerated and checked against complementarity;
+a singular both-active block falls through to feasible one-point cases. The
+witness fails closed when no case exists and verifies the reconstructed post
+speeds against the matrix equation. This is not friction, penetration bias,
+warm starting, manifold reduction, or a production island solver.
+*/
+// C++20 two-point unilateral contact witness: 2x2 block complementarity, not a complete engine solver.
+// Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/two_point_contact_block_lab.cpp -o /tmp/two_point && /tmp/two_point
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+
+struct Vec2 { double x{}, y{}; };
+constexpr Vec2 operator+(Vec2 a, Vec2 b) { return {a.x + b.x, a.y + b.y}; }
+constexpr Vec2 operator-(Vec2 a, Vec2 b) { return {a.x - b.x, a.y - b.y}; }
+constexpr Vec2 operator*(Vec2 a, double k) { return {a.x * k, a.y * k}; }
+constexpr double dot(Vec2 a, Vec2 b) { return a.x * b.x + a.y * b.y; }
+constexpr double cross(Vec2 a, Vec2 b) { return a.x * b.y - a.y * b.x; }
+constexpr Vec2 spin(double w, Vec2 r) { return {-w * r.y, w * r.x}; }
+
+void require(bool ok, const char* what) {
+    if (!ok) throw std::runtime_error(what);
+}
+void near(double got, double want, double tolerance = 1e-9) {
+    require(std::isfinite(got) && std::abs(got - want) <= tolerance,
+            "numerical check failed");
+}
+void finite(Vec2 a) { require(std::isfinite(a.x) && std::isfinite(a.y), "nonfinite point"); }
+
+struct Body {
+    Vec2 center{}, velocity{};
+    double omega{}, inverseMass{}, inverseInertia{};
+};
+void validate(const Body& b) {
+    finite(b.center); finite(b.velocity);
+    require(std::isfinite(b.omega) && std::isfinite(b.inverseMass) &&
+            std::isfinite(b.inverseInertia) && b.inverseMass >= 0.0 &&
+            b.inverseInertia >= 0.0, "invalid body");
+}
+struct ContactPair { std::array<Vec2, 2> worldPoints{}; Vec2 normal{0, 1}; };
+struct BlockResult {
+    std::array<double, 2> impulses{}, postSpeeds{};
+    int activeConstraints{};
+};
+
+Vec2 pointVelocity(const Body& b, Vec2 r) {
+    return b.velocity + spin(b.omega, r);
+}
+void apply(Body& a, Body& b, Vec2 ra, Vec2 rb, Vec2 normal, double impulse) {
+    const Vec2 p = normal * impulse;
+    a.velocity = a.velocity - p * a.inverseMass;
+    b.velocity = b.velocity + p * b.inverseMass;
+    a.omega -= a.inverseInertia * cross(ra, p);
+    b.omega += b.inverseInertia * cross(rb, p);
+}
+
+// A contact is unilateral: its impulse can push, but never pull.
+// The two-point matrix captures how an impulse at either point affects BOTH gaps.
+BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
+    validate(a); validate(b); finite(pair.normal);
+    const double normalLength = std::hypot(pair.normal.x, pair.normal.y);
+    require(std::isfinite(normalLength) && normalLength > 0, "invalid normal");
+    const Vec2 n = pair.normal * (1.0 / normalLength);
+    std::array<Vec2, 2> ra{}, rb{};
+    std::array<double, 2> leverA{}, leverB{}, before{};
+    for (int i = 0; i < 2; ++i) {
+        finite(pair.worldPoints[i]);
+        ra[i] = pair.worldPoints[i] - a.center;
+        rb[i] = pair.worldPoints[i] - b.center;
+        leverA[i] = cross(ra[i], n);
+        leverB[i] = cross(rb[i], n);
+        before[i] = dot(pointVelocity(b, rb[i]) - pointVelocity(a, ra[i]), n);
+        require(std::isfinite(before[i]), "nonfinite relative velocity");
+    }
+    // K maps each impulse to both normal speeds; off-diagonal terms are rotational coupling.
+    double K[2][2]{};
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+            K[i][j] = a.inverseMass + b.inverseMass +
+                      a.inverseInertia * leverA[i] * leverA[j] +
+                      b.inverseInertia * leverB[i] * leverB[j];
+    for (auto& row : K)
+        for (double value : row)
+            require(std::isfinite(value), "effective mass overflow");
+
+    // Solve w = before + K*lambda >= 0, lambda >= 0, lambda_i*w_i = 0.
+    // Enumerate both-active, left-only, right-only and none, accepting only
+    // complementarity-feasible cases. Zero determinant means no unique
+    // both-active solution; a one-active solution may still exist.
+    constexpr double eps = 1e-10;
+    const double determinant = K[0][0] * K[1][1] - K[0][1] * K[1][0];
+    const double matrixScale = std::max({1.0, std::abs(K[0][0] * K[1][1]),
+                                          std::abs(K[0][1] * K[1][0])});
+    auto feasible = [&](std::array<double, 2> lambda) {
+        std::array<double, 2> gap{
+            before[0] + K[0][0] * lambda[0] + K[0][1] * lambda[1],
+            before[1] + K[1][0] * lambda[0] + K[1][1] * lambda[1]
+        };
+        const double scale = std::max({1.0, std::abs(before[0]), std::abs(before[1])});
+        const double tolerance = eps * scale;
+        for (int i = 0; i < 2; ++i) {
+            if (!std::isfinite(lambda[i]) || !std::isfinite(gap[i]) ||
+                lambda[i] < -tolerance || gap[i] < -tolerance ||
+                (lambda[i] > tolerance && std::abs(gap[i]) > tolerance))
+                return false;
+        }
+        return true;
+    };
+    std::array<double, 2> answer{};
+    bool found = false;
+    // Avoid determinant division when the block is singular or poorly conditioned.
+    if (std::isfinite(determinant) && determinant > eps * matrixScale) {
+        const std::array<double, 2> both{
+            (-K[1][1] * before[0] + K[0][1] * before[1]) / determinant,
+            ( K[1][0] * before[0] - K[0][0] * before[1]) / determinant
+        };
+        if (feasible(both)) { answer = both; found = true; }
+    }
+    // Rank-deficient pairs may still admit one active point; test its effect on both gaps.
+    if (!found && K[0][0] > eps) {
+        const std::array<double, 2> left{-before[0] / K[0][0], 0};
+        if (feasible(left)) { answer = left; found = true; }
+    }
+    if (!found && K[1][1] > eps) {
+        const std::array<double, 2> right{0, -before[1] / K[1][1]};
+        if (feasible(right)) { answer = right; found = true; }
+    }
+    if (!found && feasible({0, 0})) found = true;
+    require(found, "no valid contact impulse: degenerate or inconsistent pair");
+
+    // Mutate bodies only after a feasible active set is found.
+    for (int i = 0; i < 2; ++i) {
+        // Tiny negative roundoff is projected to zero, not treated as attraction.
+        answer[i] = std::max(0.0, answer[i]);
+        apply(a, b, ra[i], rb[i], n, answer[i]);
+    }
+    validate(a); validate(b);
+    BlockResult result;
+    result.impulses = answer;
+    for (int i = 0; i < 2; ++i) {
+        result.postSpeeds[i] =
+            dot(pointVelocity(b, rb[i]) - pointVelocity(a, ra[i]), n);
+        near(result.postSpeeds[i],
+             before[i] + K[i][0] * answer[0] + K[i][1] * answer[1], 1e-8);
+        require(result.postSpeeds[i] >= -1e-8, "still closing after block solve");
+        if (answer[i] > eps) ++result.activeConstraints;
+    }
+    return result;
+}
+int main() {
+    const Body ground{{0, 0}, {0, 0}, 0, 0, 0};
+    { // Symmetric crate: K = diag(2,2); a -2m/s fall needs 1N*s at each point.
+        Body crate{{0, 1}, {0, -2}, 0, 1, 1};
+        Body fixed = ground;
+        const auto result = solveBlock(fixed, crate,
+                                      ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 1); near(result.impulses[1], 1);
+        near(crate.velocity.y, 0); near(crate.omega, 0);
+        require(result.activeConstraints == 2, "both contacts should act");
+    }
+    { // Asymmetric footprint: K=[[2,-1],[-1,5]], impulses 4/3 and 2/3.
+        Body fixed = ground, crate{{0, 1}, {0, -2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{2, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 4.0 / 3.0);
+        near(result.impulses[1], 2.0 / 3.0);
+        near(crate.velocity.y, 0); near(crate.omega, 0);
+    }
+    { // Single active point: positive separating speed at the second point.
+        Body fixed = ground, crate{{0, 1}, {0, 0}, 1, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 0.5); near(result.impulses[1], 0.0);
+    }
+    { // Already separating: neither contact is allowed to pull the body down.
+        Body fixed = ground, crate{{0, 1}, {0, 2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0], 0); near(result.impulses[1], 0);
+    }
+    { // Duplicate contact positions make K rank deficient; one point suffices.
+        Body fixed = ground, crate{{0, 1}, {0, -2}, 0, 1, 1};
+        const auto result = solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{-1, 0}}, Vec2{0, 1}});
+        near(result.impulses[0] + result.impulses[1], 1);
+        near(result.postSpeeds[0], 0); near(result.postSpeeds[1], 0);
+    }
+    { // Two immovable bodies cannot repair closing speed via impulse.
+        Body fixed = ground, immovable{{0, 1}, {0, -1}, 0, 0, 0};
+        bool rejected = false;
+        try { (void)solveBlock(fixed, immovable, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 1}}); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "immovable closing geometry should be rejected");
+    }
+    { // Hostile inputs must fail before polluting another island.
+        Body fixed = ground, crate{{0, 1}, {0, -1}, 0, 1, 1};
+        bool rejected = false;
+        try { (void)solveBlock(fixed, crate, ContactPair{{Vec2{-1, 0}, Vec2{1, 0}}, Vec2{0, 0}}); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected, "zero normal must be rejected");
+    }
+    std::cout << "two-point contact block: 7 suites PASS\n";
+}
+```
+
+**Reconstruction check:** explain why the off-diagonal terms couple the contacts, list all four active sets, and say why a singular pair can still have a feasible one-contact solution.
 
 ### An animation library is one part of an authoring workflow
 
@@ -100015,6 +100971,30 @@ A renderer experiment may show a roughness-controlled reflection, shadow, or def
 
 A safe progression is to name the evidence level: idea, prototype, integrated path, tested workflow, and packaged release. For example, a deferred renderer writing normals and positions to multiple targets is a prototype until lighting consumes those buffers and the frame is validated. A thumbnail generator is a prototype until cache reload, file replacement, invalid image data, and editor restart are tested. In a debugging story, the Hazel author found that a constructor accepted an image buffer but did not use it; a solid pink diagnostic image helped separate thumbnail generation from disk-cache loading. The key technique is to make each stage observable and test one boundary at a time ([How New Game Engine Features are Implemented](https://www.youtube.com/watch?v=z1O6AZWuWm4&t=13m56s)).
 
+<!-- Supervised source-review addition 261a50f00fedc94d -->
+
+### A thumbnail cache is derived render output with explicit invalidation
+
+The Hazel 2024.1 release walkthrough describes editor thumbnails as rendered scenes using Hazel’s ordinary rendering path, including post-processing such as bloom and shadow maps. It also describes the first visit to a directory or first search as taking a short time to produce previews, with later visits appearing immediate because the images have been cached. This is a dated account of that build, not evidence about every Hazel version. The durable lesson is that a thumbnail is derived output: it has inputs, a renderer path, a cache key, and invalidation rules. ([Hazel 2024.1](https://www.youtube.com/watch?v=10OVd1VHEZ4&t=13m27s), 13:27–14:47.)
+
+A cache key must identify every input that can change the pixels. One bounded key is
+
+$$
+K=(A,D,R,Q,C),
+$$
+
+where $A$ is the asset content version, $D$ is the versioned dependency set (for example, the material and environment map), $R$ is the renderer or preview-pipeline settings version, $Q$ is the target resolution, and $C$ is the color and output policy (including transfer function and tone mapping). If any of these values changes, the previous image may still be a useful old artifact, but it is not a valid answer for the new key. Do not key only by filename: a material edit can change the rendered model while its path remains constant. The cache is derived data, so it can be discarded and regenerated. A dirty flag or version comparison records that the output is stale; it does not itself perform the expensive render. ([Game Programming Patterns: Dirty Flag](https://github.com/munificent/game-programming-patterns/blob/master/book/dirty-flag.markdown).)
+
+The editor should first compute $K$ and look for a matching cached image. On a hit it can show that image immediately. On a miss it schedules an offscreen preview request, loads or resolves the asset dependencies, renders the preview through the configured pipeline, and publishes the completed image under $K$ only after rendering and cache writing succeed. The source calls the thumbnails full scenes and says they pass through bloom and shadow-map processing; it does not document a universal Hazel thumbnail API or a promise that every editor must run every game pass. Keep the preview camera, lighting, post-processing, target size, and color handling explicit, and include the settings that affect output in $K$.
+
+Asynchronous generation needs a freshness check as well as a cache key. Capture the key and a request generation when the job starts. When it finishes, accept the result only if the current request still has the same key and generation; otherwise discard it instead of replacing a newer preview with an older completion. Write cache files to a temporary destination and publish them atomically after validation. On failure, keep the preview dirty and expose an error or placeholder so a later attempt can retry. Browsing or searching the same directory should perform lookups against the existing keys, not schedule a new render for every display of the same tile.
+
+**Trace.** The first visit requests `crate.mesh` at content version 4, with `paint.material` version 8, preview-pipeline version 3, a 256-by-256 target, and the declared color policy. The key misses, so the editor renders and stores that version. Returning through directory navigation or finding the crate by search produces the same key and reuses the stored image. Now the material changes to version 9: invalidate the old preview and start a new render under the version-9 key. Its result belongs to that key. If it changes again to version 10 before the older job finishes, the editor advances its request generation and rejects the version-9 completion. A fresh version-10 render becomes the visible image and cache entry. This trace separates first-generation cost, cache-hit navigation, dependency invalidation, and stale-job rejection.
+
+Test the boundary with an unchanged asset (cache hit), a changed source file, a changed material or environment dependency, changed post-processing settings, changed target resolution or color policy, corrupt cached bytes, a failed render, editor restart, and two overlapping requests that finish out of order. Check that each changed input invalidates only the affected key, that a cache hit displays the expected pixels, and that a stale result cannot overwrite the current one. A screenshot alone cannot establish invalidation or publication correctness.
+
+
+
 This evidence ladder also applies to performance. A presenter may say two threads could nearly double CPU performance, or that a binary model loads nearly instantly compared with parsing a small OBJ file. Without a benchmark with the same content, machine, build mode, and workload, these remain claims or motivating hypotheses. Measure the operation the game actually performs, and include tooling and synchronization costs in the comparison ([Our biggest release ever... Hazel 2023.1](https://www.youtube.com/watch?v=L_XLGmG2Ct8&t=1m12s), [Sparky Engine Dev Log #4 - Sparky Model Format](https://www.youtube.com/watch?v=EUy8G3uMitI&t=4m30s)).
 
 ### A profiler result belongs to its exact build and scene
@@ -100674,6 +101654,88 @@ These layers should not be collapsed into one abstraction. The engine's portable
 
 
 
+<!-- Book-completion teaching addition c84e70430fe57374 -->
+
+## Game Engine project ladder: first executable loop to evidence-backed capstone
+
+This ladder is an assessment bridge over the canonical teaching route. It points readers to the existing lessons and executable witnesses; it does not replace their derivations or claim that reference labs are the current Kairo implementation. Each stage adds one owner and one failure boundary to the same small world: two moving crates, a floor, one controllable actor, and a saved scene.
+
+## Stage 1 — A visible, repeatable frame
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Where the bytes live|A game promise becomes bytes and running state]] and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Keep application key names independent of a windowing library|Application clocks and stable input identity]].
+
+**Build:** a window loop that drains events, converts button transitions into tick-stamped commands, advances a fixed-step simulation, and presents an interpolated snapshot. The demo object moves under one command; rendering reads a snapshot and never mutates simulation state.
+
+**Worked check:** with fixed step $h=1/60\,\mathrm s$, a held-right command of $a=6\,\mathrm{m/s^2}$ for three ticks from rest gives $v_3=0.3\,\mathrm{m/s}$ under semi-implicit Euler and $x_3=h(0.1+0.2+0.3)=0.01\,\mathrm m$. A render at interpolation fraction $\alpha=1/2$ between $x_2=0.005\,\mathrm m$ and $x_3=0.01\,\mathrm m$ displays $0.0075\,\mathrm m$, while authoritative simulation remains at $0.01\,\mathrm m$.
+
+**Solution outline:** keep `previous` and `current` simulation snapshots; update `previous = current` once per fixed tick; advance only from tick commands; derive render pose as `(1-alpha)*previous + alpha*current`. Cap catch-up work and retain/report the discarded-time policy. The window thread owns event polling and presentation.
+
+**Exit test:** replay the same command sequence twice and compare the per-tick state hash. Inject two key-down events before a tick and prove the event queue is fully drained and ordered. State the accumulator-overload policy and show that rendering cannot change the simulation hash.
+
+## Stage 2 — Stable identity and transform ownership
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#COMPONENT POOLS AND SPARSE SETS|Sparse-set components and generational entity handles]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#ARCHETYPES, CHUNKS, LAYOUTS, RELATIONSHIPS AND TRANSFORMS|Archetypes, chunks, relationships, and transforms]], and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#DIAGNOSTICS, MEMORY, COMPLEXITY, API CONTRACTS AND COMPLETE ECS DEFENSE|ECS contracts, diagnostics, and GPU handoff]].
+
+**Build:** a generational entity store with local transforms and parent links. Destroy a parent, reject stale handles, and evaluate world transforms parent-first. Keep structural changes in an explicit command phase.
+
+**Worked check:** parent translation `(10,0)` and child local translation `(2,3)` produce child world translation `(12,3)`. Destroying entity `(slot=4,generation=7)` and reusing slot 4 as generation 8 makes the old handle invalid even though its slot matches.
+
+**Solution outline:** validate both slot bounds and generation on every public handle lookup. Build a parent-first order or perform a color-marked DFS; reject cycles before publishing transforms. A deferred destroy command invalidates the generation and removes component membership at the structural boundary.
+
+**Exit test:** destroy/reuse a slot and prove the old handle cannot read or mutate the new entity. Create a three-node hierarchy and verify parent-first output; add a cycle and verify the update fails without publishing partially updated world transforms.
+
+## Stage 3 — Compile render intent into a legal logical order
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From a list of render passes to a proved execution order|From a list of render passes to a proved execution order]] and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Compile renderer intent into backend work|Compile renderer intent into backend work]].
+
+**Build:** a pass graph with explicit resource versions and read/write declarations. Start with shadow, geometry, lighting, tone-map and present. Compile dependencies, reject uninitialized reads and cycles, then emit a deterministic order. Keep logical dependency proof separate from backend barrier proof.
+
+**Worked check:** if `Geometry` writes `GBuffer`, `Lighting` reads `GBuffer` and writes `HDR`, and `ToneMap` reads `HDR`, the required edges are `Geometry -> Lighting -> ToneMap`. Let `UI` read the tone-mapped image and write the final swapchain image, then let `Present` read that final image. The `UI -> Present` edge is a read-after-write dependency: presentation must consume the completed output, regardless of whether an earlier pass touched the same storage. If different logical versions reuse physical memory, the compiler must also account for readers and writers of that backing storage before overwriting it.
+
+**Solution outline:** identify each logical version's producer and consumers. A read depends on its producer. When a new version overwrites existing backing storage, it must also respect the previous writer and the readers that still use that storage; this is where write-after-write and write-after-read constraints enter. Topologically sort with a stable tie-breaker. Do not infer API layout, access masks, queue ownership, or device correctness from this CPU DAG.
+
+**Exit test:** a transient read with no writer, duplicate version declaration, and explicit cycle each fail with a useful diagnostic. Two valid graphs with independent passes produce deterministic output. Explain which separate Vulkan synchronization2 or Metal validation evidence would still be required.
+
+## Stage 4 — Move one rigid body from force to coupled contact
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#THE COMPLETE KAIRO STATE SO FAR|A complete rigid-body state before the formula audit]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge|From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge]], and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Contact forces form a coupled system|Contact forces form a coupled system]].
+
+**Build:** a 2-D rigid body with COM-relative contact Jacobians, nonnegative normal impulses, bounded friction impulses, a small sequential solver, and a deterministic contact island. Instrument residual speed, penetration, iterations, and wake/sleep transitions.
+
+**Worked check:** for an isolated one-kilogram body approaching a static wall at `2 m/s`, zero restitution requires a `2 N s` normal impulse, leaving zero normal speed. If `mu=0.5`, the normal impulse bounds tangent impulse magnitude to `1 N s`. A tangential request of `1.4 N s` therefore clamps to `1 N s`; apply only the difference from the previous accumulated tangent impulse.
+
+**Solution outline:** compute contact-point relative velocity including angular velocity; compute effective inverse mass; project the accumulated normal impulse to `>= 0`; project tangent impulse into `[-mu*lambda_n, +mu*lambda_n]`; apply only each accumulated-impulse delta. Use stable feature keys for cache reuse and invalidate the cache when a feature disappears, body identity changes, normal turns beyond policy, or timestep semantics change.
+
+**Exit test:** run the saved two-contact block and friction-island witnesses. Show equal-and-opposite impulses preserve total linear momentum for an isolated pair before external forces; show friction does not exceed its Coulomb bound; reject a NaN normal and a stale feature key. Compare one-pass and multi-pass residuals and state the CPU-model/device boundary.
+
+## Stage 5 — Save and replace a scene transactionally
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Save scenes as a versioned authoring contract|Save scenes as a versioned authoring contract]] and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Save scenes as a versioned authoring contract|Versioned scenes and transactional loading]].
+
+**Build:** a bounded versioned scene document with stable IDs, explicit migration, two-pass reference resolution, parent-cycle detection and all-or-nothing replacement. Unknown future versions must be rejected without mutating the live world.
+
+**Worked check:** document objects `A(parent=B)` and `B(parent=A)` parse as valid records and unique IDs but fail the graph validation stage as a cycle. The live world's hash before and after failure must be identical. A v1 document can migrate into v2 by supplying a documented default; a v99 document is rejected as unsupported.
+
+**Solution outline:** parse into a detached candidate, validate record bounds and IDs, resolve references in a second pass, validate acyclic relationships and component constraints, then swap the candidate into the active world at one commit point. Keep diagnostics attached to source object IDs. Any failure discards the candidate.
+
+**Exit test:** valid v1, valid current version, unknown version, duplicate ID, dangling reference, cycle, truncated input and allocation-limit cases. Hash the active world before each invalid load and verify exact equality afterward. Run the saved versioned-scene codec witness; report that it is a reference codec unless the current project parser is separately inspected and built.
+
+## Stage 6 — Capstone: deterministic replay across save, simulation and rendering
+
+**Enter through:** [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Deterministic replay requires an explicit state contract|Deterministic replay requires an explicit state contract]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Correlate one player action through every subsystem hand-off|Correlate one player action through every subsystem hand-off]], and [[Continuous Notes/Game Engine - From First Frame to Living Worlds#The deterministic system capstone and its evidence boundary|The deterministic system capstone and its evidence boundary]].
+
+**Build:** a small game slice where an input command moves a character, a contact changes a crate, a scene can be saved/reloaded, and every frame carries a correlation ID from event through simulation, render submission and diagnostics. Replay the same tick-stamped commands from the same initial scene.
+
+**Worked check:** compare per-tick hashes for two replays. The first differing tick is the failure location; compare entity generations, command sequence, body state, contact cache and random seed at that boundary. A matching final screenshot is not enough because distinct hidden states may render identically.
+
+**Solution outline:** define what belongs in deterministic state (including any persistent warm-start/contact state used on restore), define canonical field order and numeric encoding for hashes, and exclude nondeterministic wall-clock timing from simulation decisions. Give asynchronous asset completion a stable publication tick or gate replay until the same resource version is ready. Render from immutable tick snapshots.
+
+**Exit test:** save at tick `N`, continue to `N+120`, restore, replay the same commands and compare every tick hash. Perturb one command sequence number and demonstrate the first divergence is reported. Force a scene-load error and verify rollback preserves both the prior world and replay continuation. Attach build, test, and device evidence separately; a passing CPU slice does not prove production engine parity.
+
+## Route completion rule
+
+Advance only when the learner can explain the invariant, trace the numeric witness by hand, reproduce the positive and negative tests, identify the code owner and failure boundary, and state what the evidence does not establish. Re-reading the chapter, recognizing its code, or reaching a visually plausible frame is not an exit test.
+
 ## The deterministic system capstone and its evidence boundary
 
 The conceptual capstone is a single pipeline: a validated cartridge file enters a deterministic CPU interpreter; a complete versioned state snapshot is constructed; a temporary filesystem object is atomically published with an explicitly chosen crash-durability contract; the state is length-framed for transport; received bytes are authenticated and authorized; a trusted snapshot is restored; and time-stamped input is replayed to reproduce the same program behavior. Any stage can fail, and the complete application must preserve the previous valid state or report a safe, diagnosable error.
@@ -101177,6 +102239,207 @@ Represent a dependency as a directed edge between pass indices: \(A\to B\) means
 Maintain, per resource, the last writer, the readers of its current version, and the imported-initialization flag. For each read, add a RAW dependency from the last writer or reject a transient read without a writer. For each write, add WAW from the previous writer and WAR from every outstanding reader, then clear that reader set and record the new writer. Deduplicate pass-to-pass adjacencies before computing indegrees: two separate RAW reasons between the same passes create one predecessor relationship, not two required predecessor executions. Finally, topologically sort by repeatedly scheduling a zero-indegree pass and deleting its outgoing constraints. If passes remain, a cycle makes the declared ordering impossible.
 
 The test compiler deliberately rejects read-and-write access to one logical resource inside the *same pass*. In-place compute, attachment feedback, atomic access and Vulkan subpass self-dependencies are not inherently forbidden; they require a richer access contract than this whole-resource single-queue model. Silently accepting them here would teach an incorrect general guarantee.
+
+<!-- Engine-resource-state-plan -->
+### Plan subresource state before translating it to an API
+
+A logical render graph describes which pass uses a resource. A backend planner has a second job: track each image mip and layer independently, including whether its contents exist, its current layout, its queue owner, and the stages that read or wrote it. A whole-image flag loses correctness when one mip is uploaded while another is sampled.
+
+Its tests establish only the planner's CPU state contract. Native barrier translation still needs API validation and device execution.
+
+The witness below turns those declarations into symbolic same-queue transitions and release/acquire obligations. The records explain the reason for each transition; they are not Vulkan barriers, Metal fences, or evidence of driver synchronization. The example rejects unknown subresources, duplicate image declarations, undefined reads, unsupported feedback, and illegal stage/layout combinations before returning a plan.
+
+```cpp
+/*
+Teaching contract: each image mip/layer is independent logical state. A pass
+access names its queue, pipeline stage, read/write intent, and required layout;
+no GPU object or native barrier is created here. The planner carries whether a
+subresource has initialized contents, its current layout/owner, and all readers
+and writers needed to describe RAW, WAR, and WAW hazards. Release/acquire rows
+are symbolic ownership-transfer obligations, not Vulkan/Metal synchronization
+commands. Invalid ranges, duplicate declarations, undefined reads, feedback
+inside one pass, and illegal stage/layout pairs are rejected before a plan is
+returned. Tests inspect transitions and failure cases, not device execution.
+*/
+// C++20. Symbolic resource hazards: NOT valid Vulkan barrier emission.
+// Run: c++ -std=c++20 -Wall -Wextra -Werror -pedantic -O2 resource_state_plan_lab.cpp -o planner && ./planner
+#include <cstddef>
+#include <iostream>
+#include <map>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+enum class Queue { Transfer, Graphics };
+enum class Stage { Transfer, Compute, Fragment, ColorOutput };
+enum class Access { Read, Write };
+enum class Layout { Undefined, TransferDst, ShaderRead, ColorAttachment };
+
+struct Key {
+    std::string image;
+    unsigned mip = 0, layer = 0;
+    bool operator<(const Key& rhs) const {
+        return std::tie(image, mip, layer) < std::tie(rhs.image, rhs.mip, rhs.layer);
+    }
+};
+struct Image {
+    std::string name;
+    unsigned mips=1, layers=1;
+    bool imported=false;
+    Layout initial=Layout::Undefined;
+    Queue owner=Queue::Graphics;
+};
+struct Use { Key key; Queue queue; Stage stage; Access access; Layout layout; };
+struct Pass { std::string name; std::vector<Use> uses; };
+enum class Kind { Initialize, SameQueue, Release, Acquire };
+struct Transition {
+    Kind kind;
+    std::size_t before, after; Key key;
+    Queue from, to; Layout oldLayout, newLayout;
+    std::set<Stage> producerStages;
+    Stage consumerStage;
+    bool memoryWrite;
+    unsigned handoff=0;
+};
+struct State {
+    bool initialized=false;
+    Layout layout=Layout::Undefined;
+    Queue owner=Queue::Graphics;
+    std::size_t previousPass=0;
+    bool priorWrite=false;
+    std::set<Stage> readers, writers;
+};
+void require(bool ok,const std::string& why) {
+    if(!ok) throw std::runtime_error(why);
+}
+std::vector<Transition> plan(const std::vector<Image>& images,
+                             const std::vector<Pass>& passes) {
+    std::map<Key, State> states; // independent state for every mip/layer
+    for(const Image& image:images) {
+        require(!image.name.empty() && image.mips>0 && image.layers>0,
+                "invalid image declaration");
+        for(unsigned m=0;m<image.mips;++m) for(unsigned l=0;l<image.layers;++l) {
+            Key key{image.name,m,l};
+            State state;
+            state.initialized=image.imported;
+            state.layout=image.imported?image.initial:Layout::Undefined;
+            state.owner=image.owner;
+            require(states.emplace(key,state).second,"duplicate image");
+        }
+    }
+    std::vector<Transition> result;
+    unsigned nextHandoff=1;
+    for(std::size_t i=0;i<passes.size();++i) {
+        require(!passes[i].name.empty(),"unnamed pass");
+        std::set<Key> inPass;
+        for(const Use& use:passes[i].uses) {
+            auto it=states.find(use.key);
+            require(it!=states.end(),"unknown image, mip or layer");
+            require(inPass.insert(use.key).second,
+                    "same-subresource feedback needs richer pass declarations");
+            require(use.layout!=Layout::Undefined,"cannot access undefined layout");
+            if(use.layout==Layout::TransferDst)
+                require(use.stage==Stage::Transfer && use.access==Access::Write,
+                        "transfer destination misuse");
+            if(use.layout==Layout::ColorAttachment)
+                require(use.stage==Stage::ColorOutput && use.access==Access::Write,
+                        "color output misuse");
+            if(use.layout==Layout::ShaderRead)
+                require(use.access==Access::Read &&
+                       (use.stage==Stage::Fragment || use.stage==Stage::Compute),
+                        "shader sampled read misuse");
+            State& state=it->second;
+            require(state.initialized || use.access==Access::Write,
+                    "uninitialized read");
+            std::set<Stage> producers=state.readers;
+            producers.insert(state.writers.begin(),state.writers.end());
+            if(!state.initialized) {
+                // First write establishes one subresource's initialized state.
+                result.push_back({Kind::Initialize,i,i,use.key,
+                                  use.queue,use.queue,Layout::Undefined,
+                                  use.layout,{},use.stage,false,0});
+            } else if(state.owner!=use.queue) {
+                // Queue change requires a paired ownership handoff; only the backend can encode it natively.
+                const unsigned handoff=nextHandoff++;
+                // Symbolic release/acquire pair. Real Vulkan requires actual
+                // VkImageMemoryBarrier2 on each queue + matching submission
+                // semaphore ordering and correct scope/layout legality.
+                result.push_back({Kind::Release,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,handoff});
+                result.push_back({Kind::Acquire,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,handoff});
+            } else if(state.layout!=use.layout ||
+                      state.priorWrite || use.access==Access::Write) {
+                // Consecutive read-only operations at identical layout and
+                // queue intentionally do not create a new transition.
+                result.push_back({Kind::SameQueue,state.previousPass,i,use.key,
+                                  state.owner,use.queue,state.layout,use.layout,
+                                  producers,use.stage,state.priorWrite,0});
+            }
+            // Keep reader/writer stages per mip/layer so later transitions retain their producer scope.
+            if(use.access==Access::Write) {
+                state.readers.clear();
+                state.writers={use.stage};
+            } else {
+                state.readers.insert(use.stage);
+            }
+            state.priorWrite=(use.access==Access::Write);
+            state.previousPass=i;
+            state.initialized=true;
+            state.layout=use.layout;
+            state.owner=use.queue;
+        }
+    }
+    return result;
+}
+int main() {
+    const Key mip0{"hdr",0,0},mip1{"hdr",1,0};
+    const std::vector<Image> images{
+        {"hdr",2,1,false,Layout::Undefined,Queue::Graphics}
+    };
+    const auto use=[](Key key,Queue q,Stage s,Access a,Layout l) {
+        return Use{key,q,s,a,l};
+    };
+    const auto transitions=plan(images,{
+        {"upload0",{use(mip0,Queue::Transfer,Stage::Transfer,Access::Write,Layout::TransferDst)}},
+        {"sample0",{use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead)}},
+        {"sample0-again",{use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead)}},
+        {"overwrite0",{use(mip0,Queue::Graphics,Stage::ColorOutput,Access::Write,Layout::ColorAttachment)}},
+        {"upload1",{use(mip1,Queue::Transfer,Stage::Transfer,Access::Write,Layout::TransferDst)}}
+    });
+    require(transitions.size()==5,"unexpected transition count");
+    require(transitions[0].kind==Kind::Initialize,"missing first-write initialization");
+    require(transitions[1].kind==Kind::Release &&
+            transitions[2].kind==Kind::Acquire,"missing ownership pair");
+    require(transitions[1].handoff==transitions[2].handoff,
+            "release/acquire handoff IDs differ");
+    require(transitions[3].kind==Kind::SameQueue &&
+            transitions[3].after==3,"write-after-read transition missing");
+    require(transitions[4].kind==Kind::Initialize &&
+            transitions[4].key.mip==1,"mip isolation violated");
+    bool rejected=false;
+    try {
+        (void)plan(images,{{"bad",{use(mip1,Queue::Graphics,Stage::Fragment,
+                                     Access::Read,Layout::ShaderRead)}}});
+    } catch(const std::runtime_error&) {rejected=true;}
+    require(rejected,"read of uninitialized mip accepted");
+    rejected=false;
+    try {
+        (void)plan(images,{{"feedback",{
+            use(mip0,Queue::Graphics,Stage::Fragment,Access::Read,Layout::ShaderRead),
+            use(mip0,Queue::Graphics,Stage::ColorOutput,Access::Write,Layout::ColorAttachment)
+        }}});
+    } catch(const std::runtime_error&) {rejected=true;}
+    require(rejected,"ambiguous same-pass feedback accepted");
+    std::cout<<"planned="<<transitions.size()
+             <<" symbolic transitions; ownership pair, mip isolation and negatives PASS\n";
+}
+```
 
 ### Complete C++20 graph compiler, executable trace and negative cases
 
@@ -112300,6 +113563,347 @@ The phrase **how good is good enough?** should become a production question with
 
 Source basis: Rouse, *Game Design: Theory & Practice*, Chapter 9 on AI goals, the sloped playing field, “how real is too real,” “how good is good enough,” scripting, artificial stupidity, and creating a living world.
 
+<!-- Bible-final-pass: AI decision layer -->
+## Navigation answers how to move; the decision layer answers what to do
+
+The navigation chapter already teaches graphs, A*, navmeshes, funnels, dynamic obstacles, and path queries. Those systems answer a geometric question:
+
+> Given a destination, how can this agent reach it?
+
+They do not decide whether the agent should attack, heal, investigate, retreat, reload, guard, or choose a different goal. That belongs to a decision layer.
+
+Behavior trees, utility systems, and goal-oriented action planning solve related decision problems with different tradeoffs.
+
+### Behavior trees expose authored control structure
+
+A sequence usually means:
+
+~~~text
+try child 1
+if it succeeds, try child 2
+fail on the first failure
+succeed if all succeed
+~~~
+
+A selector usually means:
+
+~~~text
+try child 1
+if it fails, try child 2
+succeed on the first success
+fail if all fail
+~~~
+
+Leaves commonly return Success, Failure, or Running. Running matters because movement or animation can take many ticks.
+
+A small combat tree might be:
+
+~~~text
+Selector
+  Sequence
+    IsHealthLow
+    MoveToCover
+  Sequence
+    CanAttack
+    Attack
+  SearchForEnemy
+~~~
+
+Priority is visible in the structure. The tradeoff is that large trees can accumulate repeated conditions and hidden priority interactions.
+
+A running node also needs interruption policy. Does the tree reevaluate higher-priority branches each tick, or stay committed until the current task finishes? Both are valid and produce different behavior.
+
+### Utility AI scores alternatives
+
+Utility AI computes a score for each candidate action:
+
+~~~text
+score(action, state) -> real number
+choose the highest acceptable score
+~~~
+
+For example, cover score can rise as health falls, attack score can be high only when a visible target can be attacked, and search score can rise when no target is visible.
+
+This makes continuous tradeoffs easy to tune, but it adds contracts: normalize inputs, define response curves, prevent tiny score changes from causing rapid action switching, expose scores in debug tools, and use deterministic tie-breaking when replay matters.
+
+Numbers do not automatically make an AI smarter. Bad utility curves can be less readable than a small tree.
+
+### GOAP searches over preconditions and effects
+
+Goal-Oriented Action Planning represents actions with symbolic preconditions, effects, and costs.
+
+Suppose the goal is enemy_defeated=true. Actions might be:
+
+~~~text
+find_weapon:
+  pre: no weapon
+  effect: has weapon
+  cost: 2
+
+find_ammo:
+  pre: has weapon and no ammo
+  effect: has ammo
+  cost: 2
+
+find_enemy:
+  pre: enemy not visible
+  effect: enemy visible
+  cost: 1
+
+attack:
+  pre: weapon + ammo + visible enemy
+  effect: enemy defeated
+  cost: 1
+~~~
+
+The planner searches the symbolic state graph for a low-cost sequence that reaches the goal.
+
+The symbolic action find_enemy does not specify pathfinding, animation, or perception implementation. It says what subgoal should occur. Lower systems execute it.
+
+### A plan must survive a changing world
+
+Another agent may take the ammo before this agent arrives. Therefore each action must verify its preconditions when it begins and often while it runs. If they fail, repair or replan.
+
+Replanning every frame can waste CPU and make behavior unstable. Useful triggers include action failure, important fact changes, goal changes, invalidated plans, or periodic low-frequency reconsideration.
+
+Planning work must also be bounded. A large symbolic state space can explode just like an unbounded path search.
+
+### Keep perception, memory, decision, navigation, and action separate
+
+A useful pipeline is:
+
+~~~text
+sensors / perception
+  -> interpreted facts
+  -> memory with age/confidence
+  -> decision system
+  -> chosen goal/action
+  -> navigation or task executor
+  -> animation/physics/gameplay command
+  -> changed world
+  -> new perception
+~~~
+
+This prevents one opaque AI leaf from raycasting, pathfinding, changing animation, and directly editing physics velocity without clear ownership.
+
+### AI needs observability
+
+For one selected agent, a debug view should show perceived facts, remembered targets and their age, active goal, active behavior-tree branch or utility scores, current plan, path result, action status, and reason for failure/replan.
+
+"Enemy acted stupid" becomes useful only after the engine can show which fact or decision produced the action.
+
+A real game can combine them: utility chooses fight versus flee, a behavior tree executes the mode, GOAP handles a special multistep task, and navigation moves toward requested destinations.
+
+The executable witness below sends small world states through all three models. The behavior tree exposes authored priority, utility AI scores alternatives, and GOAP searches action preconditions/effects. It is a comparison of semantics, not a declaration that one architecture wins.
+
+
+~~~cpp
+/*
+Teaching contract: World is a snapshot of interpreted facts, not raw sensing.
+The same facts are fed to three distinct decision semantics: a behavior tree
+applies explicit branch priority and Success/Failure/Running status; utility AI
+scores available actions and needs stable tie/threshold policy; GOAP searches a
+bounded symbolic state graph using action preconditions, effects, and costs.
+Action names are intentions, not movement or combat implementations. Tests
+compare choices on fixtures and failure states; they do not establish that one
+model is universally better or that the world facts are accurate.
+*/
+#include <algorithm>
+#include <array>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <optional>
+#include <queue>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+struct World {
+    int health = 100;
+    int ammo = 0;
+    bool enemy_visible = false;
+    bool has_weapon = false;
+    bool enemy_defeated = false;
+};
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+// ---- Behavior tree: authored control structure ----
+enum class Status { Success, Failure, Running };
+
+// Ordered branches make authored priority the selection rule.
+Status behavior_tree_decide(const World& w, std::string& action) {
+    // Selector priority is explicit: survive first, then attack, then search.
+    if (w.health < 30) {
+        action = "seek_cover";
+        return Status::Success;
+    }
+    if (w.enemy_visible && w.has_weapon && w.ammo > 0) {
+        action = "attack";
+        return Status::Success;
+    }
+    action = "search";
+    return Status::Success;
+}
+
+// ---- Utility AI: score alternatives from current facts ----
+// Utility compares scored candidates; stable ties avoid nondeterministic choices.
+std::string utility_decide(const World& w) {
+    struct Candidate { std::string name; double score; };
+    std::vector<Candidate> c{
+        {"seek_cover", std::clamp((50.0 - w.health) / 30.0, 0.0, 1.0)},
+        {"attack", (w.enemy_visible && w.has_weapon && w.ammo > 0) ? 0.85 : 0.0},
+        {"search", w.enemy_visible ? 0.1 : 0.55},
+    };
+    return std::max_element(c.begin(), c.end(),
+        [](const Candidate& a, const Candidate& b) {
+            if (a.score != b.score) return a.score < b.score;
+            return a.name > b.name; // deterministic tie-break
+        })->name;
+}
+
+// ---- GOAP: search over symbolic actions and effects ----
+struct Facts {
+    bool has_weapon = false;
+    bool has_ammo = false;
+    bool enemy_visible = false;
+    bool enemy_defeated = false;
+    friend bool operator==(const Facts&, const Facts&) = default;
+};
+
+struct Action {
+    std::string name;
+    int cost;
+    std::function<bool(const Facts&)> pre;
+    std::function<Facts(Facts)> apply;
+};
+
+int encode(const Facts& f) {
+    return (f.has_weapon ? 1 : 0)
+         | (f.has_ammo ? 2 : 0)
+         | (f.enemy_visible ? 4 : 0)
+         | (f.enemy_defeated ? 8 : 0);
+}
+
+// Expand applicable symbolic actions; this plan names intent, not navigation execution.
+std::optional<std::vector<std::string>> goap_plan(Facts start) {
+    const std::vector<Action> actions{
+        {"find_weapon", 2,
+            [](const Facts& f){ return !f.has_weapon; },
+            [](Facts f){ f.has_weapon=true; return f; }},
+        {"find_ammo", 2,
+            [](const Facts& f){ return f.has_weapon && !f.has_ammo; },
+            [](Facts f){ f.has_ammo=true; return f; }},
+        {"find_enemy", 1,
+            [](const Facts& f){ return !f.enemy_visible; },
+            [](Facts f){ f.enemy_visible=true; return f; }},
+        {"attack", 1,
+            [](const Facts& f){
+                return f.has_weapon && f.has_ammo && f.enemy_visible && !f.enemy_defeated;
+            },
+            [](Facts f){ f.enemy_defeated=true; f.has_ammo=false; return f; }},
+    };
+
+    struct Node {
+        int cost;
+        Facts facts;
+        std::vector<std::string> plan;
+    };
+    struct Greater {
+        bool operator()(const Node& a, const Node& b) const {
+            if (a.cost != b.cost) return a.cost > b.cost;
+            return a.plan > b.plan; // deterministic queue tie-break
+        }
+    };
+
+    std::priority_queue<Node,std::vector<Node>,Greater> q;
+    std::array<int,16> best;
+    best.fill(std::numeric_limits<int>::max());
+    best[encode(start)] = 0;
+    q.push({0,start,{}});
+
+    while(!q.empty()) {
+        Node n=q.top(); q.pop();
+        if(n.facts.enemy_defeated) return n.plan;
+        if(n.cost != best[encode(n.facts)]) continue;
+
+        for(const auto& a:actions) {
+            if(!a.pre(n.facts)) continue;
+            Facts next=a.apply(n.facts);
+            int cost=n.cost+a.cost;
+            int key=encode(next);
+            if(cost >= best[key]) continue;
+            best[key]=cost;
+            auto plan=n.plan;
+            plan.push_back(a.name);
+            q.push({cost,next,std::move(plan)});
+        }
+    }
+    return std::nullopt;
+}
+
+int main() {
+    {
+        World w{20,10,true,true,false};
+        std::string bt;
+        require(behavior_tree_decide(w,bt)==Status::Success && bt=="seek_cover",
+                "behavior-tree priority should choose survival branch");
+        require(utility_decide(w)=="seek_cover",
+                "utility score should also favor cover at very low health");
+    }
+
+    {
+        World w{80,10,true,true,false};
+        std::string bt;
+        behavior_tree_decide(w,bt);
+        require(bt=="attack" && utility_decide(w)=="attack",
+                "both models should attack when attack is clearly useful");
+    }
+
+    {
+        Facts start{};
+        auto plan=goap_plan(start);
+        require(plan.has_value(), "planner should find a plan");
+        // Several equal-cost orderings can be logically valid. Verify the plan
+        // reaches the goal and has the expected total number of required steps.
+        require(plan->size()==4, "planner should need four prerequisite/action steps");
+        Facts f=start;
+        const std::unordered_map<std::string,Action> table{
+            {"find_weapon",{"find_weapon",2,[](const Facts& x){return !x.has_weapon;},
+                [](Facts x){x.has_weapon=true;return x;}}},
+            {"find_ammo",{"find_ammo",2,[](const Facts& x){return x.has_weapon&&!x.has_ammo;},
+                [](Facts x){x.has_ammo=true;return x;}}},
+            {"find_enemy",{"find_enemy",1,[](const Facts& x){return !x.enemy_visible;},
+                [](Facts x){x.enemy_visible=true;return x;}}},
+            {"attack",{"attack",1,[](const Facts& x){return x.has_weapon&&x.has_ammo&&x.enemy_visible&&!x.enemy_defeated;},
+                [](Facts x){x.enemy_defeated=true;x.has_ammo=false;return x;}}},
+        };
+        for(const auto& name:*plan) {
+            const auto& a=table.at(name);
+            require(a.pre(f), "GOAP action precondition must hold when executed");
+            f=a.apply(f);
+        }
+        require(f.enemy_defeated, "GOAP plan must actually establish the goal");
+    }
+
+    {
+        Facts impossible{false,false,false,true};
+        auto plan=goap_plan(impossible);
+        require(plan.has_value() && plan->empty(),
+                "already-satisfied goal should produce an empty plan");
+    }
+
+    std::cout << "AI decision models: 4 suites PASS\n";
+}
+~~~
+
+
+**Reconstruct without reading:** explain what A* answers that a behavior tree does not. Write one selector, one utility score, and one GOAP action. Then state when replanning should occur and which AI state the editor must expose.
+
 ## Let companion AI and level geometry share one contract
 
 A companion that follows the player is not only a navigation feature. It is part of the level’s reachable-state design. In the *Damage Incorporated* example, a rudimentary teammate AI was built before substantial level design. That early version could not jump or swim, and it struggled in tight spaces where companions collided or blocked the player. The author reports that this discovery changed level design: routes had to remain traversable by the follower, and constrained spaces had to be reconsidered. (*Game Design: Theory and Practice*, supplied PDF p. 191, source `src-f508b5433ab08ffd2964`, unit `u-4274992395bc43b21d421cf2`.)
@@ -112365,6 +113969,361 @@ Treat the earliest prototype as a question about the game’s intended shared ac
 The same production chapter warns that beta testers may be unusually invested players and may not represent casual audiences; it also notes that some testers can benefit from keeping an exploit undisclosed. Its later discussion recommends community managers to interpret and communicate player feedback and describes player metrics as another source of evidence (PDF pp. 279–280; units `u-e3e73c42b9ad8eb3140f355a`, `u-a4de81035bbfc7ebaf2b8750`). These are the authors’ observations, not a guarantee about every beta cohort. More generally, measurements record selected actions under a particular build and sampling setup; they do not explain why a player acted or whether an outcome felt fair. Combine telemetry with representative playtests, observation, and a clear design question. When a change may alter a valued mechanic, test the consequence with players before treating a metric movement as proof that the design improved.
 
 The system boundary therefore extends past networking code: it includes the intended player relationship, the content and test setup that exercise it, and the post-launch capacity to interpret reports and maintain the experience. That is a design and operations implication drawn from this historical production discussion, not a prescribed live-service architecture.
+
+<!-- Bible-final-pass: rollback netcode -->
+### Prediction hides latency; rollback repairs a wrong prediction
+
+The earlier networking sections correctly start from authority, identity, packet validation, and bounded work. A fast action game still has one practical question: what should the local machine do before a remote input or server correction arrives?
+
+If the client waits for every remote input before simulating, network delay becomes control delay. Prediction avoids that wait by simulating with the best information currently available. Prediction creates a second problem: it can be wrong. Rollback is the repair mechanism.
+
+Keep the simulation on integer ticks. Write one tick as:
+
+~~~text
+S_(k+1) = F(S_k, I_k)
+~~~
+
+S_k is the complete gameplay state needed to continue the simulation. I_k is the complete input set for that tick.
+
+For a two-player rollback peer:
+
+~~~text
+known local input    -> use it
+known remote input   -> use it
+missing remote input -> predict it
+simulate tick
+store resulting state
+~~~
+
+A common prediction rule is to repeat the last known remote input. It is simple and often useful for held movement. It is not a universal rule. A fighting game might repeat a direction while predicting one-shot attack buttons as unpressed. Prediction policy affects game feel.
+
+Suppose the peer has simulated through tick 105 while the remote input for tick 101 was predicted. The real tick-101 input later arrives.
+
+If it matches the prediction, no repair is needed.
+
+If it differs:
+
+~~~text
+restore S_100
+replace predicted I_101 with real I_101
+resimulate 101, 102, 103, 104, 105
+continue from corrected S_105
+~~~
+
+The player normally sees the newest corrected state, not the temporary historical replay.
+
+#### Rollback requires reproducible simulation
+
+Rollback assumes that the same starting state plus the same input sequence produces the same result. That requirement reaches beyond networking. It affects update order, random-number generation, physics ordering, unordered-container iteration, script side effects, spawning and stable IDs, event delivery, and any system that reads wall-clock time or other mutable external state.
+
+The witness uses integer gameplay state so this requirement is visible. A production engine can use floating point, but supported platforms still need a tested determinism policy instead of an assumption.
+
+A useful diagnostic is a state hash:
+
+~~~text
+hash(tick, gameplay state that should agree)
+~~~
+
+Comparing hashes can reveal the first divergent tick. A hash says that state differs; it does not say why. Serious replay tooling should also expose subsystem or component traces so the first differing value can be found.
+
+#### Rollback history is finite
+
+To repair an input from N ticks ago, the engine needs a state from before that input and enough input history to replay forward.
+
+A rollback buffer therefore has a finite window:
+
+~~~text
+oldest retained state ... current speculative state
+~~~
+
+The window costs memory and resimulation CPU. If a correction arrives older than retained history, the engine needs a declared recovery policy: request an authoritative snapshot, hard-correct, pause/disconnect, or another explicit rule. Missing history must not become silent state corruption.
+
+#### Prediction, rollback, interpolation, and reconciliation are different tools
+
+Local prediction makes the local player's own controls feel immediate.
+
+Rollback repairs speculative simulation when late input disagrees.
+
+Snapshot interpolation intentionally renders remote objects a little in the past so two received snapshots are usually available for smooth interpolation.
+
+A server-authoritative client can use server reconciliation. The client predicts numbered local inputs. The server later sends an authoritative state and the last processed input number. The client installs the server state, discards acknowledged inputs, and reapplies newer inputs:
+
+~~~text
+client predicts input 80
+client predicts input 81
+
+server replies with state after input 80 and ack=80
+
+client:
+  install server state
+  discard history through 80
+  replay input 81 and later
+~~~
+
+Lag compensation is different again. A server may evaluate a shot against a reconstructed historical world near the shooter's command time. That requires policy: maximum rewind, which objects rewind, interpolation rules, and what happens when the shooter's past view conflicts with another player's present view.
+
+#### Presentation does not have to expose every correction
+
+A corrected gameplay state may jump. Rendering that correction directly can look harsh. Keep simulation truth separate from visual smoothing. The gameplay state can become correct immediately while a presentation transform eases toward it, provided the smoothed value never becomes authoritative collision or gameplay state.
+
+This witness does not implement transport, congestion control, authentication, packet redundancy, anti-cheat, floating-point cross-platform determinism, snapshot compression, or lag-compensated hit validation. It makes the simulation/history contract reconstructable before those layers are added.
+
+The executable witness below predicts missing remote input, stores state history, detects a late mismatch, restores the previous state, resimulates to the present, and verifies that the final state equals a direct authoritative simulation. It also checks duplicate packets and a correction older than retained history.
+
+
+~~~cpp
+/*
+Teaching contract: State is the complete deterministic gameplay state for this
+tiny two-player example; tick is an integer simulation step and positions are
+integer cells. Input is the command assigned to one tick. The peer predicts a
+missing remote command by repeating the latest known one, stores the state
+before each tick plus inputs used, and when a late command differs restores the
+preceding state and replays through the present. Capacity bounds memory and
+resimulation age; a correction outside retained history is rejected. State
+hashes are diagnostic only. This integer witness avoids floating-point drift;
+it does not prove determinism for a real engine or implement packet transport.
+*/
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <cstdlib>
+#include <deque>
+#include <iostream>
+#include <map>
+#include <stdexcept>
+#include <string>
+
+struct Input {
+    int move = 0;   // -1, 0, +1
+    bool fire = false;
+    friend bool operator==(const Input&, const Input&) = default;
+};
+
+struct State {
+    std::int64_t tick = 0;
+    std::int64_t p0 = 0;
+    std::int64_t p1 = 0;
+    std::int64_t score0 = 0;
+    std::int64_t score1 = 0;
+    friend bool operator==(const State&, const State&) = default;
+};
+
+State step(State s, Input a, Input b) {
+    ++s.tick;
+    s.p0 += a.move;
+    s.p1 += b.move;
+
+    // Deterministic toy hit rule: firing scores when players are at most one
+    // integer cell apart after movement. Integer state avoids floating-point
+    // cross-platform drift in this teaching witness.
+    if (a.fire && std::llabs(s.p0 - s.p1) <= 1) ++s.score0;
+    if (b.fire && std::llabs(s.p0 - s.p1) <= 1) ++s.score1;
+    return s;
+}
+
+std::uint64_t hash_state(const State& s) {
+    // A tiny deterministic diagnostic hash, not a cryptographic hash.
+    std::uint64_t h = 1469598103934665603ull;
+    auto mix = [&](std::int64_t v) {
+        std::uint64_t x = static_cast<std::uint64_t>(v);
+        for (int i = 0; i < 8; ++i) {
+            h ^= (x >> (i * 8)) & 0xffu;
+            h *= 1099511628211ull;
+        }
+    };
+    mix(s.tick); mix(s.p0); mix(s.p1); mix(s.score0); mix(s.score1);
+    return h;
+}
+
+void require(bool condition, const char* message) {
+    if (!condition) throw std::runtime_error(message);
+}
+
+class RollbackPeer {
+public:
+    explicit RollbackPeer(std::size_t history_capacity)
+        : capacity_(history_capacity) {
+        if (capacity_ < 2) throw std::invalid_argument("history must hold at least two states");
+        states_[0] = State{};
+    }
+
+    void set_local_input(std::int64_t tick, Input in) {
+        local_[tick] = in;
+    }
+
+    // Returns true when the new remote input changed a past prediction and a
+    // rollback/resimulation was performed.
+    bool receive_remote_input(std::int64_t tick, Input in) {
+        if (tick <= confirmed_before_) return false; // duplicate/ancient confirmed packet
+        if (tick <= current_.tick && !states_.contains(tick - 1))
+            throw std::runtime_error("correction is older than retained rollback history");
+        auto old = remote_.find(tick);
+        if (old != remote_.end() && old->second == in) return false; // idempotent duplicate
+
+        remote_[tick] = in;
+
+        const auto predicted = remote_used_.find(tick);
+        // Only an already-consumed prediction mismatch requires history repair.
+        if (predicted != remote_used_.end() && predicted->second != in) {
+            if (!states_.contains(tick - 1))
+                throw std::runtime_error("misprediction is older than retained rollback history");
+            rollback_from(tick);
+            return true;
+        }
+        return false;
+    }
+
+    void advance_to(std::int64_t target_tick) {
+        while (current_.tick < target_tick) simulate_one(current_.tick + 1);
+    }
+
+    const State& state() const { return current_; }
+    std::uint64_t state_hash() const { return hash_state(current_); }
+
+    void confirm_through(std::int64_t tick) {
+        confirmed_before_ = std::max(confirmed_before_, tick);
+        trim_history();
+    }
+
+private:
+    Input local_for(std::int64_t tick) const {
+        if (auto it = local_.find(tick); it != local_.end()) return it->second;
+        return {};
+    }
+
+    Input remote_for(std::int64_t tick) const {
+        if (auto it = remote_.find(tick); it != remote_.end()) return it->second;
+
+        // Common rollback prediction policy: repeat the last known remote input.
+        Input last{};
+        auto it = remote_.upper_bound(tick);
+        if (it != remote_.begin()) {
+            --it;
+            last = it->second;
+        }
+        return last;
+    }
+
+    void simulate_one(std::int64_t tick) {
+        const Input a = local_for(tick);
+        const Input b = remote_for(tick);
+        remote_used_[tick] = b;
+        current_ = step(current_, a, b);
+        states_[current_.tick] = current_;
+        trim_history();
+    }
+
+    // Restore the pre-tick snapshot and replay retained commands to the old present.
+    void rollback_from(std::int64_t tick) {
+        const std::int64_t previous_target = current_.tick;
+        current_ = states_.at(tick - 1);
+
+        for (auto it = states_.lower_bound(tick); it != states_.end(); )
+            it = states_.erase(it);
+        for (auto it = remote_used_.lower_bound(tick); it != remote_used_.end(); )
+            it = remote_used_.erase(it);
+
+        while (current_.tick < previous_target) simulate_one(current_.tick + 1);
+    }
+
+    void trim_history() {
+        while (states_.size() > capacity_) states_.erase(states_.begin());
+
+        // Inputs older than the oldest retained transition are no longer useful.
+        if (!states_.empty()) {
+            const std::int64_t oldest_state = states_.begin()->first;
+            for (auto it = remote_used_.begin(); it != remote_used_.end() && it->first <= oldest_state; )
+                it = remote_used_.erase(it);
+        }
+    }
+
+    std::size_t capacity_;
+    State current_{};
+    std::map<std::int64_t, State> states_;
+    std::map<std::int64_t, Input> local_;
+    std::map<std::int64_t, Input> remote_;
+    std::map<std::int64_t, Input> remote_used_;
+    std::int64_t confirmed_before_ = -1;
+};
+
+State authoritative_run(
+    std::int64_t ticks,
+    const std::map<std::int64_t, Input>& a,
+    const std::map<std::int64_t, Input>& b
+) {
+    State s{};
+    for (std::int64_t t = 1; t <= ticks; ++t) {
+        const Input ia = a.contains(t) ? a.at(t) : Input{};
+        const Input ib = b.contains(t) ? b.at(t) : Input{};
+        s = step(s, ia, ib);
+    }
+    return s;
+}
+
+int main() {
+    std::map<std::int64_t, Input> local{
+        {1,{1,false}}, {2,{1,false}}, {3,{0,true}}, {4,{-1,false}}, {5,{0,true}}
+    };
+    std::map<std::int64_t, Input> remote_truth{
+        {1,{-1,false}}, {2,{-1,false}}, {3,{1,false}}, {4,{1,true}}, {5,{0,false}}
+    };
+
+    const State truth = authoritative_run(5, local, remote_truth);
+
+    RollbackPeer peer(16);
+    for (const auto& [t,in] : local) peer.set_local_input(t,in);
+
+    // Tick 1 remote input arrives in time. Ticks 2..5 are initially predicted
+    // by repeating that last known input.
+    peer.receive_remote_input(1, remote_truth.at(1));
+    peer.advance_to(5);
+    const auto speculative_hash = peer.state_hash();
+    require(!(peer.state() == truth), "prediction should differ before late packets arrive");
+
+    // A late authoritative tick 2 happens to match the repeated prediction.
+    require(!peer.receive_remote_input(2, remote_truth.at(2)),
+            "matching late input should not require rollback");
+
+    // Tick 3 differs from prediction, so the peer restores tick 2 and resimulates.
+    require(peer.receive_remote_input(3, remote_truth.at(3)),
+            "mispredicted past input must trigger rollback");
+    require(peer.state_hash() != speculative_hash,
+            "rollback should change the speculative result in this scenario");
+
+    // Later authoritative inputs can trigger further resimulation.
+    require(peer.receive_remote_input(4, remote_truth.at(4)),
+            "tick 4 mismatch must trigger rollback");
+    require(peer.receive_remote_input(5, remote_truth.at(5)),
+            "tick 5 mismatch must trigger rollback");
+
+    require(peer.state() == truth,
+            "after all authoritative inputs arrive, rollback state must equal direct simulation");
+    require(peer.state_hash() == hash_state(truth),
+            "deterministic state hash must agree with authoritative run");
+
+    // Duplicate packet: application layer remains idempotent.
+    require(!peer.receive_remote_input(5, remote_truth.at(5)),
+            "duplicate authoritative input must be harmless");
+
+    // History overflow is an explicit policy, not silent corruption.
+    RollbackPeer tiny(3);
+    tiny.set_local_input(1,{1,false});
+    tiny.receive_remote_input(1,{0,false});
+    tiny.advance_to(8);
+    bool rejected_old = false;
+    try {
+        tiny.receive_remote_input(2,{1,false});
+    } catch (const std::runtime_error&) {
+        rejected_old = true;
+    }
+    require(rejected_old, "too-old correction must fail visibly when history is gone");
+
+    std::cout << "rollback netcode: 7 suites PASS\n";
+}
+~~~
+
+
+**Reconstruct without reading:** if a wrong tick-101 prediction is discovered after simulating tick 105, name the snapshot restored and every tick replayed. Then distinguish local prediction, rollback, server reconciliation, snapshot interpolation, and lag compensation.
 
 ### A reconnect window needs an ownership policy
 

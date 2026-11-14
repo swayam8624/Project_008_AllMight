@@ -20,4 +20,4 @@ tools/labs/algorithm_patterns_lab.cpp implements the nonnegative-budget window a
 
 The same lab includes a sorted two-pointer pair-sum search and states its sorted-input precondition.
 
-Related: [[Complexity, asymptotics, and amortized analysis]].
+Related: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Why vectors usually grow geometrically: derive the cost instead of repeating “amortized O(1)”|Complexity, asymptotics, and amortized analysis]].

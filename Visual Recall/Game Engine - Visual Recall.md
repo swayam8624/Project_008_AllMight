@@ -117,3 +117,14 @@ flowchart LR
 |---|---|---|
 | Does a successful thread-status query mean the job succeeded? | No. Query success, final worker status, and handle lifetime are separate states. Closing a handle does not stop its worker. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Query success, worker completion and handle lifetime are separate states|Shutdown and buffer-lifetime trace]] |
 | Does identifying a reward prove its effect on every player? | No. Observe the rule, state the cultural interpretation, then test actual behavior. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Ask what the game makes valuable|Cultural rhetoric and medical-kit comparison]] |
+
+
+## Reconstruct the integrated runtime witnesses
+
+| Prompt | Short answer | Full explanation and commented code |
+|---|---|---|
+| When does a decoded scene become live? | After strict parsing, migration, complete reference/cycle validation and the final no-throw swap. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Serialize scene meaning through stable identities|Candidate-to-live diagram and malformed-input fixtures]] |
+| Why is a resource DAG insufficient for a backend? | Each mip/layer also has initialized contents, layout, access history and queue ownership. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Plan subresource state before translating it to an API|Symbolic transition planner]] |
+| What repairs a wrong predicted tick? | Restore retained state and replay the corrected input sequence; reject corrections older than the declared history policy. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Prediction hides latency; rollback repairs a wrong prediction|Rollback trace and reference]] |
+| What does an audio voice own? | One playback cursor and policy state; it borrows clip data under an explicit lifetime. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Turn the audio front end into a real-time voice and mixing system|Voice pool and mixing contract]] |
+| What question comes before navigation? | Which action or goal to pursue; behavior trees, utility and planning express different decisions. | [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Navigation answers how to move; the decision layer answers what to do|Decision-model comparison]] |

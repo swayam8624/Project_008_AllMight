@@ -1,3 +1,14 @@
+/*
+Teaching contract: each image mip/layer is independent logical state. A pass
+access names its queue, pipeline stage, read/write intent, and required layout;
+no GPU object or native barrier is created here. The planner carries whether a
+subresource has initialized contents, its current layout/owner, and all readers
+and writers needed to describe RAW, WAR, and WAW hazards. Release/acquire rows
+are symbolic ownership-transfer obligations, not Vulkan/Metal synchronization
+commands. Invalid ranges, duplicate declarations, undefined reads, feedback
+inside one pass, and illegal stage/layout pairs are rejected before a plan is
+returned. Tests inspect transitions and failure cases, not device execution.
+*/
 // C++20. Symbolic resource hazards: NOT valid Vulkan barrier emission.
 // Run: c++ -std=c++20 -Wall -Wextra -Werror -pedantic -O2 resource_state_plan_lab.cpp -o planner && ./planner
 #include <cstddef>
@@ -99,6 +110,7 @@ std::vector<Transition> plan(const std::vector<Image>& images,
                                   use.queue,use.queue,Layout::Undefined,
                                   use.layout,{},use.stage,false,0});
             } else if(state.owner!=use.queue) {
+                // Queue change requires a paired ownership handoff; only the backend can encode it natively.
                 const unsigned handoff=nextHandoff++;
                 // Symbolic release/acquire pair. Real Vulkan requires actual
                 // VkImageMemoryBarrier2 on each queue + matching submission
@@ -117,6 +129,7 @@ std::vector<Transition> plan(const std::vector<Image>& images,
                                   state.owner,use.queue,state.layout,use.layout,
                                   producers,use.stage,state.priorWrite,0});
             }
+            // Keep reader/writer stages per mip/layer so later transitions retain their producer scope.
             if(use.access==Access::Write) {
                 state.readers.clear();
                 state.writers={use.stage};

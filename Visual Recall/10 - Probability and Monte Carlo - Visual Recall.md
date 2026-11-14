@@ -58,11 +58,11 @@ Every arrow carries assumptions. A wrong PDF or measure can bias the result. A l
 
 ## Targeted backlinks
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A direction can exist even when the naive length overflows|stable numerics]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#An inverse can exist and still amplify uncertainty|conditioning]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Coordinates can change while the geometric object stays still|coordinate changes]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Positive definiteness is a structural promise|positive definiteness]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Diagonalization leads to the stronger symmetric spectral theorem|covariance eigenstructure]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A direction can exist even when the naive length overflows|stable numerics]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An inverse can exist and still amplify uncertainty|conditioning]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Coordinates can change while the geometric object stays still|coordinate changes]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Positive definiteness is a structural promise|positive definiteness]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Diagonalization leads to the stronger symmetric spectral theorem|covariance eigenstructure]]
 
 Parts covered by supplied sources: 901–1000. The numerical continuation and figure index below complete this received phase.
 
@@ -152,7 +152,7 @@ $$
 
 From Sigma=LL transpose and x=mu+Lz, solve z=inverse(L)(x-mu); then Mahalanobis squared distance is z transpose z. A singular covariance is supported on a lower-dimensional affine subspace.
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Original bridge: whiten a covariance ellipse|Rebuild the numerical witness]].
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Original bridge: whiten a covariance ellipse|Rebuild the numerical witness]].
 
 ## Six figures
 
@@ -186,19 +186,19 @@ Use each keyword for the concept note and the adjacent section link for the full
 
 | Concept keyword | Full teaching section |
 |---|---|
-| [[Probability spaces, events, and conditioning|sample space]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#1. A probability model begins with possible outcomes\|Phase 10 section]] |
-| [[Random variables and probability laws|random law]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#2. Random quantities and their probability laws\|Phase 10 section]] |
-| [[Common probability distributions and their assumptions|normal distribution]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#4. Discrete and continuous distribution families\|Phase 10 section]] |
-| [[Expectation, covariance, and dependence|first and second moments]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#3. Expected values describe centers; covariance describes dependence\|Phase 10 section]] |
-| [[Multivariate Gaussian distributions and whitening|normal vector]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#5. Waiting times, event counts, and covariance geometry\|Phase 10 section]] |
-| [[Conditional Gaussians and Schur complements|Schur complement covariance]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#5. Waiting times, event counts, and covariance geometry\|Phase 10 section]] |
-| [[Stateful pseudorandom generators and stream state|engine state]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
-| [[Stateless keyed sampling and reproducibility|counter-based RNG]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
-| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise|quasi-Monte Carlo]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
-| [[Inverse, rejection, and importance sampling|inverse transform]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#7. Transformations turn simple inputs into useful samples\|Phase 10 section]] |
-| [[Online moments and Welford accumulation|online variance]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#9. Finite samples need stable descriptive statistics\|Phase 10 section]] |
-| [[Confidence intervals and sequential evidence|coverage interval]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10. Inference and error metrics need explicit assumptions\|Phase 10 section]] |
-| [[Robust summaries and error metrics|quantile]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10. Inference and error metrics need explicit assumptions\|Phase 10 section]] |
+| [[Probability spaces, events, and conditioning|sample space]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#1. A probability model begins with possible outcomes\|Phase 10 section]] |
+| [[Random variables and probability laws|random law]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#2. Random quantities and their probability laws\|Phase 10 section]] |
+| [[Common probability distributions and their assumptions|normal distribution]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#4. Discrete and continuous distribution families\|Phase 10 section]] |
+| [[Expectation, covariance, and dependence|first and second moments]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#3. Expected values describe centers; covariance describes dependence\|Phase 10 section]] |
+| [[Multivariate Gaussian distributions and whitening|normal vector]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#5. Waiting times, event counts, and covariance geometry\|Phase 10 section]] |
+| [[Conditional Gaussians and Schur complements|Schur complement covariance]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#5. Waiting times, event counts, and covariance geometry\|Phase 10 section]] |
+| [[Stateful pseudorandom generators and stream state|engine state]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
+| [[Stateless keyed sampling and reproducibility|counter-based RNG]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
+| [[Sampling quality: stratification, quasi-Monte Carlo, and blue noise|quasi-Monte Carlo]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#6. A computer produces deterministic pseudorandom sequences\|Phase 10 section]] |
+| [[Inverse, rejection, and importance sampling|inverse transform]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#7. Transformations turn simple inputs into useful samples\|Phase 10 section]] |
+| [[Online moments and Welford accumulation|online variance]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#9. Finite samples need stable descriptive statistics\|Phase 10 section]] |
+| [[Confidence intervals and sequential evidence|coverage interval]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#10. Inference and error metrics need explicit assumptions\|Phase 10 section]] |
+| [[Robust summaries and error metrics|quantile]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#10. Inference and error metrics need explicit assumptions\|Phase 10 section]] |
 
 ## The chain
 
@@ -232,28 +232,35 @@ Input uncertainty is amplified by conditioning; finite-precision algorithms add 
 
 ## Continue in the volume
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Floating-point answers: error, conditioning, stability, and stable arithmetic|Error and arithmetic]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Reconstructing values and curves between samples|Interpolation and curves]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Finding roots with guarantees and convergence checks|Root solving]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Separate discretization, truncation, and roundoff; measure convergence|Error sources and convergence]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep probability weights stable before sampling|Stable weights]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Design samples: without replacement, stratified, and low-discrepancy|Sampling design]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Test numerical methods and benchmark reproducibly|Numerical tests]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Floating-point answers: error, conditioning, stability, and stable arithmetic|Error and arithmetic]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Reconstructing values and curves between samples|Interpolation and curves]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Finding roots with guarantees and convergence checks|Root solving]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Separate discretization, truncation, and roundoff; measure convergence|Error sources and convergence]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep probability weights stable before sampling|Stable weights]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Design samples: without replacement, stratified, and low-discrepancy|Sampling design]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Test numerical methods and benchmark reproducibly|Numerical tests]]
 
 ## Numerical reliability figures and their explanations
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-7 — Summation is an algorithm, not just a plus sign|N10-7 · Summation is an algorithm, not just a plus sign]] — Exact real sum is 10000. The three-term counterexample shows why Kahan is not an exact-arithmetic guarantee. Strict IEEE-style evaluation is assumed; reassociation can invalidate compensation.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-7 — Summation is an algorithm, not just a plus sign|N10-7 · Summation is an algorithm, not just a plus sign]] — Exact real sum is 10000. The three-term counterexample shows why Kahan is not an exact-arithmetic guarantee. Strict IEEE-style evaluation is assumed; reassociation can invalidate compensation.
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-8 — More polynomial degree does not guarantee a better picture|N10-8 · More polynomial degree does not guarantee a better picture]] — Both interpolants match every node. Their behaviour between nodes differs. Chebyshev extrema reduce this example’s endpoint oscillation; this comparison is not a universal interpolation error bound.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-8 — More polynomial degree does not guarantee a better picture|N10-8 · More polynomial degree does not guarantee a better picture]] — Both interpolants match every node. Their behaviour between nodes differs. Chebyshev extrema reduce this example’s endpoint oscillation; this comparison is not a universal interpolation error bound.
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-9 — Bézier and Hermite can tell the same curve story|N10-9 · Bézier and Hermite can tell the same curve story]] — Use Hermite tangents 3(P1−P0) and 3(P3−P2) for this cubic Bézier curve. The control polygon bounds the curve through nonnegative weights summing to one; inner control points need not lie on the curve.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-9 — Bézier and Hermite can tell the same curve story|N10-9 · Bézier and Hermite can tell the same curve story]] — Use Hermite tangents 3(P1−P0) and 3(P3−P2) for this cubic Bézier curve. The control polygon bounds the curve through nonnegative weights summing to one; inner control points need not lie on the curve.
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-10 — A root solver needs both progress and a safety argument|N10-10 · A root solver needs both progress and a safety argument]] — The error comparison uses cos(x)−x with specified starting values. Bisection has a shrinking bracket; Newton and secant need additional hypotheses. The plotting floor is explicitly shown rather than interpreted as continuing convergence.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-10 — A root solver needs both progress and a safety argument|N10-10 · A root solver needs both progress and a safety argument]] — The error comparison uses cos(x)−x with specified starting values. Bisection has a shrinking bracket; Newton and secant need additional hypotheses. The plotting floor is explicitly shown rather than interpreted as continuing convergence.
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-11 — Arbitrary sample counts need full-domain support|N10-11 · Arbitrary sample counts need full-domain support]] — Left: choosing the first five of nine equal cells and averaging equally gives E[y] = 0.3, while the uniform-square value is 0.5. Right: one point per marginal bin is a midpoint illustration; randomized LHS jitters and permutes appropriately, and is not full multidimensional stratification.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-11 — Arbitrary sample counts need full-domain support|N10-11 · Arbitrary sample counts need full-domain support]] — Left: choosing the first five of nine equal cells and averaging equally gives E[y] = 0.3, while the uniform-square value is 0.5. Right: one point per marginal bin is a midpoint illustration; randomized LHS jitters and permutes appropriately, and is not full multidimensional stratification.
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Figure N10-12 — Algebraically equal formulas can have unequal numerical error|N10-12 · Algebraically equal formulas can have unequal numerical error]] — The reference uses 90-digit Decimal arithmetic and compares binary64 formulas for b from 100 to 10¹⁶. This bounded example illustrates cancellation, not a complete robust quadratic solver.
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Figure N10-12 — Algebraically equal formulas can have unequal numerical error|N10-12 · Algebraically equal formulas can have unequal numerical error]] — The reference uses 90-digit Decimal arithmetic and compares binary64 formulas for b from 100 to 10¹⁶. This bounded example illustrates cancellation, not a complete robust quadratic solver.
 
 ## Linked numerical concepts
 
 [[Concepts/Algorithmic stability|Algorithmic stability]] · [[Concepts/Stable quadratic root evaluation|Stable quadratic root evaluation]] · [[Concepts/Interpolation versus approximation|Interpolation versus approximation]] · [[Concepts/Tensor-product interpolation|Tensor-product interpolation]] · [[Concepts/Cubic Hermite interpolation|Cubic Hermite interpolation]] · [[Concepts/Bézier curves and De Casteljau evaluation|Bézier curves and De Casteljau evaluation]] · [[Concepts/Bracketed and open root solvers|Bracketed and open root solvers]] · [[Concepts/A posteriori error bounds for contractive iteration|A posteriori error bounds for contractive iteration]] · [[Concepts/Discretization, truncation, and roundoff|Discretization, truncation, and roundoff]] · [[Concepts/Convergence order and Richardson extrapolation|Convergence order and Richardson extrapolation]] · [[Concepts/Stable probability normalization and log-sum-exp|Stable probability normalization and log-sum-exp]] · [[Concepts/Uniform shuffling without replacement|Uniform shuffling without replacement]] · [[Concepts/Latin-hypercube sampling|Latin-hypercube sampling]] · [[Concepts/Numerical error budgets|Numerical error budgets]] · [[Concepts/Reproducible numerical benchmarking|Reproducible numerical benchmarking]]
+
+
+## Paired evidence — retrieve the statistical unit
+
+| Prompt | Short answer | Full commented witness |
+|---|---|---|
+| What must survive a bootstrap or comparison? | The scene/run pairing; finite observations; and a test statistic whose result does not change with measurement units. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A research claim needs more than a p-value|Effect size, sign flips, bootstrap and Holm correction]] |

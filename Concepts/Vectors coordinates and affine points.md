@@ -32,4 +32,4 @@ Show why point plus point needs an affine-weight policy, while point plus displa
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#An arrow is not the address written beside it|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#An arrow is not the address written beside it|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]

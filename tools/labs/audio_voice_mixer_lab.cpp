@@ -1,3 +1,14 @@
+/*
+Teaching contract: Clip contains mono floating-point samples; cursor is a
+per-playback frame index, gain is dimensionless, and a fixed pool bounds active
+voices. For every frame, the mixer sums sample*gain across active voices, then
+this witness clamps to [-1,1]. A finished non-looping voice retires; a looping
+voice wraps; a full pool steals the oldest voice among the lowest priority, but
+rejects a lower-priority request. The mixing call uses fixed arrays and existing
+clip storage, so it allocates no memory. Device callbacks, command concurrency,
+spatialization, resampling and perceptual loudness policy are outside this CPU
+contract; hard clipping is used only to make output bounds testable.
+*/
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -41,6 +52,7 @@ public:
         if (!slot) {
             // Steal the least-important voice. For equal priority, steal the
             // oldest one so the rule is deterministic and inspectable.
+            // Deterministic overload rule: lowest priority loses, then oldest.
             auto it = std::min_element(
                 voices_.begin(), voices_.end(),
                 [](const Voice& a, const Voice& b) {
@@ -63,6 +75,7 @@ public:
             for (auto& voice : voices_) {
                 if (!voice.active) continue;
 
+                // Each overlapping voice owns its own cursor into shared clip samples.
                 sample += voice.clip->mono[voice.cursor] * voice.gain;
                 ++voice.cursor;
 

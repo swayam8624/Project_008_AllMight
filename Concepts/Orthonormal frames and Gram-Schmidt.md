@@ -29,4 +29,4 @@ Check reconstruction and orthogonality separately; know when a QR-based method i
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Orthonormal frames make reconstruction simple|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Orthonormal frames make reconstruction simple|Teaching narrative]] · [[Supplementary/Foundations#Phase 6 - Parts 501-600|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 6 - Source analysis and verification|Evidence and limits]] · [[Dependency Map]]

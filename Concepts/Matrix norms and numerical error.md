@@ -4,7 +4,7 @@ The spectral norm is the largest 2-norm stretch and equals the largest singular 
 
 **Use it when:** setting scaled tolerances or interpreting numerical diagnostics.
 
-**Developed in Phase 8:** The spectral norm measures worst-case amplification, while the Frobenius norm accumulates squared energy across entries. The chapter uses them to scale residuals, reconstruction errors, and orthogonality defects, and separates backward error in a nearby problem from forward error in the requested answer. [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Matrix norms put scale into error statements|norms and scale]] · [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Residuals distinguish backward accuracy from forward certainty|residuals and error interpretation]]
+**Developed in Phase 8:** The spectral norm measures worst-case amplification, while the Frobenius norm accumulates squared energy across entries. The chapter uses them to scale residuals, reconstruction errors, and orthogonality defects, and separates backward error in a nearby problem from forward error in the requested answer. [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Matrix norms put scale into error statements|norms and scale]] · [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Residuals distinguish backward accuracy from forward certainty|residuals and error interpretation]]
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ The spectral norm is the largest 2-norm stretch and equals the largest singular 
 
 [[Moore-Penrose pseudoinverse]], [[Matrix functions]], [[Sparse and iterative solvers]].
 
-**Teaching path:** [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Matrix norms give scale to residuals and error claims|norms and error]].
+**Teaching path:** [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Matrix norms give scale to residuals and error claims|norms and error]].
 
 
 ## A matrix norm can protect a geometry bound

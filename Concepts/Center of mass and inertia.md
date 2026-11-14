@@ -81,4 +81,4 @@ This feeds directly into contact effective mass and constraint solving.
 
 Read the connected explanation in [[Continuous Notes/Game Engine - From First Frame to Living Worlds#From the push on a panel to a repeatable rigid-body simulator]].
 
-Related: [[Impulse and force timing]], [[Mass properties and inertia tensor]].
+Related: [[Impulse and force timing]], [[Continuous Notes/Game Engine - From First Frame to Living Worlds#Part 1637 — Composite-body mass properties|Mass properties and inertia tensor]].

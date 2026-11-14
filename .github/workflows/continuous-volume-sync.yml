@@ -5,15 +5,37 @@ on:
     branches: [main]
     paths:
       - 'Continuous Notes/**'
+      - 'Chapter Edition/**'
+      - 'tools/chapter_plans/**'
+      - 'tools/build_chapter_edition.py'
+      - 'tools/tests/test_chapter_edition.py'
       - 'tools/labs/**'
       - 'tools/check_continuous_code_sync.py'
+      - 'tools/note_integrity.py'
+      - 'tools/check_vault_links.py'
+      - 'tools/tests/test_note_integrity.py'
+      - 'Concepts/**'
+      - 'Supplementary/**'
+      - 'Visual Recall/**'
+      - 'README.md'
       - 'tools/m018/check_note_examples.py'
       - '.github/workflows/continuous-volume-sync.yml'
   pull_request:
     paths:
       - 'Continuous Notes/**'
+      - 'Chapter Edition/**'
+      - 'tools/chapter_plans/**'
+      - 'tools/build_chapter_edition.py'
+      - 'tools/tests/test_chapter_edition.py'
       - 'tools/labs/**'
       - 'tools/check_continuous_code_sync.py'
+      - 'tools/note_integrity.py'
+      - 'tools/check_vault_links.py'
+      - 'tools/tests/test_note_integrity.py'
+      - 'Concepts/**'
+      - 'Supplementary/**'
+      - 'Visual Recall/**'
+      - 'README.md'
       - 'tools/m018/check_note_examples.py'
       - '.github/workflows/continuous-volume-sync.yml'
   workflow_dispatch:
@@ -29,5 +51,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Compare declared embedded C++ labs and formatting boundaries
         run: python3 tools/check_continuous_code_sync.py
+      - name: Regression-test Markdown, source identity and wiki target checks
+        run: python3 -m unittest discover -s tools/tests -p test_note_integrity.py
+      - name: Verify complete chapter reading copies
+        run: |
+          python3 -m unittest discover -s tools/tests -p test_chapter_edition.py
+          python3 tools/build_chapter_edition.py --check
+      - name: Verify note, heading and figure navigation
+        run: python3 tools/check_vault_links.py
       - name: Compile selected examples from the canonical engine volume
         run: python3 tools/m018/check_note_examples.py --compiler g++

@@ -1,143 +1,84 @@
 #!/usr/bin/env python3
-"""Verify live three-volume inventory, inline witnesses and lossless XR relocation.
+"""Protect the live three books and the approved November14 repair boundary.
 
-Structural and source-preservation check only. It does NOT prove source coverage,
-semantics, device correctness, or reconstruction of the original 3,000 parts.
+Preservation is distinct from source exhaustion, semantic correctness and device
+validation. The pinned input is the actual clean book state before this repair.
 """
-from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+from note_integrity import (code_blocks, migrate_legacy_links,
+                            normalized_baseline, ordered_lines_preserved)
+from check_continuous_code_sync import EMBEDDED
 
 ROOT = Path(__file__).resolve().parents[1]
 NOTES = ROOT / "Continuous Notes"
-FOUNDATIONS = NOTES / "Computing Foundations - From Bits to C++ and Systems APIs.md"
-GRAPHICS = NOTES / "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
-ENGINE = NOTES / "Game Engine - From First Frame to Living Worlds.md"
-BASE = "5be7d79c337c3d359569c9531621dd386fa0b7f0"
-START = "## A correct image must survive the viewer — perceptual rendering and XR"
-END = "## Mathematical language: points, vectors, and derivatives"
-LABS = {
-    FOUNDATIONS: (
-        "basis_measurement_lab.cpp",
-        "math_contact_toi_lab.cpp",
-        "temporary_lifetime_lab.cpp",
-        "se3_exp_log_lab.cpp",
-        "research_inference_lab.py",
-    ),
-    GRAPHICS: (
-        "xr_planar_vio_ekf_lab.py",
-        "xr_3d_imu_preintegration_lab.py",
-        "nerf_volume_rendering_lab.py",
-    ),
-    ENGINE: (
-        "render_graph_contract_lab.cpp",
-        "resource_state_plan_lab.cpp",
-        "two_point_contact_block_lab.cpp",
-        "rollback_netcode_lab.cpp",
-        "audio_voice_mixer_lab.cpp",
-        "ai_decision_models_lab.cpp",
-    ),
-}
-ENGINE_OLD_OVERCLOSURE = "That closes the **entire 18-pass run**.\n"
-ENGINE_RECONSTRUCTION_MARKER = (
-    "## From one collision impulse to a coupled contact problem "
-    "— reconstructed Phase 18 bridge"
-)
+BASE = "c142869a391c32d55068ddfbf4d4ac11ce52762c"
+XR_BASE = "5be7d79c337c3d359569c9531621dd386fa0b7f0"
+GRAPHICS = "University - Worlds, Images and Inference - Graphics, Vision and Photography.md"
+ENGINE = "Game Engine - From First Frame to Living Worlds.md"
+XR_START = "## A correct image must survive the viewer — perceptual rendering and XR"
+MATH_START = "## Mathematical language: points, vectors, and derivatives"
+BRIDGE = "## From one collision impulse to a coupled contact problem — reconstructed Phase 18 bridge"
 
 
-def verify(condition: bool, message: str) -> None:
+def require(condition, message):
     if not condition:
         raise RuntimeError(message)
 
 
-def subsequence(old: str, new: str) -> bool:
-    """Verify all old lines still exist in the same order after insertions."""
-    cursor = iter(new.splitlines(keepends=True))
-    for wanted in old.splitlines(keepends=True):
-        for candidate in cursor:
-            if candidate == wanted:
-                break
+def historical(name, revision):
+    command = ["git", "show", f"{revision}:Continuous Notes/{name}"]
+    result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+    require(result.returncode == 0, f"Historical baseline unavailable: {revision}:{name}")
+    return result.stdout
+
+
+def main():
+    require({p.name for p in NOTES.glob("*.md")} == set(EMBEDDED),
+            "Physical canonical inventory differs from the three teaching books")
+    for name in EMBEDDED:
+        current = (NOTES / name).read_text(encoding="utf-8")
+        code_blocks(current)  # Actual paired fence syntax, not prefix parity.
+        previous = normalized_baseline(historical(name, BASE), name)
+        if name == GRAPHICS:
+            # The approved repair moves this one intact source packet after its
+            # prerequisites. Compare the surrounding text independently so no
+            # other reordering or deletion can hide behind that exception.
+            begin, end = previous.index(XR_START), previous.index(MATH_START)
+            require(begin < end, "Pinned input no longer has the original early XR packet")
+            relocated = previous[begin:end]
+            require(current.count(relocated) == 1, "The approved XR packet lost bytes or was duplicated")
+            prior_rest = previous.replace(relocated, "", 1)
+            current_rest = current.replace(relocated, "", 1)
+            require(ordered_lines_preserved(prior_rest, current_rest),
+                    "Graphics text outside the approved XR relocation was removed/reordered")
         else:
-            return False
-    return True
-
-
-def baseline_text(path: Path) -> str:
-    relative = path.relative_to(ROOT).as_posix()
-    proc = subprocess.run(
-        ["git", "show", f"{BASE}:{relative}"],
-        cwd=ROOT, capture_output=True, check=False
-    )
-    verify(proc.returncode == 0,
-           f"Cannot read pinned baseline {BASE}:{relative}; fetch full history")
-    return proc.stdout.decode("utf-8")
-
-
-def display_check(path: Path, content: str) -> None:
-    lines = content.splitlines()
-    backtick = chr(96) * 3
-    fences = sum(line.startswith(backtick) or line.startswith("~~~") for line in lines)
-    maths = sum(line.strip() == "$$" for line in lines)
-    verify(fences % 2 == 0, f"{path.name}: odd code fence count {fences}")
-    verify(maths % 2 == 0, f"{path.name}: odd display-math fence count {maths}")
-    print(f"FORMAT {path.name}: {fences} code boundaries, {maths} math boundaries")
-
-
-def main() -> None:
-    current = {p: p.read_text(encoding="utf-8") for p in LABS}
-    discovered = set(NOTES.glob("*.md"))
-    verify(discovered == set(LABS),
-           "Live physical three-volume inventory changed; adjust routing/checker")
-    for path, body in current.items():
-        display_check(path, body)
-        previous = baseline_text(path)
-        if path == GRAPHICS:
-            verify(previous.count(START) == 1 and previous.count(END) == 1,
-                   "Baseline XR source anchors are not unique")
-            start, end = previous.index(START), previous.index(END)
-            verify(start < end, "Old XR source seam order changed")
-            original_xr = previous[start:end]
-            verify(body.count(original_xr) == 1,
-                   "Losslessly relocated XR foundation is missing or changed")
-            verify(body.index(END) < body.index(START),
-                   "XR block moved back before mathematics prerequisites")
-            verify(subsequence(previous.replace(original_xr, "", 1),
-                               body.replace(original_xr, "", 1)),
-                   "Graphics lost or reordered baseline text outside relocated XR")
-            print(f"RELOCATED XR: {len(original_xr)} original characters preserved")
-        elif path == ENGINE:
-            verify(previous.count(ENGINE_OLD_OVERCLOSURE) == 1,
-                   "Pinned baseline no longer has the single Phase-18 overclosure sentence")
-            verify(ENGINE_OLD_OVERCLOSURE not in body,
-                   "Phase-18 overclosure sentence was accidentally restored")
-            verify(body.count(ENGINE_RECONSTRUCTION_MARKER) == 1,
-                   "Phase-18 provenance-correct reconstruction bridge is missing or duplicated")
-            previous_without_overclaim = previous.replace(
-                ENGINE_OLD_OVERCLOSURE, "", 1
-            )
-            verify(subsequence(previous_without_overclaim, body),
-                   "Engine lost or reordered baseline text outside the one documented "
-                   "Phase-18 overclaim correction")
-            print("DOCUMENTED CORRECTION: removed one false Phase-18 closure claim")
-        else:
-            verify(subsequence(previous, body),
-                   f"{path.name}: original source lines removed or reordered")
-        print(f"BASELINE PRESERVED: {path.name}")
-        for filename in LABS[path]:
-            source = (ROOT / "tools" / "labs" / filename).read_text("utf-8").rstrip()
-            verify(source in body, f"{filename} differs from inline complete code")
-            print(f"INLINE SOURCE: {filename} matches")
-
-    print("PASS: actual three-volume inventory, inline labs, formatting, and "
-          "lossless source preservation with XR relocation")
-    print("LIMIT: this does not prove source exhaustion, S4 for every part, "
-          "GPU driver validation, or current Kairo/Maveb integration")
+            require(ordered_lines_preserved(previous, current),
+                    f"Original text removed/reordered beyond approved corrections: {name}")
+        print(f"PRESERVED {name}: approved-route baseline lines retained")
+        if name == ENGINE:
+            require("That closes the **entire 18-pass run**." not in current,
+                    "False Phase-18 source-closure claim remains")
+            require(current.count(BRIDGE) == 1, "Phase-18 reconstruction bridge missing/duplicated")
+        if name == GRAPHICS:
+            old = historical(name, XR_BASE)
+            begin, end = old.index(XR_START), old.index(MATH_START)
+            require(begin < end, "Historical XR seam changed")
+            xr = migrate_legacy_links(old[begin:end])
+            require(current.count(XR_START) == 1, "XR reader route missing/duplicated")
+            require(current.index(MATH_START) < current.index(XR_START),
+                    "XR source relocated ahead of its mathematics prerequisites")
+            require(ordered_lines_preserved(xr, current),
+                    "Original XR teaching lost after its historical relocation")
+            print("PRESERVED historical XR: original lines retained after prerequisite route")
+    print("PASS: three canonical books; prior teaching preserved with documented link/fence/closure corrections")
+    print("LIMIT: not source exhaustion, all-part mastery, native driver proof or production integration")
 
 
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, UnicodeError, RuntimeError) as problem:
+    except (OSError, UnicodeError, ValueError, RuntimeError) as problem:
         print(f"FAIL: {problem}", file=sys.stderr)
-        raise SystemExit(1)
+        sys.exit(1)

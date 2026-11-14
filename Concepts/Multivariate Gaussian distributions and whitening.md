@@ -28,7 +28,7 @@ A multivariate Gaussian is determined by a mean vector and a symmetric positive-
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#5. Waiting times, event counts, and covariance geometry|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#5. Waiting times, event counts, and covariance geometry|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage
@@ -36,4 +36,4 @@ A multivariate Gaussian is determined by a mean vector and a symmetric positive-
 Supplied lesson parts: 928 (T01 · M056), 929 (T01 · M056), 930 (T01 · M056).
 
 
-Expanded direct teaching: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Whiten residuals without pretending every ellipse has the same probability]].
+Expanded direct teaching: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Whiten residuals without pretending every ellipse has the same probability]].

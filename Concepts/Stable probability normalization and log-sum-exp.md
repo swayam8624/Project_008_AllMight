@@ -24,7 +24,7 @@ To normalize nonnegative weights, divide each by their sum; direct summation can
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep probability weights stable before sampling|Keep probability weights stable before sampling]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep probability weights stable before sampling|Keep probability weights stable before sampling]]
 
 ## Source coverage
 

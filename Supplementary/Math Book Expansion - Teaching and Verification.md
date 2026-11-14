@@ -1,5 +1,8 @@
 # Math book expansion — teaching and verification
 
+> Historical pass record: the reading counters below describe that pass, not the current corpus. As of 14 November, the retained ledger has 28,485 claim texts reviewed and 1,230 pending. Full-book coverage remains unfinished. See [[Supplementary/Vault Repair and Source Retention - 2026-11-14|the current repair and retention record]].
+
+
 This corrective pass adds textbook-based teaching directly to the integrated mathematics volume. Earlier selected additions in the graphics volume did not establish complete mathematics-book coverage. Inventory, claim reading, source verification and narrative teaching remain separate stages; this pass does not certify that every book page or every earlier video has been reviewed.
 
 ## What is now developed inside mathematics

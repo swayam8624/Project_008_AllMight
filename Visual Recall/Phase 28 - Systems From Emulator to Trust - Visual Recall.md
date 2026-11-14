@@ -6,7 +6,7 @@ companion: "Systems — From Cartridge Bytes to Reproducible State"
 
 # Systems recall — one snapshot from executed byte to trusted replay
 
-This is a reconstruction companion, not a replacement for [[Continuous Notes/Systems - From Cartridge Bytes to Reproducible State|the continuous systems teaching]]. Start with the user loading a cartridge, making a snapshot and attempting a remote restore. Follow causal operations in order and reconstruct the reason for every byte and lifetime boundary.
+This is a reconstruction companion, not a replacement for [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs|the continuous systems teaching]]. Start with the user loading a cartridge, making a snapshot and attempting a remote restore. Follow causal operations in order and reconstruct the reason for every byte and lifetime boundary.
 
 ## Rebuild the emulated CPU
 

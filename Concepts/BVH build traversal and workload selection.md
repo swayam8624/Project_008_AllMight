@@ -51,7 +51,7 @@ tools/labs/spatial_index_lab.cpp builds a median-split BVH over deterministic ra
 
 The witness does not claim SAH quality, LBVH construction, dynamic updates, SIMD traversal, ray packet behavior, navmesh construction, or KairoSpatial parity. Those remain separate evidence layers.
 
-Related: [[AABB overlap and containment]], [[Prefix scan and stream compaction]], [[Field reordering and AoS versus SoA]].
+Related: [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Axis-Aligned Bounding Boxes|AABB overlap and containment]], [[Prefix scan and stream compaction]], [[Field reordering and AoS versus SoA]].
 
 ## SAH, Morton and refit witness
 

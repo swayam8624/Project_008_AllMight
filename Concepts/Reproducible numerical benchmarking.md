@@ -27,7 +27,7 @@ A useful numerical benchmark separates sample-level variability from run-level v
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Test numerical methods and benchmark reproducibly|Test numerical methods and benchmark reproducibly]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Test numerical methods and benchmark reproducibly|Test numerical methods and benchmark reproducibly]]
 
 ## Source coverage
 

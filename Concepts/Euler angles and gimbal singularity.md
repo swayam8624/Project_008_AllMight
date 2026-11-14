@@ -19,7 +19,7 @@ Euler/Tait-Bryan angles are coordinates for rotation with a specified axis/order
 
 ## Used by
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|Phase 7 teaching and laboratory]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|Phase 7 teaching and laboratory]]
 
 ## Recall and next depth
 
@@ -27,7 +27,7 @@ Reconstruct the example, state its conventions and find an input that violates i
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
 
 
-Expanded direct teaching: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Angle rates are not three components of angular velocity]].
+Expanded direct teaching: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Angle rates are not three components of angular velocity]].

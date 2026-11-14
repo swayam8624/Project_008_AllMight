@@ -22,8 +22,8 @@ A camera sample selects a film location and usually a shutter time, then maps th
 
 ## Used by
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A camera model must close the loop|A camera model must close the loop]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]]
 
 ## Future depth
 

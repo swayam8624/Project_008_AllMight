@@ -236,3 +236,12 @@ Reconstruct without looking: show why the screen midpoint gives $u=0.2$ for $w=(
 | Can a negative cotangent edge weight coexist with nonnegative energy? | Yes. Valid element energies are squared gradients; individual signed edge terms are coupled by geometry. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Nonnegative energy and nonnegative weights are different promises|Proof and triangle matrix]] |
 | Does a stable heat step preserve nonnegative values? | Not necessarily: the worked step produces −0.015 while energy falls from 0.125 to 0.104525. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A stable heat step can still create a negative sample|Step derivation and limits]] · [[Visual Recall/University Graphics and Vision/cotan-energy-positivity.png|Figure]] |
 | What makes an explicit diffusion update a convex average? | Nonnegative edge weights, positive lumped masses, and a step small enough to keep every diagonal update coefficient nonnegative. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Complete single-triangle energy witness|Executable reference and failure witness]] |
+
+
+## From measurements to state and pixels
+
+| Prompt | Short answer | Full commented reconstruction |
+|---|---|---|
+| What makes the planar camera bearing model valid? | Known landmarks, planar motion and the explicitly identity body-to-camera extrinsic. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#Make the visual correction small enough to inspect: an eight-state planar EKF|EKF state, gate and covariance update]] |
+| What is IMU preintegration compressing? | High-rate samples between keyframes into declared relative motion summaries; it is not a complete visual estimator. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#From raw 3-D IMU samples to the pose constraint used by VIO|Frames, deltas and reconstruction]] |
+| What connects extinction to a pixel? | Segment opacity and remaining transmittance weight emitted sample colors. | [[Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography#A NeRF pixel is an integral before it is a neural-network output|Discrete volume rendering and gradients]] |

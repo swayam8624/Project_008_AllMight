@@ -26,12 +26,12 @@ The six figure assets have been rendered as PNG and SVG files and embedded in th
 
 ## Topic route
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change|Functions and local change]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation|Jacobians and curvature]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature|Integration]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation|Simulation]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation|Automatic differentiation]]
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems|Optimization]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change|Functions and local change]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Jacobians, curvature, and local approximation|Jacobians and curvature]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Integration and quadrature|Integration]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#ODEs and numerical simulation|Simulation]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Numerical differentiation and automatic differentiation|Automatic differentiation]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Optimization and inverse problems|Optimization]]
 
 ## Six figures
 
@@ -65,21 +65,28 @@ Use each keyword for the concept note and the adjacent section link for the full
 
 | Concept keyword | Full teaching section |
 |---|---|
-| [[Function contracts: domains, codomains, and images|domain and codomain]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
-| [[Limits and continuity|epsilon-delta limit]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
-| [[Derivative as a local linear map|differential]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
-| [[Differentiation rules and chain rule|product rule]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
-| [[Partial derivatives and gradients|gradient vector]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Multivariable derivatives and sensitivity\|Phase 9 section]] |
-| [[Directional and total derivatives|directional derivative]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Multivariable derivatives and sensitivity\|Phase 9 section]] |
-| [[Jacobians, pushforwards, and pullbacks|Jacobian matrix]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation\|Phase 9 section]] |
-| [[Hessians and local curvature|second derivative matrix]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation\|Phase 9 section]] |
-| [[Taylor models and approximation error|Taylor polynomial]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Jacobians, curvature, and local approximation\|Phase 9 section]] |
-| [[Finite differences and step-size balance|finite-difference derivative]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation\|Phase 9 section]] |
-| [[Definite integrals and the fundamental theorem|Riemann integral]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature\|Phase 9 section]] |
-| [[Numerical quadrature and error|integration rule]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Integration and quadrature\|Phase 9 section]] |
-| [[ODE initial-value problems and stiffness|initial-value problem]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation\|Phase 9 section]] |
-| [[Time integrators and symplectic updates|symplectic integrator]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#ODEs and numerical simulation\|Phase 9 section]] |
-| [[Newton and quasi-Newton optimization|Newton method]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems\|Phase 9 section]] |
-| [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt|Gauss-Newton]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Optimization and inverse problems\|Phase 9 section]] |
-| [[Implicit differentiation and parameter sensitivities|implicit differentiation]] | [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Numerical differentiation and automatic differentiation\|Phase 9 section]] |
+| [[Function contracts: domains, codomains, and images|domain and codomain]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
+| [[Limits and continuity|epsilon-delta limit]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
+| [[Derivative as a local linear map|differential]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
+| [[Differentiation rules and chain rule|product rule]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Functions, limits, continuity, and scalar change\|Phase 9 section]] |
+| [[Partial derivatives and gradients|gradient vector]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Multivariable derivatives and sensitivity\|Phase 9 section]] |
+| [[Directional and total derivatives|directional derivative]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Multivariable derivatives and sensitivity\|Phase 9 section]] |
+| [[Jacobians, pushforwards, and pullbacks|Jacobian matrix]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Jacobians, curvature, and local approximation\|Phase 9 section]] |
+| [[Hessians and local curvature|second derivative matrix]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Jacobians, curvature, and local approximation\|Phase 9 section]] |
+| [[Taylor models and approximation error|Taylor polynomial]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Jacobians, curvature, and local approximation\|Phase 9 section]] |
+| [[Finite differences and step-size balance|finite-difference derivative]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Numerical differentiation and automatic differentiation\|Phase 9 section]] |
+| [[Definite integrals and the fundamental theorem|Riemann integral]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Integration and quadrature\|Phase 9 section]] |
+| [[Numerical quadrature and error|integration rule]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Integration and quadrature\|Phase 9 section]] |
+| [[ODE initial-value problems and stiffness|initial-value problem]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#ODEs and numerical simulation\|Phase 9 section]] |
+| [[Time integrators and symplectic updates|symplectic integrator]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#ODEs and numerical simulation\|Phase 9 section]] |
+| [[Newton and quasi-Newton optimization|Newton method]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Optimization and inverse problems\|Phase 9 section]] |
+| [[Nonlinear least squares: Gauss-Newton and Levenberg-Marquardt|Gauss-Newton]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Optimization and inverse problems\|Phase 9 section]] |
+| [[Implicit differentiation and parameter sensitivities|implicit differentiation]] | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Numerical differentiation and automatic differentiation\|Phase 9 section]] |
 
+
+
+## Pose increments — retrieve the convention
+
+| Prompt | Short answer | Full commented witness |
+|---|---|---|
+| Why does a six-number pose increment need exp/log? | Translation and rotation compose through a declared rigid-transform convention; tiny-angle and near-pi branches need explicit policies. | [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#From a six-number pose update to an actual rigid transform|SE(3) derivation and tested branches]] |

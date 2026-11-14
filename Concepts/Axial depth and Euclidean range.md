@@ -25,7 +25,7 @@ Axial depth measures distance along the camera’s forward axis; Euclidean range
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Recover geometry from depth and construct screen-space rays|Recover geometry from depth and construct screen-space rays]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Recover geometry from depth and construct screen-space rays|Recover geometry from depth and construct screen-space rays]]
 
 ## Source coverage
 

@@ -18,7 +18,7 @@ A camera pose maps camera coordinates to world coordinates; its inverse is the v
 
 ## Used by
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|Phase 7 teaching and laboratory]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|Phase 7 teaching and laboratory]]
 - [[Depth buffering and visibility order]]
 - [[Lens optics and depth of field]]
 
@@ -35,7 +35,7 @@ Reconstruct the example, state its conventions and find an input that violates i
 
 ## Source and navigation
 
-[[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
+[[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Keep the promises visible while moving between representations|Continuous explanation]] · [[Supplementary/Foundations#Phase 7 - Parts 601-700|Coverage and source gap]] · [[Supplementary/Sources and Code Anchors#Phase 7 - Source analysis and verification|Sources and verification]]
 
 ## University course development
 
@@ -45,4 +45,4 @@ Extend the existing transform pipeline with the clipping and depth-precision dec
 
 ## Phase 11 camera development
 
-A raster-to-ray camera maps a pixel to a geometric sample; In a pinhole model, invert projection and view transforms to recover a camera-space direction, then transform it to world space without applying translation as if it were a point. Pixel-center convention, viewport origin, handedness, clip-depth range, and normalization all affect the result. Offset a pixel to generate differential rays and estimate the surface footprint; that footprint grows with depth and changes with surface orientation. Keep ray generation distinct from raster projection while ensuring their conventions agree. Link: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].
+A raster-to-ray camera maps a pixel to a geometric sample; In a pinhole model, invert projection and view transforms to recover a camera-space direction, then transform it to world space without applying translation as if it were a point. Pixel-center convention, viewport origin, handedness, clip-depth range, and normalization all affect the result. Offset a pixel to generate differential rays and estimate the surface footprint; that footprint grows with depth and changes with surface orientation. Keep ray generation distinct from raster projection while ensuring their conventions agree. Link: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#A camera model must close the loop|A camera model must close the loop]]; research: [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Four deeper links from the TUM lecture review|Four deeper links from the TUM lecture review]].

@@ -24,7 +24,7 @@ Cubemaps, equirectangular panoramas, and fisheye lenses map unit directions onto
 
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#Represent directions over the full sphere|Represent directions over the full sphere]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#Represent directions over the full sphere|Represent directions over the full sphere]]
 
 ## Source coverage
 

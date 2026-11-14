@@ -1,3 +1,21 @@
+/*
+Teaching contract: this is a 2-D rigid-body velocity solve for two unilateral
+normal contacts on one body pair. Positions are metres, linear speeds m/s,
+angular speed rad/s, inverse mass kg^-1, inverse inertia kg^-1 m^-2, and each
+normal impulse is kg m/s. The unit normal points from A toward B; a positive
+relative normal speed means separation. The contact-point velocity is
+v + omega x r, so rotating bodies can close at one point and separate at the
+other even when their centers move together.
+
+For contact i, let J_i be its normal-velocity row. The effective-mass block
+K_ij = J_i M^-1 J_j^T maps impulse j into speed change at point i. We solve
+w = u + K lambda >= 0, lambda >= 0, lambda_i*w_i = 0. The four active sets
+(both, left, right, neither) are enumerated and checked against complementarity;
+a singular both-active block falls through to feasible one-point cases. The
+witness fails closed when no case exists and verifies the reconstructed post
+speeds against the matrix equation. This is not friction, penetration bias,
+warm starting, manifold reduction, or a production island solver.
+*/
 // C++20 two-point unilateral contact witness: 2x2 block complementarity, not a complete engine solver.
 // Build: c++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror tools/labs/two_point_contact_block_lab.cpp -o /tmp/two_point && /tmp/two_point
 #include <algorithm>
@@ -68,6 +86,7 @@ BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
         before[i] = dot(pointVelocity(b, rb[i]) - pointVelocity(a, ra[i]), n);
         require(std::isfinite(before[i]), "nonfinite relative velocity");
     }
+    // K maps each impulse to both normal speeds; off-diagonal terms are rotational coupling.
     double K[2][2]{};
     for (int i = 0; i < 2; ++i)
         for (int j = 0; j < 2; ++j)
@@ -103,6 +122,7 @@ BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
     };
     std::array<double, 2> answer{};
     bool found = false;
+    // Avoid determinant division when the block is singular or poorly conditioned.
     if (std::isfinite(determinant) && determinant > eps * matrixScale) {
         const std::array<double, 2> both{
             (-K[1][1] * before[0] + K[0][1] * before[1]) / determinant,
@@ -110,6 +130,7 @@ BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
         };
         if (feasible(both)) { answer = both; found = true; }
     }
+    // Rank-deficient pairs may still admit one active point; test its effect on both gaps.
     if (!found && K[0][0] > eps) {
         const std::array<double, 2> left{-before[0] / K[0][0], 0};
         if (feasible(left)) { answer = left; found = true; }
@@ -121,6 +142,7 @@ BlockResult solveBlock(Body& a, Body& b, ContactPair pair) {
     if (!found && feasible({0, 0})) found = true;
     require(found, "no valid contact impulse: degenerate or inconsistent pair");
 
+    // Mutate bodies only after a feasible active set is found.
     for (int i = 0; i < 2; ++i) {
         // Tiny negative roundoff is projected to zero, not treated as attraction.
         answer[i] = std::max(0.0, answer[i]);

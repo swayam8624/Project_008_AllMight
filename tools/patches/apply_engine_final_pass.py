@@ -126,9 +126,10 @@ Lag compensation is different again. A server may evaluate a shot against a reco
 
 A corrected gameplay state may jump. Rendering that correction directly can look harsh. Keep simulation truth separate from visual smoothing. The gameplay state can become correct immediately while a presentation transform eases toward it, provided the smoothed value never becomes authoritative collision or gameplay state.
 
+This witness does not implement transport, congestion control, authentication, packet redundancy, anti-cheat, floating-point cross-platform determinism, snapshot compression, or lag-compensated hit validation. It makes the simulation/history contract reconstructable before those layers are added.
+
 The executable witness below predicts missing remote input, stores state history, detects a late mismatch, restores the previous state, resimulates to the present, and verifies that the final state equals a direct authoritative simulation. It also checks duplicate packets and a correction older than retained history.
 """ + rollback_code + """
-This witness does not implement transport, congestion control, authentication, packet redundancy, anti-cheat, floating-point cross-platform determinism, snapshot compression, or lag-compensated hit validation. It makes the simulation/history contract reconstructable before those layers are added.
 
 **Reconstruct without reading:** if a wrong tick-101 prediction is discovered after simulating tick 105, name the snapshot restored and every tick replayed. Then distinguish local prediction, rollback, server reconciliation, snapshot interpolation, and lag compensation.
 """
@@ -241,9 +242,10 @@ Changing playback rate also changes pitch and duration. Time stretching without 
 
 The game owns emitter and listener transforms. Publish a compact timestamped snapshot for audio rather than letting the callback query arbitrary ECS state. Occlusion queries can run at a safe cadence elsewhere and publish their results to the mixer.
 
+It does not implement HRTF processing, resampling, streaming decode, effects buses, device hot-swap, or thread-safe command publication. Those now have explicit architectural homes instead of being hidden behind a single play-sound call.
+
 The executable witness below owns a fixed voice pool and performs no allocation inside its mixing function. It verifies summation, natural voice retirement, looping, deterministic voice stealing, rejection of an unimportant sound when all slots are more important, and bounded output.
 """ + audio_code + """
-It does not implement HRTF processing, resampling, streaming decode, effects buses, device hot-swap, or thread-safe command publication. Those now have explicit architectural homes instead of being hidden behind a single play-sound call.
 
 **Reconstruct without reading:** distinguish an asset from a voice, explain why the callback should not wait on the game thread, derive the basic mix equation, state a voice-stealing rule, and explain how streaming buffers stay ahead of playback.
 """
@@ -378,12 +380,73 @@ For one selected agent, a debug view should show perceived facts, remembered tar
 
 "Enemy acted stupid" becomes useful only after the engine can show which fact or decision produced the action.
 
+A real game can combine them: utility chooses fight versus flee, a behavior tree executes the mode, GOAP handles a special multistep task, and navigation moves toward requested destinations.
+
 The executable witness below sends small world states through all three models. The behavior tree exposes authored priority, utility AI scores alternatives, and GOAP searches action preconditions/effects. It is a comparison of semantics, not a declaration that one architecture wins.
 """ + ai_code + """
-A real game can combine them: utility chooses fight versus flee, a behavior tree executes the mode, GOAP handles a special multistep task, and navigation moves toward requested destinations.
 
 **Reconstruct without reading:** explain what A* answers that a behavior tree does not. Write one selector, one utility score, and one GOAP action. Then state when replanning should occur and which AI state the editor must expose.
 """
+
+resource = """
+<!-- Engine-resource-state-plan -->
+### Plan subresource state before translating it to an API
+
+A logical render graph describes which pass uses a resource. A backend planner has a second job: track each image mip and layer independently, including whether its contents exist, its current layout, its queue owner, and the stages that read or wrote it. A whole-image flag loses correctness when one mip is uploaded while another is sampled.
+
+Its tests establish only the planner's CPU state contract. Native barrier translation still needs API validation and device execution.
+
+The witness below turns those declarations into symbolic same-queue transitions and release/acquire obligations. The records explain the reason for each transition; they are not Vulkan barriers, Metal fences, or evidence of driver synchronization. The example rejects unknown subresources, duplicate image declarations, undefined reads, unsupported feedback, and illegal stage/layout combinations before returning a plan.
+
+```cpp
+""" + (ROOT / "tools/labs/resource_state_plan_lab.cpp").read_text().rstrip() + """
+```
+
+"""
+
+scene_persistence = """
+<!-- Engine-scene-persistence -->
+#### Serialize scene meaning through stable identities
+
+Saving a scene must preserve authored meaning across process lifetimes. Runtime pointers and dense ECS slots are temporary, so each serialized entity and asset needs a stable ID. Each field must be written deliberately; dumping a C++ object layout would also persist padding, compiler ABI, and endianness accidents.
+
+A safe loader first checks byte and record bounds and parses into a candidate scene. It validates unique entity IDs and asset IDs, builds the complete ID table, then resolves parent references in a second pass so forward references work. Only a fully validated candidate can replace the live scene. Version migration supplies defined defaults for fields added later. The small text fixture below demonstrates round-trip, a version-1 migration, and rejection of unsupported versions, oversized counts, malformed coordinates, duplicate IDs, missing assets, and dangling parents. Its codec is intentionally portable and dependency-free; it does not promise filesystem atomicity, crash durability, checksums, escaping for arbitrary strings, or a production binary schema.
+
+```mermaid
+flowchart LR
+  A[Versioned scene bytes] --> B[Bound tokens and migrate fields]
+  B --> C[Build candidate IDs and resolve references]
+  C --> D[Reject missing assets and hierarchy cycles]
+  D --> E[Swap fully valid candidate into live scene]
+  B -->|invalid| F[Keep previous live scene]
+  C -->|invalid| F
+  D -->|invalid| F
+  classDef valid fill:#dcfce7,stroke:#15803d,color:#14532d
+  classDef fail fill:#ffedd5,stroke:#c2410c,color:#7c2d12
+  class E valid
+  class F fail
+```
+
+The candidate is private until every gate succeeds. A failed parse, unresolved reference or cycle leaves the old live scene available; the comments in the program explain how the checks and final swap enforce that boundary.
+
+```cpp
+""" + (ROOT / "tools/labs/scene_persistence_lab.cpp").read_text().rstrip() + """
+```
+
+"""
+
+text = insert_or_refresh_before(
+    text,
+    "### 6. Dependencies, composition, and the build graph",
+    "<!-- Engine-scene-persistence -->",
+    scene_persistence,
+)
+text = insert_or_refresh_before(
+    text,
+    "### Complete C++20 graph compiler, executable trace and negative cases",
+    "<!-- Engine-resource-state-plan -->",
+    resource,
+)
 
 text = insert_or_refresh_before(
     text,

@@ -1,3 +1,14 @@
+/*
+Teaching contract: State is the complete deterministic gameplay state for this
+tiny two-player example; tick is an integer simulation step and positions are
+integer cells. Input is the command assigned to one tick. The peer predicts a
+missing remote command by repeating the latest known one, stores the state
+before each tick plus inputs used, and when a late command differs restores the
+preceding state and replays through the present. Capacity bounds memory and
+resimulation age; a correction outside retained history is rejected. State
+hashes are diagnostic only. This integer witness avoids floating-point drift;
+it does not prove determinism for a real engine or implement packet transport.
+*/
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -78,6 +89,7 @@ public:
         remote_[tick] = in;
 
         const auto predicted = remote_used_.find(tick);
+        // Only an already-consumed prediction mismatch requires history repair.
         if (predicted != remote_used_.end() && predicted->second != in) {
             if (!states_.contains(tick - 1))
                 throw std::runtime_error("misprediction is older than retained rollback history");
@@ -127,6 +139,7 @@ private:
         trim_history();
     }
 
+    // Restore the pre-tick snapshot and replay retained commands to the old present.
     void rollback_from(std::int64_t tick) {
         const std::int64_t previous_target = current_.tick;
         current_ = states_.at(tick - 1);

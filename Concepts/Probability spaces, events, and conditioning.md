@@ -27,7 +27,7 @@ A probability model consists of a sample space, a collection of measurable event
 - [[Uniform shuffling without replacement]]
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#1. A probability model begins with possible outcomes|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#1. A probability model begins with possible outcomes|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

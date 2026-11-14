@@ -29,7 +29,7 @@ A confidence interval is a procedure with repeated-sample coverage under stated 
 - [[Reproducible numerical benchmarking]]
 ## Full teaching explanation
 
-- [[Continuous Notes/00 - From Vectors to Images - Integrated Mathematics for Visual Computing#10. Inference and error metrics need explicit assumptions|Phase 10 teaching section]]
+- [[Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs#10. Inference and error metrics need explicit assumptions|Phase 10 teaching section]]
 - [[Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md]] · visual recall
 
 ## Source coverage

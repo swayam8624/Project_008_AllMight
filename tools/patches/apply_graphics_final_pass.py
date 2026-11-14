@@ -8,86 +8,123 @@ def code_block(path, language):
     return "\n\n~~~" + language + "\n" + path.read_text().rstrip() + "\n~~~\n"
 
 def insert_or_refresh_before(text, anchor, marker, body):
-    if anchor not in text:
+    if text.count(anchor) != 1:
         raise SystemExit("missing anchor: " + anchor)
     normalized = body.strip("\n")
-    if marker in text:
+    occurrences = text.count(marker)
+    if occurrences > 1:
+        raise SystemExit("duplicate patch marker: " + marker)
+    if occurrences == 1:
         start = text.index(marker)
         while start > 0 and text[start - 1] == "\n":
             start -= 1
-        end = text.index(anchor, start)
+        end = text.find(anchor, start)
+        if end < 0:
+            raise SystemExit("patch marker is no longer before anchor: " + marker)
         return text[:start] + "\n\n" + normalized + "\n\n" + text[end:]
     return text.replace(anchor, normalized + "\n\n" + anchor, 1)
 
 text = NOTE.read_text()
 
+planar_code = code_block(ROOT / "tools/labs/xr_planar_vio_ekf_lab.py", "python")
 imu_code = code_block(ROOT / "tools/labs/xr_3d_imu_preintegration_lab.py", "python")
 nerf_code = code_block(ROOT / "tools/labs/nerf_volume_rendering_lab.py", "python")
 
-imu = """
+planar = r"""
+<!-- Bible-final-pass: XR planar VIO EKF -->
+### Make the visual correction small enough to inspect: an eight-state planar EKF
+
+The previous state list names orientation, position, velocity and sensor biases, but does not yet show how a camera observation changes them. Begin with a deliberately constrained model whose entire covariance update can be checked: a horizontal world plane, yaw-only rotation, gravity already removed from horizontal acceleration, and bearings to surveyed landmarks. This is an EKF witness for that model; it is not full 3-D VIO or SLAM.
+
+For this experiment, the camera coordinate frame $C$ is known to coincide with the planar body frame $B$: the optical center is at the body origin, camera forward is body $+x$, and the in-plane camera rotation is zero. Thus the fixed camera-to-body extrinsic $T_{BC}$, which maps camera coordinates into body coordinates, is $I$, with zero lever arm and aligned axes. This is a stated identity-extrinsic assumption, not an estimated calibration result. The bearing equation below is valid because the camera and body origins and orientations coincide.
+
+Use the state
+
+$$
+\mathbf{x}=(p_x,p_y,v_x,v_y,\psi,b_g,b_{ax},b_{ay})^T,
+$$
+
+where positions are metres, velocities are metres per second, yaw $\psi$ and gyro bias $b_g$ are radians and radians per second, and accelerometer biases are metres per second squared. Position and velocity are world-horizontal; accelerometer samples are body-horizontal. The rotation $R(\psi)$ maps body vectors into world axes. Gyroscope measurement is $\omega_m=\dot\psi+b_g+n_g$; specific-force measurement is $\mathbf{a}_m=R^T\mathbf{a}_w+\mathbf{b}_a+\mathbf{n}_a$. Here the simulation's horizontal channel has gravity removed by construction.
+
+For a zero-order hold over interval $\Delta t$, subtract the estimated biases, rotate acceleration with the interval-start yaw, then integrate constant acceleration:
+
+$$
+\begin{aligned}
+\mathbf{a}_w &= R(\psi_k)(\mathbf{a}_{m,k}-\mathbf{b}_{a,k}),\\
+\mathbf{p}_{k+1} &= \mathbf{p}_k+\mathbf{v}_k\Delta t+\tfrac12\mathbf{a}_w\Delta t^2,\\
+\mathbf{v}_{k+1} &= \mathbf{v}_k+\mathbf{a}_w\Delta t,\\
+\psi_{k+1} &= \operatorname{wrap}(\psi_k+(\omega_{m,k}-b_{g,k})\Delta t).
+\end{aligned}
+$$
+
+The transition Jacobian $F=\partial f/\partial\mathbf{x}$ propagates uncertainty as $P_{k+1}=FP_kF^T+Q$. Sensor noise enters through a first-order map $G$; bias random walks add their variance per sample. A surveyed landmark $\mathbf{L}$ gives camera bearing
+
+$$
+h(\mathbf{x})=\operatorname{wrap}\!\left(\operatorname{atan2}(L_y-p_y,L_x-p_x)-\psi\right).
+$$
+
+For $d_x=L_x-p_x$, $d_y=L_y-p_y$, and $r^2=d_x^2+d_y^2$, its nonzero Jacobian entries are $H_{p_x}=d_y/r^2$, $H_{p_y}=-d_x/r^2$, and $H_\psi=-1$. As a hand check, at $\mathbf{p}=(0,0)$ looking at $\mathbf{L}=(6,4)$, they are $(0.1,-0.15,-1)$ in radians per metre and radians per radian.
+
+The wrapped innovation $\nu=\operatorname{wrap}(z-h(\mathbf{x}))$ avoids treating bearings just across $-\pi/\pi$ as almost a full revolution apart. With $S=HPH^T+R_z$, reject a gross mismatch when $\nu^2/S$ exceeds the one-degree-of-freedom 99% chi-square threshold $6.635$. Otherwise use $K=PH^T/S$, correct the state by $K\nu$, wrap yaw, and update covariance in Joseph form: $P^+=(I-KH)P(I-KH)^T+KR_zK^T$. Joseph form better preserves symmetry and positive semidefiniteness under finite precision.
+
+The complete source below fixes the clock at 50 Hz, uses three surveyed landmarks, injects one deliberately wrong correspondence, finite-differences every column of both analytic Jacobians, and checks covariance eigenvalues through a deterministic replay. Its 0.25 m final-position bound belongs only to this generated 4.8-second planar trajectory. It does not estimate camera intrinsics/extrinsics, time offset, roll/pitch, gravity direction, map structure, delayed observations, or human-head motion.
+""" + planar_code + r"""
+"""
+
+imu = r"""
 <!-- Bible-final-pass: XR 3D VIO spine -->
 #### From raw 3-D IMU samples to the pose constraint used by VIO
 
 The planar EKF above is useful because every state variable and Jacobian can be inspected. A real headset, however, rotates around all three axes and accelerates in three dimensions. We therefore need the next bridge: not a second list of VIO vocabulary, but the exact path from high-rate IMU samples to a constraint that a filter or sliding-window optimizer can use.
 
-Keep the frame convention from the previous section. Let R_i be body-to-world orientation at keyframe i, p_i world position, v_i world velocity, and g world gravity. The IMU reports
+Keep the frame convention from the previous section. Let $R_i$ map body coordinates into world coordinates at keyframe $i$, with position $\mathbf p_i$ in metres, velocity $\mathbf v_i$ in metres per second, and gravity $\mathbf g$ in metres per second squared. The IMU reports
 
-~~~text
-omega_m = omega + b_g + n_g
-f_m     = R^T (a_world - g) + b_a + n_a
-~~~
+$$
+\boldsymbol\omega_m=\boldsymbol\omega+\mathbf b_g+\mathbf n_g,
+\qquad
+\mathbf f_m=R^T(\mathbf a_{world}-\mathbf g)+\mathbf b_a+\mathbf n_a.
+$$
 
 The accelerometer measures specific force, not world acceleration. That one sentence explains a common debugging surprise: a level, stationary accelerometer can report roughly +9.81 m/s^2 along its upward body axis. After rotating that specific force into the world and adding world gravity, the net translational acceleration is zero.
 
 If every IMU sample were integrated from the beginning of the trajectory each time an optimizer changed an old pose, optimization would be wasteful. **Preintegration** compresses all IMU samples between two keyframes into a relative motion summary.
 
-For samples between i and j, define three quantities in frame i:
-
-~~~text
-Delta R_ij   relative rotation
-Delta v_ij   gravity-free relative velocity change
-Delta p_ij   gravity-free relative position change
-~~~
+For samples between $i$ and $j$, define a relative rotation $\Delta R_{ij}\in SO(3)$ and gravity-free increments $\Delta\mathbf v_{ij}$ (metres per second) and $\Delta\mathbf p_{ij}$ (metres), both expressed in frame $i$:
 
 Under a zero-order-hold discretization with one sample interval dt,
 
-~~~text
-Delta R <- Delta R Exp((omega_m - b_g) dt)
-
-a_local <- Delta R_before (f_m - b_a)
-
-Delta p <- Delta p + Delta v dt + 1/2 a_local dt^2
-Delta v <- Delta v + a_local dt
-~~~
+$$
+\begin{aligned}
+\Delta R &\leftarrow \Delta R\,\operatorname{Exp}((\boldsymbol\omega_m-\mathbf b_g)\Delta t),\\
+\mathbf a_i &\leftarrow \Delta R_{\mathrm{before}}(\mathbf f_m-\mathbf b_a),\\
+\Delta\mathbf p &\leftarrow \Delta\mathbf p+\Delta\mathbf v\Delta t+\tfrac12\mathbf a_i\Delta t^2,\\
+\Delta\mathbf v &\leftarrow \Delta\mathbf v+\mathbf a_i\Delta t.
+\end{aligned}
+$$
 
 The order matters. The force sample for that interval is rotated by the relative orientation at the start of the interval in this simple discretization.
 
 After the whole interval has been compressed, the later navigation state is predicted by
 
-~~~text
-R_j = R_i Delta R_ij
-
-v_j = v_i + g Delta t + R_i Delta v_ij
-
-p_j = p_i + v_i Delta t
-            + 1/2 g Delta t^2
-            + R_i Delta p_ij
-~~~
+$$
+\begin{aligned}
+R_j &= R_i\Delta R_{ij},\\
+\mathbf v_j &= \mathbf v_i+\mathbf g\Delta t+R_i\Delta\mathbf v_{ij},\\
+\mathbf p_j &= \mathbf p_i+\mathbf v_i\Delta t+\tfrac12\mathbf g\Delta t^2+R_i\Delta\mathbf p_{ij}.
+\end{aligned}
+$$
 
 Notice where gravity appears: not inside the stored preintegrated delta above, but when the delta is connected to the world state. This separation is what lets one relative IMU constraint be reused while the optimizer changes R_i, p_i, and v_i.
 
 Two consecutive preintegrated intervals also compose without replaying the raw samples. If a is i->j and b is j->k,
 
-~~~text
-Delta R_ik = Delta R_ij Delta R_jk
-
-Delta v_ik = Delta v_ij
-           + Delta R_ij Delta v_jk
-
-Delta p_ik = Delta p_ij
-           + Delta v_ij Delta t_jk
-           + Delta R_ij Delta p_jk
-~~~
+$$
+\begin{aligned}
+\Delta R_{ik}&=\Delta R_{ij}\Delta R_{jk},\\
+\Delta\mathbf v_{ik}&=\Delta\mathbf v_{ij}+\Delta R_{ij}\Delta\mathbf v_{jk},\\
+\Delta\mathbf p_{ik}&=\Delta\mathbf p_{ij}+\Delta\mathbf v_{ij}\Delta t_{jk}+\Delta R_{ij}\Delta\mathbf p_{jk}.
+\end{aligned}
+$$
 
 This is not merely an optimization trick. It is a testable algebraic contract. Integrating 200 samples in one pass should agree with integrating the first 100, integrating the second 100 in the intermediate frame, and composing the two deltas.
 
@@ -97,32 +134,29 @@ The compact recurrence above assumes a particular gyro bias b_g and acceleromete
 
 A production preintegrator therefore carries first-order Jacobians such as
 
-~~~text
-d(Delta R) / d b_g
-d(Delta v) / d b_g
-d(Delta v) / d b_a
-d(Delta p) / d b_g
-d(Delta p) / d b_a
-~~~
+$$
+\frac{\partial\Delta R}{\partial\mathbf b_g},\quad
+\frac{\partial\Delta\mathbf v}{\partial\mathbf b_g},\quad
+\frac{\partial\Delta\mathbf v}{\partial\mathbf b_a},\quad
+\frac{\partial\Delta\mathbf p}{\partial\mathbf b_g},\quad
+\frac{\partial\Delta\mathbf p}{\partial\mathbf b_a}.
+$$
 
 and a covariance for the preintegrated measurement. Small bias changes can then correct the delta without replaying every IMU sample. Large changes may require reintegration. The exact Jacobian recurrence depends on the left/right perturbation convention and SO(3) Jacobians; copying formulas from a paper while using the opposite rotation convention is a reliable way to build a filter that looks plausible but is inconsistent.
 
 The executable witness below intentionally stops one level before that production complexity. It verifies the 3-D geometry first: SO(3) exp/log, a stationary gravity-cancellation case, constant yaw integration, interval composition, and visible drift when a known gyro bias is ignored.
-""" + imu_code + """
-This witness reaches reconstructable depth for the **3-D inertial propagation and preintegration subproblem**. It does not claim that a full VIO system is finished.
-
+""" + imu_code + r"""
 ##### How the preintegrated delta enters a sliding-window optimizer
 
 A keyframe optimizer keeps several camera/IMU states. Between adjacent states it adds an IMU residual. In simplified form,
 
-~~~text
-r_R = Log( Delta R_ij^-1 (R_i^T R_j) )
-
-r_v = R_i^T (v_j - v_i - g Delta t) - Delta v_ij
-
-r_p = R_i^T (p_j - p_i - v_i Delta t
-             - 1/2 g Delta t^2) - Delta p_ij
-~~~
+$$
+\begin{aligned}
+\mathbf r_R &= \operatorname{Log}(\Delta R_{ij}^{-1}R_i^TR_j),\\
+\mathbf r_v &= R_i^T(\mathbf v_j-\mathbf v_i-\mathbf g\Delta t)-\Delta\mathbf v_{ij},\\
+\mathbf r_p &= R_i^T(\mathbf p_j-\mathbf p_i-\mathbf v_i\Delta t-\tfrac12\mathbf g\Delta t^2)-\Delta\mathbf p_{ij}.
+\end{aligned}
+$$
 
 The rotation residual is a three-vector in a tangent space, not nine elementwise matrix differences. Velocity and position residuals are expressed in the same local frame as the preintegrated quantities. Bias random-walk residuals connect b_g and b_a across the interval.
 
@@ -180,7 +214,7 @@ Prediction should propagate not only a pose value but also an age/uncertainty st
 **Reconstruct without reading:** derive the three preintegration recurrences, derive the state reconstruction equations containing gravity, compose two preintegrated intervals, explain why bias Jacobians are needed, write the three simplified IMU residuals, and distinguish MSCKF elimination, sliding-window marginalization, loop closure, relocalization, and display-time prediction. If those five ideas collapse into the word “tracking,” the pipeline is not yet understood.
 """
 
-nerf = """
+nerf = r"""
 <!-- Bible-final-pass: neural volume rendering -->
 ## A NeRF pixel is an integral before it is a neural-network output
 
@@ -188,59 +222,35 @@ The phrase “NeRF uses an MLP to synthesize new views” skips the part that ma
 
 Let a camera ray be
 
-~~~text
-r(t) = o + t d
-~~~
+$$\mathbf r(t)=\mathbf o+t\mathbf d,$$
 
-with origin o, direction d, and distance parameter t. At a sample position x = r(t), a basic NeRF-style field predicts
-
-~~~text
-sigma(x) >= 0              volume density
-c(x, d)                     emitted/view-dependent RGB color
-~~~
+with origin $\mathbf o$ in metres, unit direction $\mathbf d$, and distance parameter $t$ in metres. At sample position $\mathbf x=\mathbf r(t)$, a basic NeRF-style field predicts density $\sigma(\mathbf x)\ge0$ in inverse metres and emitted/view-dependent RGB radiance $\mathbf c(\mathbf x,\mathbf d)$.
 
 Density says how quickly light traveling along the ray is terminated. Color says what radiance is contributed if the ray terminates there.
 
 ### Continuous transmittance explains the discrete alpha formula
 
-Suppose density along the ray is sigma(s). The probability-like fraction of light that survives from the ray start t_n to a later point t is the **transmittance**
+Suppose density along the ray is $\sigma(s)$. The fraction of radiance that survives from ray start $t_n$ to $t$ is the **transmittance**
 
-~~~text
-T(t) = exp( - integral[t_n to t] sigma(s) ds )
-~~~
+$$T(t)=\exp\left(-\int_{t_n}^{t}\sigma(s)\,ds\right).$$
 
 The rendered color is
 
-~~~text
-C(r) = integral T(t) sigma(r(t)) c(r(t), d) dt
-       + T(t_f) C_background
-~~~
+$$\mathbf C(\mathbf r)=\int_{t_n}^{t_f}T(t)\sigma(\mathbf r(t))\mathbf c(\mathbf r(t),\mathbf d)\,dt+T(t_f)\mathbf C_{\mathrm{background}}.$$
 
 This equation says something simple: a sample contributes strongly only if the ray first survives to that sample and then terminates there.
 
-A computer uses finite intervals. If sample i represents an interval of length delta_i and density is treated as constant over that interval,
+A computer uses finite intervals. If sample $i$ represents an interval of length $\Delta_i$ metres and density is constant over that interval, its dimensionless opacity is
 
-~~~text
-alpha_i = 1 - exp(-sigma_i delta_i)
-~~~
+$$\alpha_i=1-\exp(-\sigma_i\Delta_i).$$
 
-is the opacity of that interval. The transmittance reaching sample i is
+The transmittance reaching sample $i$ and its rendering weight are
 
-~~~text
-T_i = product over j<i of (1 - alpha_j)
-~~~
-
-and its rendering weight is
-
-~~~text
-w_i = T_i alpha_i.
-~~~
+$$T_i=\prod_{j<i}(1-\alpha_j),\qquad w_i=T_i\alpha_i.$$
 
 The discrete pixel is therefore
 
-~~~text
-C = sum_i w_i c_i + T_end C_background.
-~~~
+$$\mathbf C=\sum_iw_i\mathbf c_i+T_{\mathrm{end}}\mathbf C_{\mathrm{background}}.$$
 
 The weights plus the surviving background transmittance sum to one, up to floating-point error. That gives us an immediate implementation invariant.
 
@@ -254,35 +264,24 @@ The exponential form also keeps opacity in [0,1) for finite nonnegative density.
 
 ### The renderer is differentiable because every weight is a smooth chain of operations
 
-For a scalar-color version of the ray,
-
-~~~text
-C = sum_i T_i alpha_i c_i + T_end c_bg.
-~~~
+For a scalar-color version of the ray, $C=\sum_iT_i\alpha_ic_i+T_{\mathrm{end}}c_{\mathrm{bg}}$.
 
 The derivative with respect to color is especially clear:
 
-~~~text
-dC / dc_i = w_i.
-~~~
+$$\frac{\partial C}{\partial c_i}=w_i.$$
 
 A color at a fully occluded sample receives almost no gradient because its weight is tiny.
 
 Density is more interesting. Increasing sigma_i increases alpha_i, which makes sample i contribute more but makes every later sample and the background contribute less. Let C_after_i be the color the remaining tail would produce if its incoming transmittance were reset to one. Then
 
-~~~text
-dC / d sigma_i
-    = T_i delta_i (1 - alpha_i) (c_i - C_after_i).
-~~~
+$$\frac{\partial C}{\partial\sigma_i}=T_i\Delta_i(1-\alpha_i)(c_i-C_{\mathrm{after},i}).$$
 
 The sign has a physical interpretation. If the current sample is brighter than what lies behind it, increasing its density raises the pixel. If it is darker, increasing density hides a brighter tail and lowers the pixel.
 
 This is the missing bridge between rendering and learning: the photometric loss sends gradients through transmittance into density, color, and eventually the field parameters.
 
-The standalone witness below implements the compositing equation, checks the weight partition, derives analytic gradients, verifies every density/color derivative against finite differences, performs a tiny inverse-rendering optimization, demonstrates one-pixel non-identifiability, and builds a positional encoding.
-""" + nerf_code + """
-The tiny optimization should not be mistaken for “training NeRF.” Its purpose is to prove the differentiable rendering path on an inspectable problem.
-
+The standalone witness below implements the compositing equation, checks the weight partition, derives analytic gradients, verifies every density/color derivative against finite differences, performs a tiny inverse-rendering optimization, demonstrates one-pixel non-identifiability, and builds a positional encoding. The optimization is an inspectable scalar inverse-rendering toy; it is not training NeRF, fitting calibrated multi-view images, benchmarking a neural field, or reconstructing geometry.
+""" + nerf_code + r"""
 ### One pixel is not enough to recover a unique scene
 
 The witness deliberately constructs two different density/color pairs that produce the same pixel. This is not a bug in gradient descent. It is an **inverse-problem ambiguity**.
@@ -295,13 +294,7 @@ This is why image reconstruction quality and geometric correctness must be evalu
 
 A plain coordinate MLP tends to learn low-frequency variation first. The original NeRF maps a coordinate through sinusoidal functions at multiple frequencies before the MLP sees it. In one dimension a simple form is
 
-~~~text
-gamma(x) =
-[x,
- sin(pi x), cos(pi x),
- sin(2 pi x), cos(2 pi x),
- ...].
-~~~
+$$\gamma(x)=\left[x,\sin(\pi x),\cos(\pi x),\sin(2\pi x),\cos(2\pi x),\ldots\right].$$
 
 The encoding does not create missing scene information. It gives the network basis features that make high-frequency spatial variation easier to represent.
 
@@ -375,37 +368,23 @@ The later 2DGS, Mip-Splatting, 3DGUT and surface-oriented families should now be
 """
 
 
-sds = """
+sds = r"""
 <!-- Bible-final-pass: score distillation -->
 ## Generative 3-D can borrow a 2-D diffusion prior without having a target photograph
 
 View synthesis starts from captured images of one scene. Text-to-3-D asks a different inverse problem: find one 3-D scene whose rendered views look as though they belong to a text-conditioned image distribution.
 
-That is the idea behind **score distillation sampling (SDS)**. Let theta be the 3-D representation. A differentiable renderer produces an image from camera v:
+That is the idea behind **score distillation sampling (SDS)**. Let $\theta$ denote the 3-D representation, $v$ a camera, and $R$ a differentiable renderer:
 
-~~~text
-x = R(theta, v).
-~~~
+$$\mathbf x=R(\theta,v).$$
 
-Encode that image as z if the diffusion model works in latent space. Choose diffusion time t and add known Gaussian noise epsilon:
+Encode the image as latent $\mathbf z$, choose diffusion time $t$, and add known Gaussian noise $\boldsymbol\epsilon$:
 
-~~~text
-z_t = alpha_t z + sigma_t epsilon.
-~~~
+$$\mathbf z_t=\alpha_t\mathbf z+\sigma_t\boldsymbol\epsilon.$$
 
-A frozen text-conditioned diffusion model predicts the noise it expects:
+A frozen text-conditioned diffusion model predicts noise $\boldsymbol\epsilon_\phi(\mathbf z_t,y,t)$. An SDS-style parameter update is proportional to
 
-~~~text
-epsilon_hat = epsilon_phi(z_t, y, t).
-~~~
-
-The useful update direction is proportional to
-
-~~~text
-w(t) (epsilon_hat - epsilon)
-    * dz/dx
-    * dx/dtheta.
-~~~
+$$w(t)(\boldsymbol\epsilon_\phi-\boldsymbol\epsilon)\,\frac{\partial\mathbf z}{\partial\mathbf x}\,\frac{\partial\mathbf x}{\partial\theta}.$$
 
 The last factor is the differentiable renderer. It carries the 2-D prior back into the 3-D representation: density, Gaussian positions, mesh vertices, texture, or whatever theta stores.
 
@@ -419,13 +398,9 @@ So when two papers both say “SDS,” inspect the actual implementation. They m
 
 ### Classifier-free guidance changes the force applied to the 3-D scene
 
-A common guided prediction is
+A common classifier-free guided prediction is
 
-~~~text
-epsilon_guided
-  = epsilon_uncond
-  + s (epsilon_cond - epsilon_uncond).
-~~~
+$$\boldsymbol\epsilon_{guided}=\boldsymbol\epsilon_{uncond}+s(\boldsymbol\epsilon_{cond}-\boldsymbol\epsilon_{uncond}).$$
 
 The guidance scale s changes the optimization direction. Larger is not automatically better: strong guidance can increase semantic pressure while also causing saturation, instability, or reduced diversity.
 
@@ -465,7 +440,7 @@ Text-image similarity alone cannot certify the result. Separate semantic alignme
 **Reconstruct without reading:** draw the gradient path from theta to rendered image to noisy latent to diffusion prediction and back to theta. Explain epsilon_hat minus epsilon, state where classifier-free guidance enters, and explain why several individually good 2-D views can still correspond to a bad 3-D object.
 """
 
-human = """
+human = r"""
 <!-- Bible-final-pass: XR human study design -->
 ## An XR user study is an experiment with people, not a benchmark loop with extra columns
 
@@ -551,6 +526,12 @@ research question
 **Reconstruct without reading:** design a comparison of two foveated-rendering policies. State the study design, order counterbalancing, practice protocol, primary outcome, experimental unit, exclusion policy, minimum effect worth detecting, and the system variables that must be controlled or reported.
 """
 
+text = insert_or_refresh_before(
+    text,
+    "OpenVINS is a useful filter-based VIO reference.",
+    "<!-- Bible-final-pass: XR planar VIO EKF -->",
+    planar,
+)
 text = insert_or_refresh_before(
     text,
     "### Calibration errors can masquerade as rendering errors",
