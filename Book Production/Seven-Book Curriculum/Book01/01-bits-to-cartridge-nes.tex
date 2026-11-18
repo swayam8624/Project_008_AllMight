@@ -104,3 +104,11 @@ property of all addresses.
 derive the offsets, reject malformed images without undefined behavior,
 and reproduce all eleven test cases. Neither a completed emulator nor a
 validated production cartridge loader is claimed at this milestone.
+
+\paragraph{Reference specifications.} Consult the NESdev iNES file-format
+specification (www.nesdev.org/wiki/INES), the NES 2.0 format description
+(www.nesdev.org/wiki/NES\_2.0), and NESdev's mirroring reference
+(www.nesdev.org/wiki/Mirroring). The present lab deliberately rejects a
+header that advertises NES 2.0, whose size and mapper fields differ. Old
+legacy dumps can contain misleading reserved bytes; a production loader
+requires an explicit compatibility policy rather than guessing.
