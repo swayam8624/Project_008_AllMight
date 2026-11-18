@@ -135,7 +135,9 @@ public:
     // are separately owned vectors. It is NOT a real placed GPU heap.
     [[nodiscard]] std::expected<Allocation,MemoryError>
     allocate(ResourceKey key,std::size_t size,std::size_t alignment) {
-        if (size==0)
+        if (size==0 ||
+            size>static_cast<std::size_t>(
+                std::numeric_limits<std::ptrdiff_t>::max()))
             return std::unexpected(MemoryError::invalid_extent);
         if (!power_of_two(alignment))
             return std::unexpected(MemoryError::invalid_alignment);
@@ -251,6 +253,51 @@ public:
         }
         r.owner=b.destination;
         r.layout=b.resulting_layout;
+        return {};
+    }
+
+    // This is deliberately an EXECUTION/ROLE-only transition. It updates
+    // the simulated permission/layout state WITHOUT publishing recent byte
+    // writes. It lets a negative test prove that ordering is insufficient
+    // for a read-after-write data hazard. Never map this API 1:1 to a Vulkan
+    // barrier or Metal command without validating actual synchronization.
+    [[nodiscard]] std::expected<void,MemoryError>
+    execution_only_transition(const BarrierDescription& b) noexcept {
+        auto result=active(b.resource);
+        if (!result) return std::unexpected(result.error());
+        State& r=**result;
+        if (r.owner!=b.source)
+            return std::unexpected(MemoryError::wrong_role);
+        if (r.layout!=b.expected_layout)
+            return std::unexpected(MemoryError::wrong_layout);
+        if (b.offset!=0 || b.size!=r.allocation.size)
+            return std::unexpected(MemoryError::invalid_barrier);
+        r.owner=b.destination;
+        r.layout=b.resulting_layout;
+        return {};
+    }
+
+    // Separate conceptual MEMORY dependency after an execution-only
+    // role transition. The intended producer must actually see the version
+    // being published, and the consumer must now be the current role.
+    [[nodiscard]] std::expected<void,MemoryError>
+    memory_dependency(ResourceKey key,Domain producer,Domain consumer,
+                      std::size_t offset,std::size_t size) noexcept {
+        auto result=active(key);
+        if (!result) return std::unexpected(result.error());
+        State& r=**result;
+        if (r.owner!=consumer)
+            return std::unexpected(MemoryError::wrong_role);
+        if (size==0 || !in_bounds(r.allocation.size,offset,size))
+            return std::unexpected(MemoryError::range_out_of_bounds);
+        for (std::size_t i=offset;i<offset+size;++i) {
+            if (r.initialized[i] &&
+                r.visible[stage_index(producer)][i]<r.write_epoch[i])
+                return std::unexpected(MemoryError::producer_not_visible);
+        }
+        for (std::size_t i=offset;i<offset+size;++i)
+            if (r.initialized[i])
+                r.visible[stage_index(consumer)][i]=r.write_epoch[i];
         return {};
     }
 
