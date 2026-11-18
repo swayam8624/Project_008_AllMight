@@ -8,6 +8,8 @@ on:
       - ".github/workflows/allmight-cpp23-nes-course.yml"
       - "tools/labs/**"
       - "tools/tests/test_cpp23_project_inserts.py"
+      - "tools/tests/test_nes_course_evidence.py"
+      - "tools/nes_course_evidence.py"
       - "tools/apply_cpp23_project_inserts.py"
       - "Supplementary/C++23 Project Labs/**"
       - "Book Production/Seven-Book Curriculum/**"
@@ -16,48 +18,165 @@ on:
 permissions:
   contents: read
 
+# Multiple consecutive chapter commits should not waste parallel CI minutes.
+concurrency:
+  group: allmight-nes-course-branch
+  cancel-in-progress: true
+
 jobs:
-  gcc-cpp23-and-insertion:
-    name: GCC C++23 and manuscript preservation
+  gcc-cpp23-and-source:
+    name: GCC C++23 and fail-closed manuscript/evidence verification
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Show compiler versions
+      - name: Record toolchain versions
         run: |
           g++ --version | head -n 1
           cmake --version | head -n 1
           python3 --version
-      - name: Configure the standalone NES course (no LaTeX)
+          git rev-parse HEAD
+      - name: Configure with isolated build tree
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-gcc \
-            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug
-      - name: Build C++23 labs
+            -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Compile all cumulative C++23 labs
         run: cmake --build build/nes-ci-gcc --parallel 2
-      - name: Run every cumulative NES regression
-        run: ctest --test-dir build/nes-ci-gcc --output-on-failure
-      - name: Test that manuscript inserts are idempotent and never delete source
-        run: python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py' -v
-      - name: Dry-run existing manuscript without changing it
+      - name: Run CTest and materialize real JUnit evidence
+        run: |
+          ctest --test-dir build/nes-ci-gcc --output-on-failure \
+            --output-junit "$PWD/build/nes-ci-gcc/ctest-junit.xml"
+      - name: Run source preservation and evidence negative tests
+        run: |
+          python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_nes_course_evidence.py' -v
+      - name: Dry-run exact additive manuscript insertions (never apply)
         run: python3 tools/apply_cpp23_project_inserts.py --check
-      - name: Ensure no manuscript files were edited
+      - name: Audit inventory and collect verifiable source-pinned receipt
+        run: |
+          python3 tools/nes_course_evidence.py audit > build/nes-ci-gcc/source-inventory.json
+          python3 tools/nes_course_evidence.py collect \
+            --build build/nes-ci-gcc \
+            --junit build/nes-ci-gcc/ctest-junit.xml \
+            --output build/nes-ci-gcc/nes-course-evidence.json
+          python3 tools/nes_course_evidence.py verify \
+            --record build/nes-ci-gcc/nes-course-evidence.json
+      - name: Confirm unchanged source and clean working diff
         run: |
           git diff --exit-code -- "Continuous Notes/"
           git diff --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nes-course-gcc-evidence
+          path: |
+            build/nes-ci-gcc/ctest-junit.xml
+            build/nes-ci-gcc/source-inventory.json
+            build/nes-ci-gcc/nes-course-evidence.json
+            build/nes-ci-gcc/compile_commands.json
+          if-no-files-found: error
 
   clang-cpp23:
-    name: Clang C++23
+    name: Clang C++23 and source-pinned evidence
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Show compiler version
+      - name: Record compiler version
         run: clang++ --version | head -n 1
-      - name: Configure C++23 exercises (no LaTeX)
+      - name: Configure Clang Debug build
         run: |
           cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-clang \
             -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
-      - name: Build C++23 labs
+      - name: Build C++23 teaching labs
         run: cmake --build build/nes-ci-clang --parallel 2
-      - name: Run cumulative NES regression suite
-        run: ctest --test-dir build/nes-ci-clang --output-on-failure
+      - name: Execute all tests and capture JUnit
+        run: |
+          ctest --test-dir build/nes-ci-clang --output-on-failure \
+            --output-junit "$PWD/build/nes-ci-clang/ctest-junit.xml"
+      - name: Enforce receipt matches compiler and exact committed sources
+        run: |
+          python3 tools/nes_course_evidence.py collect \
+            --build build/nes-ci-clang \
+            --junit build/nes-ci-clang/ctest-junit.xml \
+            --output build/nes-ci-clang/nes-course-evidence.json
+          python3 tools/nes_course_evidence.py verify \
+            --record build/nes-ci-clang/nes-course-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nes-course-clang-evidence
+          path: |
+            build/nes-ci-clang/ctest-junit.xml
+            build/nes-ci-clang/nes-course-evidence.json
+          if-no-files-found: error
+
+  macos-apple-clang:
+    name: macOS AppleClang C++23 portability
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record AppleClang, CMake and macOS versions
+        run: |
+          clang++ --version | head -n 1
+          cmake --version | head -n 1
+          sw_vers
+      - name: Configure native macOS build without graphics or LaTeX
+        run: |
+          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-macos \
+            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug
+      - name: Build C++23 course
+        run: cmake --build build/nes-ci-macos --parallel 2
+      - name: Run tests and record JUnit
+        run: |
+          ctest --test-dir build/nes-ci-macos --output-on-failure \
+            --output-junit "$PWD/build/nes-ci-macos/ctest-junit.xml"
+      - name: Collect and independently verify Mac evidence
+        run: |
+          python3 tools/nes_course_evidence.py collect \
+            --build build/nes-ci-macos \
+            --junit build/nes-ci-macos/ctest-junit.xml \
+            --output build/nes-ci-macos/nes-course-evidence.json
+          python3 tools/nes_course_evidence.py verify \
+            --record build/nes-ci-macos/nes-course-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nes-course-macos-evidence
+          path: |
+            build/nes-ci-macos/ctest-junit.xml
+            build/nes-ci-macos/nes-course-evidence.json
+          if-no-files-found: error
+
+  clang-sanitizers:
+    name: Clang ASan and UBSan evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure sanitizer-enabled C++23 build
+        run: |
+          cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-ci-sanitizers \
+            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+      - name: Build all sanitizer-instrumented teaching labs
+        run: cmake --build build/nes-ci-sanitizers --parallel 2
+      - name: Execute sanitizer-backed regression suite
+        run: |
+          ctest --test-dir build/nes-ci-sanitizers --output-on-failure \
+            --output-junit "$PWD/build/nes-ci-sanitizers/ctest-junit.xml"
+      - name: Collect sanitizer build provenance and test outcomes
+        run: |
+          python3 tools/nes_course_evidence.py collect \
+            --build build/nes-ci-sanitizers \
+            --junit build/nes-ci-sanitizers/ctest-junit.xml \
+            --output build/nes-ci-sanitizers/nes-course-evidence.json
+          python3 tools/nes_course_evidence.py verify \
+            --record build/nes-ci-sanitizers/nes-course-evidence.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nes-course-sanitizers-evidence
+          path: |
+            build/nes-ci-sanitizers/ctest-junit.xml
+            build/nes-ci-sanitizers/nes-course-evidence.json
+          if-no-files-found: error
