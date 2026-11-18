@@ -221,6 +221,23 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 06, "Grow Registries without Invalidating Identity", will grow this exact store into owner-aware generational handles, explicit release/reuse policy, handle invalidation tests and a clear distinction between stable logical identity and movable physical storage.
 
 
+## Pass 06 — Book 01, Chapter 06: Grow Registries without Invalidating Identity
+
+**Workflow:** the user will not pull or run any commands yet. All six authoring passes accumulate on the existing `curriculum/cpp23-nes-project-pass01` branch. Do **not** present another per-pass command block. Final pull, canonical insertion, CMake/CTest, manuscript diff and LaTeX authoring handoff remain deferred until the user asks for an end-of-day or end-of-book review.
+
+**Preserved original chapter:** "Grow Registries without Invalidating Identity" (~1,331 lines in the derived chapter copy). Its present M015 generational registry example, vector growth and invalidation reasoning, name-index transaction, free-list rules and container comparisons remain untouched. Pass 06 adds a *project-specific strengthening* of these existing ideas, not a replacement or claim that the material was absent.
+
+**New additive narrative:** [NES-06G — Generational Identity and Safe Reuse](../../Supplementary/C++23%20Project%20Labs/NES-06G%20-%20Generational%20Identity%20and%20Safe%20Reuse.md) (27,541 characters), staged immediately before the existing heading "From a living asset registry to reliable queries and transformations".
+
+**Shared code and tests:** [generational_asset_registry.hpp](../../tools/labs/nes_course/generational_asset_registry.hpp) uses the **exact existing** cartridge/texture/mesh `Spec<Tag>` decoders and `AssetRecord` variant. [generational_asset_registry_cpp23_lab.cpp](../../tools/labs/generational_asset_registry_cpp23_lab.cpp) exercises owner-scoped handle identity, runtime type checks despite compile-time tag types, vector relocation, slot reuse, stale generation rejection, typed errors, registry move semantics, near-overflow permanent retirement and 2,000 deterministic reuse cycles. It preserves Stage-05 import error boundaries and data ownership.
+
+**Safety and limitations:** handle identity includes `owner + slot + generation + type`. Owner tokens are unique only in the current process execution, not persistent IDs or security capabilities. Borrowed C++ pointers and references are never safe merely because a logical handle stays valid. The registry is deliberately single-threaded; its atomic token issuer protects only construction of registry owner namespaces. It is not a concurrent GPU asset registry.
+
+**Evidence:** the CMake/CTest project now registers six cumulative C++23 targets and GitHub Actions monitors the source paths. `tools/apply_cpp23_project_inserts.py` stages six exact idempotent additions; the fixture tests prove byte-exact recovery after removing all six blocks. **Compilation/CI run results for the newly committed Pass 06 code have not been verified**; do not call it fully tested until actual build output is available.
+
+**Next:** Chapter 07, "Typed Interfaces, Identity, and Data Structures", with continued improvements to the same store and evidence-based choice of data structures.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
