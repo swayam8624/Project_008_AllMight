@@ -259,6 +259,23 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 08, "Graphs, Search, and GPU Scheduling". The next curriculum pass should derive a graph of real resource and debugger workload dependencies rather than using disconnected graph snippets. Keep CPU instruction order, host task scheduling and eventual Vulkan/Metal GPU synchronization as *distinct semantics*.
 
 
+## Pass 08 — Book 01, Chapter 08: Graphs, Search, and GPU Scheduling
+
+**User handoff:** do not request pulls, edits, compilation commands or LaTeX work now. All passes continue accumulating on `curriculum/cpp23-nes-project-pass01`, with one later consolidated source insertion, C++23 audit and native Mac verification when the user chooses a checkpoint.
+
+**Original content preserved:** The derived "Graphs, Search, and GPU Scheduling" chapter already has ~2,263 lines / 89.7K characters of BFS, DFS, topological sorting, shortest-path, A*, SCC, scan, API, GPU synchronization, shader layout and kernel material. None has been deleted or replaced. The new project lesson is staged at the graph-to-API transition immediately preceding `## An API is a promise about an operation` in the original continuous manuscript.
+
+**Deep integrated lesson:** [NES-08G — Dependency Graphs and Explicit GPU Work Contracts](../../Supplementary/C++23%20Project%20Labs/NES-08G%20-%20Dependency%20Graphs%20and%20Explicit%20GPU%20Work%20Contracts.md) (~35,243 chars). Real NES/CPU execution motivates explicit DAG prerequisites, WAR/WAW/RAW hazards, deterministic topological planning, critical paths, CPU-prefix-scan resource partitioning and the boundary where a render graph must become actual synchronized device work. Primary Khronos Vulkan and Apple Metal/Metal4 docs underpin the distinction; no GPU runtime is claimed.
+
+**Cumulative code:** [work_dependency_graph.hpp](../../tools/labs/nes_course/work_dependency_graph.hpp) exposes TaskId, Task/Domain/ResourceKey (including generation-aware identity), typed graph errors, explicit resource access tracking, deduplicated hazard edges, stable Kahn topological planning, earliest start/finish + critical-path estimates, GPU synchronization review edges and overflow-safe CPU exclusive scan. [nes_work_dependency_graph_cpp23_lab.cpp](../../tools/labs/nes_work_dependency_graph_cpp23_lab.cpp) imports NROM and RGBA8 through the existing Pass05/06 system, executes LDA/STA tasks through the actual separately compiled Pass07 CPU debugger, and validates the CPU RAM mirror. It generates and verifies 1,800 task declarations across 30 fixed-seed DAGs. GPU transfer/compute/graphics tasks are inspected as PLANS ONLY.
+
+**Limits and evidence:** The CMake project now has eight cumulative C++23 targets. The seventh and eighth both link the same `cpu_debug_session.cpp` PIMPL implementation. `tools/apply_cpp23_project_inserts.py` stages eight marker-delimited additive chapters and `tools/tests/test_cpp23_project_inserts.py` checks recovery of all original fixture bytes and idempotence. A GitHub Actions workflow is configured to monitor changes. **Successful build/CTest/GPU results have not yet been observed; do not falsely report them passed.**
+
+**Not implemented:** Native Vulkan/Metal barriers, Metal4 synchronization, GPU command buffers, real transfer/compute queue ownership, image layout transitions, in-flight resource retirement, full NES timings/PPU/APU, measured GPU/CPU performance, and currently checked Kairo/Maveb backend integration.
+
+**Next:** Chapter 09 "GPU Memory, Divergence, Atomics, and Ordering" will use this host dependency model to derive device memory ranges, visibility/ordering contracts and per-backend verifiable experiments, with source preserved and no premature performance/correctness claims.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
