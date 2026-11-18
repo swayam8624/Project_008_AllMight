@@ -1,0 +1,36 @@
+\hypertarget{appendix-f6e77f4a200f}{}\label{referencestart:appendix-f6e77f4a200f}
+\section{Gaussian elimination and pivoting}\label{appendix-f6e77f4a200f-gaussian-elimination-and-pivoting}
+
+\hypertarget{appendix-f6e77f4a200f-gaussian-elimination-and-pivoting}{}
+
+Equivalent elementary row operations expose pivots and triangular structure while preserving the solution set when applied to the full augmented system. Pivoting avoids zero or dangerously small divisors; it improves the calculation but does not cure an ill-conditioned problem.
+
+\textbf{Use it when:} understanding REF/RREF, LU, consistency, rank, and triangular solves.
+
+\textbf{Developed in Phase 8:} Elimination turns those geometric questions into auditable row operations on the augmented matrix. Pivots expose rank and free variables; partial pivoting chooses a safer divisor and tracks row exchanges, while residual and growth checks explain why pivoting cannot repair ill-conditioning. \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch019-elimination-turns-the-geometry-into-an-auditable-calculation}{elimination steps (Mathematics for Visual Computing, Part 1, Ch. 3)} · \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch019-pivoting-separates-algorithm-failure-from-matrix-failure}{pivoting and growth (Mathematics for Visual Computing, Part 1, Ch. 3)}
+
+\subsection{Prerequisites}\label{appendix-f6e77f4a200f-prerequisites}
+
+\hypertarget{appendix-f6e77f4a200f-prerequisites}{}
+
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-ab31ef447dbf]{Matrix multiplication and composition order}, \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}.
+
+\subsection{Used by}\label{appendix-f6e77f4a200f-used-by}
+
+\hypertarget{appendix-f6e77f4a200f-used-by}{}
+
+\hyperref[appendix-55e4b5b0a1e6]{LU factorization and reusable solves}, \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#appendix-f8657bac66e5}{Matrix norms and numerical error (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Matrix norms and numerical error)}, \hyperref[appendix-67c87a3d9e94]{Sparse and iterative solvers}.
+
+\textbf{Teaching path:} \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch019-elimination-turns-the-geometry-into-an-auditable-calculation}{elimination story (Mathematics for Visual Computing, Part 1, Ch. 3)}. - \hyperref[appendix-221a483bec2d]{Matrix factorization choices} --- Extends this foundation into the Phase 8 dependency spine. - \hyperref[appendix-f0437ea55a47]{Conditional Gaussians and Schur complements}
+
+\subsection{Full teaching explanation}\label{appendix-f6e77f4a200f-full-teaching-explanation}
+
+\hypertarget{appendix-f6e77f4a200f-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#02-foundations-ii-ch024-waiting-times-event-counts-and-covariance-geometry}{Phase 10 teaching section (Mathematics for Visual Computing, Part 1, Ch. 8)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall
+\end{itemize}

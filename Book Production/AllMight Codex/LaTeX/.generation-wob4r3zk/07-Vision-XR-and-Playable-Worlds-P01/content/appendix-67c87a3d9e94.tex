@@ -1,0 +1,24 @@
+\hypertarget{appendix-67c87a3d9e94}{}\label{referencestart:appendix-67c87a3d9e94}
+\section{Sparse and iterative solvers}\label{appendix-67c87a3d9e94-sparse-and-iterative-solvers}
+
+\hypertarget{appendix-67c87a3d9e94-sparse-and-iterative-solvers}{}
+
+Sparse storage avoids zeros when structure and scale justify its index overhead. Iterative methods replace a dense factorization with matrix-vector products and a convergence process. Conjugate gradient requires symmetric positive definiteness; preconditioning, residual criteria, and a maximum iteration count belong in the contract.
+
+\textbf{Use it when:} large structured systems make dense storage or factorization impractical.
+
+\textbf{Developed in Phase 8:} Sparse storage pays off when zeros and dimensions outweigh indexing overhead, while direct factorization can create fill that destroys sparsity. Iterative methods instead use matrix-vector products and stopping tests; conjugate gradient requires an SPD operator, and preconditioning, a maximum iteration count, and a true residual make convergence reviewable. \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch038-sparse-storage-changes-the-cost-model}{storage and fill (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)} · \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch038-direct-and-iterative-solvers-suit-different-workloads}{direct versus iterative solving (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)}
+
+\subsection{Prerequisites}\label{appendix-67c87a3d9e94-prerequisites}
+
+\hypertarget{appendix-67c87a3d9e94-prerequisites}{}
+
+\hyperref[appendix-8572a4a060c1]{Linear systems and fundamental subspaces}, \hyperref[appendix-50d2ea3c9b26]{Symmetric positive-definite matrices and Cholesky}, \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#appendix-f8657bac66e5}{Matrix norms and numerical error (Spatial Worlds, Engine State, and Simulation, Part 1, Reference notes: Matrix norms and numerical error)}.
+
+\subsection{Used by}\label{appendix-67c87a3d9e94-used-by}
+
+\hypertarget{appendix-67c87a3d9e94-used-by}{}
+
+\hyperref[appendix-221a483bec2d]{Matrix factorization choices}, \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-ffdc1d4e5350}{Matrix storage indexing and strides (Mathematics for Visual Computing, Part 1, Reference notes: Matrix storage indexing and strides)}.
+
+\textbf{Teaching path:} \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch038-sparse-problems-change-the-economics-of-solving}{sparse and iterative methods (Geometry, Cameras, and Image Formation, Part 1, Ch. 7)}.

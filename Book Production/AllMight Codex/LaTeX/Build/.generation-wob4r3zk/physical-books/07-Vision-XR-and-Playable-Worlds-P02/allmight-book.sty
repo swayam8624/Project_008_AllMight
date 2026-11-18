@@ -1,0 +1,214 @@
+% AllMight Codex book design profiles. Original implementation.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{allmight-book}[2026/11/17 v0.4 AllMight Codex book profiles]
+\RequirePackage{iftex}
+\ifLuaTeX\else\PackageError{allmight-book}{LuaLaTeX is required}{Compile with the pinned LuaLaTeX runtime.}\fi
+\RequirePackage{amsmath}
+\RequirePackage{fontspec}
+\RequirePackage{unicode-math}
+\RequirePackage{geometry}
+\RequirePackage{xcolor}
+\RequirePackage{microtype}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{longtable}
+\RequirePackage{calc}
+\RequirePackage{graphicx}
+\RequirePackage{adjustbox}
+\RequirePackage{fancyvrb}
+\RequirePackage{fvextra}
+\RequirePackage{seqsplit}
+\RequirePackage{xparse}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{hyperref}
+\RequirePackage{etoolbox}
+\DeclareOption{print}{\def\AllMightProfile{print}}
+\DeclareOption{ebook}{\def\AllMightProfile{ebook}}
+\ExecuteOptions{print}
+\ProcessOptions\relax
+\RequirePackage{setspace}
+\setmainfont{TeX Gyre Pagella}[Ligatures=TeX]
+\setmathfont{TeX Gyre Pagella Math}
+\directlua{luaotfload.add_fallback("allmight-code-math", {"TeX Gyre Pagella Math:mode=node;"})}
+\setmonofont{Menlo}[Scale=MatchLowercase,Ligatures=NoCommon,RawFeature={fallback=allmight-code-math}]
+% Font fallbacks preserve source sub/superscript semantics across the installed
+% Pagella text/math and Menlo code faces; verbatim retains original code tokens.
+\makeatletter
+\newcommand{\AllMightDeclareUnicodeFallback}[2]{%
+  \begingroup\lccode`\~=#1\relax
+  \lowercase{\endgroup\protected\def~}{#2}}
+\newcommand{\AllMightDeclareUnicodeSubscript}[2]{%
+  \AllMightDeclareUnicodeFallback{#1}{\ifmmode_{#2}\else\textsubscript{#2}\fi}}
+\newcommand{\AllMightDeclareUnicodeSuperscript}[2]{%
+  \AllMightDeclareUnicodeFallback{#1}{\ifmmode^{#2}\else\textsuperscript{#2}\fi}}
+\makeatother
+\AllMightDeclareUnicodeSubscript{8320}{0}
+\AllMightDeclareUnicodeSubscript{8321}{1}
+\AllMightDeclareUnicodeSubscript{8322}{2}
+\AllMightDeclareUnicodeSubscript{8323}{3}
+\AllMightDeclareUnicodeSubscript{8324}{4}
+\AllMightDeclareUnicodeSubscript{8325}{5}
+\AllMightDeclareUnicodeSubscript{8326}{6}
+\AllMightDeclareUnicodeSubscript{8327}{7}
+\AllMightDeclareUnicodeSubscript{8328}{8}
+\AllMightDeclareUnicodeSubscript{8330}{+}
+\AllMightDeclareUnicodeSubscript{8345}{n}
+\AllMightDeclareUnicodeSubscript{8346}{p}
+\AllMightDeclareUnicodeSubscript{7522}{i}
+\AllMightDeclareUnicodeSuperscript{7482}{N}
+\AllMightDeclareUnicodeSuperscript{7488}{T}
+\AllMightDeclareUnicodeSuperscript{8308}{4}
+\AllMightDeclareUnicodeSuperscript{8315}{-}
+\AllMightDeclareUnicodeSuperscript{8312}{8}
+\AllMightDeclareUnicodeSuperscript{8310}{6}
+\AllMightDeclareUnicodeSuperscript{8305}{i}
+\AllMightDeclareUnicodeSuperscript{185}{1}
+\AllMightDeclareUnicodeSuperscript{178}{2}
+\AllMightDeclareUnicodeSuperscript{179}{3}
+\directlua{
+  local roots = {"Assets/Fonts/", "../Assets/Fonts/", "../../Assets/Fonts/", "../../../../Assets/Fonts/"}
+  local found = false
+  for _, root in ipairs(roots) do
+    if lfs.attributes(root .. "NotoEmoji-Static.ttf") then
+      tex.sprint(string.char(92) .. "newfontfamily" .. string.char(92) .. "AllMightEmojiFont{Noto Emoji}[Path=" .. root .. ",Extension=.ttf,UprightFont=NotoEmoji-Static,Scale=MatchLowercase]")
+      found = true
+      break
+    end
+  end
+  if not found then tex.sprint(string.char(92) .. "PackageError{allmight-book}{Noto Emoji font asset not found}{Provide Assets/Fonts/NotoEmoji-Static.ttf next to this package.}") end
+}
+\AllMightDeclareUnicodeFallback{128075}{{\AllMightEmojiFont 👋}}
+\catcode"2080=13 \catcode"2081=13 \catcode"2082=13 \catcode"2083=13 \catcode"2084=13
+\catcode"2085=13 \catcode"2086=13 \catcode"2087=13 \catcode"2088=13 \catcode"208A=13
+\catcode"2099=13 \catcode"209A=13 \catcode"1D62=13 \catcode"1D3A=13 \catcode"1D40=13
+\catcode"2074=13 \catcode"207B=13 \catcode"2078=13 \catcode"2076=13 \catcode"2071=13 \catcode"00B9=13
+\catcode"00B2=13 \catcode"00B3=13 \catcode"1F44B=13
+% Wrap long code visually at the text measure without changing or shrinking bytes.
+\fvset{breaklines=true,breakanywhere=true}
+% Pandoc's unhighlighted code blocks use lowercase `verbatim`; redefine that
+% environment through fvextra so long source lines wrap instead of overhanging.
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}{fontsize=\small,baselinestretch=0.92,breaklines=true,breakanywhere=true}
+\definecolor{AMInk}{HTML}{252A32}
+\definecolor{AMMuted}{HTML}{68717D}
+\definecolor{AMRule}{HTML}{C8CDD3}
+\definecolor{AMAccent}{HTML}{335E78}
+\definecolor{AMWash}{HTML}{F3F6F7}
+% Seven distinct learning-stage accents. Each has a pale companion for print-safe
+% callout fills; all semantic roles also retain labels and rules in grayscale.
+\definecolor{AMStageOne}{HTML}{1E9ED7} % BookCalculus blue palette value
+\definecolor{AMStageOneWash}{HTML}{DAEEF8}
+\definecolor{AMStageTwo}{HTML}{F07E26} % BookCalculus orange palette value
+\definecolor{AMStageTwoWash}{HTML}{FDEBD0}
+\definecolor{AMStageThree}{HTML}{5BB85D} % BookCalculus green palette value
+\definecolor{AMStageThreeWash}{HTML}{D5F5D5}
+\definecolor{AMStageFour}{HTML}{7C5CBF} % BookCalculus purple palette value
+\definecolor{AMStageFourWash}{HTML}{EAE4F7}
+\definecolor{AMStageFive}{HTML}{E84855} % complementary coral-red stage
+\definecolor{AMStageFiveWash}{HTML}{FCEBED}
+\definecolor{AMStageSix}{HTML}{238A87} % complementary teal stage
+\definecolor{AMStageSixWash}{HTML}{E7F4F2}
+\definecolor{AMStageSeven}{HTML}{344E7A} % complementary indigo stage
+\definecolor{AMStageSevenWash}{HTML}{E9EEF7}
+\colorlet{AMBookAccent}{AMAccent}
+\def\AllMightCurrentStageNumber{0}
+\def\AllMightCurrentStageTitle{}
+\newcommand{\AllMightStageColor}[1]{% semantic accent by learning-stage number
+  \ifcase#1 AMAccent\or AMStageOne\or AMStageTwo\or AMStageThree\or AMStageFour\or AMStageFive\or AMStageSix\or AMStageSeven\else AMAccent\fi}
+\newcommand{\AllMightStageWash}[1]{%
+  \ifcase#1 AMWash\or AMStageOneWash\or AMStageTwoWash\or AMStageThreeWash\or AMStageFourWash\or AMStageFiveWash\or AMStageSixWash\or AMStageSevenWash\else AMWash\fi}
+\NewDocumentCommand{\AllMightStageMark}{m m}{\begingroup\color{\AllMightStageColor{#1}}\textsf{\bfseries STAGE~#1}\enspace\textcolor{AMMuted}{#2}\endgroup}
+% Set the active volume accent and retain the human-readable stage metadata.
+\NewDocumentCommand{\SetBookStage}{m m}{%
+  \colorlet{AMBookAccent}{\AllMightStageColor{#1}}%
+  \gdef\AllMightCurrentStageNumber{#1}%
+  \gdef\AllMightCurrentStageTitle{#2}%
+}
+\newcommand{\BookStageHeading}{%
+  \ifnum\AllMightCurrentStageNumber>0
+    \AllMightStageMark{\AllMightCurrentStageNumber}{\AllMightCurrentStageTitle}%
+  \fi}
+\color{AMInk}
+\ifdefstring{\AllMightProfile}{print}{%
+  \geometry{paperwidth=8in,paperheight=10in,inner=1.0in,outer=0.72in,top=0.78in,bottom=0.80in,bindingoffset=0.06in,includeheadfoot,headheight=14pt,headsep=0.23in,footskip=0.34in}
+  \AtBeginDocument{\fontsize{10.5}{13}\selectfont}
+}{%
+  % Fixed-page reading proof only; EPUB generation is a separate semantic conversion.
+  \geometry{paperwidth=6in,paperheight=9in,inner=0.70in,outer=0.62in,top=0.72in,bottom=0.72in,includeheadfoot,headheight=14pt,headsep=0.20in,footskip=0.32in}
+  \AtBeginDocument{\fontsize{11}{14}\selectfont}
+}
+% A \\texttt span inside math selects Menlo's math alphabet as well. The
+% source uses \\epsilon in an inline-code expression; use a Pagella text glyph.
+\setlength{\parindent}{1.1em}
+\setlength{\parskip}{0pt plus 0.15pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\LTpre}{0.6\baselineskip}
+\setlength{\LTpost}{0.6\baselineskip}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\footrulewidth}{0pt}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrule}{\color{AMRule}\hrule width\headwidth height\headrulewidth \vskip-\headrulewidth}
+\ifdefstring{\AllMightProfile}{ebook}{%
+  \fancyhead[R]{\small\color{AMMuted}\nouppercase{\rightmark}}
+  \fancyfoot[R]{\small\thepage}
+  \fancypagestyle{plain}{\fancyhf{}\fancyfoot[R]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+}{%
+  \fancyhead[LE]{\small\color{AMMuted}\nouppercase{\leftmark}}
+  \fancyhead[RO]{\small\color{AMMuted}\nouppercase{\rightmark}}
+  \fancyfoot[LE,RO]{\small\thepage}
+  \fancypagestyle{plain}{\fancyhf{}\fancyfoot[LE,RO]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+}
+% Quiet chapter and section hierarchy.
+\titleformat{\chapter}[display]{\normalfont\color{AMInk}}{\colorbox{AMBookAccent!16!white}{\strut\large\scshape\color{AMBookAccent}\chaptername\enspace\thechapter}}{0.7ex}{\huge\bfseries}[\vspace{0.8ex}{\color{AMBookAccent}\titlerule[2pt]}\vspace{0.4ex}{\color{AMRule}\titlerule}]
+\titlespacing*{\chapter}{0pt}{-1.8ex plus -0.2ex minus -0.2ex}{2.5ex plus 0.3ex}
+\titleformat{\section}{\Large\bfseries\color{AMInk}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{AMInk}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{AMBookAccent}}{\thesubsubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{2.1ex plus 0.5ex minus 0.2ex}{0.75ex}
+\titlespacing*{\subsection}{0pt}{1.7ex plus 0.4ex minus 0.2ex}{0.55ex}
+\titlespacing*{\subsubsection}{0pt}{1.4ex plus 0.3ex minus 0.2ex}{0.45ex}
+% Tighter booktabs tables; longtable repeats headings supplied by each fragment.
+\setlength{\LTcapwidth}{\textwidth}
+% Pandoc marks captionless tables with LTcaptype=none; longtable still
+% references that counter internally on some TeX Live releases.
+\newcounter{none}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+% Keep ordinary figures modest in the text flow. These are shrink-only caps;
+% source-aware QA must reject any asset whose labels would fall below 8 pt.
+\providecommand{\pandocbounded}[1]{\adjustbox{max width=.8\linewidth,max height=.4\textheight}{#1}}
+\NewDocumentCommand{\BookFigure}{O{} m}{\adjustbox{max width=.8\linewidth,max height=.4\textheight}{\includegraphics[#1]{#2}}}
+\NewDocumentCommand{\AllMightGraphic}{O{} m}{\BookFigure[#1]{#2}}
+% Panels are authored with 12 px base labels (9 pt before fitting). A larger
+% composition allowance lets compact variants retain readable labels in print.
+\NewDocumentCommand{\BookDiagramPanel}{O{} m}{\adjustbox{max width=.98\linewidth,max height=.62\textheight}{\includegraphics[#1]{#2}}}
+\NewDocumentCommand{\BookDiagramWide}{O{} m}{\adjustbox{max width=.98\linewidth,max height=.36\textheight}{\includegraphics[#1]{#2}}}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% Pandoc inline Code spans use this wrapper so long code can break at character
+% boundaries without shrinking or inserting visible hyphens.
+\DeclareRobustCommand{\BookInlineCode}[2]{{\ttfamily\seqsplit{#1}}}
+\pdfstringdefDisableCommands{\def\BookInlineCode#1#2{#2}\def\_{\textunderscore}}
+% Semantic callouts use the reference's four color roles. Large labels and body
+% text stay dark; light title bands preserve contrast in print and grayscale.
+\newtcolorbox[auto counter,number within=chapter]{allmightdefinition}[1][]{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageOne},colback=AMStageOneWash,colbacktitle=AMStageOneWash,coltitle=AMInk,left=9pt,right=9pt,top=7pt,bottom=7pt,before skip=0.9\baselineskip,after skip=0.9\baselineskip,title={\textsf{Definition~\thetcbcounter}\if\relax\detokenize{#1}\relax\else\enspace\textsf{#1}\fi},fonttitle=\small\bfseries}
+\newtcolorbox[auto counter,number within=chapter]{allmighttheorem}[1][]{enhanced,breakable,sharp corners,boxrule=0.7pt,colframe=AMStageFour,colback=AMStageFourWash,colbacktitle=AMStageFourWash,coltitle=AMInk,left=9pt,right=9pt,top=7pt,bottom=7pt,before skip=0.9\baselineskip,after skip=0.9\baselineskip,title={\textsf{Theorem~\thetcbcounter}\if\relax\detokenize{#1}\relax\else\enspace\textsf{#1}\fi},fonttitle=\small\bfseries}
+\newtcolorbox[auto counter,number within=chapter]{allmightexample}[1][]{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageTwo},colback=AMStageTwoWash,colbacktitle=AMStageTwoWash,coltitle=AMInk,left=9pt,right=9pt,top=7pt,bottom=7pt,before skip=0.9\baselineskip,after skip=0.9\baselineskip,title={\textsf{Worked example~\thetcbcounter}\if\relax\detokenize{#1}\relax\else\enspace\textsf{#1}\fi},fonttitle=\small\bfseries}
+\newtcolorbox[auto counter,number within=chapter]{allmightexercise}[1][]{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageThree},colback=AMStageThreeWash,colbacktitle=AMStageThreeWash,coltitle=AMInk,left=9pt,right=9pt,top=7pt,bottom=7pt,before skip=0.9\baselineskip,after skip=0.9\baselineskip,title={\textsf{Exercise~\thetcbcounter}\if\relax\detokenize{#1}\relax\else\enspace\textsf{#1}\fi},fonttitle=\small\bfseries}
+% Non-numbered wrappers for explicit source headings and only their lead paragraph.
+\newtcolorbox{allmightroledefinition}{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageOne},colback=AMStageOneWash,left=9pt,right=9pt,top=5pt,bottom=6pt,before skip=0.55\baselineskip,after skip=0.65\baselineskip}
+\newtcolorbox{allmightroletheorem}{enhanced,breakable,sharp corners,boxrule=0.65pt,colframe=AMStageFour,colback=AMStageFourWash,left=9pt,right=9pt,top=5pt,bottom=6pt,before skip=0.55\baselineskip,after skip=0.65\baselineskip}
+\newtcolorbox{allmightroleexample}{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageTwo},colback=AMStageTwoWash,left=9pt,right=9pt,top=5pt,bottom=6pt,before skip=0.55\baselineskip,after skip=0.65\baselineskip}
+\newtcolorbox{allmightroleexercise}{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageThree},colback=AMStageThreeWash,left=9pt,right=9pt,top=5pt,bottom=6pt,before skip=0.55\baselineskip,after skip=0.65\baselineskip}
+\newtcolorbox{allmightroleactiverecall}{enhanced,breakable,sharp corners,boxrule=0pt,borderline west={4pt}{0pt}{AMStageFive},colback=AMStageFiveWash,left=9pt,right=9pt,top=5pt,bottom=6pt,before skip=0.55\baselineskip,after skip=0.65\baselineskip}
+\hypersetup{colorlinks=true,linkcolor=AMAccent,citecolor=AMAccent,urlcolor=AMAccent,pdfborder={0 0 0}}
+\urlstyle{same}
+% Pandoc Shaded/Highlighting compatibility.
+\definecolor{shadecolor}{HTML}{F3F6F7}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{fontsize=\small,commandchars=\\\{\}}
+\newenvironment{Shaded}{\begin{tcolorbox}[breakable,sharp corners,boxrule=0pt,colback=shadecolor,left=7pt,right=7pt,top=5pt,bottom=5pt]}{\end{tcolorbox}}

@@ -1,22 +1,14 @@
 {
-  "schema": "allmight-remote-named-destination-proof-v2",
-  "generation_format": "LaTeX filter rewrites remote-PDF fragment only for LaTeX; HTML retains the semantic nameddest URI",
+  "schema": "allmight-remote-named-destination-proof-v1",
   "remote_pdf_count": 2,
   "destination_name": "geometry-basics",
-  "target_page_count": 1,
-  "source_page_count": 1,
-  "destination_in_target_name_tree": true,
-  "remote_gotor_actions": [
-    {
-      "file": "stage2.pdf",
-      "destination_raw": "geometry-basics",
-      "destination_name": "geometry-basics"
-    }
-  ],
-  "html_link_preserves_semantic_target": true,
-  "pdf_sha256": {
-    "stage1.pdf": "28f635845fa855ce6f5fdf54357eabfdf084e5b7927084f202175a539cb00dcf",
-    "stage2.pdf": "012f74ef14be1870f68d4fe0af598737d49d6ece2d4d91c45b5837147878ef5b"
+  "destination_page_index": 0,
+  "destination_action": {
+    "page": 0,
+    "file": "stage2.pdf",
+    "destination": "geometry-basics"
   },
-  "status": "pass"
+  "pypdf_named_destination_present": true,
+  "cross_pdf_link_present": true,
+  "note": "TeX compiled the LaTeX Header-filter output; PyPDF inspected actual PDF name trees, page references, and remote GoToR annotations."
 }

@@ -1,0 +1,72 @@
+\hypertarget{appendix-31b8c295e05f}{}\label{referencestart:appendix-31b8c295e05f}
+\section{Numerical error budgets}\label{appendix-31b8c295e05f-numerical-error-budgets}
+
+\hypertarget{appendix-31b8c295e05f-numerical-error-budgets}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-31b8c295e05f-definition-and-mechanism}
+
+\hypertarget{appendix-31b8c295e05f-definition-and-mechanism}{}
+
+A computed result can differ from a target because of model assumptions, discretization, solver termination, arithmetic, sampling, or uncertain reference data. These contributions may interact, so an additive budget is a diagnostic model rather than a universal identity. First identify which errors are deterministic bounds, which are observed estimates, and which are stochastic uncertainty. For example, a ray-traced pixel can combine approximation of geometry, finite sample variance, floating-point accumulation, and an imperfect reference image. Allocate effort where the dominant contribution lies: extra precision cannot fix model bias, and more samples cannot repair an incorrect PDF. Report units and assumptions with every tolerance.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-31b8c295e05f-prerequisites}
+
+\hypertarget{appendix-31b8c295e05f-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-a7fbaf6d1b1c}{Forward and backward error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Forward and backward error)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}
+\item
+  \hyperref[appendix-aa2bf0d79639]{Algorithmic stability}
+\item
+  \hyperref[appendix-6b0648b2b8e8]{Discretization, truncation, and roundoff}
+\item
+  \hyperref[appendix-f63eb850796d]{Bracketed and open root solvers}
+\item
+  \hyperref[appendix-d83b0ad1be7f]{A posteriori error bounds for contractive iteration}
+\item
+  \hyperref[appendix-aca80b6bf17a]{Convergence order and Richardson extrapolation}
+\item
+  \hyperref[appendix-2cbf2968e866]{Position reconstruction from depth}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-31b8c295e05f-used-by}
+
+\hypertarget{appendix-31b8c295e05f-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-31b8c295e05f-full-teaching-explanation}
+
+\hypertarget{appendix-31b8c295e05f-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch029-separate-discretization-truncation-and-roundoff-measure-convergence}{Separate discretization, truncation, and roundoff; measure convergence (Mathematics for Visual Computing, Part 2, Ch. 13)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-31b8c295e05f-source-coverage}
+
+\hypertarget{appendix-31b8c295e05f-source-coverage}{}
+
+Supplied lesson parts: 966--1000.
+
+\subsection{Future keywords}\label{appendix-31b8c295e05f-future-keywords}
+
+\hypertarget{appendix-31b8c295e05f-future-keywords}{}
+
+model bias, solver tolerance, sampling uncertainty

@@ -1,0 +1,61 @@
+\hypertarget{appendix-3ee9861904d5}{}\label{referencestart:appendix-3ee9861904d5}
+\section{Camera calibration and bundle adjustment}\label{appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment}
+
+\hypertarget{appendix-3ee9861904d5-camera-calibration-and-bundle-adjustment}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-3ee9861904d5-definition-and-mechanism}
+
+\hypertarget{appendix-3ee9861904d5-definition-and-mechanism}{}
+
+Camera calibration estimates parameters that map 3D points to image coordinates. Intrinsics describe focal scale, principal point, and lens distortion; extrinsics describe camera pose relative to the scene. Known calibration targets provide 3D-to-2D correspondences, and a nonlinear least-squares objective minimizes reprojection error. Bundle adjustment jointly refines many camera poses and 3D feature points by minimizing all observed image residuals. The problem is sparse because each image sees only a subset of points. It also has gauge freedoms: translating or scaling the entire reconstruction may leave projections unchanged, so fix a reference pose or scale. Robust loss functions reduce the effect of mismatched features. Good initialization, parameter scaling, and Jacobian structure determine whether optimization converges.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-3ee9861904d5-prerequisites}
+
+\hypertarget{appendix-3ee9861904d5-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cb3b26862282]{Homogeneous coordinates and perspective division}
+\item
+  \hyperref[appendix-1fad5e7f36fa]{Singular value decomposition}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-3ee9861904d5-used-by}
+
+\hypertarget{appendix-3ee9861904d5-used-by}{}
+
+\begin{itemize}
+\item
+  {Worlds, Images and Inference}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#appendix-c4e98b6e4001}{Stereo correspondence and epipolar geometry (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Stereo correspondence and epipolar geometry)}
+\item
+  \hyperref[appendix-c5b332e400e7]{Radiance fields and Gaussian splatting}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-0976e86e5b9f}{Off-axis stereo projection and disparity (Vision, XR, and Playable Worlds, Part 1, Reference notes: Off-axis stereo projection and disparity)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-fc99ad39f351}{Omnidirectional camera projections (Vision, XR, and Playable Worlds, Part 1, Reference notes: Omnidirectional camera projections)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-2cbf2968e866}{Position reconstruction from depth (Vision, XR, and Playable Worlds, Part 1, Reference notes: Position reconstruction from depth)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-113f0267e5f4}{Camera gauge freedoms and observability (Vision, XR, and Playable Worlds, Part 1, Reference notes: Camera gauge freedoms and observability)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-3ee9861904d5-full-teaching-explanation}
+
+\hypertarget{appendix-3ee9861904d5-full-teaching-explanation}{}
+
+\href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#03-visual-computing-i-ch003-cameras-projection-and-calibration}{Cameras, projection, and calibration (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#04-visual-computing-ii-ch032-pose-estimation-transforms-and-robust-fitting}{Pose estimation, transforms, and robust fitting (Vision, XR, and Playable Worlds, Part 1, Ch. 3)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#04-visual-computing-ii-ch032-stereo-relative-orientation-and-reconstruction}{Stereo, relative orientation, and reconstruction (Vision, XR, and Playable Worlds, Part 1, Ch. 3)}
+
+\subsection{Phase 11 camera development}\label{appendix-3ee9861904d5-phase-11-camera-development}
+
+\hypertarget{appendix-3ee9861904d5-phase-11-camera-development}{}
+
+Linearize reprojection residuals as r(θ+δ)≈r(θ)+Jδ; the weighted information matrix \(J^{\mathsf T}WJ\) reveals parameter combinations that change observations. Null directions are local ambiguities, while small eigenvalues indicate weak constraints. In calibrated monocular structure from motion, global frame choice and common scene scale are gauge freedoms. Fix a pose and scale convention, or add a metric measurement, before interpreting covariance. Repeated nearly identical views may leave focal length, depth, and pose coupled even with many pixels. Link: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)}.

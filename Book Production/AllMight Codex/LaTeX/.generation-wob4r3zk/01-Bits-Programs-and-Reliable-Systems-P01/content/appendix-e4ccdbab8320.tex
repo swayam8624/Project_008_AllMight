@@ -1,0 +1,62 @@
+\hypertarget{appendix-e4ccdbab8320}{}\label{referencestart:appendix-e4ccdbab8320}
+\section{Cache lines and memory bandwidth}\label{appendix-e4ccdbab8320-cache-lines-and-memory-bandwidth}
+
+\hypertarget{appendix-e4ccdbab8320-cache-lines-and-memory-bandwidth}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C003
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-e4ccdbab8320-definition-and-mechanism}
+
+\hypertarget{appendix-e4ccdbab8320-definition-and-mechanism}{}
+
+Packing can place more logical values in each transferred cache line, trading arithmetic for lower footprint and traffic.
+
+\end{allmightroledefinition}
+
+A cache line is the block moved between cache levels; memory bandwidth is bytes transferred per unit time. With an illustrative 64-byte line, byte-per-bit data stores 64 logical bits, while packed data stores 512. Real line sizes and performance must be measured for the target.
+
+\subsection{Prerequisites}\label{appendix-e4ccdbab8320-prerequisites}
+
+\hypertarget{appendix-e4ccdbab8320-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-18ee4f913c3c}{Addresses and virtual memory (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Addresses and virtual memory)} --- An address names a storage location in an address space.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-e4ccdbab8320-used-by}
+
+\hypertarget{appendix-e4ccdbab8320-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-5522ad176ca0}{Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{M003 development}\label{appendix-e4ccdbab8320-m003-development}
+
+\hypertarget{appendix-e4ccdbab8320-m003-development}{}
+
+A four-byte load at line offset 62 crosses two 64-byte lines; a page crossing also requires a second translation. Reordering 24→16-byte records reduces footprint, not necessarily measured traffic or speed. \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-5522ad176ca0}{Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)} separates hot field arrays from full records; \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-7a2d9c5ce511}{TLB (Bits, Programs, and Reliable Systems, Part 2, Reference notes: TLB)} caches translations rather than contents.
+
+\subsection{Recall and next depth}\label{appendix-e4ccdbab8320-recall-and-next-depth}
+
+\hypertarget{appendix-e4ccdbab8320-recall-and-next-depth}{}
+
+Explain cache lines and memory bandwidth without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} measurement, locality, hierarchy levels, and prefetch behavior.
+
+\subsection{Source and navigation}\label{appendix-e4ccdbab8320-source-and-navigation}
+
+\hypertarget{appendix-e4ccdbab8320-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#01-foundations-i-ch002-where-the-bytes-live}{C003 development (Bits, Programs, and Reliable Systems, Part 2, Ch. 2)}

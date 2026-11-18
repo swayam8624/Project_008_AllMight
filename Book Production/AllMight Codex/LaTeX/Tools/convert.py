@@ -18,7 +18,7 @@ def pandoc(data,fr,to,division='chapter'):
 
 def normalize_layout_formula(value):
  value=' '.join(value.split())
- value=re.sub(r'\s*\\(?:rightarrow|to)\s*',lambda match: r'\'+match.group(0).strip().lstrip('\\'),value)
+ value=re.sub(r'\s*\\(?:rightarrow|to)\s*',lambda match: match.group(0).strip(),value)
  value=re.sub(r'\{\s+','{',value)
  return re.sub(r'\s+\}', '}',value)
 
@@ -289,7 +289,12 @@ def main():
    if sha(proposal_source.read_bytes())!=proposal['source_sha256']:
     raise RuntimeError('Source reflow source hash mismatch: '+str(proposal_source))
    source_text=proposal_source.read_text()
-   if normalize_layout_formula(proposal['before']) not in normalize_layout_formula(source_text):
+   source_guard=normalize_layout_formula(source_text)
+   fragment_guard=normalize_layout_formula(proposal['before'])
+   if '\\text{' not in proposal['before'] and '\\boxed{' not in proposal['before']:
+    source_guard=re.sub(r'\s+','',source_guard)
+    fragment_guard=re.sub(r'\s+','',fragment_guard)
+   if fragment_guard not in source_guard:
     raise RuntimeError('Source reflow source fragment mismatch: '+str(proposal_source))
    # The transient-state box is already covered by its earlier exact SHA guard.
    # Keep one conversion record for this same formula instead of applying it twice.
@@ -692,16 +697,19 @@ def main():
          r'\rightarrow\text{smallest-pool joins}\rightarrow\text{invalidation rules}\\'
          r'\rightarrow\text{deferred structural mutation}.'
          r'\end{gathered}}')
+        before_guard=current
        elif (proposal['before'].startswith(r'\text{3D Gaussians}') and
-             current.startswith(r'\boxed{') and not after.startswith(r'\boxed{')):
+             current==normalize_layout_formula(r'\boxed{'+proposal['before']+r'}') and
+             not after.startswith(r'\boxed{')):
         after=r'\boxed{'+after+r'}'
+        before_guard=current
        elif not ('\\text{' in proposal['before']) and not ('\\boxed{' in proposal['before']):
         current=re.sub(r'\s+','',current)
         before_guard=re.sub(r'\s+','',before_guard)
        if (expected==proposal['source_sha256'] and current==before_guard):
         c[1]=after
         exceptions.append({'source':str(src),'source_id':proposal['source_id'],'source_sha256':expected,
-         'proposal_file':proposal['_proposal_file'],'kind':'source_verified_trim_reflow','original':proposal['before'],'rendered':after,
+         'proposal_file':proposal['_proposal_file'],'kind':'source_verified_trim_reflow','original':before,'rendered':after,
          'affected_pdf_pages':proposal.get('affected_pdf_pages',[]),
          'reason':'Applied the exact source-hash-bound display reflow with source words and operators retained.'})
         break

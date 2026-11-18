@@ -225,7 +225,7 @@ class Packager:
     def raster_pdf(self, source: Path):
         source=source.resolve()
         if not source.is_file(): raise RuntimeError(f"Missing diagram PDF: {source}")
-        digest=sha(source.read_bytes()); dest=self.asset_dir/(digest+".png")
+        digest=sha(source.read_bytes()); dest=self.asset_dir/(digest+"-300dpi.png")
         if not dest.exists():
             exe=shutil.which("pdftoppm") or "/Users/swayamsingal/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm"
             if not Path(exe).exists(): raise RuntimeError(f"pdftoppm unavailable for {source}")
@@ -548,7 +548,7 @@ def patch_epub_project_css(epub, old_css, new_css):
             if not item.tag.endswith("item") or item.attrib.get("media-type")!="text/css":continue
             href=urllib.parse.unquote(item.attrib.get("href",""));target=posixpath.normpath(posixpath.join(base,href))
             payload=zin.read(target)
-            if payload.startswith(b"/* Reflow first:"):
+            if payload.lstrip().startswith(b"/* Reflow first:"):
                 if sha(payload)!=sha(old_css):raise RuntimeError(f"Unexpected project CSS fingerprint in {epub}: {target}")
                 targets.add(target)
         if len(targets)!=1:raise RuntimeError(f"Expected one project stylesheet in {epub}; found {len(targets)}")
@@ -560,6 +560,42 @@ def patch_epub_project_css(epub, old_css, new_css):
     return {"path":str(epub.resolve()),"patched_css_paths":sorted(targets),"old_css_sha256":sha(old_css),"new_css_sha256":sha(new_css),"epub_sha256":sha(epub.read_bytes()),"epub_bytes":epub.stat().st_size}
 
 
+
+def publish_epubs(out, destination, manifest, generation):
+    """Publish only checked, fingerprint-matched books and reader-facing metadata."""
+    report=json.loads((out/"epub-build-report.json").read_text(encoding="utf-8"))
+    if report.get("generation_id") != generation:
+        raise RuntimeError("Build report generation does not match requested generation")
+    stages=manifest["stages"]
+    records={r["stage_id"]:r for r in report["stage_epubs"]}
+    if set(records) != {s["id"] for s in stages}:
+        raise RuntimeError("Build report does not contain exactly the expected stages")
+    items=[(s["id"]+".epub",records[s["id"]]) for s in stages]
+    items.append(("AllMight-Codex-Collection.epub",report["collection_epub"]))
+    artifacts=[]
+    for name,record in items:
+        source=out/name
+        digest=sha(source.read_bytes())
+        if digest != record.get("sha256") or record.get("epubcheck",{}).get("exit_code") != 0:
+            raise RuntimeError(f"Unverified or changed EPUB: {source}")
+        artifacts.append({"file":name,"sha256":digest,"bytes":source.stat().st_size})
+    destination.mkdir(parents=True,exist_ok=True)
+    allowed={name for name,_ in items}|{"INDEX.md","QA-summary.json"}
+    extras=[p.name for p in destination.iterdir() if p.name not in allowed]
+    if extras: raise RuntimeError(f"Unexpected reader-folder entries; preserve them elsewhere first: {extras}")
+    for name,_ in items:
+        temp=destination/("."+name+".tmp")
+        shutil.copyfile(out/name,temp);temp.replace(destination/name)
+    lines=["# AllMight Codex ebooks","","The complete collection contains all seven stages and supports offline links across them. Each stage is also available as a separate reflowable EPUB.","","## Reading order",""]
+    for index,stage in enumerate(stages,1):
+        lines.append(f"{index}. [{stage['title']}](<{stage['id']}.epub>)")
+    lines += ["","[Complete collection](AllMight-Codex-Collection.epub)","","Standalone books identify cross-stage references by stage and topic. Use the collection for direct offline navigation across stages.",""]
+    (destination/"INDEX.md").write_text("\n".join(lines),encoding="utf-8")
+    summary={"generation_id":generation,"source_totals":report["source_totals"],"artifacts":artifacts,"epubcheck":"5.4.0: all eight passed","detailed_report":str((out/"epub-build-report.json").resolve())}
+    (destination/"QA-summary.json").write_text(json.dumps(summary,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+    print(f"PUBLISHED generation={generation} artifacts={len(items)} destination={destination}",flush=True)
+
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--generation",required=True,help="Generation ID, e.g. .generation-uuihb_gl")
@@ -568,6 +604,7 @@ def main():
     ap.add_argument("--collection-only",action="store_true",help="Build only the all-stage collection EPUB")
     ap.add_argument("--finalize-crossrefs-only",action="store_true",help="Add verified CFI locators to already-built stage EPUBs without rerunning Pandoc")
     ap.add_argument("--patch-css-only",action="store_true",help="Patch the embedded project stylesheet in the eight existing EPUBs and revalidate without rerunning Pandoc")
+    ap.add_argument("--publish",action="store_true",help="Publish checked books from the build directory to Books/Ebooks")
     args=ap.parse_args()
     gen=args.generation
     if "/" in gen or "\\" in gen or gen in (".",".."):
@@ -579,6 +616,9 @@ def main():
     if len(manifest.get("rows",[])) != 568: raise RuntimeError(f"Expected 568 normalized source rows, got {len(manifest.get('rows',[]))}")
     out=Path(args.output_dir).resolve() if args.output_dir else ROOT/"Build"/gen/"epubs"
     out.mkdir(parents=True,exist_ok=True)
+    if args.publish:
+        publish_epubs(out,ROOT/"Books"/"Ebooks",manifest,gen)
+        return 0
     ast_cache,owner,titles,chapter_owner,chapter_title,target_anchor=build_indexes(manifest,root)
     all_math=sum(1 for ast in ast_cache.values() for n in walk_nodes(ast) if n.get("t")=="Math")
     if all_math != 39483: raise RuntimeError(f"Expected 39,483 transformed Math nodes, found {all_math}")

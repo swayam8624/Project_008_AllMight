@@ -1,0 +1,60 @@
+\hypertarget{appendix-d1a5b1e520c2}{}\label{referencestart:appendix-d1a5b1e520c2}
+\section{Full adder}\label{appendix-d1a5b1e520c2-full-adder}
+
+\hypertarget{appendix-d1a5b1e520c2-full-adder}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d1a5b1e520c2-definition-and-mechanism}
+
+\hypertarget{appendix-d1a5b1e520c2-definition-and-mechanism}{}
+
+Adds \(A,B,C_{in}\); sum is three-way XOR and carry is the majority of its inputs.
+
+\end{allmightroledefinition}
+
+A full adder adds A, B, and carry-in. Sum is their parity; carry-out is 1 when at least two inputs are 1. Build it from two half adders: add A,B, then add that sum to carry-in, then OR the two carry outputs.
+
+\subsection{Prerequisites}\label{appendix-d1a5b1e520c2-prerequisites}
+
+\hypertarget{appendix-d1a5b1e520c2-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-1652d27a8e90]{Half adder} --- A half adder adds two bits with sum S=A XOR B and carry C=A AND B.
+\item
+  \hyperref[appendix-d52d5f78ffd1]{Carry and borrow} --- For N-bit unsigned addition, carry-out means the exact sum exceeds 2ᴺ−1.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d1a5b1e520c2-used-by}
+
+\hypertarget{appendix-d1a5b1e520c2-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-17917d9fdbe3]{Ripple-carry addition} --- uses full adder as part of its representation or reasoning.
+\item
+  \hyperref[appendix-8d687c9c08ab]{Carry, overflow, negative, and zero flags} --- uses full adder as part of its representation or reasoning.
+\item
+  \hyperref[appendix-1c7df340573e]{Subtraction through addition} --- uses full adder as part of its representation or reasoning.
+\item
+  \hyperref[appendix-a65290d66ed9]{Shift-and-add multiplication} --- uses full adder as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d1a5b1e520c2-recall-and-next-depth}
+
+\hypertarget{appendix-d1a5b1e520c2-recall-and-next-depth}{}
+
+Explain full adder without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Apply and reconstruct this concept independently.
+
+\subsection{Source and navigation}\label{appendix-d1a5b1e520c2-source-and-navigation}
+
+\hypertarget{appendix-d1a5b1e520c2-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

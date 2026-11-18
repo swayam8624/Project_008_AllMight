@@ -1,0 +1,56 @@
+\hypertarget{appendix-44e00863b4d5}{}\label{referencestart:appendix-44e00863b4d5}
+\section{Reflection refraction and shading directions}\label{appendix-44e00863b4d5-reflection-refraction-and-shading-directions}
+
+\hypertarget{appendix-44e00863b4d5-reflection-refraction-and-shading-directions}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase6 · \textbf{Latest development:} University courses
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-44e00863b4d5-definition-and-mechanism}
+
+\hypertarget{appendix-44e00863b4d5-definition-and-mechanism}{}
+
+Plane reflection reverses a direction's normal component. Refraction scales its tangent component by the incident/transmitted index ratio and solves for a unit normal component. A negative computed discriminant indicates total internal reflection under the stated model. Half-vectors require normalized outward light/view directions.
+
+\end{allmightroledefinition}
+
+Incident \((0.6,0,-0.8)\) reflects to \((0.6,0,0.8)\) across normal \((0,0,1)\). Antiparallel light/view directions have no unique half-vector.
+
+\subsection{Prerequisites}\label{appendix-44e00863b4d5-prerequisites}
+
+\hypertarget{appendix-44e00863b4d5-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-505a502c372a}{Projection rejection and scalar components (Vision, XR, and Playable Worlds, Part 1, Reference notes: Projection rejection and scalar components)} --- Removing an unwanted component creates residuals, tangent axes and mirror decompositions.
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-f744e41b95b4}{Unit directions and safe normalization (Vision, XR, and Playable Worlds, Part 1, Reference notes: Unit directions and safe normalization)} --- Validated finite unit directions establish the preconditions for simplified geometry formulas.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-44e00863b4d5-used-by}
+
+\hypertarget{appendix-44e00863b4d5-used-by}{}
+
+Later curriculum sources can deepen this same node; no future coverage is marked complete. - \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#appendix-21f8456e2629}{Lens optics and depth of field (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Lens optics and depth of field)}
+
+\subsection{Recall and next depth}\label{appendix-44e00863b4d5-recall-and-next-depth}
+
+\hypertarget{appendix-44e00863b4d5-recall-and-next-depth}{}
+
+Declare arrow and medium conventions before deriving formulas; distinguish direction geometry from optical energy. Full production proofs, target-specific integration and learner mastery require further evidence.
+
+\subsection{Source and navigation}\label{appendix-44e00863b4d5-source-and-navigation}
+
+\hypertarget{appendix-44e00863b4d5-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch018-light-uses-the-same-decomposition-in-a-new-role}{Teaching narrative (Mathematics for Visual Computing, Part 1, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-6---parts-501-600]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-6---source-analysis-and-verification]{Evidence and limits} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{University course development}\label{appendix-44e00863b4d5-university-course-development}
+
+\hypertarget{appendix-44e00863b4d5-university-course-development}{}
+
+Extend the existing direction note by separating geometric surface orientation from optical ray behavior. The normal vector is perpendicular to a local tangent plane; it determines the cosine term in diffuse shading and the directions of ideal reflection and refraction. For unit incident direction \(\omega_i\) and unit normal \(n\), specular reflection mirrors the direction about the normal, while refraction changes direction according to the ratio of refractive indices and may undergo total internal reflection. Direction conventions matter: some texts define incoming vectors toward the surface, others point away from it, so signs must be checked before applying formulas. A shading normal may differ from the true geometric normal, as in normal mapping, but it cannot change silhouette or visibility. Distinguish shading perturbations from geometry displacement, and use consistent normals when evaluating BRDFs, ray offsets, and medium transitions.
+
+\href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#03-visual-computing-i-ch003-lens-optics-focus-and-image-formation}{Lens optics, focus, and image formation (Geometry, Cameras, and Image Formation, Part 1, Ch. 10)} · \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#03-visual-computing-i-ch004-reflectance-brdfs-and-shading}{Reflectance, BRDFs, and shading (Geometry, Cameras, and Image Formation, Part 1, Ch. 11)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#04-visual-computing-ii-ch032-shape-from-shading-and-reflectance}{Shape from shading and reflectance (Vision, XR, and Playable Worlds, Part 1, Ch. 3)}

@@ -1,0 +1,62 @@
+\hypertarget{appendix-1c5e85693a06}{}\label{referencestart:appendix-1c5e85693a06}
+\section{Latin-hypercube sampling}\label{appendix-1c5e85693a06-latin-hypercube-sampling}
+
+\hypertarget{appendix-1c5e85693a06-latin-hypercube-sampling}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1c5e85693a06-definition-and-mechanism}
+
+\hypertarget{appendix-1c5e85693a06-definition-and-mechanism}{}
+
+Latin-hypercube sampling divides each coordinate axis into \(N\) equal strata and uses a permutation so every sample occupies one stratum per dimension. With randomized within-stratum positions and randomized permutations, each sample has uniform marginal coordinates; samples are dependent by design. This can improve coverage for some integrands at arbitrary sample counts, including counts that do not form a square grid. It does not guarantee lower variance for every function, and IID variance formulas cannot be applied without accounting for dependence. Test exact stratum coverage deterministically, then compare estimator error over repeated randomized trials for the intended integrand. For \(N=5\), each axis still receives five strata, avoiding the missing-cell bias of taking five cells from a \(3\times3\) grid.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-1c5e85693a06-prerequisites}
+
+\hypertarget{appendix-1c5e85693a06-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement}
+\item
+  \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#appendix-4815cd87ab8b}{Probability density and change of measure (Mathematics for Visual Computing, Part 2, Reference notes: Probability density and change of measure)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1c5e85693a06-used-by}
+
+\hypertarget{appendix-1c5e85693a06-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-b9db93e28371]{Reproducible numerical benchmarking}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-1c5e85693a06-full-teaching-explanation}
+
+\hypertarget{appendix-1c5e85693a06-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch031-design-samples-without-replacement-stratified-and-low-discrepancy}{Design samples: without replacement, stratified, and low-discrepancy (Mathematics for Visual Computing, Part 2, Ch. 15)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-1c5e85693a06-source-coverage}
+
+\hypertarget{appendix-1c5e85693a06-source-coverage}{}
+
+Supplied lesson parts: 997.
+
+\subsection{Future keywords}\label{appendix-1c5e85693a06-future-keywords}
+
+\hypertarget{appendix-1c5e85693a06-future-keywords}{}
+
+marginal stratification, randomized Latin hypercube, dependence

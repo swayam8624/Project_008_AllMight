@@ -53,13 +53,16 @@ def tex_runtime():
     engine = str(Path(engine).absolute())
     env = os.environ.copy()
     env['PATH'] = str(Path(engine).parent) + os.pathsep + env.get('PATH', '')
-    env['TEXINPUTS'] = str(ROOT) + os.pathsep + env.get('TEXINPUTS', '')
+    env['TEXINPUTS'] = env.get('TEXINPUTS', '')
     env.setdefault('TEXMFHOME', '/tmp/allmight-local-texmf')
     return engine, env
 
 
-def compile_tex(cwd, engine, env):
+def compile_tex(cwd, engine, env, generation=None):
     cwd = Path(cwd)
+    env = env.copy()
+    env['TEXINPUTS'] = str(cwd.resolve()) + os.pathsep + env.get('TEXINPUTS', '')
+    shutil.copy2(ROOT / 'allmight-book.sty', cwd / 'allmight-book.sty')
     (cwd / 'build').mkdir(parents=True, exist_ok=True)
     command = [engine, '-g', '-lualatex', '-interaction=nonstopmode', '-halt-on-error',
                '-file-line-error', '-outdir=build', 'main.tex']
@@ -67,6 +70,18 @@ def compile_tex(cwd, engine, env):
     with log.open('w') as stream:
         result = subprocess.run(command, cwd=cwd, env=env, stdout=stream, stderr=subprocess.STDOUT)
     pdf = cwd / 'build' / 'main.pdf'
+    if result.returncode == 0 and generation is not None:
+        fls = cwd / 'build' / 'main.fls'
+        if not fls.is_file():
+            raise RuntimeError('TeX recorder output is missing: ' + str(fls))
+        inputs = [Path(line[6:]) for line in fls.read_text(errors='replace').splitlines() if line.startswith('INPUT ')]
+        resolved = {(p if p.is_absolute() else cwd / p).resolve() for p in inputs}
+        expected = {generation.resolve() / x for x in re.findall(r'\\input\{\.\./current/([^}]+)\}', (cwd / 'main.tex').read_text())}
+        if not expected or not expected.issubset(resolved):
+            raise RuntimeError('TeX did not read all requested generation fragments: ' + str(sorted(map(str, expected - resolved))[:5]))
+        wrong = [str(p) for p in inputs if '/current/' in str(p) and not (p if p.is_absolute() else cwd / p).resolve().is_relative_to(generation.resolve())]
+        if wrong:
+            raise RuntimeError('TeX read another generation through current: ' + str(wrong[:5]))
     if result.returncode == 0 and pdf.is_file():
         shutil.copy2(pdf, cwd / 'main.pdf')
     return {'command': command, 'returncode': result.returncode, 'pdf': str(pdf),
@@ -407,7 +422,7 @@ def build_physical_parts(generation, part_map, selected=None):
     def run(part):
         cwd = output_root / part['id']; cwd.mkdir(parents=True, exist_ok=True)
         shutil.copy2(generation / part['id'] / 'main.tex', cwd / 'main.tex')
-        result = compile_tex(cwd, engine, env)
+        result = compile_tex(cwd, engine, env, generation)
         if result['returncode'] == 0:
             build_pdf = Path(result['pdf'])
             candidate_pdf = cwd / 'main.pdf'

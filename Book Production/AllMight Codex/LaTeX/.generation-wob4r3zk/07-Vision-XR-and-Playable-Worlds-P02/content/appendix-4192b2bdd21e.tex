@@ -1,0 +1,74 @@
+\hypertarget{appendix-4192b2bdd21e}{}\label{referencestart:appendix-4192b2bdd21e}
+\section{Antialiasing and sample allocation}\label{appendix-4192b2bdd21e-antialiasing-and-sample-allocation}
+
+\hypertarget{appendix-4192b2bdd21e-antialiasing-and-sample-allocation}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} XR01 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-4192b2bdd21e-definition-and-mechanism}
+
+\hypertarget{appendix-4192b2bdd21e-definition-and-mechanism}{}
+
+SSAA increases spatial observations; MSAA principally adds coverage-related sampling under its shading conventions. TAA reuses aligned temporal observations. Nonlinear shading makes pre-/post-filtering noncommutative, so coarse rates need appropriate input/output policies.
+
+\end{allmightroledefinition}
+
+\subsubsection{Phase 9--10 development}\label{appendix-4192b2bdd21e-phase-910-development}
+
+\hypertarget{appendix-4192b2bdd21e-phase-910-development}{}
+
+Antialiasing combines a sampling pattern with a reconstruction or integration footprint so unresolved variation contributes with controlled error. More samples can reduce Monte Carlo variance, while better placement can reduce structured error; these are different effects. Adaptive allocation based on observed samples changes the sampling procedure and can affect uncertainty estimates. Spatial sample allocation should remain distinct from importance sampling over path or event space.
+
+\subsection{Prerequisites}\label{appendix-4192b2bdd21e-prerequisites}
+
+\hypertarget{appendix-4192b2bdd21e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-6a7869dd79a6}{Sampling aliasing and reconstruction (Light Transport and Image Synthesis, Part 1, Reference notes: Sampling aliasing and reconstruction)} --- Allocation/filtering must respect what reduced samples can distinguish.
+\item
+  \hyperref[appendix-b677a85ba76f]{Multiscale texture filtering} --- Coarse samples need appropriate prefilter/footprint representations.
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#appendix-031e02bf28af}{Monte Carlo rendering estimators and variance (Mathematics for Visual Computing, Part 2, Reference notes: Monte Carlo rendering estimators and variance)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-9f693ffd82bc}{Sampling quality: stratification, quasi-Monte Carlo, and blue noise (Vision, XR, and Playable Worlds, Part 1, Reference notes: Sampling quality: stratification, quasi-Monte Carlo, and blue noise)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-4192b2bdd21e-used-by}
+
+\hypertarget{appendix-4192b2bdd21e-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0727340a4428]{Temporal reprojection and history validation}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-4192b2bdd21e-recall-and-next-depth}
+
+\hypertarget{appendix-4192b2bdd21e-recall-and-next-depth}{}
+
+Explain mean(x²) versus square(mean(x)). Pending: actual shader invocation reduction and VRS/GPU execution. Written coverage is not a claim of learner mastery or accepted numbered-curriculum progress.
+
+\subsection{Source and navigation}\label{appendix-4192b2bdd21e-source-and-navigation}
+
+\hypertarget{appendix-4192b2bdd21e-source-and-navigation}{}
+
+\hyperref[04-visual-computing-ii-ch042-multiresolution-work-must-preserve-the-right-information]{Expanded teaching explanation} · \hyperref[appendix-fd090d982a15-xr01---independent-seeing-and-representation-source]{Independent coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Full teaching explanation}\label{appendix-4192b2bdd21e-full-teaching-explanation}
+
+\hypertarget{appendix-4192b2bdd21e-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch029-a-computer-produces-deterministic-pseudorandom-sequences}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 13)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch031-use-probability-to-evaluate-graphics-and-research-claims}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 15)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · Phase 10 visual recall
+\end{itemize}

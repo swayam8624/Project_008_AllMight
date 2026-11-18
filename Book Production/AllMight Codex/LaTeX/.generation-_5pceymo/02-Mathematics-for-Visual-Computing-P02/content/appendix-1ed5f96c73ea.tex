@@ -1,0 +1,51 @@
+\hypertarget{appendix-1ed5f96c73ea}{}\label{referencestart:appendix-1ed5f96c73ea}
+\section{Perspective-correct interpolation}\label{appendix-1ed5f96c73ea-perspective-correct-interpolation}
+
+\hypertarget{appendix-1ed5f96c73ea-perspective-correct-interpolation}{}
+
+Rasterization computes barycentric coordinates in screen space, but many vertex attributes are defined as linear functions on the original 3D primitive before perspective division. Directly interpolating those attributes with screen-space barycentrics therefore produces the wrong result.
+
+Let clip-space vertex \(i\) have homogeneous coordinate \(w_i\) and attribute \(a_i\). If screen-space barycentric weights at a sample are \(\lambda_i\), perspective-correct interpolation is
+
+\[
+a=
+\frac{
+\sum_i \lambda_i a_i/w_i
+}{
+\sum_i \lambda_i /w_i
+}.
+\]
+
+The denominator reconstructs the projective scaling that was lost during perspective division.
+
+\subsection{Why affine screen interpolation fails}\label{appendix-1ed5f96c73ea-why-affine-screen-interpolation-fails}
+
+\hypertarget{appendix-1ed5f96c73ea-why-affine-screen-interpolation-fails}{}
+
+Imagine two vertices at different depths but carrying texture coordinates that vary linearly across the original triangle. Perspective makes equal screen distances correspond to unequal distances on the surface. Affine screen interpolation assumes the opposite, so textures visibly ``swim'' or warp across polygons.
+
+The derivation can be viewed by interpolating homogeneous quantities before division: both \(a/w\) and \(1/w\) are affine in screen barycentrics, then dividing recovers \(a\).
+
+\subsection{Depth is a separate contract}\label{appendix-1ed5f96c73ea-depth-is-a-separate-contract}
+
+\hypertarget{appendix-1ed5f96c73ea-depth-is-a-separate-contract}{}
+
+Do not blindly apply the same formula to every quantity named ``depth.'' Hardware depth after projection/divide is designed to interpolate affinely in screen space under the pipeline's projective construction. Camera-space \(z\), Euclidean range and reciprocal depth are different quantities.
+
+The shader/runtime must know which one it is carrying.
+
+\subsection{Derivatives}\label{appendix-1ed5f96c73ea-derivatives}
+
+\hypertarget{appendix-1ed5f96c73ea-derivatives}{}
+
+Texture gradients used for mip/anisotropic filtering are derivatives of the perspective-correct attribute with respect to screen position. Finite differences across neighboring fragments approximate that quotient behavior; manually reconstructing derivatives requires differentiating the quotient rather than differentiating the raw affine numerator alone.
+
+\subsection{Executable reference}\label{appendix-1ed5f96c73ea-executable-reference}
+
+\hypertarget{appendix-1ed5f96c73ea-executable-reference}{}
+
+tools/labs/raster\_reference\_lab.cpp chooses a triangle with unequal reciprocal-w values and verifies that affine interpolation differs from the perspective-correct result. The same lab tests top-left edge ownership and depth ordering.
+
+Teach and reconstruct: \hyperref[03-visual-computing-i-ch012-decide-which-samples-a-triangle-owns]{Continuous Notes/University - Worlds, Images and Inference - Graphics, Vision and Photography\#Decide which samples a triangle owns}.
+
+Related: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#appendix-40426e4b2103}{Homogeneous clipping and perspective interpolation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Homogeneous clipping and perspective interpolation)}, \hyperref[appendix-275ec8847057]{Reversed-Z depth contracts}.

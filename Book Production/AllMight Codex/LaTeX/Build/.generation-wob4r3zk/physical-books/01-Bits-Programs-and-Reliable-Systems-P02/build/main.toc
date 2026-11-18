@@ -1,0 +1,728 @@
+\contentsline {chapter}{\numberline {2}Values at Addresses: Layout, Lifetimes, and Representation}{1}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Where the bytes live}{1}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}A value is not its address order}{1}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Alignment is a placement requirement}{2}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Smaller records are not always faster records}{3}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}A pointer is more than an integer location}{4}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}Virtual memory translates page identity}{4}{subsection.2.1.5}%
+\contentsline {subsection}{\numberline {2.1.6}Figure B4 - Translation preserves the offset}{5}{subsection.2.1.6}%
+\contentsline {subsection}{\numberline {2.1.7}A fault is a request for intervention, not necessarily a crash}{5}{subsection.2.1.7}%
+\contentsline {subsection}{\numberline {2.1.8}Storage, lifetime, ownership, and placement are different axes}{6}{subsection.2.1.8}%
+\contentsline {subsection}{\numberline {2.1.9}Memory laboratory and teaching checkpoint}{7}{subsection.2.1.9}%
+\contentsline {section}{\numberline {2.2}Bytes become a durable agreement}{8}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Representation copying and numeric conversion answer different questions}{8}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}A file is a promise to a reader you have not met yet}{8}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Validate lengths before performing the arithmetic they request}{9}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Correct decoding is not proof that the bytes survived}{9}{subsection.2.2.4}%
+\contentsline {subsection}{\numberline {2.2.5}Read a dump by reversing the contract}{10}{subsection.2.2.5}%
+\contentsline {subsection}{\numberline {2.2.6}A laboratory that tests the contracts, not just matching functions}{11}{subsection.2.2.6}%
+\contentsline {subsection}{\numberline {2.2.7}Diagnose the layer before changing the implementation}{12}{subsection.2.2.7}%
+\contentsline {section}{\numberline {2.3}Reading provenance and enrichment}{12}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Prologue - Bytes need rules before they become a program}{13}{section.2.4}%
+\contentsline {section}{\numberline {2.5}What we bring from the byte story}{14}{section.2.5}%
+\contentsline {section}{\numberline {2.6}The journey from text to a live object}{15}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Giving a program a buildable shape}{16}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Figure CPP-01 - Two build lanes meet at the linker}{16}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}The traditional translation model}{17}{subsection.2.7.2}%
+\contentsline {subsection}{\numberline {2.7.3}Compile-time error}{18}{subsection.2.7.3}%
+\contentsline {subsection}{\numberline {2.7.4}Link-time error}{18}{subsection.2.7.4}%
+\contentsline {subsection}{\numberline {2.7.5}What preprocessing actually is}{19}{subsection.2.7.5}%
+\contentsline {subsection}{\numberline {2.7.6}What \BookInlineCode {{\#}{i}{n}{c}{l}{u}{d}{e}}{\#include} really means}{20}{subsection.2.7.6}%
+\contentsline {subsection}{\numberline {2.7.7}What compilation produces}{20}{subsection.2.7.7}%
+\contentsline {subsection}{\numberline {2.7.8}What the linker actually does}{21}{subsection.2.7.8}%
+\contentsline {subsection}{\numberline {2.7.9}Name mangling}{21}{subsection.2.7.9}%
+\contentsline {section}{\numberline {2.8}A compiled interface rather than repeated text}{22}{section.2.8}%
+\contentsline {subsection}{\numberline {2.8.1}Modules versus \BookInlineCode {{\#}{i}{n}{c}{l}{u}{d}{e}}{\#include}}{22}{subsection.2.8.1}%
+\contentsline {section}{\numberline {2.9}Promises become definitions}{23}{section.2.9}%
+\contentsline {subsection}{\numberline {2.9.1}Objects}{23}{subsection.2.9.1}%
+\contentsline {subsection}{\numberline {2.9.2}Classes}{24}{subsection.2.9.2}%
+\contentsline {subsection}{\numberline {2.9.3}Enumerations}{24}{subsection.2.9.3}%
+\contentsline {subsection}{\numberline {2.9.4}Templates complicate the old declaration/implementation split}{25}{subsection.2.9.4}%
+\contentsline {section}{\numberline {2.10}Many files must describe one coherent program}{25}{section.2.10}%
+\contentsline {subsection}{\numberline {2.10.1}The common program-wide rule}{26}{subsection.2.10.1}%
+\contentsline {subsection}{\numberline {2.10.2}The classic header mistake}{26}{subsection.2.10.2}%
+\contentsline {subsection}{\numberline {2.10.3}Two modern solutions}{27}{subsection.2.10.3}%
+\contentsline {subsection}{\numberline {2.10.4}Why class definitions may live in headers}{27}{subsection.2.10.4}%
+\contentsline {subsection}{\numberline {2.10.5}The evil ODR bug: definitions that look like the same header but aren't}{28}{subsection.2.10.5}%
+\contentsline {subsection}{\numberline {2.10.6}Why modules help}{29}{subsection.2.10.6}%
+\contentsline {subsection}{\numberline {2.10.7}Linkage is related to ODR, but is not ODR}{29}{subsection.2.10.7}%
+\contentsline {section}{\numberline {2.11}A spelling needs a place and a meaning}{29}{section.2.11}%
+\contentsline {subsection}{\numberline {2.11.1}Block scope}{30}{subsection.2.11.1}%
+\contentsline {subsection}{\numberline {2.11.2}Name hiding}{30}{subsection.2.11.2}%
+\contentsline {subsection}{\numberline {2.11.3}Class scope}{31}{subsection.2.11.3}%
+\contentsline {subsection}{\numberline {2.11.4}Namespace scope}{31}{subsection.2.11.4}%
+\contentsline {subsection}{\numberline {2.11.5}\BookInlineCode {{u}{s}{i}{n}{g}{\ }{n}{a}{m}{e}{s}{p}{a}{c}{e}}{using\ namespace} versus using declaration}{31}{subsection.2.11.5}%
+\contentsline {subsection}{\numberline {2.11.6}Argument-dependent lookup --- ADL}{32}{subsection.2.11.6}%
+\contentsline {subsection}{\numberline {2.11.7}Modules add visibility/reachability, not a replacement for scopes}{32}{subsection.2.11.7}%
+\contentsline {section}{\numberline {2.12}A name does not decide how long storage lasts}{33}{section.2.12}%
+\contentsline {subsection}{\numberline {2.12.1}Automatic storage duration}{34}{subsection.2.12.1}%
+\contentsline {subsection}{\numberline {2.12.2}Static storage duration}{34}{subsection.2.12.2}%
+\contentsline {subsection}{\numberline {2.12.3}The static initialization order problem}{35}{subsection.2.12.3}%
+\contentsline {subsection}{\numberline {2.12.4}\BookInlineCode {{c}{o}{n}{s}{t}{i}{n}{i}{t}}{constinit}}{35}{subsection.2.12.4}%
+\contentsline {subsection}{\numberline {2.12.5}Thread storage duration}{36}{subsection.2.12.5}%
+\contentsline {subsection}{\numberline {2.12.6}Dynamic storage duration}{36}{subsection.2.12.6}%
+\contentsline {section}{\numberline {2.13}Storage is a place; an object is its occupant}{37}{section.2.13}%
+\contentsline {subsection}{\numberline {2.13.1}Raw storage is not automatically a live object of arbitrary type}{37}{subsection.2.13.1}%
+\contentsline {subsection}{\numberline {2.13.2}Construction starts a lifetime}{38}{subsection.2.13.2}%
+\contentsline {subsection}{\numberline {2.13.3}\BookInlineCode {{n}{e}{w}}{new} actually combines operations}{39}{subsection.2.13.3}%
+\contentsline {subsection}{\numberline {2.13.4}A dangerous misconception}{39}{subsection.2.13.4}%
+\contentsline {subsection}{\numberline {2.13.5}Lifetime beginning and ending more precisely}{40}{subsection.2.13.5}%
+\contentsline {subsection}{\numberline {2.13.6}Modern implicit-lifetime objects}{40}{subsection.2.13.6}%
+\contentsline {section}{\numberline {2.14}Values, occupants and addresses tell different stories}{40}{section.2.14}%
+\contentsline {subsection}{\numberline {2.14.1}Address is often useful as identity, but is not identity itself}{41}{subsection.2.14.1}%
+\contentsline {section}{\numberline {2.15}A handle remembers which occupant was intended}{42}{section.2.15}%
+\contentsline {subsection}{\numberline {2.15.1}Multiple things can even share an address}{42}{subsection.2.15.1}%
+\contentsline {subsection}{\numberline {2.15.2}\BookInlineCode {{s}{t}{d}{:}{:}{a}{d}{d}{r}{e}{s}{s}{o}{f}}{std::addressof}}{42}{subsection.2.15.2}%
+\contentsline {section}{\numberline {2.16}Choose a type for its promise, not its familiar size}{43}{section.2.16}%
+\contentsline {subsection}{\numberline {2.16.1}What the standard does guarantee}{43}{subsection.2.16.1}%
+\contentsline {subsection}{\numberline {2.16.2}Integer relative sizes}{44}{subsection.2.16.2}%
+\contentsline {subsection}{\numberline {2.16.3}Exact-width integer types}{44}{subsection.2.16.3}%
+\contentsline {subsection}{\numberline {2.16.4}\BookInlineCode {{l}{e}{a}{s}{t}}{least} and \BookInlineCode {{f}{a}{s}{t}}{fast}}{45}{subsection.2.16.4}%
+\contentsline {subsection}{\numberline {2.16.5}\BookInlineCode {{s}{t}{d}{:}{:}{s}{i}{z}{e}{\_}{t}}{std::size\_t}}{46}{subsection.2.16.5}%
+\contentsline {subsection}{\numberline {2.16.6}\BookInlineCode {{c}{h}{a}{r}}{char} signedness}{46}{subsection.2.16.6}%
+\contentsline {subsection}{\numberline {2.16.7}\BookInlineCode {{n}{u}{m}{e}{r}{i}{c}{\_}{l}{i}{m}{i}{t}{s}}{numeric\_limits}}{47}{subsection.2.16.7}%
+\contentsline {section}{\numberline {2.17}Give a domain its own vocabulary}{47}{section.2.17}%
+\contentsline {subsection}{\numberline {2.17.1}Old unscoped enums}{48}{subsection.2.17.1}%
+\contentsline {subsection}{\numberline {2.17.2}Scoped enums}{48}{subsection.2.17.2}%
+\contentsline {section}{\numberline {2.18}Representation is an intention, not input validation}{49}{section.2.18}%
+\contentsline {subsection}{\numberline {2.18.1}Getting the underlying integer}{49}{subsection.2.18.1}%
+\contentsline {subsection}{\numberline {2.18.2}An enum can represent more than just the named enumerators}{49}{subsection.2.18.2}%
+\contentsline {subsection}{\numberline {2.18.3}Enum flags}{50}{subsection.2.18.3}%
+\contentsline {chapter}{\numberline {3}Records as Resource Transactions}{51}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Records acquire their initial state}{51}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}What counts as an aggregate?}{51}{subsection.3.1.1}%
+\contentsline {section}{\numberline {3.2}Similar braces can invoke different mechanisms}{52}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Initialization order}{52}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Designated initializers}{53}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Missing members}{53}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Aggregate initialization and API evolution}{54}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Braces do more than aggregates}{54}{subsection.3.2.5}%
+\contentsline {section}{\numberline {3.3}Public records and protected invariants}{55}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}The other difference: base-class access}{56}{subsection.3.3.1}%
+\contentsline {section}{\numberline {3.4}A convention about promises}{56}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Bringing the object model back to bytes}{56}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Typical alignment calculation}{58}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Reordering members can reduce padding}{58}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}\BookInlineCode {{a}{l}{i}{g}{n}{o}{f}}{alignof} and \BookInlineCode {{a}{l}{i}{g}{n}{a}{s}}{alignas}}{59}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}\BookInlineCode {{s}{t}{a}{n}{d}{a}{r}{d}{-}{l}{a}{y}{o}{u}{t}}{standard-layout} does NOT mean ``packed C struct''}{60}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}\BookInlineCode {{t}{r}{i}{v}{i}{a}{l}{l}{y}{\_}{c}{o}{p}{y}{a}{b}{l}{e}}{trivially\_copyable} is another distinct concept}{60}{subsection.3.5.5}%
+\contentsline {section}{\numberline {3.6}Adjacent members are not an array}{61}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Correct alternatives}{61}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Why the bug often appears to work forever}{62}{subsection.3.6.2}%
+\contentsline {subsection}{\numberline {3.6.3}CPU layout is not GPU layout}{63}{subsection.3.6.3}%
+\contentsline {subsection}{\numberline {3.6.4}\BookInlineCode {{o}{f}{f}{s}{e}{t}{o}{f}}{offsetof}}{64}{subsection.3.6.4}%
+\contentsline {subsection}{\numberline {3.6.5}\BookInlineCode {{\#}{p}{r}{a}{g}{m}{a}{\ }{p}{a}{c}{k}}{\#pragma\ pack} is not a magic optimization}{65}{subsection.3.6.5}%
+\contentsline {subsection}{\numberline {3.6.6}Bit-fields}{65}{subsection.3.6.6}%
+\contentsline {section}{\numberline {3.7}Following an escaped address through time}{66}{section.3.7}%
+\contentsline {section}{\numberline {3.8}Following one call through the build}{67}{section.3.8}%
+\contentsline {section}{\numberline {3.9}Giving another name to a live object}{69}{section.3.9}%
+\contentsline {section}{\numberline {3.10}An expression has a type and a category}{70}{section.3.10}%
+\contentsline {section}{\numberline {3.11}Binding chooses a referent, not always the one you imagined}{71}{section.3.11}%
+\contentsline {section}{\numberline {3.12}A temporary needs an explicit lifetime story}{72}{section.3.12}%
+\contentsline {subsubsection}{Turn the lifetime rule into a scope trace}{73}{subsubsection*.6}%
+\contentsline {section}{\numberline {3.13}Move permission is not resource transfer}{75}{section.3.13}%
+\contentsline {section}{\numberline {3.14}A pointer carries an access contract}{76}{section.3.14}%
+\contentsline {section}{\numberline {3.15}When a valid borrow stops naming the intended thing}{77}{section.3.15}%
+\contentsline {subsection}{\numberline {3.15.1}Figure CPP-02 - A borrow can fail in two different ways}{77}{subsection.3.15.1}%
+\contentsline {section}{\numberline {3.16}Borrowed views and deferred work need an owner story}{79}{section.3.16}%
+\contentsline {section}{\numberline {3.17}Read-only is a path, not an ownership or synchronization promise}{79}{section.3.17}%
+\contentsline {section}{\numberline {3.18}An accessor must respect the caller's lifetime}{81}{section.3.18}%
+\contentsline {section}{\numberline {3.19}A cache may change bits without changing meaning}{81}{section.3.19}%
+\contentsline {section}{\numberline {3.20}Choose the access contract before the parameter syntax}{82}{section.3.20}%
+\contentsline {subsection}{\numberline {3.20.1}Worked API choice: borrow, consume, retain, or copy a value}{83}{subsection.3.20.1}%
+\contentsline {section}{\numberline {3.21}The call-site decision}{84}{section.3.21}%
+\contentsline {section}{\numberline {3.22}A value crosses the function boundary}{85}{section.3.22}%
+\contentsline {section}{\numberline {3.23}Return a result without handing out a lifetime problem}{87}{section.3.23}%
+\contentsline {section}{\numberline {3.24}Construction establishes a usable state}{88}{section.3.24}%
+\contentsline {section}{\numberline {3.25}Empty syntax does not promise initialized members}{89}{section.3.25}%
+\contentsline {section}{\numberline {3.26}Construction order records lifetime dependencies}{90}{section.3.26}%
+\contentsline {section}{\numberline {3.27}Destruction closes the ownership interval}{90}{section.3.27}%
+\contentsline {section}{\numberline {3.28}Copy a meaning rather than just its bytes}{91}{section.3.28}%
+\contentsline {section}{\numberline {3.29}Replacing a value is not creating an object}{92}{section.3.29}%
+\contentsline {section}{\numberline {3.30}A move transfers responsibility while the source survives}{93}{section.3.30}%
+\contentsline {subsection}{\numberline {3.30.1}Figure CPP-03 - Move the duty, keep both object lifetimes}{93}{subsection.3.30.1}%
+\contentsline {section}{\numberline {3.31}Failure guarantees shape the transfer algorithm}{94}{section.3.31}%
+\contentsline {section}{\numberline {3.32}Let the compiler compose the operations}{95}{section.3.32}%
+\contentsline {section}{\numberline {3.33}From three repairs to five decisions to zero boilerplate}{95}{section.3.33}%
+\contentsline {section}{\numberline {3.34}Trace one payload from decode to cache}{96}{section.3.34}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{98}{appendix.A}%
+\contentsline {section}{\numberline {A.1}ASLR}{98}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Definition and mechanism}{98}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Prerequisites}{98}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Used by}{98}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Recall and next depth}{98}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Source and navigation}{98}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}Reconstruction depth}{98}{subsection.A.1.6}%
+\contentsline {section}{\numberline {A.2}Addresses and virtual memory}{99}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Definition and mechanism}{99}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Prerequisites}{99}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Used by}{99}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Recall and next depth}{99}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}Source and navigation}{99}{subsection.A.2.5}%
+\contentsline {section}{\numberline {A.3}Aggregate initialization}{100}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{100}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{100}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Used by}{100}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Recall and next depth}{100}{subsection.A.3.4}%
+\contentsline {subsection}{\numberline {A.3.5}Source and navigation}{100}{subsection.A.3.5}%
+\contentsline {section}{\numberline {A.4}Alignment and padding}{100}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Definition and mechanism}{100}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Prerequisites}{100}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Used by}{101}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Recall and next depth}{101}{subsection.A.4.4}%
+\contentsline {subsection}{\numberline {A.4.5}Source and navigation}{101}{subsection.A.4.5}%
+\contentsline {section}{\numberline {A.5}Allocator fragmentation}{101}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Definition and mechanism}{101}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Prerequisites}{101}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Used by}{101}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Recall and next depth}{102}{subsection.A.5.4}%
+\contentsline {subsection}{\numberline {A.5.5}Source and navigation}{102}{subsection.A.5.5}%
+\contentsline {subsection}{\numberline {A.5.6}Reconstruction depth}{102}{subsection.A.5.6}%
+\contentsline {section}{\numberline {A.6}Argument-dependent lookup}{102}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Definition and mechanism}{102}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Prerequisites}{102}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Used by}{102}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Recall and next depth}{103}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Source and navigation}{103}{subsection.A.6.5}%
+\contentsline {section}{\numberline {A.7}Assignment and exception guarantees}{103}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Definition and mechanism}{103}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Prerequisites}{103}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Used by}{103}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}Recall and next depth}{103}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Source and navigation}{103}{subsection.A.7.5}%
+\contentsline {section}{\numberline {A.8}Atomic publication and durability}{103}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Definition and mechanism}{104}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Prerequisites}{104}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Used by}{104}{subsection.A.8.3}%
+\contentsline {subsection}{\numberline {A.8.4}Recall and next depth}{104}{subsection.A.8.4}%
+\contentsline {subsection}{\numberline {A.8.5}Source and navigation}{104}{subsection.A.8.5}%
+\contentsline {subsection}{\numberline {A.8.6}Executed POSIX durability sequence}{104}{subsection.A.8.6}%
+\contentsline {section}{\numberline {A.9}Auto decltype and reference collapsing}{104}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}Definition and mechanism}{105}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}Prerequisites}{105}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}Used by}{105}{subsection.A.9.3}%
+\contentsline {subsection}{\numberline {A.9.4}Recall and next depth}{105}{subsection.A.9.4}%
+\contentsline {subsection}{\numberline {A.9.5}Source and navigation}{105}{subsection.A.9.5}%
+\contentsline {section}{\numberline {A.10}Big endian}{105}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Definition and mechanism}{105}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}Prerequisites}{105}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Used by}{105}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Recall and next depth}{106}{subsection.A.10.4}%
+\contentsline {subsection}{\numberline {A.10.5}Source and navigation}{106}{subsection.A.10.5}%
+\contentsline {subsection}{\numberline {A.10.6}Reconstruction depth}{106}{subsection.A.10.6}%
+\contentsline {section}{\numberline {A.11}Binary format contracts}{106}{section.A.11}%
+\contentsline {subsection}{\numberline {A.11.1}Definition and mechanism}{106}{subsection.A.11.1}%
+\contentsline {subsection}{\numberline {A.11.2}Prerequisites}{106}{subsection.A.11.2}%
+\contentsline {subsection}{\numberline {A.11.3}Used by}{107}{subsection.A.11.3}%
+\contentsline {subsection}{\numberline {A.11.4}Recall and next depth}{107}{subsection.A.11.4}%
+\contentsline {subsection}{\numberline {A.11.5}Source and navigation}{107}{subsection.A.11.5}%
+\contentsline {section}{\numberline {A.12}Bit casting and representation}{107}{section.A.12}%
+\contentsline {subsection}{\numberline {A.12.1}Definition and mechanism}{107}{subsection.A.12.1}%
+\contentsline {subsection}{\numberline {A.12.2}Prerequisites}{107}{subsection.A.12.2}%
+\contentsline {subsection}{\numberline {A.12.3}Used by}{107}{subsection.A.12.3}%
+\contentsline {subsection}{\numberline {A.12.4}Recall and next depth}{108}{subsection.A.12.4}%
+\contentsline {subsection}{\numberline {A.12.5}Source and navigation}{108}{subsection.A.12.5}%
+\contentsline {section}{\numberline {A.13}Borrow contracts and pool epochs}{108}{section.A.13}%
+\contentsline {subsection}{\numberline {A.13.1}Definition and mechanism}{108}{subsection.A.13.1}%
+\contentsline {subsection}{\numberline {A.13.2}Prerequisites}{108}{subsection.A.13.2}%
+\contentsline {subsection}{\numberline {A.13.3}Used by}{108}{subsection.A.13.3}%
+\contentsline {subsection}{\numberline {A.13.4}Recall and next depth}{108}{subsection.A.13.4}%
+\contentsline {subsection}{\numberline {A.13.5}Source and navigation}{108}{subsection.A.13.5}%
+\contentsline {section}{\numberline {A.14}Borrow invalidation and logical identity}{109}{section.A.14}%
+\contentsline {subsection}{\numberline {A.14.1}Definition and mechanism}{109}{subsection.A.14.1}%
+\contentsline {subsection}{\numberline {A.14.2}Prerequisites}{109}{subsection.A.14.2}%
+\contentsline {subsection}{\numberline {A.14.3}Used by}{109}{subsection.A.14.3}%
+\contentsline {subsection}{\numberline {A.14.4}Recall and next depth}{109}{subsection.A.14.4}%
+\contentsline {subsection}{\numberline {A.14.5}Source and navigation}{109}{subsection.A.14.5}%
+\contentsline {section}{\numberline {A.15}Byte swapping and network order}{109}{section.A.15}%
+\contentsline {subsection}{\numberline {A.15.1}Definition and mechanism}{109}{subsection.A.15.1}%
+\contentsline {subsection}{\numberline {A.15.2}Prerequisites}{109}{subsection.A.15.2}%
+\contentsline {subsection}{\numberline {A.15.3}Used by}{110}{subsection.A.15.3}%
+\contentsline {subsection}{\numberline {A.15.4}Recall and next depth}{110}{subsection.A.15.4}%
+\contentsline {subsection}{\numberline {A.15.5}Source and navigation}{110}{subsection.A.15.5}%
+\contentsline {section}{\numberline {A.16}C++ modules and reachability}{110}{section.A.16}%
+\contentsline {subsection}{\numberline {A.16.1}Definition and mechanism}{110}{subsection.A.16.1}%
+\contentsline {subsection}{\numberline {A.16.2}Prerequisites}{110}{subsection.A.16.2}%
+\contentsline {subsection}{\numberline {A.16.3}Used by}{110}{subsection.A.16.3}%
+\contentsline {subsection}{\numberline {A.16.4}Recall and next depth}{110}{subsection.A.16.4}%
+\contentsline {subsection}{\numberline {A.16.5}Source and navigation}{110}{subsection.A.16.5}%
+\contentsline {section}{\numberline {A.17}Call stack and stack frames}{111}{section.A.17}%
+\contentsline {subsection}{\numberline {A.17.1}Definition and mechanism}{111}{subsection.A.17.1}%
+\contentsline {subsection}{\numberline {A.17.2}Prerequisites}{111}{subsection.A.17.2}%
+\contentsline {subsection}{\numberline {A.17.3}Used by}{111}{subsection.A.17.3}%
+\contentsline {subsection}{\numberline {A.17.4}Recall and next depth}{111}{subsection.A.17.4}%
+\contentsline {subsection}{\numberline {A.17.5}Source and navigation}{111}{subsection.A.17.5}%
+\contentsline {section}{\numberline {A.18}Checked binary parsing}{111}{section.A.18}%
+\contentsline {subsection}{\numberline {A.18.1}Definition and mechanism}{111}{subsection.A.18.1}%
+\contentsline {subsection}{\numberline {A.18.2}Prerequisites}{111}{subsection.A.18.2}%
+\contentsline {subsection}{\numberline {A.18.3}Used by}{112}{subsection.A.18.3}%
+\contentsline {subsection}{\numberline {A.18.4}Recall and next depth}{112}{subsection.A.18.4}%
+\contentsline {subsection}{\numberline {A.18.5}Source and navigation}{112}{subsection.A.18.5}%
+\contentsline {section}{\numberline {A.19}Checksums, CRCs, and hashes}{112}{section.A.19}%
+\contentsline {subsection}{\numberline {A.19.1}SHA-256 compression structure}{112}{subsection.A.19.1}%
+\contentsline {subsection}{\numberline {A.19.2}Known-answer evidence}{112}{subsection.A.19.2}%
+\contentsline {subsection}{\numberline {A.19.3}What to use for what}{113}{subsection.A.19.3}%
+\contentsline {subsection}{\numberline {A.19.4}Prerequisites}{113}{subsection.A.19.4}%
+\contentsline {subsection}{\numberline {A.19.5}Used by}{113}{subsection.A.19.5}%
+\contentsline {subsection}{\numberline {A.19.6}Source and navigation}{113}{subsection.A.19.6}%
+\contentsline {section}{\numberline {A.20}Const qualification and shallow constness}{113}{section.A.20}%
+\contentsline {subsection}{\numberline {A.20.1}Definition and mechanism}{113}{subsection.A.20.1}%
+\contentsline {subsection}{\numberline {A.20.2}Prerequisites}{113}{subsection.A.20.2}%
+\contentsline {subsection}{\numberline {A.20.3}Used by}{113}{subsection.A.20.3}%
+\contentsline {subsection}{\numberline {A.20.4}Recall and next depth}{114}{subsection.A.20.4}%
+\contentsline {subsection}{\numberline {A.20.5}Source and navigation}{114}{subsection.A.20.5}%
+\contentsline {section}{\numberline {A.21}Constructors and invariant establishment}{114}{section.A.21}%
+\contentsline {subsection}{\numberline {A.21.1}Definition and mechanism}{114}{subsection.A.21.1}%
+\contentsline {subsection}{\numberline {A.21.2}Prerequisites}{114}{subsection.A.21.2}%
+\contentsline {subsection}{\numberline {A.21.3}Used by}{114}{subsection.A.21.3}%
+\contentsline {subsection}{\numberline {A.21.4}Recall and next depth}{114}{subsection.A.21.4}%
+\contentsline {subsection}{\numberline {A.21.5}Source and navigation}{114}{subsection.A.21.5}%
+\contentsline {section}{\numberline {A.22}Copy semantics and resource identity}{114}{section.A.22}%
+\contentsline {subsection}{\numberline {A.22.1}Definition and mechanism}{115}{subsection.A.22.1}%
+\contentsline {subsection}{\numberline {A.22.2}Prerequisites}{115}{subsection.A.22.2}%
+\contentsline {subsection}{\numberline {A.22.3}Used by}{115}{subsection.A.22.3}%
+\contentsline {subsection}{\numberline {A.22.4}Recall and next depth}{115}{subsection.A.22.4}%
+\contentsline {subsection}{\numberline {A.22.5}Source and navigation}{115}{subsection.A.22.5}%
+\contentsline {section}{\numberline {A.23}Copy-on-write}{115}{section.A.23}%
+\contentsline {subsection}{\numberline {A.23.1}Definition and mechanism}{115}{subsection.A.23.1}%
+\contentsline {subsection}{\numberline {A.23.2}Prerequisites}{115}{subsection.A.23.2}%
+\contentsline {subsection}{\numberline {A.23.3}Used by}{115}{subsection.A.23.3}%
+\contentsline {subsection}{\numberline {A.23.4}Recall and next depth}{116}{subsection.A.23.4}%
+\contentsline {subsection}{\numberline {A.23.5}Source and navigation}{116}{subsection.A.23.5}%
+\contentsline {subsection}{\numberline {A.23.6}Reconstruction depth}{116}{subsection.A.23.6}%
+\contentsline {section}{\numberline {A.24}Default and value initialization}{116}{section.A.24}%
+\contentsline {subsection}{\numberline {A.24.1}Definition and mechanism}{116}{subsection.A.24.1}%
+\contentsline {subsection}{\numberline {A.24.2}Prerequisites}{116}{subsection.A.24.2}%
+\contentsline {subsection}{\numberline {A.24.3}Used by}{116}{subsection.A.24.3}%
+\contentsline {subsection}{\numberline {A.24.4}Recall and next depth}{117}{subsection.A.24.4}%
+\contentsline {subsection}{\numberline {A.24.5}Source and navigation}{117}{subsection.A.24.5}%
+\contentsline {section}{\numberline {A.25}Deferred captures and borrowed views}{117}{section.A.25}%
+\contentsline {subsection}{\numberline {A.25.1}Definition and mechanism}{117}{subsection.A.25.1}%
+\contentsline {subsection}{\numberline {A.25.2}Prerequisites}{117}{subsection.A.25.2}%
+\contentsline {subsection}{\numberline {A.25.3}Used by}{117}{subsection.A.25.3}%
+\contentsline {subsection}{\numberline {A.25.4}Recall and next depth}{117}{subsection.A.25.4}%
+\contentsline {subsection}{\numberline {A.25.5}Source and navigation}{117}{subsection.A.25.5}%
+\contentsline {section}{\numberline {A.26}Destruction and partial construction}{117}{section.A.26}%
+\contentsline {subsection}{\numberline {A.26.1}Definition and mechanism}{118}{subsection.A.26.1}%
+\contentsline {subsection}{\numberline {A.26.2}Prerequisites}{118}{subsection.A.26.2}%
+\contentsline {subsection}{\numberline {A.26.3}Used by}{118}{subsection.A.26.3}%
+\contentsline {subsection}{\numberline {A.26.4}Recall and next depth}{118}{subsection.A.26.4}%
+\contentsline {subsection}{\numberline {A.26.5}Source and navigation}{118}{subsection.A.26.5}%
+\contentsline {section}{\numberline {A.27}Dynamic allocation and heap}{118}{section.A.27}%
+\contentsline {subsection}{\numberline {A.27.1}Definition and mechanism}{118}{subsection.A.27.1}%
+\contentsline {subsection}{\numberline {A.27.2}Prerequisites}{119}{subsection.A.27.2}%
+\contentsline {subsection}{\numberline {A.27.3}Used by}{119}{subsection.A.27.3}%
+\contentsline {subsection}{\numberline {A.27.4}Recall and next depth}{119}{subsection.A.27.4}%
+\contentsline {subsection}{\numberline {A.27.5}Source and navigation}{119}{subsection.A.27.5}%
+\contentsline {section}{\numberline {A.28}Endianness}{119}{section.A.28}%
+\contentsline {subsection}{\numberline {A.28.1}Definition and mechanism}{119}{subsection.A.28.1}%
+\contentsline {subsection}{\numberline {A.28.2}Prerequisites}{119}{subsection.A.28.2}%
+\contentsline {subsection}{\numberline {A.28.3}Used by}{119}{subsection.A.28.3}%
+\contentsline {subsection}{\numberline {A.28.4}Recall and next depth}{120}{subsection.A.28.4}%
+\contentsline {subsection}{\numberline {A.28.5}Source and navigation}{120}{subsection.A.28.5}%
+\contentsline {section}{\numberline {A.29}Field reordering and AoS versus SoA}{120}{section.A.29}%
+\contentsline {subsection}{\numberline {A.29.1}Definition and mechanism}{120}{subsection.A.29.1}%
+\contentsline {subsection}{\numberline {A.29.2}Prerequisites}{120}{subsection.A.29.2}%
+\contentsline {subsection}{\numberline {A.29.3}Used by}{120}{subsection.A.29.3}%
+\contentsline {subsection}{\numberline {A.29.4}Recall and next depth}{120}{subsection.A.29.4}%
+\contentsline {subsection}{\numberline {A.29.5}Source and navigation}{120}{subsection.A.29.5}%
+\contentsline {section}{\numberline {A.30}Huge pages and TLB reach}{120}{section.A.30}%
+\contentsline {subsection}{\numberline {A.30.1}Definition and mechanism}{121}{subsection.A.30.1}%
+\contentsline {subsection}{\numberline {A.30.2}Prerequisites}{121}{subsection.A.30.2}%
+\contentsline {subsection}{\numberline {A.30.3}Used by}{121}{subsection.A.30.3}%
+\contentsline {subsection}{\numberline {A.30.4}Recall and next depth}{121}{subsection.A.30.4}%
+\contentsline {subsection}{\numberline {A.30.5}Source and navigation}{121}{subsection.A.30.5}%
+\contentsline {subsection}{\numberline {A.30.6}Reach, fragmentation, and measurement}{121}{subsection.A.30.6}%
+\contentsline {section}{\numberline {A.31}Integrity and authenticity}{121}{section.A.31}%
+\contentsline {subsection}{\numberline {A.31.1}HMAC construction}{122}{subsection.A.31.1}%
+\contentsline {subsection}{\numberline {A.31.2}Key management is part of authenticity}{122}{subsection.A.31.2}%
+\contentsline {subsection}{\numberline {A.31.3}Production boundary}{122}{subsection.A.31.3}%
+\contentsline {section}{\numberline {A.32}Internal and tail padding}{123}{section.A.32}%
+\contentsline {subsection}{\numberline {A.32.1}Definition and mechanism}{123}{subsection.A.32.1}%
+\contentsline {subsection}{\numberline {A.32.2}Prerequisites}{123}{subsection.A.32.2}%
+\contentsline {subsection}{\numberline {A.32.3}Used by}{123}{subsection.A.32.3}%
+\contentsline {subsection}{\numberline {A.32.4}Recall and next depth}{123}{subsection.A.32.4}%
+\contentsline {subsection}{\numberline {A.32.5}Source and navigation}{123}{subsection.A.32.5}%
+\contentsline {section}{\numberline {A.33}Linkage and entity ownership}{123}{section.A.33}%
+\contentsline {subsection}{\numberline {A.33.1}Definition and mechanism}{123}{subsection.A.33.1}%
+\contentsline {subsection}{\numberline {A.33.2}Prerequisites}{123}{subsection.A.33.2}%
+\contentsline {subsection}{\numberline {A.33.3}Used by}{124}{subsection.A.33.3}%
+\contentsline {subsection}{\numberline {A.33.4}Recall and next depth}{124}{subsection.A.33.4}%
+\contentsline {subsection}{\numberline {A.33.5}Source and navigation}{124}{subsection.A.33.5}%
+\contentsline {section}{\numberline {A.34}Little endian}{124}{section.A.34}%
+\contentsline {subsection}{\numberline {A.34.1}Definition and mechanism}{124}{subsection.A.34.1}%
+\contentsline {subsection}{\numberline {A.34.2}Prerequisites}{124}{subsection.A.34.2}%
+\contentsline {subsection}{\numberline {A.34.3}Used by}{124}{subsection.A.34.3}%
+\contentsline {subsection}{\numberline {A.34.4}Recall and next depth}{124}{subsection.A.34.4}%
+\contentsline {subsection}{\numberline {A.34.5}Source and navigation}{124}{subsection.A.34.5}%
+\contentsline {subsection}{\numberline {A.34.6}Reconstruction depth}{124}{subsection.A.34.6}%
+\contentsline {section}{\numberline {A.35}Logical constness and mutable caches}{125}{section.A.35}%
+\contentsline {subsection}{\numberline {A.35.1}Definition and mechanism}{125}{subsection.A.35.1}%
+\contentsline {subsection}{\numberline {A.35.2}Prerequisites}{125}{subsection.A.35.2}%
+\contentsline {subsection}{\numberline {A.35.3}Used by}{125}{subsection.A.35.3}%
+\contentsline {subsection}{\numberline {A.35.4}Recall and next depth}{125}{subsection.A.35.4}%
+\contentsline {subsection}{\numberline {A.35.5}Source and navigation}{125}{subsection.A.35.5}%
+\contentsline {section}{\numberline {A.36}Member order and delegating constructors}{126}{section.A.36}%
+\contentsline {subsection}{\numberline {A.36.1}Definition and mechanism}{126}{subsection.A.36.1}%
+\contentsline {subsection}{\numberline {A.36.2}Prerequisites}{126}{subsection.A.36.2}%
+\contentsline {subsection}{\numberline {A.36.3}Used by}{126}{subsection.A.36.3}%
+\contentsline {subsection}{\numberline {A.36.4}Recall and next depth}{126}{subsection.A.36.4}%
+\contentsline {subsection}{\numberline {A.36.5}Source and navigation}{126}{subsection.A.36.5}%
+\contentsline {section}{\numberline {A.37}Memory dump interpretation}{126}{section.A.37}%
+\contentsline {subsection}{\numberline {A.37.1}Definition and mechanism}{126}{subsection.A.37.1}%
+\contentsline {subsection}{\numberline {A.37.2}Prerequisites}{126}{subsection.A.37.2}%
+\contentsline {subsection}{\numberline {A.37.3}Used by}{126}{subsection.A.37.3}%
+\contentsline {subsection}{\numberline {A.37.4}Recall and next depth}{127}{subsection.A.37.4}%
+\contentsline {subsection}{\numberline {A.37.5}Source and navigation}{127}{subsection.A.37.5}%
+\contentsline {section}{\numberline {A.38}Memory-mapped files}{127}{section.A.38}%
+\contentsline {subsection}{\numberline {A.38.1}Definition and mechanism}{127}{subsection.A.38.1}%
+\contentsline {subsection}{\numberline {A.38.2}Prerequisites}{127}{subsection.A.38.2}%
+\contentsline {subsection}{\numberline {A.38.3}Used by}{127}{subsection.A.38.3}%
+\contentsline {subsection}{\numberline {A.38.4}Recall and next depth}{127}{subsection.A.38.4}%
+\contentsline {subsection}{\numberline {A.38.5}Source and navigation}{127}{subsection.A.38.5}%
+\contentsline {section}{\numberline {A.39}Move casts and forwarding references}{127}{section.A.39}%
+\contentsline {subsection}{\numberline {A.39.1}Definition and mechanism}{127}{subsection.A.39.1}%
+\contentsline {subsection}{\numberline {A.39.2}Prerequisites}{128}{subsection.A.39.2}%
+\contentsline {subsection}{\numberline {A.39.3}Used by}{128}{subsection.A.39.3}%
+\contentsline {subsection}{\numberline {A.39.4}Recall and next depth}{128}{subsection.A.39.4}%
+\contentsline {subsection}{\numberline {A.39.5}Source and navigation}{128}{subsection.A.39.5}%
+\contentsline {section}{\numberline {A.40}Move operations and moved-from states}{128}{section.A.40}%
+\contentsline {subsection}{\numberline {A.40.1}Definition and mechanism}{128}{subsection.A.40.1}%
+\contentsline {subsection}{\numberline {A.40.2}Prerequisites}{128}{subsection.A.40.2}%
+\contentsline {subsection}{\numberline {A.40.3}Used by}{129}{subsection.A.40.3}%
+\contentsline {subsection}{\numberline {A.40.4}Recall and next depth}{129}{subsection.A.40.4}%
+\contentsline {subsection}{\numberline {A.40.5}Source and navigation}{129}{subsection.A.40.5}%
+\contentsline {section}{\numberline {A.41}Multilevel pointer qualification}{129}{section.A.41}%
+\contentsline {subsection}{\numberline {A.41.1}Definition and mechanism}{129}{subsection.A.41.1}%
+\contentsline {subsection}{\numberline {A.41.2}Prerequisites}{129}{subsection.A.41.2}%
+\contentsline {subsection}{\numberline {A.41.3}Used by}{129}{subsection.A.41.3}%
+\contentsline {subsection}{\numberline {A.41.4}Recall and next depth}{129}{subsection.A.41.4}%
+\contentsline {subsection}{\numberline {A.41.5}Source and navigation}{129}{subsection.A.41.5}%
+\contentsline {subsection}{\numberline {A.41.6}Const applies at each indirection level}{129}{subsection.A.41.6}%
+\contentsline {section}{\numberline {A.42}Noexcept and transfer selection}{130}{section.A.42}%
+\contentsline {subsection}{\numberline {A.42.1}Definition and mechanism}{130}{subsection.A.42.1}%
+\contentsline {subsection}{\numberline {A.42.2}Prerequisites}{130}{subsection.A.42.2}%
+\contentsline {subsection}{\numberline {A.42.3}Used by}{130}{subsection.A.42.3}%
+\contentsline {subsection}{\numberline {A.42.4}Recall and next depth}{130}{subsection.A.42.4}%
+\contentsline {subsection}{\numberline {A.42.5}Source and navigation}{130}{subsection.A.42.5}%
+\contentsline {section}{\numberline {A.43}Null pointers and optional access}{130}{section.A.43}%
+\contentsline {subsection}{\numberline {A.43.1}Definition and mechanism}{131}{subsection.A.43.1}%
+\contentsline {subsection}{\numberline {A.43.2}Prerequisites}{131}{subsection.A.43.2}%
+\contentsline {subsection}{\numberline {A.43.3}Used by}{131}{subsection.A.43.3}%
+\contentsline {subsection}{\numberline {A.43.4}Recall and next depth}{131}{subsection.A.43.4}%
+\contentsline {subsection}{\numberline {A.43.5}Source and navigation}{131}{subsection.A.43.5}%
+\contentsline {subsection}{\numberline {A.43.6}Absence must be part of the type or contract}{131}{subsection.A.43.6}%
+\contentsline {section}{\numberline {A.44}Object construction and storage reuse}{131}{section.A.44}%
+\contentsline {subsection}{\numberline {A.44.1}Definition and mechanism}{132}{subsection.A.44.1}%
+\contentsline {subsection}{\numberline {A.44.2}Prerequisites}{132}{subsection.A.44.2}%
+\contentsline {subsection}{\numberline {A.44.3}Used by}{132}{subsection.A.44.3}%
+\contentsline {subsection}{\numberline {A.44.4}Recall and next depth}{132}{subsection.A.44.4}%
+\contentsline {subsection}{\numberline {A.44.5}Source and navigation}{132}{subsection.A.44.5}%
+\contentsline {section}{\numberline {A.45}Object identity and generation handles}{132}{section.A.45}%
+\contentsline {subsection}{\numberline {A.45.1}Definition and mechanism}{133}{subsection.A.45.1}%
+\contentsline {subsection}{\numberline {A.45.2}Prerequisites}{133}{subsection.A.45.2}%
+\contentsline {subsection}{\numberline {A.45.3}Used by}{133}{subsection.A.45.3}%
+\contentsline {subsection}{\numberline {A.45.4}Recall and next depth}{133}{subsection.A.45.4}%
+\contentsline {subsection}{\numberline {A.45.5}Source and navigation}{133}{subsection.A.45.5}%
+\contentsline {section}{\numberline {A.46}One Definition Rule}{133}{section.A.46}%
+\contentsline {subsection}{\numberline {A.46.1}Definition and mechanism}{133}{subsection.A.46.1}%
+\contentsline {subsection}{\numberline {A.46.2}Prerequisites}{134}{subsection.A.46.2}%
+\contentsline {subsection}{\numberline {A.46.3}Used by}{134}{subsection.A.46.3}%
+\contentsline {subsection}{\numberline {A.46.4}Recall and next depth}{134}{subsection.A.46.4}%
+\contentsline {subsection}{\numberline {A.46.5}Source and navigation}{134}{subsection.A.46.5}%
+\contentsline {section}{\numberline {A.47}Ownership and non-owning views}{134}{section.A.47}%
+\contentsline {subsection}{\numberline {A.47.1}Definition and mechanism}{134}{subsection.A.47.1}%
+\contentsline {subsection}{\numberline {A.47.2}Prerequisites}{135}{subsection.A.47.2}%
+\contentsline {subsection}{\numberline {A.47.3}Used by}{135}{subsection.A.47.3}%
+\contentsline {subsection}{\numberline {A.47.4}Recall and next depth}{135}{subsection.A.47.4}%
+\contentsline {subsection}{\numberline {A.47.5}Source and navigation}{135}{subsection.A.47.5}%
+\contentsline {section}{\numberline {A.48}Packed structures and misaligned access}{135}{section.A.48}%
+\contentsline {subsection}{\numberline {A.48.1}Definition and mechanism}{135}{subsection.A.48.1}%
+\contentsline {subsection}{\numberline {A.48.2}Prerequisites}{136}{subsection.A.48.2}%
+\contentsline {subsection}{\numberline {A.48.3}Used by}{136}{subsection.A.48.3}%
+\contentsline {subsection}{\numberline {A.48.4}Recall and next depth}{136}{subsection.A.48.4}%
+\contentsline {subsection}{\numberline {A.48.5}Source and navigation}{136}{subsection.A.48.5}%
+\contentsline {section}{\numberline {A.49}Page faults and demand paging}{136}{section.A.49}%
+\contentsline {subsection}{\numberline {A.49.1}Definition and mechanism}{136}{subsection.A.49.1}%
+\contentsline {subsection}{\numberline {A.49.2}Prerequisites}{136}{subsection.A.49.2}%
+\contentsline {subsection}{\numberline {A.49.3}Used by}{136}{subsection.A.49.3}%
+\contentsline {subsection}{\numberline {A.49.4}Recall and next depth}{136}{subsection.A.49.4}%
+\contentsline {subsection}{\numberline {A.49.5}Source and navigation}{136}{subsection.A.49.5}%
+\contentsline {section}{\numberline {A.50}Page tables and MMU}{137}{section.A.50}%
+\contentsline {subsection}{\numberline {A.50.1}Definition and mechanism}{137}{subsection.A.50.1}%
+\contentsline {subsection}{\numberline {A.50.2}Prerequisites}{137}{subsection.A.50.2}%
+\contentsline {subsection}{\numberline {A.50.3}Used by}{137}{subsection.A.50.3}%
+\contentsline {subsection}{\numberline {A.50.4}Recall and next depth}{137}{subsection.A.50.4}%
+\contentsline {subsection}{\numberline {A.50.5}Source and navigation}{137}{subsection.A.50.5}%
+\contentsline {section}{\numberline {A.51}Pages and page offsets}{137}{section.A.51}%
+\contentsline {subsection}{\numberline {A.51.1}Definition and mechanism}{137}{subsection.A.51.1}%
+\contentsline {subsection}{\numberline {A.51.2}Prerequisites}{137}{subsection.A.51.2}%
+\contentsline {subsection}{\numberline {A.51.3}Used by}{138}{subsection.A.51.3}%
+\contentsline {subsection}{\numberline {A.51.4}Recall and next depth}{138}{subsection.A.51.4}%
+\contentsline {subsection}{\numberline {A.51.5}Source and navigation}{138}{subsection.A.51.5}%
+\contentsline {section}{\numberline {A.52}Parameter passing and sink contracts}{138}{section.A.52}%
+\contentsline {subsection}{\numberline {A.52.1}Definition and mechanism}{138}{subsection.A.52.1}%
+\contentsline {subsection}{\numberline {A.52.2}Prerequisites}{138}{subsection.A.52.2}%
+\contentsline {subsection}{\numberline {A.52.3}Used by}{138}{subsection.A.52.3}%
+\contentsline {subsection}{\numberline {A.52.4}Recall and next depth}{138}{subsection.A.52.4}%
+\contentsline {subsection}{\numberline {A.52.5}Source and navigation}{138}{subsection.A.52.5}%
+\contentsline {section}{\numberline {A.53}Pointer arithmetic and provenance}{139}{section.A.53}%
+\contentsline {subsection}{\numberline {A.53.1}Definition and mechanism}{139}{subsection.A.53.1}%
+\contentsline {subsection}{\numberline {A.53.2}Prerequisites}{139}{subsection.A.53.2}%
+\contentsline {subsection}{\numberline {A.53.3}Used by}{139}{subsection.A.53.3}%
+\contentsline {subsection}{\numberline {A.53.4}Source and navigation}{140}{subsection.A.53.4}%
+\contentsline {section}{\numberline {A.54}Preprocessing and macro boundaries}{140}{section.A.54}%
+\contentsline {subsection}{\numberline {A.54.1}Definition and mechanism}{140}{subsection.A.54.1}%
+\contentsline {subsection}{\numberline {A.54.2}Prerequisites}{140}{subsection.A.54.2}%
+\contentsline {subsection}{\numberline {A.54.3}Used by}{140}{subsection.A.54.3}%
+\contentsline {subsection}{\numberline {A.54.4}Recall and next depth}{140}{subsection.A.54.4}%
+\contentsline {subsection}{\numberline {A.54.5}Source and navigation}{140}{subsection.A.54.5}%
+\contentsline {section}{\numberline {A.55}Process isolation and page permissions}{140}{section.A.55}%
+\contentsline {subsection}{\numberline {A.55.1}Definition and mechanism}{140}{subsection.A.55.1}%
+\contentsline {subsection}{\numberline {A.55.2}Prerequisites}{141}{subsection.A.55.2}%
+\contentsline {subsection}{\numberline {A.55.3}Used by}{141}{subsection.A.55.3}%
+\contentsline {subsection}{\numberline {A.55.4}Recall and next depth}{141}{subsection.A.55.4}%
+\contentsline {subsection}{\numberline {A.55.5}Source and navigation}{141}{subsection.A.55.5}%
+\contentsline {section}{\numberline {A.56}Read-only data and code}{141}{section.A.56}%
+\contentsline {subsection}{\numberline {A.56.1}Definition and mechanism}{141}{subsection.A.56.1}%
+\contentsline {subsection}{\numberline {A.56.2}Prerequisites}{141}{subsection.A.56.2}%
+\contentsline {subsection}{\numberline {A.56.3}Used by}{141}{subsection.A.56.3}%
+\contentsline {subsection}{\numberline {A.56.4}Recall and next depth}{141}{subsection.A.56.4}%
+\contentsline {subsection}{\numberline {A.56.5}Source and navigation}{142}{subsection.A.56.5}%
+\contentsline {section}{\numberline {A.57}Ref-qualified accessors}{142}{section.A.57}%
+\contentsline {subsection}{\numberline {A.57.1}Definition and mechanism}{142}{subsection.A.57.1}%
+\contentsline {subsection}{\numberline {A.57.2}Prerequisites}{142}{subsection.A.57.2}%
+\contentsline {subsection}{\numberline {A.57.3}Used by}{142}{subsection.A.57.3}%
+\contentsline {subsection}{\numberline {A.57.4}Recall and next depth}{142}{subsection.A.57.4}%
+\contentsline {subsection}{\numberline {A.57.5}Source and navigation}{142}{subsection.A.57.5}%
+\contentsline {section}{\numberline {A.58}Reference binding and converted temporaries}{142}{section.A.58}%
+\contentsline {subsection}{\numberline {A.58.1}Definition and mechanism}{143}{subsection.A.58.1}%
+\contentsline {subsection}{\numberline {A.58.2}Prerequisites}{143}{subsection.A.58.2}%
+\contentsline {subsection}{\numberline {A.58.3}Used by}{143}{subsection.A.58.3}%
+\contentsline {subsection}{\numberline {A.58.4}Recall and next depth}{143}{subsection.A.58.4}%
+\contentsline {subsection}{\numberline {A.58.5}Source and navigation}{143}{subsection.A.58.5}%
+\contentsline {section}{\numberline {A.59}References and aliases}{143}{section.A.59}%
+\contentsline {subsection}{\numberline {A.59.1}Definition and mechanism}{143}{subsection.A.59.1}%
+\contentsline {subsection}{\numberline {A.59.2}Prerequisites}{143}{subsection.A.59.2}%
+\contentsline {subsection}{\numberline {A.59.3}Used by}{144}{subsection.A.59.3}%
+\contentsline {subsection}{\numberline {A.59.4}Recall and next depth}{144}{subsection.A.59.4}%
+\contentsline {subsection}{\numberline {A.59.5}Source and navigation}{144}{subsection.A.59.5}%
+\contentsline {section}{\numberline {A.60}Relocation versus move}{144}{section.A.60}%
+\contentsline {subsection}{\numberline {A.60.1}Definition and mechanism}{144}{subsection.A.60.1}%
+\contentsline {subsection}{\numberline {A.60.2}Prerequisites}{144}{subsection.A.60.2}%
+\contentsline {subsection}{\numberline {A.60.3}Used by}{144}{subsection.A.60.3}%
+\contentsline {subsection}{\numberline {A.60.4}Recall and next depth}{144}{subsection.A.60.4}%
+\contentsline {subsection}{\numberline {A.60.5}Source and navigation}{144}{subsection.A.60.5}%
+\contentsline {section}{\numberline {A.61}Return values and copy elision}{145}{section.A.61}%
+\contentsline {subsection}{\numberline {A.61.1}Definition and mechanism}{145}{subsection.A.61.1}%
+\contentsline {subsection}{\numberline {A.61.2}Prerequisites}{145}{subsection.A.61.2}%
+\contentsline {subsection}{\numberline {A.61.3}Used by}{145}{subsection.A.61.3}%
+\contentsline {subsection}{\numberline {A.61.4}Recall and next depth}{145}{subsection.A.61.4}%
+\contentsline {subsection}{\numberline {A.61.5}Source and navigation}{145}{subsection.A.61.5}%
+\contentsline {section}{\numberline {A.62}Rules of Three Five and Zero}{145}{section.A.62}%
+\contentsline {subsection}{\numberline {A.62.1}Definition and mechanism}{145}{subsection.A.62.1}%
+\contentsline {subsection}{\numberline {A.62.2}Prerequisites}{145}{subsection.A.62.2}%
+\contentsline {subsection}{\numberline {A.62.3}Used by}{146}{subsection.A.62.3}%
+\contentsline {subsection}{\numberline {A.62.4}Recall and next depth}{146}{subsection.A.62.4}%
+\contentsline {subsection}{\numberline {A.62.5}Source and navigation}{146}{subsection.A.62.5}%
+\contentsline {section}{\numberline {A.63}Scoped enums and validated domains}{146}{section.A.63}%
+\contentsline {subsection}{\numberline {A.63.1}Definition and mechanism}{146}{subsection.A.63.1}%
+\contentsline {subsection}{\numberline {A.63.2}Prerequisites}{146}{subsection.A.63.2}%
+\contentsline {subsection}{\numberline {A.63.3}Used by}{146}{subsection.A.63.3}%
+\contentsline {subsection}{\numberline {A.63.4}Recall and next depth}{146}{subsection.A.63.4}%
+\contentsline {subsection}{\numberline {A.63.5}Source and navigation}{147}{subsection.A.63.5}%
+\contentsline {section}{\numberline {A.64}Scopes and name lookup}{147}{section.A.64}%
+\contentsline {subsection}{\numberline {A.64.1}Definition and mechanism}{147}{subsection.A.64.1}%
+\contentsline {subsection}{\numberline {A.64.2}Prerequisites}{147}{subsection.A.64.2}%
+\contentsline {subsection}{\numberline {A.64.3}Used by}{147}{subsection.A.64.3}%
+\contentsline {subsection}{\numberline {A.64.4}Recall and next depth}{147}{subsection.A.64.4}%
+\contentsline {subsection}{\numberline {A.64.5}Source and navigation}{147}{subsection.A.64.5}%
+\contentsline {section}{\numberline {A.65}Serialization}{147}{section.A.65}%
+\contentsline {subsection}{\numberline {A.65.1}Definition and mechanism}{148}{subsection.A.65.1}%
+\contentsline {subsection}{\numberline {A.65.2}Prerequisites}{148}{subsection.A.65.2}%
+\contentsline {subsection}{\numberline {A.65.3}Used by}{148}{subsection.A.65.3}%
+\contentsline {subsection}{\numberline {A.65.4}Recall and next depth}{148}{subsection.A.65.4}%
+\contentsline {subsection}{\numberline {A.65.5}Source and navigation}{148}{subsection.A.65.5}%
+\contentsline {section}{\numberline {A.66}Special member generation and traits}{149}{section.A.66}%
+\contentsline {subsection}{\numberline {A.66.1}Definition and mechanism}{149}{subsection.A.66.1}%
+\contentsline {subsection}{\numberline {A.66.2}Prerequisites}{149}{subsection.A.66.2}%
+\contentsline {subsection}{\numberline {A.66.3}Used by}{149}{subsection.A.66.3}%
+\contentsline {subsection}{\numberline {A.66.4}Recall and next depth}{149}{subsection.A.66.4}%
+\contentsline {subsection}{\numberline {A.66.5}Source and navigation}{149}{subsection.A.66.5}%
+\contentsline {section}{\numberline {A.67}Standard-layout and trivial copyability}{149}{section.A.67}%
+\contentsline {subsection}{\numberline {A.67.1}Definition and mechanism}{149}{subsection.A.67.1}%
+\contentsline {subsection}{\numberline {A.67.2}Prerequisites}{150}{subsection.A.67.2}%
+\contentsline {subsection}{\numberline {A.67.3}Used by}{150}{subsection.A.67.3}%
+\contentsline {subsection}{\numberline {A.67.4}Recall and next depth}{150}{subsection.A.67.4}%
+\contentsline {subsection}{\numberline {A.67.5}Source and navigation}{150}{subsection.A.67.5}%
+\contentsline {section}{\numberline {A.68}Static storage and initialization}{150}{section.A.68}%
+\contentsline {subsection}{\numberline {A.68.1}Definition and mechanism}{150}{subsection.A.68.1}%
+\contentsline {subsection}{\numberline {A.68.2}Prerequisites}{151}{subsection.A.68.2}%
+\contentsline {subsection}{\numberline {A.68.3}Used by}{151}{subsection.A.68.3}%
+\contentsline {subsection}{\numberline {A.68.4}Recall and next depth}{151}{subsection.A.68.4}%
+\contentsline {subsection}{\numberline {A.68.5}Source and navigation}{151}{subsection.A.68.5}%
+\contentsline {section}{\numberline {A.69}Storage duration and object lifetime}{151}{section.A.69}%
+\contentsline {subsection}{\numberline {A.69.1}Definition and mechanism}{151}{subsection.A.69.1}%
+\contentsline {subsection}{\numberline {A.69.2}Prerequisites}{151}{subsection.A.69.2}%
+\contentsline {subsection}{\numberline {A.69.3}Used by}{152}{subsection.A.69.3}%
+\contentsline {subsection}{\numberline {A.69.4}Recall and next depth}{152}{subsection.A.69.4}%
+\contentsline {subsection}{\numberline {A.69.5}Source and navigation}{152}{subsection.A.69.5}%
+\contentsline {section}{\numberline {A.70}TLB}{152}{section.A.70}%
+\contentsline {subsection}{\numberline {A.70.1}Definition and mechanism}{152}{subsection.A.70.1}%
+\contentsline {subsection}{\numberline {A.70.2}Prerequisites}{152}{subsection.A.70.2}%
+\contentsline {subsection}{\numberline {A.70.3}Used by}{153}{subsection.A.70.3}%
+\contentsline {subsection}{\numberline {A.70.4}Recall and next depth}{153}{subsection.A.70.4}%
+\contentsline {subsection}{\numberline {A.70.5}Source and navigation}{153}{subsection.A.70.5}%
+\contentsline {subsection}{\numberline {A.70.6}Reconstruction depth}{153}{subsection.A.70.6}%
+\contentsline {section}{\numberline {A.71}Temporary lifetime extension}{153}{section.A.71}%
+\contentsline {subsection}{\numberline {A.71.1}Definition and mechanism}{153}{subsection.A.71.1}%
+\contentsline {subsection}{\numberline {A.71.2}Prerequisites}{153}{subsection.A.71.2}%
+\contentsline {subsection}{\numberline {A.71.3}Used by}{154}{subsection.A.71.3}%
+\contentsline {subsection}{\numberline {A.71.4}Recall and next depth}{154}{subsection.A.71.4}%
+\contentsline {subsection}{\numberline {A.71.5}Source and navigation}{154}{subsection.A.71.5}%
+\contentsline {section}{\numberline {A.72}Thread-local storage}{154}{section.A.72}%
+\contentsline {subsection}{\numberline {A.72.1}Definition and mechanism}{154}{subsection.A.72.1}%
+\contentsline {subsection}{\numberline {A.72.2}Prerequisites}{154}{subsection.A.72.2}%
+\contentsline {subsection}{\numberline {A.72.3}Used by}{154}{subsection.A.72.3}%
+\contentsline {subsection}{\numberline {A.72.4}Recall and next depth}{154}{subsection.A.72.4}%
+\contentsline {subsection}{\numberline {A.72.5}Source and navigation}{154}{subsection.A.72.5}%
+\contentsline {section}{\numberline {A.73}Translation units and linking}{154}{section.A.73}%
+\contentsline {subsection}{\numberline {A.73.1}Definition and mechanism}{155}{subsection.A.73.1}%
+\contentsline {subsection}{\numberline {A.73.2}Prerequisites}{155}{subsection.A.73.2}%
+\contentsline {subsection}{\numberline {A.73.3}Used by}{155}{subsection.A.73.3}%
+\contentsline {subsection}{\numberline {A.73.4}Recall and next depth}{155}{subsection.A.73.4}%
+\contentsline {subsection}{\numberline {A.73.5}Source and navigation}{155}{subsection.A.73.5}%
+\contentsline {section}{\numberline {A.74}Value categories and materialization}{155}{section.A.74}%
+\contentsline {subsection}{\numberline {A.74.1}Definition and mechanism}{155}{subsection.A.74.1}%
+\contentsline {subsection}{\numberline {A.74.2}Prerequisites}{156}{subsection.A.74.2}%
+\contentsline {subsection}{\numberline {A.74.3}Used by}{156}{subsection.A.74.3}%
+\contentsline {subsection}{\numberline {A.74.4}Recall and next depth}{156}{subsection.A.74.4}%
+\contentsline {subsection}{\numberline {A.74.5}Source and navigation}{156}{subsection.A.74.5}%
+\contentsline {section}{\numberline {A.75}Virtual and physical contiguity}{156}{section.A.75}%
+\contentsline {subsection}{\numberline {A.75.1}Definition and mechanism}{156}{subsection.A.75.1}%
+\contentsline {subsection}{\numberline {A.75.2}Prerequisites}{156}{subsection.A.75.2}%
+\contentsline {subsection}{\numberline {A.75.3}Used by}{156}{subsection.A.75.3}%
+\contentsline {subsection}{\numberline {A.75.4}Recall and next depth}{157}{subsection.A.75.4}%
+\contentsline {subsection}{\numberline {A.75.5}Source and navigation}{157}{subsection.A.75.5}%
+\contentsline {subsection}{\numberline {A.75.6}Reconstruction depth}{157}{subsection.A.75.6}%
+\contentsline {section}{\numberline {A.76}Sources and Code Anchors}{157}{section.A.76}%
+\contentsline {subsection}{\numberline {A.76.1}Phase 8 - Source analysis and verification}{157}{subsection.A.76.1}%
+\contentsline {subsubsection}{Primary reference checks}{158}{subsubsection*.7}%
+\contentsline {subsubsection}{Scope audit of brief statements in Phases 6--8}{158}{subsubsection*.8}%
+\contentsline {subsubsection}{Initial Phase 8 integration checks - historical}{158}{subsubsection*.9}%
+\contentsline {subsubsection}{Phase 8 depth restoration - 2026-10-27}{159}{subsubsection*.10}%
+\contentsline {subsection}{\numberline {A.76.2}Phase 7 - Source analysis and verification}{161}{subsection.A.76.2}%
+\contentsline {subsubsection}{Received material and source boundary}{161}{subsubsection*.11}%
+\contentsline {subsubsection}{Corrections and conventions made explicit}{162}{subsubsection*.12}%
+\contentsline {subsubsection}{Primary-reference enrichment}{162}{subsubsection*.13}%
+\contentsline {subsubsection}{Executable verification and limits}{163}{subsubsection*.14}%
+\contentsline {subsubsection}{Saved-volume rendering and final checks - 2026-10-26}{163}{subsubsection*.15}%
+\contentsline {subsection}{\numberline {A.76.3}Phase 6 - Source analysis and verification}{164}{subsection.A.76.3}%
+\contentsline {subsubsection}{Source inventory and exact scope}{164}{subsubsection*.16}%
+\contentsline {subsubsection}{Pedagogy and substantive corrections}{165}{subsubsection*.17}%
+\contentsline {subsubsection}{Primary-reference enrichment}{166}{subsubsection*.18}%
+\contentsline {subsubsection}{Executed C++ checks}{166}{subsubsection*.19}%
+\contentsline {subsubsection}{Structural and rendering checks}{167}{subsubsection*.20}%
+\contentsline {subsubsection}{Limits and handoff}{168}{subsubsection*.21}%
+\contentsline {subsection}{\numberline {A.76.4}XR - Teaching-language and mathematical notation revision}{168}{subsection.A.76.4}%
+\contentsline {subsubsection}{Executed checks}{168}{subsubsection*.22}%
+\contentsline {subsubsection}{Preservation and limits}{169}{subsubsection*.23}%
+\contentsline {subsection}{\numberline {A.76.5}XR01 - Seeing and representing reality}{169}{subsection.A.76.5}%
+\contentsline {subsubsection}{Independent scope and source}{169}{subsubsection*.24}%
+\contentsline {subsubsection}{Primary evidence and what was actually checked}{170}{subsubsection*.25}%
+\contentsline {subsubsection}{Corrections and modeling contracts}{171}{subsubsection*.26}%
+\contentsline {subsubsection}{Executed numerical verification}{171}{subsubsection*.27}%
+\contentsline {subsubsection}{Verification scope and limitations}{171}{subsubsection*.28}%
+\contentsline {subsection}{\numberline {A.76.6}M009 - Construction and value transfer}{172}{subsection.A.76.6}%
+\contentsline {subsubsection}{Accepted source and teaching decisions}{172}{subsubsection*.29}%
+\contentsline {subsubsection}{Primary wording and corrections}{172}{subsubsection*.30}%
+\contentsline {subsubsection}{Exact new-laboratory commands and results}{173}{subsubsection*.31}%
+\contentsline {subsubsection}{Limits and preservation}{174}{subsubsection*.32}%
+\contentsline {subsection}{\numberline {A.76.7}M008 - Borrowing, categories and const access}{174}{subsection.A.76.7}%
+\contentsline {subsubsection}{Accepted material and scope}{174}{subsubsection*.33}%
+\contentsline {subsubsection}{Selected book passages and primary checks}{175}{subsubsection*.34}%
+\contentsline {subsubsection}{Corrections and expanded contracts}{175}{subsubsection*.35}%
+\contentsline {subsubsection}{Executed examples and verification}{176}{subsubsection*.36}%
+\contentsline {subsubsection}{Verification limits}{177}{subsubsection*.37}%
+\contentsline {subsection}{\numberline {A.76.8}Volume 01 - Visual active-recall companion}{177}{subsection.A.76.8}%
+\contentsline {subsubsection}{Executed verification}{177}{subsubsection*.38}%
+\contentsline {subsubsection}{Limits}{178}{subsubsection*.39}%
+\contentsline {subsection}{\numberline {A.76.9}M007 - C++ volume opening}{178}{subsection.A.76.9}%
+\contentsline {subsubsection}{Source, authority and coverage}{178}{subsubsection*.40}%
+\contentsline {subsubsection}{Books and primary checks}{178}{subsubsection*.41}%
+\contentsline {subsubsection}{Commands and results}{179}{subsubsection*.42}%
+\contentsline {subsection}{\numberline {A.76.10}M006 integration and concept-led Volume 01 rewrite}{180}{subsection.A.76.10}%
+\contentsline {subsubsection}{Accepted source and authority}{180}{subsubsection*.43}%
+\contentsline {subsubsection}{What the story rewrite preserves and changes}{180}{subsubsection*.44}%
+\contentsline {subsubsection}{Source-reported NanoQuant anchors, not live findings}{180}{subsubsection*.45}%
+\contentsline {subsubsection}{Corrections and explicit implementation contracts}{181}{subsubsection*.46}%
+\contentsline {subsubsection}{Book and primary-reference enrichment}{182}{subsubsection*.47}%
+\contentsline {subsubsection}{Executed commands and actual outcomes}{182}{subsubsection*.48}%
+\contentsline {subsection}{\numberline {A.76.11}M005 - Arithmetic, error and reproducibility merge}{183}{subsection.A.76.11}%
+\contentsline {subsubsection}{Repository excerpts awaiting live verification}{183}{subsubsection*.49}%
+\contentsline {subsubsection}{Corrections and teaching decisions}{184}{subsubsection*.50}%
+\contentsline {subsubsection}{Commands executed and actual results}{184}{subsubsection*.51}%
+\contentsline {subsection}{\numberline {A.76.12}Teaching-volume expansion - 2026-10-07}{185}{subsection.A.76.12}%
+\contentsline {subsection}{\numberline {A.76.13}Planning reference}{186}{subsection.A.76.13}%
+\contentsline {subsection}{\numberline {A.76.14}Supplied chunk sources}{187}{subsection.A.76.14}%
+\contentsline {subsection}{\numberline {A.76.15}Repository anchors}{187}{subsection.A.76.15}%
+\contentsline {subsection}{\numberline {A.76.16}C001 - M001 source record}{188}{subsection.A.76.16}%
+\contentsline {subsection}{\numberline {A.76.17}C002 - M002 source record}{189}{subsection.A.76.17}%
+\contentsline {subsection}{\numberline {A.76.18}Repair verification - 2026-10-06}{189}{subsection.A.76.18}%
+\contentsline {subsection}{\numberline {A.76.19}External sources}{190}{subsection.A.76.19}%
+\contentsline {subsection}{\numberline {A.76.20}C003 - M003 source record}{190}{subsection.A.76.20}%
+\contentsline {subsubsection}{M003 reported repository anchors}{190}{subsubsection*.52}%
+\contentsline {subsubsection}{M003 independent wording checks}{191}{subsubsection*.53}%
+\contentsline {subsubsection}{M003 verification - 2026-10-06}{191}{subsubsection*.54}%
+\contentsline {subsection}{\numberline {A.76.21}C004 - M004 source record and merge verification - 2026-10-07}{192}{subsection.A.76.21}%
+\contentsline {subsubsection}{Source-reported repository claims, not live anchors}{192}{subsubsection*.55}%
+\contentsline {subsubsection}{Merge corrections and explicit policies}{193}{subsubsection*.56}%
+\contentsline {subsubsection}{Independent wording references}{194}{subsubsection*.57}%
+\contentsline {subsubsection}{Exact commands and actual results}{194}{subsubsection*.58}%
+\contentsline {subsection}{\numberline {A.76.22}C010 - M010 resource ownership - 2026-10-23}{195}{subsection.A.76.22}%
+\contentsline {subsubsection}{M010 - Resource ownership}{195}{subsubsection*.59}%
+\contentsline {subsection}{\numberline {A.76.23}Visual revision - 2026-10-23}{195}{subsection.A.76.23}%
+\contentsline {subsection}{\numberline {A.76.24}University graphics vision and photography - complete source synthesis - 2026-10-27}{196}{subsection.A.76.24}%
+\contentsline {subsection}{\numberline {A.76.25}University visual computing expansion - 2026-10-27}{199}{subsection.A.76.25}%
+\contentsline {subsection}{\numberline {A.76.26}Phase 1 additive reconstruction --- M011 / Parts 161--180, November 11, 2026}{201}{subsection.A.76.26}%
+\contentsline {subsection}{\numberline {A.76.27}Phase 2 additive reconstruction --- M012 / Parts 181--200, November 11, 2026}{202}{subsection.A.76.27}%
+\contentsline {subsection}{\numberline {A.76.28}Phase 3 additive reconstruction --- M013 / Parts 201--216, November 11, 2026}{203}{subsection.A.76.28}%
+\contentsline {subsection}{\numberline {A.76.29}Phase 4 additive reconstruction --- M014 / Parts 217--230}{204}{subsection.A.76.29}%
+\contentsline {subsection}{\numberline {A.76.30}Phase 5 additive reconstruction --- M015 / Parts 231--250}{205}{subsection.A.76.30}%
+\contentsline {subsection}{\numberline {A.76.31}Phase 6 additive reconstruction --- M016 / Parts 251--270}{207}{subsection.A.76.31}%
+\contentsline {subsubsection}{M016 regression workflow configuration --- unverified hosted execution}{208}{subsubsection*.60}%
+\contentsline {subsubsection}{Phase 1 release-build test preservation (discovered by Phase 6 CI)}{208}{subsubsection*.61}%
+\contentsline {subsection}{\numberline {A.76.32}Phase 7 additive reconstruction --- M017 Parts 271--290}{209}{subsection.A.76.32}%
+\contentsline {subsection}{\numberline {A.76.33}2026-10-28 --- Parts 801--965: calculus, probability, and linked math/C++ enrichment}{211}{subsection.A.76.33}%
+\contentsline {subsection}{\numberline {A.76.34}2026-10-28 --- Completion of Parts 966--1100 and deeper camera research}{213}{subsection.A.76.34}%
+\contentsline {subsection}{\numberline {A.76.35}Game-engine continuous volume --- 5 November 2026}{215}{subsection.A.76.35}%
+\contentsline {subsection}{\numberline {A.76.36}Phase 8 additive reconstruction --- M018 / original Parts 291--300, November 11, 2026}{215}{subsection.A.76.36}%
+\contentsline {subsection}{\numberline {A.76.37}Phase 9 --- Canonical CPU execution, memory, jobs and profiling (M019--M024 / Parts 301--400)}{216}{subsection.A.76.37}%
+\contentsline {subsection}{\numberline {A.76.38}Phase 10 --- Algorithms chosen by workload (M025--M030 / Parts 401--500)}{217}{subsection.A.76.38}%
+\contentsline {subsection}{\numberline {A.76.39}Phase 28 --- reconstructed original Parts 2701--2800: emulator bytes to verified trust boundaries}{219}{subsection.A.76.39}%
+\contentsline {subsection}{\numberline {A.76.40}November 12 refinement --- checked operations and continuous teaching}{219}{subsection.A.76.40}%
+\contentsline {subsection}{\numberline {A.76.41}November 12 continuation --- clipping, conservative bounds and editor state}{220}{subsection.A.76.41}%
+\contentsline {subsection}{\numberline {A.76.42}November 12 pulled consolidation --- supervised spring, contact and design additions}{221}{subsection.A.76.42}%
+\contentsline {section}{\numberline {A.77}C++: Objects, Ownership and Lifetime --- Visual Recall}{222}{section.A.77}%
+\contentsline {subsection}{\numberline {A.77.1}One-page short notes}{222}{subsection.A.77.1}%
+\contentsline {subsection}{\numberline {A.77.2}One story: from source text to responsibly released resource}{224}{subsection.A.77.2}%
+\contentsline {subsection}{\numberline {A.77.3}Four figure briefs}{224}{subsection.A.77.3}%
+\contentsline {subsection}{\numberline {A.77.4}Ownership decision board}{225}{subsection.A.77.4}%
+\contentsline {subsection}{\numberline {A.77.5}RAII: move cleanup from branches into scope}{226}{subsection.A.77.5}%
+\contentsline {subsection}{\numberline {A.77.6}Storage, object and occupant are different states}{227}{subsection.A.77.6}%
+\contentsline {subsection}{\numberline {A.77.7}The four questions to ask at a resource boundary}{228}{subsection.A.77.7}%
+\contentsline {subsection}{\numberline {A.77.8}Retrieval prompts}{229}{subsection.A.77.8}%
+\contentsline {subsection}{\numberline {A.77.9}Added retrieval prompt}{229}{subsection.A.77.9}%
+\contentsline {subsection}{\numberline {A.77.10}Requests and replaceable backends --- M011 retrieval experiment}{229}{subsection.A.77.10}%
+\contentsline {subsection}{\numberline {A.77.11}One request, one transaction, callbacks that may outlive their caller --- M012 reconstruction}{231}{subsection.A.77.11}%
+\contentsline {subsection}{\numberline {A.77.12}One asset pipeline, many types --- M013 retrieval}{233}{subsection.A.77.12}%
+\contentsline {subsection}{\numberline {A.77.13}The tile planner makes a choice --- M014 reconstruction}{235}{subsection.A.77.13}%
+\contentsline {subsection}{\numberline {A.77.14}A growing asset store must preserve its promises --- M015 retrieval}{238}{subsection.A.77.14}%
+\contentsline {subsection}{\numberline {A.77.15}Query the registry without confusing identity and a snapshot --- M016 reconstruction}{239}{subsection.A.77.15}%
+\contentsline {subsection}{\numberline {A.77.16}From borrowed reports to module boundaries --- M017 reconstruction}{242}{subsection.A.77.16}%
+\contentsline {subsection}{\numberline {A.77.17}Preserve an asset while the engine changes --- M018 reconstruction}{244}{subsection.A.77.17}%
+\contentsline {subsection}{\numberline {A.77.18}Make the rejected operation part of the lesson}{246}{subsection.A.77.18}%
+\contentsline {subsection}{\numberline {A.77.19}GPU interfaces and cooperation --- shortest useful recall}{247}{subsection.A.77.19}%
+\contentsline {subsection}{\numberline {A.77.20}API resource stages}{248}{subsection.A.77.20}%
+\contentsline {subsection}{\numberline {A.77.21}Temporary objects --- retrieve the lifetime boundary}{249}{subsection.A.77.21}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{250}{appendix.B}%

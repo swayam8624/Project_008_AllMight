@@ -1,0 +1,66 @@
+\hypertarget{appendix-390ea641da54}{}\label{referencestart:appendix-390ea641da54}
+\section{Machine epsilon}\label{appendix-390ea641da54-machine-epsilon}
+
+\hypertarget{appendix-390ea641da54-machine-epsilon}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C004 · \textbf{Latest development:} C004
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-390ea641da54-definition-and-mechanism}
+
+\hypertarget{appendix-390ea641da54-definition-and-mechanism}{}
+
+For these binary types epsilon is upward spacing at 1: 2\^{}-23 for binary32 and 2\^{}-52 for binary64. It is neither minimum positive value nor a physical threshold.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-390ea641da54-prerequisites}
+
+\hypertarget{appendix-390ea641da54-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-a24fd710cf67]{Significand and hidden bit} --- Fraction weights and effective precision determine value and the smallest retained position.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-390ea641da54-used-by}
+
+\hypertarget{appendix-390ea641da54-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-14bab4cab9d4]{ULP and representable spacing} --- uses this mechanism in its explanation.
+\item
+  \hyperref[appendix-0ec599f8ba27]{Numerical tolerance policies} --- uses this mechanism in its explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-390ea641da54-recall-and-next-depth}
+
+\hypertarget{appendix-390ea641da54-recall-and-next-depth}{}
+
+Reconstruct the concrete example in the definition and identify its validity assumptions.
+
+\textbf{Pending:} Explain min, denorm\_min, lowest, and task-specific tolerance independently.
+
+\subsection{Source and navigation}\label{appendix-390ea641da54-source-and-navigation}
+
+\hypertarget{appendix-390ea641da54-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-a-stretching-ruler-for-real-valued-quantities]{M004 teaching chapter} · \hyperref[appendix-fd090d982a15-m004---parts-61-76]{Per-part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}
+
+\subsection{Epsilon is local to one magnitude}\label{appendix-390ea641da54-epsilon-is-local-to-one-magnitude}
+
+\hypertarget{appendix-390ea641da54-epsilon-is-local-to-one-magnitude}{}
+
+For a floating type, machine epsilon is commonly defined as the distance from \(1\) to the next representable number greater than \(1\). For binary precision \(p\), that spacing is \(2^{1-p}\). It describes one location in the representable lattice; it is \textbf{not} a universal comparison tolerance.
+
+Floating spacing scales with exponent. Near a large world coordinate, one ULP can be much larger than epsilon; near zero, subnormal spacing follows a different regime. Therefore testing
+
+\BookInlineCode{{a}{b}{s}{(}{a}{-}{b}{)}{\ }{\textless{}}{\ }{e}{p}{s}{i}{l}{o}{n}}{abs(a-b)\ \textless{}\ epsilon}
+
+for arbitrary geometric or physical quantities is usually unjustified.
+
+A defensible comparison begins with the domain: absolute tolerance for quantities near zero, relative tolerance when scale matters, ULP bounds when representation-level proximity is intended, or an exact predicate when the algorithm can provide one. Tests should include values near 1, large magnitudes, tiny normals/subnormals and adjacent representable values using \BookInlineCode{{n}{e}{x}{t}{a}{f}{t}{e}{r}}{nextafter}.

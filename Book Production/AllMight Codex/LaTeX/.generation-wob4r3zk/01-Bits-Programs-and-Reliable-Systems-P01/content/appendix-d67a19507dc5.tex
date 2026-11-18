@@ -1,0 +1,64 @@
+\hypertarget{appendix-d67a19507dc5}{}\label{referencestart:appendix-d67a19507dc5}
+\section{Machine word}\label{appendix-d67a19507dc5-machine-word}
+
+\hypertarget{appendix-d67a19507dc5-machine-word}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d67a19507dc5-definition-and-mechanism}
+
+\hypertarget{appendix-d67a19507dc5-definition-and-mechanism}{}
+
+A context-dependent natural processing width, not a portable fixed-size unit.
+
+\end{allmightroledefinition}
+
+A processor's natural integer processing width is often called its word width, but the term is architecture dependent. A 64-bit CPU still supports smaller integer operations and wider vector operations. State exact widths in formats instead of relying on the word label.
+
+\subsection{Prerequisites}\label{appendix-d67a19507dc5-prerequisites}
+
+\hypertarget{appendix-d67a19507dc5-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-5bee2df85484]{Byte and octet} --- An octet is exactly eight bits.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d67a19507dc5-used-by}
+
+\hypertarget{appendix-d67a19507dc5-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-8f38927cfc54]{Bitwise NOT} --- uses machine word as part of its representation or reasoning.
+\item
+  \hyperref[appendix-73425b25118e]{Shift operations} --- uses machine word as part of its representation or reasoning.
+\item
+  \hyperref[appendix-c99977d88b33]{Unsigned modular arithmetic} --- uses machine word as part of its representation or reasoning.
+\item
+  \hyperref[appendix-e12d1b03fefb]{Atomic operations and write contention} --- uses machine word as part of its representation or reasoning.
+\item
+  \hyperref[appendix-942ad41afb30]{Compiler IR and machine instructions} --- uses machine word as part of its representation or reasoning.
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#appendix-3c7b1a56de01}{SIMD and GPU data layouts (Geometry, Cameras, and Image Formation, Part 1, Reference notes: SIMD and GPU data layouts)} --- uses machine word as part of its representation or reasoning.
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- uses machine word as part of its representation or reasoning.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-d67a19507dc5-recall-and-next-depth}
+
+\hypertarget{appendix-d67a19507dc5-recall-and-next-depth}{}
+
+Explain machine word without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} registers, instruction width, SIMD lanes, and ABI data models.
+
+\subsection{Source and navigation}\label{appendix-d67a19507dc5-source-and-navigation}
+
+\hypertarget{appendix-d67a19507dc5-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

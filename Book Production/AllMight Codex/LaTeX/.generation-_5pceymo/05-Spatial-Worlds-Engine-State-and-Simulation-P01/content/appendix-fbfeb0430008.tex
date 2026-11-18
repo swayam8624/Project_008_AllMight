@@ -1,0 +1,109 @@
+\hypertarget{appendix-fbfeb0430008}{}\label{referencestart:appendix-fbfeb0430008}
+\section{Archetype ECS}\label{appendix-fbfeb0430008-archetype-ecs}
+
+\hypertarget{appendix-fbfeb0430008-archetype-ecs}{}
+
+An archetype ECS groups entities by an exact component-type signature. If Position and Velocity are present, that entity belongs in a chunk whose columns contain Position and Velocity values for the same row. If Velocity is later removed, the entity migrates to a different archetype. This differs from a sparse-set ECS, where each component type owns an independent dense pool.
+
+The appeal is iteration density. A system that requires Position + Velocity can iterate only matching archetype chunks and then walk compact columns with predictable memory access. The cost moves into structural change: adding or removing a component is no longer a metadata toggle; it is a migration between storage layouts.
+
+\subsection{Signature and chunk model}\label{appendix-fbfeb0430008-signature-and-chunk-model}
+
+\hypertarget{appendix-fbfeb0430008-signature-and-chunk-model}{}
+
+Represent an archetype signature as a stable set or bitset of component type identifiers. A chunk for signature S owns:
+
+\begin{itemize}
+\tightlist
+\item
+  a dense entity-identity column;
+\item
+  one column per component in S;
+\item
+  capacity and live-row count;
+\item
+  optional alignment/padding metadata;
+\item
+  whatever ownership is required for non-trivial component lifetimes.
+\end{itemize}
+
+All columns must agree on row meaning. Row i in the entity column and row i in every component column refer to the same logical entity. That is an invariant, not a convention.
+
+A system query for required set Q matches archetype S when Q is a subset of S. Optional/excluded components add more predicates, but they should not change the core idea: queries select storage groups, then iterate rows.
+
+\subsection{Migration}\label{appendix-fbfeb0430008-migration}
+
+\hypertarget{appendix-fbfeb0430008-migration}{}
+
+Suppose entity e moves from signature \{Position\} to \{Position, Velocity\}. A safe conceptual sequence is:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Validate that e is alive and that its location still names the source archetype and row.
+\item
+  Reserve or allocate destination capacity before mutating source storage.
+\item
+  Construct/copy/move retained components into the destination row.
+\item
+  Construct the newly added component.
+\item
+  Publish the new entity-to-location mapping.
+\item
+  Remove the old source row.
+\item
+  If removal uses swap-and-pop, repair the location of the source entity that moved into the vacated row.
+\item
+  Destroy any source component objects whose lifetime ends.
+\end{enumerate}
+
+The exact order depends on exception and failure guarantees. ``Destination first'' helps, but it does not magically provide rollback for arbitrary component types. If a move constructor can throw after partially mutating a source object, the migration design needs a stronger policy: nothrow-movable components, copy fallback, staging storage, transactional indirection, or a documented weaker guarantee.
+
+\subsection{Address invalidation}\label{appendix-fbfeb0430008-address-invalidation}
+
+\hypertarget{appendix-fbfeb0430008-address-invalidation}{}
+
+Archetype migration frequently invalidates raw component addresses because the entity moves to a different chunk and source/destination vectors can reallocate. APIs should therefore prefer short-lived borrows, handles, or query callbacks over storing arbitrary component pointers across structural changes.
+
+Even without migration, chunk compaction may move rows. An address remaining inside the same allocation does not prove it still refers to the same entity.
+
+\subsection{Scheduling consequence}\label{appendix-fbfeb0430008-scheduling-consequence}
+
+\hypertarget{appendix-fbfeb0430008-scheduling-consequence}{}
+
+Archetypes make data access visible enough to build a scheduler. A system can declare reads and writes by component type. Two systems that only read the same component can run concurrently; a writer conflicts with any overlapping reader or writer unless a stronger partition proves disjoint data. Structural mutation is usually an even broader hazard because it can move storage while queries are iterating.
+
+\subsection{Executable reconstruction}\label{appendix-fbfeb0430008-executable-reconstruction}
+
+\hypertarget{appendix-fbfeb0430008-executable-reconstruction}{}
+
+tools/labs/ecs\_reconstruction\_lab.cpp contains a deliberately small two-archetype world. It proves:
+
+\begin{itemize}
+\tightlist
+\item
+  generational identity survives index reuse;
+\item
+  sparse membership checks full identity rather than index alone;
+\item
+  swap-and-pop repairs reverse mappings;
+\item
+  Position-only → Position+Velocity migration preserves values;
+\item
+  removing a middle source row repairs the moved entity's location.
+\end{itemize}
+
+The witness explicitly does not claim arbitrary-component exception safety, parallel structural mutation, production chunk packing, or KairoECS parity.
+
+Read the connected engine narrative at \hyperref[05-engine-i-ch014-let-identity-survive-changes-in-storage]{Continuous Notes/Game Engine - From First Frame to Living Worlds\#Let identity survive changes in storage}.
+
+Related: \hyperref[appendix-8404d0b1a3e7]{Sparse-set storage}, \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-f1581457d322}{Object identity and generation handles (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Object identity and generation handles)}, \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-5522ad176ca0}{Field reordering and AoS versus SoA (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Field reordering and AoS versus SoA)}.
+
+\subsection{Scheduler and hierarchy witness}\label{appendix-fbfeb0430008-scheduler-and-hierarchy-witness}
+
+\hypertarget{appendix-fbfeb0430008-scheduler-and-hierarchy-witness}{}
+
+Storage density is only half of an ECS. \BookInlineCode{{t}{o}{o}{l}{s}{/}{l}{a}{b}{s}{/}{e}{c}{s}{\_}{s}{c}{h}{e}{d}{u}{l}{e}{r}{\_}{h}{i}{e}{r}{a}{r}{c}{h}{y}{\_}{l}{a}{b}{.}{c}{p}{p}}{tools/labs/ecs\_scheduler\_hierarchy\_lab.cpp} adds the next contract layer: systems declare component read/write masks, two readers may share a batch, and any overlapping writer creates a dependency. The witness uses deterministic first-fit batching and then verifies that no batch contains a conflicting pair. This is intentionally a semantic scheduler, not a claim about work stealing or lock-free execution.
+
+The same laboratory models transform hierarchy invalidation. Editing one local transform marks exactly its descendant subtree dirty; world evaluation recursively establishes the parent before a child consumes the parent's world state. An unrelated sibling remains untouched. This closes the earlier gap where hierarchy and scheduling were described but not executable.

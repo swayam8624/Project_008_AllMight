@@ -1,0 +1,65 @@
+\hypertarget{appendix-1bae9457dbc3}{}\label{referencestart:appendix-1bae9457dbc3}
+\section{Coordinate frames and change of basis}\label{appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis}
+
+\hypertarget{appendix-1bae9457dbc3-coordinate-frames-and-change-of-basis}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} Phase7 · \textbf{Latest development:} Phase7
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-1bae9457dbc3-definition-and-mechanism}
+
+\hypertarget{appendix-1bae9457dbc3-definition-and-mechanism}{}
+
+A frame gives an origin and independent axes relative to another frame. Its matrix maps local coordinates to that parent description. Changing description uses the inverse destination frame followed by the source frame; active motion and passive coordinate change answer different questions.
+
+\end{allmightroledefinition}
+
+\textbf{Reconstruction cue:} Coordinates from frame A to frame B use inverse(F\_B) times F\_A.
+
+\subsection{Prerequisites}\label{appendix-1bae9457dbc3-prerequisites}
+
+\hypertarget{appendix-1bae9457dbc3-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-0bf0ca73f735}{Linear affine and projective transformations (Mathematics for Visual Computing, Part 1, Reference notes: Linear affine and projective transformations)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-48d2e66378ab}{Matrix inversion pivoting and residuals (Mathematics for Visual Computing, Part 1, Reference notes: Matrix inversion pivoting and residuals)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-1bae9457dbc3-used-by}
+
+\hypertarget{appendix-1bae9457dbc3-used-by}{}
+
+\begin{itemize}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-1c07d64f5e70}{Camera view and clip-space pipeline (Light Transport and Image Synthesis, Part 1, Reference notes: Camera view and clip-space pipeline)}
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#appendix-292c061cd47c}{Transform hierarchies TRS and shear (Mathematics for Visual Computing, Part 1, Reference notes: Transform hierarchies TRS and shear)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-fab348609369}{Manifold polygon meshes and boundary structure (Light Transport and Image Synthesis, Part 1, Reference notes: Manifold polygon meshes and boundary structure)}
+\item
+  \href{../04-Light-Transport-and-Image-Synthesis-P01/main.pdf\#appendix-29f4bea4c2bb}{Constrained optimization and inverse kinematics (Light Transport and Image Synthesis, Part 1, Reference notes: Constrained optimization and inverse kinematics)}
+\item
+  \hyperref[appendix-113f0267e5f4]{Camera gauge freedoms and observability}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-1bae9457dbc3-recall-and-next-depth}
+
+\hypertarget{appendix-1bae9457dbc3-recall-and-next-depth}{}
+
+Reconstruct the example, state its conventions and find an input that violates its preconditions. Deeper algorithms and measured production performance remain separate from the present model.
+
+\subsection{Source and navigation}\label{appendix-1bae9457dbc3-source-and-navigation}
+
+\hypertarget{appendix-1bae9457dbc3-source-and-navigation}{}
+
+\href{../02-Mathematics-for-Visual-Computing-P01/main.pdf\#01-foundations-i-ch018-keep-the-promises-visible-while-moving-between-representations}{Continuous explanation (Mathematics for Visual Computing, Part 1, Ch. 2)} · \hyperref[appendix-fd090d982a15-phase-7---parts-601-700]{Coverage and source gap} · \hyperref[appendix-a103e7846d21-phase-7---source-analysis-and-verification]{Sources and verification}
+
+\subsection{Phase 11 camera development}\label{appendix-1bae9457dbc3-phase-11-camera-development}
+
+\hypertarget{appendix-1bae9457dbc3-phase-11-camera-development}{}
+
+A basis change re-expresses the same physical points and transforms; a reconstruction gauge allows different parameter assignments to produce identical measurements. Fixing one camera pose chooses a world origin and orientation, but adds no image evidence. Monocular scale remains free until a baseline, known length, or metric sensor anchors it. Do not mistake a coordinate convention for an empirical measurement. This distinction matters when defining bundle-adjustment priors and covariance, and assumes a rigid calibrated camera model. Link: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch037-a-camera-model-must-close-the-loop}{A camera model must close the loop (Geometry, Cameras, and Image Formation, Part 1, Ch. 6)}; research: \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#02-foundations-ii-ch036-four-deeper-links-from-the-tum-lecture-review}{Four deeper links from the TUM lecture review (Geometry, Cameras, and Image Formation, Part 1, Ch. 5)}.

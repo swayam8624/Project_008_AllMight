@@ -1,0 +1,50 @@
+\hypertarget{appendix-a65290d66ed9}{}\label{referencestart:appendix-a65290d66ed9}
+\section{Shift-and-add multiplication}\label{appendix-a65290d66ed9-shift-and-add-multiplication}
+
+\hypertarget{appendix-a65290d66ed9-shift-and-add-multiplication}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-a65290d66ed9-definition-and-mechanism}
+
+\hypertarget{appendix-a65290d66ed9-definition-and-mechanism}{}
+
+Each set multiplier bit selects a shifted multiplicand partial product; an exact product of two \(N\)-bit values may need \(2N\) bits.
+
+\end{allmightroledefinition}
+
+Multiplier bit i selects multiplicand shifted i positions. 13×11 uses 11=\BookInlineCode{{1}{0}{1}{1}{₂}}{1011₂}, hence 13+26+104=143. Keep the shifting multiplicand in the widened type; shifting a uint16\_t variable repeatedly discards high partial-product bits even if the accumulator is uint32\_t.
+
+\subsection{Prerequisites}\label{appendix-a65290d66ed9-prerequisites}
+
+\hypertarget{appendix-a65290d66ed9-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-73425b25118e]{Shift operations} --- Logical right shift fills high positions with zero; arithmetic right shift replicates the sign bit.
+\item
+  \hyperref[appendix-d1a5b1e520c2]{Full adder} --- A full adder adds A, B, and carry-in.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-a65290d66ed9-used-by}
+
+\hypertarget{appendix-a65290d66ed9-used-by}{}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-a65290d66ed9-recall-and-next-depth}
+
+\hypertarget{appendix-a65290d66ed9-recall-and-next-depth}{}
+
+Explain shift-and-add multiplication without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} Booth recoding, compressor trees, pipelining, and signed multiplication.
+
+\subsection{Source and navigation}\label{appendix-a65290d66ed9-source-and-navigation}
+
+\hypertarget{appendix-a65290d66ed9-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

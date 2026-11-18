@@ -1,0 +1,47 @@
+\hypertarget{appendix-daaf25bfd3a0}{}\label{referencestart:appendix-daaf25bfd3a0}
+\section{Stateless keyed sampling and reproducibility}\label{appendix-daaf25bfd3a0-stateless-keyed-sampling-and-reproducibility}
+
+\hypertarget{appendix-daaf25bfd3a0-stateless-keyed-sampling-and-reproducibility}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-daaf25bfd3a0-definition-and-mechanism}
+
+\hypertarget{appendix-daaf25bfd3a0-definition-and-mechanism}{}
+
+Stateless sampling derives an output from explicit coordinates such as a master seed, pixel, sample index, and dimension. The same key can be recomputed without replaying prior generator calls, which makes debugging and parallel scheduling easier. A hash mixer can provide deterministic, well-dispersed values, but reproducibility does not prove IID behavior or statistical quality. Counter-based generators use designed mixing rounds and can provide stronger parallel-stream properties under their analyzed models. Distinct sampling dimensions reduce accidental reuse, yet a dimension map must remain stable when code changes. Record the key layout, algorithm, version, and conversion to floating point. Test multidimensional patterns and estimator convergence; a good one-dimensional histogram does not establish good joint behavior.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-daaf25bfd3a0-prerequisites}
+
+\hypertarget{appendix-daaf25bfd3a0-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-e0f7c7e08f3a]{Stateful pseudorandom generators and stream state}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-daaf25bfd3a0-used-by}
+
+\hypertarget{appendix-daaf25bfd3a0-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-9f693ffd82bc]{Sampling quality: stratification, quasi-Monte Carlo, and blue noise}
+\item
+  \hyperref[appendix-184fcc411663]{Uniform shuffling without replacement} \#\# Full teaching explanation
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch029-a-computer-produces-deterministic-pseudorandom-sequences}{Phase 10 teaching section (Mathematics for Visual Computing, Part 2, Ch. 13)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-cb5af353ef77}{Visual Recall/10 - Probability and Monte Carlo - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 10 - Probability and Monte Carlo - Visual Recall)} · visual recall
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-daaf25bfd3a0-source-coverage}
+
+\hypertarget{appendix-daaf25bfd3a0-source-coverage}{}
+
+Supplied lesson parts: 938 (T06 · M057), 939 (T06 · M057).

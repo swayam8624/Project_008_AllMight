@@ -1,0 +1,61 @@
+\hypertarget{appendix-73425b25118e}{}\label{referencestart:appendix-73425b25118e}
+\section{Shift operations}\label{appendix-73425b25118e-shift-operations}
+
+\hypertarget{appendix-73425b25118e-shift-operations}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C001 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-73425b25118e-definition-and-mechanism}
+
+\hypertarget{appendix-73425b25118e-definition-and-mechanism}{}
+
+Relocate bit significance; unsigned shifts can correspond to multiply or floor-divide by powers of two within their validity range.
+
+\end{allmightroledefinition}
+
+Logical right shift fills high positions with zero; arithmetic right shift replicates the sign bit. In C++23, signed right shift rounds toward negative infinity; signed integer division rounds toward zero. Thus −5\textgreater\textgreater1 gives −3 while −5/2 gives −2. A built-in shift count must be nonnegative and smaller than the promoted left operand's width.
+
+\subsection{Prerequisites}\label{appendix-73425b25118e-prerequisites}
+
+\hypertarget{appendix-73425b25118e-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-280445746493]{Bit significance} --- LSB means least significant bit, normally position 0 with weight 1.
+\item
+  \hyperref[appendix-d67a19507dc5]{Machine word} --- A processor's natural integer processing width is often called its word width, but the term is architecture dependent.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-73425b25118e-used-by}
+
+\hypertarget{appendix-73425b25118e-used-by}{}
+
+\begin{itemize}
+\item
+  \hyperref[appendix-ac697f5c66e8]{Bit field} --- uses shift operations as part of its representation or reasoning.
+\item
+  \hyperref[appendix-a65290d66ed9]{Shift-and-add multiplication} --- uses shift operations as part of its representation or reasoning.
+\item
+  \hyperref[appendix-89985e6a2685]{Binary long division} --- uses shift operations as part of its representation or reasoning.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-367b6abf460e}{Little endian (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Little endian)} --- depends on this concept; see its prerequisite explanation.
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P02/main.pdf\#appendix-0c67cd5bf30a}{Pages and page offsets (Bits, Programs, and Reliable Systems, Part 2, Reference notes: Pages and page offsets)} --- depends on this concept; see its prerequisite explanation.
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-73425b25118e-recall-and-next-depth}
+
+\hypertarget{appendix-73425b25118e-recall-and-next-depth}{}
+
+Explain shift operations without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} signed-shift rules, compiler lowering, rotate instructions, and overshift behavior.
+
+\subsection{Source and navigation}\label{appendix-73425b25118e-source-and-navigation}
+
+\hypertarget{appendix-73425b25118e-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-from-a-signal-to-an-interpretation]{C001 teaching chapter} · \hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 development} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

@@ -1,0 +1,54 @@
+\hypertarget{appendix-ddbec701898c}{}\label{referencestart:appendix-ddbec701898c}
+\section{Bézier curves and De Casteljau evaluation}\label{appendix-ddbec701898c-buxe9zier-curves-and-de-casteljau-evaluation}
+
+\hypertarget{appendix-ddbec701898c-bézier-curves-and-de-casteljau-evaluation}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} Phase 10 · \textbf{Latest development:} Phase 10
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-ddbec701898c-definition-and-mechanism}
+
+\hypertarget{appendix-ddbec701898c-definition-and-mechanism}{}
+
+A Bézier curve blends control points with Bernstein basis weights. The weights are nonnegative and sum to one on \([0,1]\), so the curve remains in the control points' convex hull and reaches its first and last control points at the endpoints. De Casteljau's repeated linear interpolation evaluates the curve using numerically straightforward convex combinations; the intermediate levels also reveal subdivision geometry. A cubic Bézier's endpoint tangents depend on its first and last control-polygon edges, so moving a handle changes direction and scale. The convex-hull guarantee applies to the curve parameter interval; extrapolation outside it loses that containment property. Subdivide the curve before tessellation when screen-space curvature changes rapidly; parameter steps alone do not guarantee uniform pixel error.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-ddbec701898c-prerequisites}
+
+\hypertarget{appendix-ddbec701898c-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0c2a5f69851e]{Interpolation versus approximation}
+\item
+  \href{../03-Geometry-Cameras-and-Image-Formation-P01/main.pdf\#appendix-f28eeec97a3d}{Spline bases and curve evaluation (Geometry, Cameras, and Image Formation, Part 1, Reference notes: Spline bases and curve evaluation)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-ddbec701898c-used-by}
+
+\hypertarget{appendix-ddbec701898c-used-by}{}
+
+\subsection{Full teaching explanation}\label{appendix-ddbec701898c-full-teaching-explanation}
+
+\hypertarget{appendix-ddbec701898c-full-teaching-explanation}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch028-reconstructing-values-and-curves-between-samples}{Reconstructing values and curves between samples (Mathematics for Visual Computing, Part 2, Ch. 12)}
+\end{itemize}
+
+\subsection{Source coverage}\label{appendix-ddbec701898c-source-coverage}
+
+\hypertarget{appendix-ddbec701898c-source-coverage}{}
+
+Supplied lesson parts: 983.
+
+\subsection{Future keywords}\label{appendix-ddbec701898c-future-keywords}
+
+\hypertarget{appendix-ddbec701898c-future-keywords}{}
+
+Bernstein basis, convex hull property, curve subdivision

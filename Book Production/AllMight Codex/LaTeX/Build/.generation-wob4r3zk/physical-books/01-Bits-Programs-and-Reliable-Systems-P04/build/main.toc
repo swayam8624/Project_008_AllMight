@@ -1,0 +1,589 @@
+\contentsline {chapter}{\numberline {11}A game promise becomes bytes and running state}{1}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Game Engine --- From First Frame to Living Worlds}{1}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}Start with an observable promise}{2}{subsection.11.1.1}%
+\contentsline {paragraph}{Centralize subsystem lifecycle without hiding order}{3}{paragraph*.5}%
+\contentsline {subsection}{\numberline {11.1.2}Why the engine begins with bytes, objects, lifetimes, and CPU work}{3}{subsection.11.1.2}%
+\contentsline {section}{\numberline {11.2}Computing Foundations --- From Bits to C++ and Systems APIs}{3}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}One byte travels from a file to a running world}{3}{subsection.11.2.1}%
+\contentsline {subsubsection}{Give every identifier a scope}{4}{subsubsection*.6}%
+\contentsline {subsubsection}{From Signals to Meaning: Bits, Numbers, and Memory}{5}{subsubsection*.7}%
+\contentsline {subsection}{\numberline {11.2.2}The route through the story}{5}{subsection.11.2.2}%
+\contentsline {subsection}{\numberline {11.2.3}Prologue - How a physical state became a byte}{5}{subsection.11.2.3}%
+\contentsline {subsubsection}{Start with the problem, not the vocabulary}{5}{subsubsection*.8}%
+\contentsline {subsubsection}{A short historical frame}{6}{subsubsection*.9}%
+\contentsline {subsubsection}{Four questions that keep the whole volume honest}{6}{subsubsection*.10}%
+\contentsline {subsection}{\numberline {11.2.4}From a signal to an interpretation}{6}{subsection.11.2.4}%
+\contentsline {subsubsection}{One bit, several bits, and an interpretation}{6}{subsubsection*.11}%
+\contentsline {subsubsection}{Position gives a digit its weight}{7}{subsubsection*.12}%
+\contentsline {subsubsection}{Hexadecimal, octal, byte, and word}{8}{subsubsection*.13}%
+\contentsline {subsubsection}{The same bits can mean different integers}{8}{subsubsection*.14}%
+\contentsline {subsubsection}{Figure B1 - One pattern, two integer readings}{10}{subsubsection*.15}%
+\contentsline {subsubsection}{Why invert-and-add-one works}{10}{subsubsection*.16}%
+\contentsline {subsection}{\numberline {11.2.5}Bits become decisions and compact fields}{11}{subsection.11.2.5}%
+\contentsline {subsubsection}{Boolean reasoning and control flow}{11}{subsubsection*.17}%
+\contentsline {subsubsection}{A mask selects positions}{11}{subsubsection*.18}%
+\contentsline {subsubsection}{Shifts move significance}{12}{subsubsection*.19}%
+\contentsline {subsubsection}{Fields: select, normalize, replace}{12}{subsubsection*.20}%
+\contentsline {subsubsection}{Figure B2 - Replace a field without damaging its neighbors}{13}{subsubsection*.21}%
+\contentsline {subsubsection}{Packing several meanings and unpacking them}{14}{subsubsection*.22}%
+\contentsline {subsubsection}{Test the packed meaning}{14}{subsubsection*.23}%
+\contentsline {subsection}{\numberline {11.2.6}Arithmetic becomes a policy}{15}{subsection.11.2.6}%
+\contentsline {subsubsection}{From logic gates to an adder}{15}{subsubsection*.24}%
+\contentsline {subsubsection}{Flags answer different questions}{16}{subsubsection*.25}%
+\contentsline {subsubsection}{Multiplication and division as reconstructible algorithms}{16}{subsubsection*.26}%
+\contentsline {subsubsection}{Choose the overflow policy before calculating}{17}{subsubsection*.27}%
+\contentsline {subsubsection}{Follow C++'s types through the expression}{18}{subsubsection*.28}%
+\contentsline {subsubsection}{Integer laboratory and teaching checkpoint}{19}{subsubsection*.29}%
+\contentsline {subsection}{\numberline {11.2.7}A stretching ruler for real-valued quantities}{19}{subsection.11.2.7}%
+\contentsline {subsubsection}{A movable binary point}{19}{subsubsection*.30}%
+\contentsline {subsubsection}{The two formats and their interpretation}{20}{subsubsection*.31}%
+\contentsline {subsubsection}{Encode 10.625, then decode −13.25}{21}{subsubsection*.32}%
+\contentsline {subsubsection}{Zero, infinity, and an unordered result}{22}{subsubsection*.33}%
+\contentsline {subsubsection}{Filling the gap to zero}{23}{subsubsection*.34}%
+\contentsline {subsubsection}{Epsilon is one spacing, not a tolerance}{24}{subsubsection*.35}%
+\contentsline {subsubsection}{Choosing a neighbor}{24}{subsubsection*.36}%
+\contentsline {subsection}{\numberline {11.2.8}When arithmetic meets uncertainty}{26}{subsection.11.2.8}%
+\contentsline {subsubsection}{The stored value is exact; its intended meaning may not be}{26}{subsubsection*.37}%
+\contentsline {subsubsection}{Align the binary points before adding}{27}{subsubsection*.38}%
+\contentsline {subsubsection}{Cancellation can expose errors made earlier}{27}{subsubsection*.39}%
+\contentsline {subsubsection}{Range events are observable, but not interchangeable}{29}{subsubsection*.40}%
+\contentsline {subsubsection}{Error, conditioning, and a budget}{29}{subsubsection*.41}%
+\contentsline {subsubsection}{Representation lessons applied to numerical APIs}{29}{subsubsection*.42}%
+\contentsline {subsubsection}{A tolerance is a semantic rule, not an equality relation}{31}{subsubsection*.43}%
+\contentsline {subsubsection}{One rounding rather than two}{31}{subsubsection*.44}%
+\contentsline {subsubsection}{Figure B3 - Rounding points change the answer}{32}{subsubsection*.45}%
+\contentsline {subsubsection}{Algebra changes when rounding points move}{32}{subsubsection*.46}%
+\contentsline {subsubsection}{Repeatable is not accurate, and atomic is not ordered}{33}{subsubsection*.47}%
+\contentsline {subsubsection}{Laboratory, reconstruction, and next step}{34}{subsubsection*.48}%
+\contentsline {subsubsection}{Laboratory and teaching checkpoint}{35}{subsubsection*.49}%
+\contentsline {subsection}{\numberline {11.2.9}Choosing what information to keep}{36}{subsection.11.2.9}%
+\contentsline {subsubsection}{A fixed ruler for fractional values}{36}{subsubsection*.50}%
+\contentsline {subsubsection}{Choose a scale from requirements, not a fashionable name}{36}{subsubsection*.51}%
+\contentsline {subsubsection}{Multiplication changes the scale; rescaling is another rounding decision}{37}{subsubsection*.52}%
+\contentsline {subsubsection}{A constant grid changes error, not the existence of error}{38}{subsubsection*.53}%
+\contentsline {subsubsection}{Two sixteen-bit bargains: keep detail or keep range}{38}{subsubsection*.54}%
+\contentsline {subsubsection}{Conversion must round, classify, and declare its NaN policy}{39}{subsubsection*.55}%
+\contentsline {subsubsection}{A smaller codebook tailored to the data}{39}{subsubsection*.56}%
+\contentsline {subsubsection}{An INT4 group, from numbers to nibbles and back}{40}{subsubsection*.57}%
+\contentsline {subsubsection}{One outlier can spend the whole group's resolution}{41}{subsubsection*.58}%
+\contentsline {subsubsection}{A one-bit label can select two learned reconstruction values}{41}{subsubsection*.59}%
+\contentsline {subsubsection}{Normalized graphics integers are another codebook}{41}{subsubsection*.60}%
+\contentsline {subsubsection}{Choose the contract before choosing the type}{42}{subsubsection*.61}%
+\contentsline {chapter}{\numberline {12}How bytes become programs, objects, and resource references}{44}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Where the bytes live}{44}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}A value is not its address order}{44}{subsection.12.1.1}%
+\contentsline {subsection}{\numberline {12.1.2}Alignment is a placement requirement}{45}{subsection.12.1.2}%
+\contentsline {subsection}{\numberline {12.1.3}Smaller records are not always faster records}{46}{subsection.12.1.3}%
+\contentsline {subsection}{\numberline {12.1.4}A pointer is more than an integer location}{47}{subsection.12.1.4}%
+\contentsline {subsection}{\numberline {12.1.5}Virtual memory translates page identity}{47}{subsection.12.1.5}%
+\contentsline {subsection}{\numberline {12.1.6}Figure B4 - Translation preserves the offset}{49}{subsection.12.1.6}%
+\contentsline {subsection}{\numberline {12.1.7}A fault is a request for intervention, not necessarily a crash}{49}{subsection.12.1.7}%
+\contentsline {subsection}{\numberline {12.1.8}Storage, lifetime, ownership, and placement are different axes}{49}{subsection.12.1.8}%
+\contentsline {subsection}{\numberline {12.1.9}Memory laboratory and teaching checkpoint}{51}{subsection.12.1.9}%
+\contentsline {section}{\numberline {12.2}Bytes become a durable agreement}{51}{section.12.2}%
+\contentsline {subsection}{\numberline {12.2.1}Representation copying and numeric conversion answer different questions}{51}{subsection.12.2.1}%
+\contentsline {subsection}{\numberline {12.2.2}A file is a promise to a reader you have not met yet}{52}{subsection.12.2.2}%
+\contentsline {subsection}{\numberline {12.2.3}Validate lengths before performing the arithmetic they request}{52}{subsection.12.2.3}%
+\contentsline {subsection}{\numberline {12.2.4}Correct decoding is not proof that the bytes survived}{53}{subsection.12.2.4}%
+\contentsline {subsection}{\numberline {12.2.5}Read a dump by reversing the contract}{54}{subsection.12.2.5}%
+\contentsline {subsection}{\numberline {12.2.6}A laboratory that tests the contracts, not just matching functions}{55}{subsection.12.2.6}%
+\contentsline {subsection}{\numberline {12.2.7}Diagnose the layer before changing the implementation}{55}{subsection.12.2.7}%
+\contentsline {section}{\numberline {12.3}Reading provenance and enrichment}{56}{section.12.3}%
+\contentsline {section}{\numberline {12.4}Prologue - Bytes need rules before they become a program}{57}{section.12.4}%
+\contentsline {section}{\numberline {12.5}What we bring from the byte story}{58}{section.12.5}%
+\contentsline {section}{\numberline {12.6}The journey from text to a live object}{58}{section.12.6}%
+\contentsline {section}{\numberline {12.7}Giving a program a buildable shape}{60}{section.12.7}%
+\contentsline {subsection}{\numberline {12.7.1}Figure CPP-01 - Two build lanes meet at the linker}{60}{subsection.12.7.1}%
+\contentsline {subsection}{\numberline {12.7.2}The traditional translation model}{61}{subsection.12.7.2}%
+\contentsline {subsection}{\numberline {12.7.3}Compile-time error}{62}{subsection.12.7.3}%
+\contentsline {subsection}{\numberline {12.7.4}Link-time error}{62}{subsection.12.7.4}%
+\contentsline {subsection}{\numberline {12.7.5}What preprocessing actually is}{62}{subsection.12.7.5}%
+\contentsline {subsection}{\numberline {12.7.6}What \BookInlineCode {{\#}{i}{n}{c}{l}{u}{d}{e}}{\#include} really means}{64}{subsection.12.7.6}%
+\contentsline {subsection}{\numberline {12.7.7}What compilation produces}{64}{subsection.12.7.7}%
+\contentsline {subsection}{\numberline {12.7.8}What the linker actually does}{65}{subsection.12.7.8}%
+\contentsline {subsection}{\numberline {12.7.9}Name mangling}{65}{subsection.12.7.9}%
+\contentsline {section}{\numberline {12.8}A compiled interface rather than repeated text}{66}{section.12.8}%
+\contentsline {subsection}{\numberline {12.8.1}Modules versus \BookInlineCode {{\#}{i}{n}{c}{l}{u}{d}{e}}{\#include}}{66}{subsection.12.8.1}%
+\contentsline {section}{\numberline {12.9}Promises become definitions}{67}{section.12.9}%
+\contentsline {subsection}{\numberline {12.9.1}Objects}{67}{subsection.12.9.1}%
+\contentsline {subsection}{\numberline {12.9.2}Classes}{68}{subsection.12.9.2}%
+\contentsline {subsection}{\numberline {12.9.3}Enumerations}{68}{subsection.12.9.3}%
+\contentsline {subsection}{\numberline {12.9.4}Templates complicate the old declaration/implementation split}{69}{subsection.12.9.4}%
+\contentsline {section}{\numberline {12.10}Many files must describe one coherent program}{69}{section.12.10}%
+\contentsline {subsection}{\numberline {12.10.1}The common program-wide rule}{70}{subsection.12.10.1}%
+\contentsline {subsection}{\numberline {12.10.2}The classic header mistake}{70}{subsection.12.10.2}%
+\contentsline {subsection}{\numberline {12.10.3}Two modern solutions}{71}{subsection.12.10.3}%
+\contentsline {subsection}{\numberline {12.10.4}Why class definitions may live in headers}{71}{subsection.12.10.4}%
+\contentsline {subsection}{\numberline {12.10.5}The evil ODR bug: definitions that look like the same header but aren't}{72}{subsection.12.10.5}%
+\contentsline {subsection}{\numberline {12.10.6}Why modules help}{73}{subsection.12.10.6}%
+\contentsline {subsection}{\numberline {12.10.7}Linkage is related to ODR, but is not ODR}{73}{subsection.12.10.7}%
+\contentsline {section}{\numberline {12.11}A spelling needs a place and a meaning}{73}{section.12.11}%
+\contentsline {subsection}{\numberline {12.11.1}Block scope}{74}{subsection.12.11.1}%
+\contentsline {subsection}{\numberline {12.11.2}Name hiding}{74}{subsection.12.11.2}%
+\contentsline {subsection}{\numberline {12.11.3}Class scope}{75}{subsection.12.11.3}%
+\contentsline {subsection}{\numberline {12.11.4}Namespace scope}{75}{subsection.12.11.4}%
+\contentsline {subsection}{\numberline {12.11.5}\BookInlineCode {{u}{s}{i}{n}{g}{\ }{n}{a}{m}{e}{s}{p}{a}{c}{e}}{using\ namespace} versus using declaration}{76}{subsection.12.11.5}%
+\contentsline {subsection}{\numberline {12.11.6}Argument-dependent lookup --- ADL}{76}{subsection.12.11.6}%
+\contentsline {subsection}{\numberline {12.11.7}Modules add visibility/reachability, not a replacement for scopes}{77}{subsection.12.11.7}%
+\contentsline {section}{\numberline {12.12}A name does not decide how long storage lasts}{77}{section.12.12}%
+\contentsline {subsection}{\numberline {12.12.1}Automatic storage duration}{78}{subsection.12.12.1}%
+\contentsline {subsection}{\numberline {12.12.2}Static storage duration}{78}{subsection.12.12.2}%
+\contentsline {subsection}{\numberline {12.12.3}The static initialization order problem}{79}{subsection.12.12.3}%
+\contentsline {subsection}{\numberline {12.12.4}\BookInlineCode {{c}{o}{n}{s}{t}{i}{n}{i}{t}}{constinit}}{80}{subsection.12.12.4}%
+\contentsline {subsection}{\numberline {12.12.5}Thread storage duration}{80}{subsection.12.12.5}%
+\contentsline {subsection}{\numberline {12.12.6}Dynamic storage duration}{80}{subsection.12.12.6}%
+\contentsline {section}{\numberline {12.13}Storage is a place; an object is its occupant}{81}{section.12.13}%
+\contentsline {subsection}{\numberline {12.13.1}Raw storage is not automatically a live object of arbitrary type}{82}{subsection.12.13.1}%
+\contentsline {subsection}{\numberline {12.13.2}Construction starts a lifetime}{82}{subsection.12.13.2}%
+\contentsline {subsection}{\numberline {12.13.3}\BookInlineCode {{n}{e}{w}}{new} actually combines operations}{83}{subsection.12.13.3}%
+\contentsline {subsection}{\numberline {12.13.4}A dangerous misconception}{84}{subsection.12.13.4}%
+\contentsline {subsection}{\numberline {12.13.5}Lifetime beginning and ending more precisely}{84}{subsection.12.13.5}%
+\contentsline {subsection}{\numberline {12.13.6}Modern implicit-lifetime objects}{85}{subsection.12.13.6}%
+\contentsline {section}{\numberline {12.14}Values, occupants and addresses tell different stories}{85}{section.12.14}%
+\contentsline {subsection}{\numberline {12.14.1}Address is often useful as identity, but is not identity itself}{86}{subsection.12.14.1}%
+\contentsline {section}{\numberline {12.15}A handle remembers which occupant was intended}{86}{section.12.15}%
+\contentsline {subsection}{\numberline {12.15.1}Multiple things can even share an address}{86}{subsection.12.15.1}%
+\contentsline {subsection}{\numberline {12.15.2}\BookInlineCode {{s}{t}{d}{:}{:}{a}{d}{d}{r}{e}{s}{s}{o}{f}}{std::addressof}}{87}{subsection.12.15.2}%
+\contentsline {section}{\numberline {12.16}Choose a type for its promise, not its familiar size}{87}{section.12.16}%
+\contentsline {subsection}{\numberline {12.16.1}What the standard does guarantee}{88}{subsection.12.16.1}%
+\contentsline {subsection}{\numberline {12.16.2}Integer relative sizes}{88}{subsection.12.16.2}%
+\contentsline {subsection}{\numberline {12.16.3}Exact-width integer types}{89}{subsection.12.16.3}%
+\contentsline {subsection}{\numberline {12.16.4}\BookInlineCode {{l}{e}{a}{s}{t}}{least} and \BookInlineCode {{f}{a}{s}{t}}{fast}}{90}{subsection.12.16.4}%
+\contentsline {subsection}{\numberline {12.16.5}\BookInlineCode {{s}{t}{d}{:}{:}{s}{i}{z}{e}{\_}{t}}{std::size\_t}}{90}{subsection.12.16.5}%
+\contentsline {subsection}{\numberline {12.16.6}\BookInlineCode {{c}{h}{a}{r}}{char} signedness}{91}{subsection.12.16.6}%
+\contentsline {subsection}{\numberline {12.16.7}\BookInlineCode {{n}{u}{m}{e}{r}{i}{c}{\_}{l}{i}{m}{i}{t}{s}}{numeric\_limits}}{92}{subsection.12.16.7}%
+\contentsline {section}{\numberline {12.17}Give a domain its own vocabulary}{92}{section.12.17}%
+\contentsline {subsection}{\numberline {12.17.1}Old unscoped enums}{92}{subsection.12.17.1}%
+\contentsline {subsection}{\numberline {12.17.2}Scoped enums}{93}{subsection.12.17.2}%
+\contentsline {chapter}{\numberline {13}Object representation, lifetime, and enforceable promises}{94}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Representation is an intention, not input validation}{94}{section.13.1}%
+\contentsline {subsection}{\numberline {13.1.1}Getting the underlying integer}{94}{subsection.13.1.1}%
+\contentsline {subsection}{\numberline {13.1.2}An enum can represent more than just the named enumerators}{95}{subsection.13.1.2}%
+\contentsline {subsection}{\numberline {13.1.3}Enum flags}{95}{subsection.13.1.3}%
+\contentsline {section}{\numberline {13.2}Records acquire their initial state}{96}{section.13.2}%
+\contentsline {subsection}{\numberline {13.2.1}What counts as an aggregate?}{96}{subsection.13.2.1}%
+\contentsline {section}{\numberline {13.3}Similar braces can invoke different mechanisms}{97}{section.13.3}%
+\contentsline {subsection}{\numberline {13.3.1}Initialization order}{97}{subsection.13.3.1}%
+\contentsline {subsection}{\numberline {13.3.2}Designated initializers}{98}{subsection.13.3.2}%
+\contentsline {subsection}{\numberline {13.3.3}Missing members}{98}{subsection.13.3.3}%
+\contentsline {subsection}{\numberline {13.3.4}Aggregate initialization and API evolution}{99}{subsection.13.3.4}%
+\contentsline {subsection}{\numberline {13.3.5}Braces do more than aggregates}{99}{subsection.13.3.5}%
+\contentsline {section}{\numberline {13.4}Public records and protected invariants}{100}{section.13.4}%
+\contentsline {subsection}{\numberline {13.4.1}The other difference: base-class access}{101}{subsection.13.4.1}%
+\contentsline {section}{\numberline {13.5}A convention about promises}{101}{section.13.5}%
+\contentsline {section}{\numberline {13.6}Bringing the object model back to bytes}{101}{section.13.6}%
+\contentsline {subsection}{\numberline {13.6.1}Typical alignment calculation}{103}{subsection.13.6.1}%
+\contentsline {subsection}{\numberline {13.6.2}Reordering members can reduce padding}{103}{subsection.13.6.2}%
+\contentsline {subsection}{\numberline {13.6.3}\BookInlineCode {{a}{l}{i}{g}{n}{o}{f}}{alignof} and \BookInlineCode {{a}{l}{i}{g}{n}{a}{s}}{alignas}}{104}{subsection.13.6.3}%
+\contentsline {subsection}{\numberline {13.6.4}\BookInlineCode {{s}{t}{a}{n}{d}{a}{r}{d}{-}{l}{a}{y}{o}{u}{t}}{standard-layout} does NOT mean ``packed C struct''}{105}{subsection.13.6.4}%
+\contentsline {subsection}{\numberline {13.6.5}\BookInlineCode {{t}{r}{i}{v}{i}{a}{l}{l}{y}{\_}{c}{o}{p}{y}{a}{b}{l}{e}}{trivially\_copyable} is another distinct concept}{105}{subsection.13.6.5}%
+\contentsline {section}{\numberline {13.7}Adjacent members are not an array}{106}{section.13.7}%
+\contentsline {subsection}{\numberline {13.7.1}Correct alternatives}{106}{subsection.13.7.1}%
+\contentsline {subsection}{\numberline {13.7.2}Why the bug often appears to work forever}{107}{subsection.13.7.2}%
+\contentsline {subsection}{\numberline {13.7.3}CPU layout is not GPU layout}{108}{subsection.13.7.3}%
+\contentsline {subsection}{\numberline {13.7.4}\BookInlineCode {{o}{f}{f}{s}{e}{t}{o}{f}}{offsetof}}{109}{subsection.13.7.4}%
+\contentsline {subsection}{\numberline {13.7.5}\BookInlineCode {{\#}{p}{r}{a}{g}{m}{a}{\ }{p}{a}{c}{k}}{\#pragma\ pack} is not a magic optimization}{110}{subsection.13.7.5}%
+\contentsline {subsection}{\numberline {13.7.6}Bit-fields}{110}{subsection.13.7.6}%
+\contentsline {section}{\numberline {13.8}Following an escaped address through time}{111}{section.13.8}%
+\contentsline {section}{\numberline {13.9}Following one call through the build}{112}{section.13.9}%
+\contentsline {section}{\numberline {13.10}Giving another name to a live object}{114}{section.13.10}%
+\contentsline {section}{\numberline {13.11}An expression has a type and a category}{115}{section.13.11}%
+\contentsline {section}{\numberline {13.12}Binding chooses a referent, not always the one you imagined}{116}{section.13.12}%
+\contentsline {section}{\numberline {13.13}A temporary needs an explicit lifetime story}{117}{section.13.13}%
+\contentsline {section}{\numberline {13.14}Move permission is not resource transfer}{118}{section.13.14}%
+\contentsline {section}{\numberline {13.15}A pointer carries an access contract}{119}{section.13.15}%
+\contentsline {section}{\numberline {13.16}When a valid borrow stops naming the intended thing}{120}{section.13.16}%
+\contentsline {subsection}{\numberline {13.16.1}Figure CPP-02 - A borrow can fail in two different ways}{121}{subsection.13.16.1}%
+\contentsline {section}{\numberline {13.17}Borrowed views and deferred work need an owner story}{123}{section.13.17}%
+\contentsline {section}{\numberline {13.18}Read-only is a path, not an ownership or synchronization promise}{123}{section.13.18}%
+\contentsline {section}{\numberline {13.19}An accessor must respect the caller's lifetime}{124}{section.13.19}%
+\contentsline {section}{\numberline {13.20}A cache may change bits without changing meaning}{125}{section.13.20}%
+\contentsline {section}{\numberline {13.21}Choose the access contract before the parameter syntax}{126}{section.13.21}%
+\contentsline {subsection}{\numberline {13.21.1}Worked API choice: borrow, consume, retain, or copy a value}{127}{subsection.13.21.1}%
+\contentsline {section}{\numberline {13.22}The call-site decision}{128}{section.13.22}%
+\contentsline {section}{\numberline {13.23}A value crosses the function boundary}{129}{section.13.23}%
+\contentsline {section}{\numberline {13.24}Return a result without handing out a lifetime problem}{131}{section.13.24}%
+\contentsline {section}{\numberline {13.25}Construction establishes a usable state}{132}{section.13.25}%
+\contentsline {section}{\numberline {13.26}Empty syntax does not promise initialized members}{133}{section.13.26}%
+\contentsline {section}{\numberline {13.27}Construction order records lifetime dependencies}{134}{section.13.27}%
+\contentsline {section}{\numberline {13.28}Destruction closes the ownership interval}{135}{section.13.28}%
+\contentsline {section}{\numberline {13.29}Copy a meaning rather than just its bytes}{135}{section.13.29}%
+\contentsline {section}{\numberline {13.30}Replacing a value is not creating an object}{136}{section.13.30}%
+\contentsline {section}{\numberline {13.31}A move transfers responsibility while the source survives}{137}{section.13.31}%
+\contentsline {subsection}{\numberline {13.31.1}Figure CPP-03 - Move the duty, keep both object lifetimes}{137}{subsection.13.31.1}%
+\contentsline {section}{\numberline {13.32}Failure guarantees shape the transfer algorithm}{138}{section.13.32}%
+\contentsline {section}{\numberline {13.33}Let the compiler compose the operations}{139}{section.13.33}%
+\contentsline {section}{\numberline {13.34}From three repairs to five decisions to zero boilerplate}{140}{section.13.34}%
+\contentsline {section}{\numberline {13.35}Trace one payload from decode to cache}{140}{section.13.35}%
+\contentsline {chapter}{\numberline {14}Resource ownership, failure paths, and review practice}{142}{chapter.14}%
+\contentsline {section}{\numberline {14.1}The laboratory and the teaching desk}{142}{section.14.1}%
+\contentsline {subsection}{\numberline {14.1.1}Complete runnable value-transfer laboratory}{142}{subsection.14.1.1}%
+\contentsline {subsection}{\numberline {14.1.2}Observe construction, failure and reverse cleanup}{146}{subsection.14.1.2}%
+\contentsline {subsection}{\numberline {14.1.3}Value-transfer diagnostic and reconstruction desk}{147}{subsection.14.1.3}%
+\contentsline {subsection}{\numberline {14.1.4}Complete runnable borrow laboratory}{149}{subsection.14.1.4}%
+\contentsline {subsection}{\numberline {14.1.5}Observe destruction without reading a dangling referent}{152}{subsection.14.1.5}%
+\contentsline {subsection}{\numberline {14.1.6}Rejected-program exercises}{153}{subsection.14.1.6}%
+\contentsline {subsection}{\numberline {14.1.7}Reconstruct the access story at the board}{153}{subsection.14.1.7}%
+\contentsline {subsection}{\numberline {14.1.8}Reproduce the compile and link distinction}{154}{subsection.14.1.8}%
+\contentsline {subsection}{\numberline {14.1.9}Complete runnable object laboratory}{154}{subsection.14.1.9}%
+\contentsline {section}{\numberline {14.2}Where these foundations matter}{157}{section.14.2}%
+\contentsline {section}{\numberline {14.3}Classifying a failure before debugging}{158}{section.14.3}%
+\contentsline {section}{\numberline {14.4}Reconstructing a compact resource record}{159}{section.14.4}%
+\contentsline {section}{\numberline {14.5}Questions for teaching without looking at the page}{160}{section.14.5}%
+\contentsline {section}{\numberline {14.6}What remains open}{162}{section.14.6}%
+\contentsline {section}{\numberline {14.7}Retrieval sheet - The whole opening story}{162}{section.14.7}%
+\contentsline {section}{\numberline {14.8}From a live object to responsible resource ownership}{163}{section.14.8}%
+\contentsline {subsection}{\numberline {14.8.1}Four lifetimes that can overlap without becoming one}{163}{subsection.14.8.1}%
+\contentsline {subsection}{\numberline {14.8.2}Why lifetime-bound cleanup is more reliable than remembering every exit}{164}{subsection.14.8.2}%
+\contentsline {subsection}{\numberline {14.8.3}Ownership is a responsibility contract, not pointer syntax}{165}{subsection.14.8.3}%
+\contentsline {subsection}{\numberline {14.8.4}Exclusive ownership: \BookInlineCode {{u}{n}{i}{q}{u}{e}{\_}{p}{t}{r}}{unique\_ptr} makes transfer visible}{166}{subsection.14.8.4}%
+\contentsline {subsection}{\numberline {14.8.5}Shared ownership: one object, a group of owners, and a separate control block}{167}{subsection.14.8.5}%
+\contentsline {subsection}{\numberline {14.8.6}Weak observation breaks cycles without pretending an object is alive}{168}{subsection.14.8.6}%
+\contentsline {subsection}{\numberline {14.8.7}Exceptions, partial construction, and the strong proof}{168}{subsection.14.8.7}%
+\contentsline {subsection}{\numberline {14.8.8}Figure CPP-04 - CPU cleanup can precede GPU reclamation}{169}{subsection.14.8.8}%
+\contentsline {subsection}{\numberline {14.8.9}Custom allocation separates obtaining bytes from constructing objects}{169}{subsection.14.8.9}%
+\contentsline {subsection}{\numberline {14.8.10}Arrays carry a count and a destruction protocol}{170}{subsection.14.8.10}%
+\contentsline {subsection}{\numberline {14.8.11}Placement construction reuses storage; it does not allocate it}{170}{subsection.14.8.11}%
+\contentsline {subsection}{\numberline {14.8.12}A union or arena slot has one occupant at a time}{171}{subsection.14.8.12}%
+\contentsline {subsection}{\numberline {14.8.13}A compact laboratory: choose the owner before the pointer}{171}{subsection.14.8.13}%
+\contentsline {subsection}{\numberline {14.8.14}The teaching summary: ask ``who, until when, by which release?''}{172}{subsection.14.8.14}%
+\contentsline {section}{\numberline {14.9}From one owned resource to many requests and a replaceable backend}{173}{section.14.9}%
+\contentsline {subsection}{\numberline {14.9.1}Why reusing memory does not identify the object stored there}{173}{subsection.14.9.1}%
+\contentsline {subsection}{\numberline {14.9.2}The request has a known shape; the backend has a runtime identity}{174}{subsection.14.9.2}%
+\contentsline {subsection}{\numberline {14.9.3}A derived object contains a base subobject, not an interchangeable base value}{176}{subsection.14.9.3}%
+\contentsline {subsection}{\numberline {14.9.4}A cast cannot manufacture a valid object}{176}{subsection.14.9.4}%
+\contentsline {subsection}{\numberline {14.9.5}Equality is an engine promise, not merely a convenient operator}{177}{subsection.14.9.5}%
+\contentsline {subsection}{\numberline {14.9.6}The compiler chooses an overload before a virtual function chooses its implementation}{178}{subsection.14.9.6}%
+\contentsline {subsection}{\numberline {14.9.7}One trace through the complete model}{178}{subsection.14.9.7}%
+\contentsline {subsection}{\numberline {14.9.8}Choose the mechanism by the question it solves}{179}{subsection.14.9.8}%
+\contentsline {section}{\numberline {14.10}From an accepted render request to a resource that survives failures and callbacks}{180}{section.14.10}%
+\contentsline {subsection}{\numberline {14.10.1}The first bug is possible before we load a file: 4096 of what?}{180}{subsection.14.10.1}%
+\contentsline {subsection}{\numberline {14.10.2}A worker needs a callable completion operation---and a way to know what state it may use}{181}{subsection.14.10.2}%
+\contentsline {subsection}{\numberline {14.10.3}A lambda is a created object, and its capture is a lifetime contract}{183}{subsection.14.10.3}%
+\contentsline {subsection}{\numberline {14.10.4}Why a uniform callback interface still has a price}{183}{subsection.14.10.4}%
+\contentsline {subsection}{\numberline {14.10.5}A decoded asset is not ready merely because its bytes exist}{184}{subsection.14.10.5}%
+\contentsline {subsection}{\numberline {14.10.6}Build an owner from an empty state, not from a hope that callers remember delete}{185}{subsection.14.10.6}%
+\contentsline {subsection}{\numberline {14.10.7}The important failure: after acquiring a resource but before publication}{186}{subsection.14.10.7}%
+\contentsline {subsection}{\numberline {14.10.8}noexcept is a promise about escaping exceptions, not a magical error handler}{187}{subsection.14.10.8}%
+\contentsline {subsection}{\numberline {14.10.9}Which failures are expected input, which are operational, and which break our program?}{187}{subsection.14.10.9}%
+\contentsline {subsection}{\numberline {14.10.10}A file is a sequence of bytes, not an object of the type we wish were there}{188}{subsection.14.10.10}%
+\contentsline {subsection}{\numberline {14.10.11}The optimizer is allowed to trust language rules; don't diagnose UB from one lucky output}{189}{subsection.14.10.11}%
+\contentsline {subsection}{\numberline {14.10.12}The complete trace becomes one implementable mental model}{189}{subsection.14.10.12}%
+\contentsline {chapter}{\numberline {15}Generic asset pipelines with stable identity}{191}{chapter.15}%
+\contentsline {section}{\numberline {15.1}One asset pipeline, many asset types --- generic code without accidental promises}{191}{section.15.1}%
+\contentsline {subsection}{\numberline {15.1.1}The repeated operation is a function whose input type can vary}{192}{subsection.15.1.1}%
+\contentsline {subsection}{\numberline {15.1.2}Different asset types share a store, but their meanings remain different}{193}{subsection.15.1.2}%
+\contentsline {subsection}{\numberline {15.1.3}The size rule must vary with the asset's semantic type}{193}{subsection.15.1.3}%
+\contentsline {subsection}{\numberline {15.1.4}A resource store must preserve the caller's intention to copy or transfer}{195}{subsection.15.1.4}%
+\contentsline {subsection}{\numberline {15.1.5}A collection of assets makes parameter packs and fold expressions necessary}{196}{subsection.15.1.5}%
+\contentsline {subsection}{\numberline {15.1.6}A generic function still needs a boundary describing which types qualify}{198}{subsection.15.1.6}%
+\contentsline {subsection}{\numberline {15.1.7}Write the contract in the type system at the point where it is needed}{198}{subsection.15.1.7}%
+\contentsline {subsection}{\numberline {15.1.8}Why two overloads can share a name without creating a runtime type switch}{200}{subsection.15.1.8}%
+\contentsline {subsection}{\numberline {15.1.9}Publication still needs a correctness proof after introducing templates}{200}{subsection.15.1.9}%
+\contentsline {subsection}{\numberline {15.1.10}The real performance question is what gets instantiated, stored and moved}{201}{subsection.15.1.10}%
+\contentsline {subsection}{\numberline {15.1.11}One complete trace and a reconstruction challenge}{202}{subsection.15.1.11}%
+\contentsline {section}{\numberline {15.2}A texture tile that chooses its work before the frame begins}{203}{section.15.2}%
+\contentsline {subsection}{\numberline {15.2.1}The pixel format is not an integer whose meaning we must rediscover}{204}{subsection.15.2.1}%
+\contentsline {subsection}{\numberline {15.2.2}The renderer asks whether one branch can disappear completely}{205}{subsection.15.2.2}%
+\contentsline {subsection}{\numberline {15.2.3}Some calculations can be used at compile time without being forced there}{205}{subsection.15.2.3}%
+\contentsline {subsection}{\numberline {15.2.4}Configuration that must be known before the program executes}{206}{subsection.15.2.4}%
+\contentsline {subsection}{\numberline {15.2.5}Why precompute a spatial-address lookup instead of rebuilding it?}{207}{subsection.15.2.5}%
+\contentsline {subsection}{\numberline {15.2.6}A global counter illustrates a different constant-initialization promise}{208}{subsection.15.2.6}%
+\contentsline {subsection}{\numberline {15.2.7}One validation rule must vary without making every call virtual}{209}{subsection.15.2.7}%
+\contentsline {subsection}{\numberline {15.2.8}The recorder is known statically; explain the CRTP rather than mystifying it}{210}{subsection.15.2.8}%
+\contentsline {subsection}{\numberline {15.2.9}The same operation can be verified or merely described---without a Boolean flag}{211}{subsection.15.2.9}%
+\contentsline {subsection}{\numberline {15.2.10}If a policy has no data, why can its ordinary member increase object size?}{212}{subsection.15.2.10}%
+\contentsline {subsection}{\numberline {15.2.11}Static choice and runtime choice have different ownership and performance consequences}{213}{subsection.15.2.11}%
+\contentsline {subsection}{\numberline {15.2.12}The full walk through our example, including its failure boundaries}{214}{subsection.15.2.12}%
+\contentsline {subsection}{\numberline {15.2.13}A mastery test that connects every mechanism without breaking the narrative}{215}{subsection.15.2.13}%
+\contentsline {section}{\numberline {15.3}An asset registry grows while its handles must not change}{216}{section.15.3}%
+\contentsline {subsection}{\numberline {15.3.1}A vector has three quantities, but only one of them counts living elements}{216}{subsection.15.3.1}%
+\contentsline {subsection}{\numberline {15.3.2}Why vectors usually grow geometrically: derive the cost instead of repeating ``amortized O(1)''}{218}{subsection.15.3.2}%
+\contentsline {subsection}{\numberline {15.3.3}A growing vector invalidates addresses, not logical identity---if we design identity correctly}{219}{subsection.15.3.3}%
+\contentsline {subsection}{\numberline {15.3.4}A stable handle is not a transactional insertion algorithm by itself}{220}{subsection.15.3.4}%
+\contentsline {subsection}{\numberline {15.3.5}Why a fixed array is still the right answer in some parts of this engine}{221}{subsection.15.3.5}%
+\contentsline {subsection}{\numberline {15.3.6}A queue of both recent and old work needs inexpensive front and back operations}{221}{subsection.15.3.6}%
+\contentsline {subsection}{\numberline {15.3.7}Node-based linked structures trade locality for specific mutation guarantees}{222}{subsection.15.3.7}%
+\contentsline {subsection}{\numberline {15.3.8}Asset name lookup is a separate job from storing the asset bytes}{222}{subsection.15.3.8}%
+\contentsline {subsection}{\numberline {15.3.9}A hash index finds names quickly on average---but its correctness is not its speed}{223}{subsection.15.3.9}%
+\contentsline {subsection}{\numberline {15.3.10}Load factor controls rehash pressure, not the absence of collisions}{224}{subsection.15.3.10}%
+\contentsline {subsection}{\numberline {15.3.11}The order in which work executes is yet another independent decision}{225}{subsection.15.3.11}%
+\contentsline {subsection}{\numberline {15.3.12}A span can inspect bytes without owning them---and that is precisely its danger}{225}{subsection.15.3.12}%
+\contentsline {subsection}{\numberline {15.3.13}Paths and asset names need two different string types at two different boundaries}{226}{subsection.15.3.13}%
+\contentsline {subsection}{\numberline {15.3.14}The container selection can be stated as an engineering contract, not a popularity ranking}{227}{subsection.15.3.14}%
+\contentsline {subsection}{\numberline {15.3.15}Trace the full lifecycle and verify precisely what the code proves}{228}{subsection.15.3.15}%
+\contentsline {chapter}{\numberline {16}Queries, lazy ranges, allocators, and module boundaries}{230}{chapter.16}%
+\contentsline {section}{\numberline {16.1}From a living asset registry to reliable queries and transformations}{230}{section.16.1}%
+\contentsline {subsection}{\numberline {16.1.1}A missing asset is different from an invalid request}{231}{subsection.16.1.1}%
+\contentsline {subsection}{\numberline {16.1.2}One value or one explanation, without pretending C++20 already has std::expected}{231}{subsection.16.1.2}%
+\contentsline {subsection}{\numberline {16.1.3}Some requests are one of several command shapes; that is not the same as a missing value}{233}{subsection.16.1.3}%
+\contentsline {subsection}{\numberline {16.1.4}The diagnostics system needs a different escape hatch: std::any}{234}{subsection.16.1.4}%
+\contentsline {subsection}{\numberline {16.1.5}A report contains several related values; what is the correct shape?}{235}{subsection.16.1.5}%
+\contentsline {subsection}{\numberline {16.1.6}Before searching anything, decide what kind of iterator the algorithm actually needs}{235}{subsection.16.1.6}%
+\contentsline {subsection}{\numberline {16.1.7}The upload report needs sorted work, but what does ``sorted'' mean?}{236}{subsection.16.1.7}%
+\contentsline {subsection}{\numberline {16.1.8}Sometimes we only need to separate meshes from textures, not sort everything}{238}{subsection.16.1.8}%
+\contentsline {subsection}{\numberline {16.1.9}Once byte counts are ordered, we can find an entire equal-size range}{238}{subsection.16.1.9}%
+\contentsline {subsection}{\numberline {16.1.10}A one-off unsorted name query may still be better as a simple linear search}{240}{subsection.16.1.10}%
+\contentsline {subsection}{\numberline {16.1.11}The report wants just byte counts; transform rather than write a second complicated loop}{240}{subsection.16.1.11}%
+\contentsline {subsection}{\numberline {16.1.12}Adding a sequence is not always the same operation as reducing it in any order}{241}{subsection.16.1.12}%
+\contentsline {subsection}{\numberline {16.1.13}Erasing ``by algorithm'' is not automatically erasing ``from the container''}{242}{subsection.16.1.13}%
+\contentsline {subsection}{\numberline {16.1.14}Putting the entire pipeline together without losing the guarantees we already earned}{243}{subsection.16.1.14}%
+\contentsline {subsection}{\numberline {16.1.15}The executable witness, independent reconstruction and remaining evidence}{244}{subsection.16.1.15}%
+\contentsline {section}{\numberline {16.2}From copying every asset report to a lazy, allocatable, separately compiled query service}{245}{section.16.2}%
+\contentsline {subsection}{\numberline {16.2.1}What the range-based for statement really does at the query boundary}{246}{subsection.16.2.1}%
+\contentsline {subsection}{\numberline {16.2.2}The custom iterator has an observable promise, not merely two operators}{247}{subsection.16.2.2}%
+\contentsline {subsection}{\numberline {16.2.3}A view describes a computation; it does not necessarily compute the answer now}{248}{subsection.16.2.3}%
+\contentsline {subsection}{\numberline {16.2.4}Owning ranges, borrowed views, and dangling are three separate questions}{249}{subsection.16.2.4}%
+\contentsline {subsection}{\numberline {16.2.5}Projections are not the same thing as constructing another list of names}{250}{subsection.16.2.5}%
+\contentsline {subsection}{\numberline {16.2.6}We have stopped copying intermediate vectors; now who pays for the final allocations?}{251}{subsection.16.2.6}%
+\contentsline {subsection}{\numberline {16.2.7}The problem with a compile-time allocator type is that allocation strategy may change per frame}{253}{subsection.16.2.7}%
+\contentsline {subsection}{\numberline {16.2.8}An arena is excellent for one frame---but only if its destruction boundary is real}{254}{subsection.16.2.8}%
+\contentsline {subsection}{\numberline {16.2.9}A function object or lambda is not necessarily slow; its \emph {representation} must be measured}{256}{subsection.16.2.9}%
+\contentsline {subsection}{\numberline {16.2.10}The first compilation boundary: headers duplicate text, modules provide an import graph}{257}{subsection.16.2.10}%
+\contentsline {subsection}{\numberline {16.2.11}Module partitions separate interface decisions without splitting their identity}{258}{subsection.16.2.11}%
+\contentsline {subsection}{\numberline {16.2.12}The implementation unit defines the operation but does not export its body}{259}{subsection.16.2.12}%
+\contentsline {subsection}{\numberline {16.2.13}Inline, linkage, and the One Definition Rule survive the transition to modules}{259}{subsection.16.2.13}%
+\contentsline {subsection}{\numberline {16.2.14}Header units are a bridge, not an unlimited replacement for every include}{260}{subsection.16.2.14}%
+\contentsline {subsection}{\numberline {16.2.15}The engine namespace organizes source names; it does not by itself version binaries}{261}{subsection.16.2.15}%
+\contentsline {subsection}{\numberline {16.2.16}A C-linkage wrapper makes a narrower promise than a C++ template API}{261}{subsection.16.2.16}%
+\contentsline {subsection}{\numberline {16.2.17}Why the exported C++ template API and the external ABI deserve different treatment}{263}{subsection.16.2.17}%
+\contentsline {subsection}{\numberline {16.2.18}Reproduce the module graph, not merely a code snippet that looks like a module}{263}{subsection.16.2.18}%
+\contentsline {subsection}{\numberline {16.2.19}One end-to-end reconstruction from a blank directory}{264}{subsection.16.2.19}%
+\contentsline {chapter}{\numberline {17}Typed APIs and measured CPU data structures}{266}{chapter.17}%
+\contentsline {section}{\numberline {17.1}A registry crosses its last C++ boundary: hidden implementation, typed identity and measured abstraction cost}{266}{section.17.1}%
+\contentsline {subsection}{\numberline {17.1.1}Hide representation only after deciding what clients are entitled to know}{267}{subsection.17.1.1}%
+\contentsline {subsection}{\numberline {17.1.2}A handle is not an address: distinguish kind, slot, generation and owner}{268}{subsection.17.1.2}%
+\contentsline {subsection}{\numberline {17.1.3}Strong mathematical types do not perform mathematical conversions for us}{270}{subsection.17.1.3}%
+\contentsline {subsection}{\numberline {17.1.4}Expression templates: delaying evaluation can remove an intermediate and create a lifetime bug}{271}{subsection.17.1.4}%
+\contentsline {subsection}{\numberline {17.1.5}The delayed path must preserve the same mathematical contract}{273}{subsection.17.1.5}%
+\contentsline {subsection}{\numberline {17.1.6}Intrusive storage exposes a different ownership contract}{274}{subsection.17.1.6}%
+\contentsline {subsection}{\numberline {17.1.7}The zero-overhead principle becomes a falsifiable experiment}{275}{subsection.17.1.7}%
+\contentsline {subsection}{\numberline {17.1.8}The finished container contract is a set of explicit promises}{276}{subsection.17.1.8}%
+\contentsline {section}{\numberline {17.2}From a correct C++ asset service to the instructions a CPU can execute --- Phase 4, M019--M021, Parts 301--346}{277}{section.17.2}%
+\contentsline {subsection}{\numberline {17.2.1}Why a five-stage pipeline is an explanation, not a prediction of modern silicon}{277}{subsection.17.2.1}%
+\contentsline {subsection}{\numberline {17.2.2}When memory traffic becomes more expensive than arithmetic}{279}{subsection.17.2.2}%
+\contentsline {subsection}{\numberline {17.2.3}Rewrite the representation around access patterns, not names}{281}{subsection.17.2.3}%
+\contentsline {subsection}{\numberline {17.2.4}Sharing a cache is not the same as safely sharing a value}{282}{subsection.17.2.4}%
+\contentsline {subsection}{\numberline {17.2.5}SIMD: one instruction, several elements, but only under a valid contract}{283}{subsection.17.2.5}%
+\contentsline {subsection}{\numberline {17.2.6}One measurement chain for the first half of Phase 4}{284}{subsection.17.2.6}%
+\contentsline {section}{\numberline {17.3}From temporary memory to finished parallel frames --- Phase 4, M022--M024, Parts 347--400}{285}{section.17.3}%
+\contentsline {subsection}{\numberline {17.3.1}Each allocation makes two promises: suitable storage and controlled lifetime}{285}{subsection.17.3.1}%
+\contentsline {subsection}{\numberline {17.3.2}Deferred destruction is ownership plus a completion relation}{287}{subsection.17.3.2}%
+\contentsline {subsection}{\numberline {17.3.3}Threads share a process address space, not a common execution order}{287}{subsection.17.3.3}%
+\contentsline {subsection}{\numberline {17.3.4}A job system is a scheduling graph, not merely a vector of threads}{289}{subsection.17.3.4}%
+\contentsline {subsection}{\numberline {17.3.5}A bounded priority scheduler from Kohi \#067 --- and the limits of what it proves}{290}{subsection.17.3.5}%
+\contentsline {subsection}{\numberline {17.3.6}Determinism is a property of the complete update contract}{293}{subsection.17.3.6}%
+\contentsline {subsection}{\numberline {17.3.7}Profile first: one plausible optimization can hide the real bottleneck}{293}{subsection.17.3.7}%
+\contentsline {section}{\numberline {17.4}The scene is now too large for the wrong container --- Phase 5, M025--M027, Parts 401--445}{295}{section.17.4}%
+\contentsline {subsection}{\numberline {17.4.1}What an abstract data type promises, and what a representation actually pays}{295}{subsection.17.4.1}%
+\contentsline {subsection}{\numberline {17.4.2}Why a vector can grow cheaply even though reallocation is expensive}{296}{subsection.17.4.2}%
+\contentsline {subsection}{\numberline {17.4.3}A ring queue is the first container where a boundary bug becomes a temporal bug}{297}{subsection.17.4.3}%
+\contentsline {subsection}{\numberline {17.4.4}Hash tables trade a comparison tree for a probe invariant}{297}{subsection.17.4.4}%
+\contentsline {subsection}{\numberline {17.4.5}A Bloom filter is a one-sided answer to a different question}{298}{subsection.17.4.5}%
+\contentsline {subsection}{\numberline {17.4.6}Trees emerge when the question changes from existence to ordered structure}{299}{subsection.17.4.6}%
+\contentsline {subsection}{\numberline {17.4.7}A heap is an ordering promise weaker than a sorted array}{300}{subsection.17.4.7}%
+\contentsline {subsection}{\numberline {17.4.8}Disjoint sets explain connectivity that repeatedly changes}{300}{subsection.17.4.8}%
+\contentsline {chapter}{\numberline {18}Build, Test and Reproduce the Program}{302}{chapter.18}%
+\contentsline {section}{\numberline {18.1}Build, document, measure, and reproduce the program}{302}{section.18.1}%
+\contentsline {subsection}{\numberline {18.1.1}CMake Target Semantics, Usage Requirements, Presets, Ninja DAGs, Toolchains, Clang/MSVC Portability, C++ Modules, Repository Pinning, Reproducible Superbuilds, CI Matrices, Test Architecture, Crash/Logging/Profiling Hooks, Portable Engine Boundaries, and the Complete Source→Editor→Package→Runtime Ownership Graph}{302}{subsection.18.1.1}%
+\contentsline {subsection}{\numberline {18.1.2}THE BUILD GRAPH ITSELF}{303}{subsection.18.1.2}%
+\contentsline {subsection}{\numberline {18.1.3}REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW}{329}{subsection.18.1.3}%
+\contentsline {chapter}{\numberline {19}C++ Representation, Ownership and Lifetime}{365}{chapter.19}%
+\contentsline {section}{\numberline {19.1}Reconstruct the representation and lifetime proofs}{365}{section.19.1}%
+\contentsline {section}{\numberline {19.2}C++ - Assignment as a resource transaction}{365}{section.19.2}%
+\contentsline {subsection}{\numberline {19.2.1}Why no-throw properties matter to growth}{365}{subsection.19.2.1}%
+\contentsline {subsection}{\numberline {19.2.2}Isolating sink counts from growth}{366}{subsection.19.2.2}%
+\contentsline {section}{\numberline {19.3}C++ - Qualification safety and borrow intervals}{366}{section.19.3}%
+\contentsline {subsection}{\numberline {19.3.1}Why nested const needs an intermediate guard}{366}{subsection.19.3.1}%
+\contentsline {subsection}{\numberline {19.3.2}A borrow's access interval is an intersection}{366}{subsection.19.3.2}%
+\contentsline {subsection}{\numberline {19.3.3}Forwarding reconstructed from collapsing}{367}{subsection.19.3.3}%
+\contentsline {section}{\numberline {19.4}C++ - Conventional record layout and identity horizon}{367}{section.19.4}%
+\contentsline {section}{\numberline {19.5}M001 - Positional value, masks, fields, and De Morgan}{368}{section.19.5}%
+\contentsline {subsection}{\numberline {19.5.1}Unsigned positional value and base conversion}{368}{subsection.19.5.1}%
+\contentsline {subsection}{\numberline {19.5.2}Contiguous masks, extraction, and insertion}{368}{subsection.19.5.2}%
+\contentsline {subsection}{\numberline {19.5.3}De Morgan by exhaustive truth assignment}{368}{subsection.19.5.3}%
+\contentsline {section}{\numberline {19.6}M002 - Signed representations, adders, and arithmetic policies}{369}{section.19.6}%
+\contentsline {subsection}{\numberline {19.6.1}Finite ranges and signed encodings}{369}{subsection.19.6.1}%
+\contentsline {subsection}{\numberline {19.6.2}Two's-complement negation and subtraction}{369}{subsection.19.6.2}%
+\contentsline {subsection}{\numberline {19.6.3}Full adder, carry, and signed overflow}{370}{subsection.19.6.3}%
+\contentsline {subsection}{\numberline {19.6.4}Multiplication, division, and policy choices}{370}{subsection.19.6.4}%
+\contentsline {section}{\numberline {19.7}Definitions and proof steps behind the compact equations}{370}{section.19.7}%
+\contentsline {subsection}{\numberline {19.7.1}Why an N-bit complement subtracts from all ones}{370}{subsection.19.7.1}%
+\contentsline {subsection}{\numberline {19.7.2}Why insertion preserves all other bits}{371}{subsection.19.7.2}%
+\contentsline {subsection}{\numberline {19.7.3}How two half adders make a full adder}{371}{subsection.19.7.3}%
+\contentsline {subsection}{\numberline {19.7.4}C++ common-type decision after promotion}{371}{subsection.19.7.4}%
+\contentsline {section}{\numberline {19.8}M003 - Byte order, layout, and translation}{371}{section.19.8}%
+\contentsline {subsection}{\numberline {19.8.1}Base-256 decomposition and codec inverse}{371}{subsection.19.8.1}%
+\contentsline {subsection}{\numberline {19.8.2}Alignment rounding without hiding overflow}{372}{subsection.19.8.2}%
+\contentsline {subsection}{\numberline {19.8.3}Member offsets and tail padding}{372}{subsection.19.8.3}%
+\contentsline {subsection}{\numberline {19.8.4}Page decomposition and offset preservation}{372}{subsection.19.8.4}%
+\contentsline {subsection}{\numberline {19.8.5}Translation reach and record footprint}{373}{subsection.19.8.5}%
+\contentsline {section}{\numberline {19.9}M004 - Floating-point fields, spacing, and rounding}{373}{section.19.9}%
+\contentsline {subsection}{\numberline {19.9.1}Normal value from fraction positions}{373}{subsection.19.9.1}%
+\contentsline {subsection}{\numberline {19.9.2}Subnormal lattice and boundary continuity}{373}{subsection.19.9.2}%
+\contentsline {subsection}{\numberline {19.9.3}Spacing, epsilon, and nearest-rounding error}{374}{subsection.19.9.3}%
+\contentsline {subsection}{\numberline {19.9.4}Guard, round, sticky and even ties}{374}{subsection.19.9.4}%
+\contentsline {subsection}{\numberline {19.9.5}A zero-collapsed representation key}{374}{subsection.19.9.5}%
+\contentsline {subsection}{\numberline {19.9.6}Scaling a norm and a determinant}{375}{subsection.19.9.6}%
+\contentsline {subsection}{\numberline {19.9.7}Representation equality versus numerical equality}{375}{subsection.19.9.7}%
+\contentsline {section}{\numberline {19.10}M005 - Representation error, cancellation, and rounding graphs}{375}{section.19.10}%
+\contentsline {subsection}{\numberline {19.10.1}Termination in a base and exact one-tenth error}{375}{subsection.19.10.1}%
+\contentsline {subsection}{\numberline {19.10.2}Cancellation bound and exact subtraction}{376}{subsection.19.10.2}%
+\contentsline {subsection}{\numberline {19.10.3}Rounding products and summation bounds}{376}{subsection.19.10.3}%
+\contentsline {subsection}{\numberline {19.10.4}FMA witness and distributive witness}{376}{subsection.19.10.4}%
+\contentsline {subsection}{\numberline {19.10.5}Capped history is mathematically order-dependent}{376}{subsection.19.10.5}%
+\contentsline {subsection}{\numberline {19.10.6}Tolerance is not an equivalence relation}{377}{subsection.19.10.6}%
+\contentsline {section}{\numberline {19.11}Representation choice - Fixed grids, codebooks and low-precision fields}{377}{section.19.11}%
+\contentsline {subsection}{\numberline {19.11.1}A scale is an interpretation, not an integer operation}{377}{subsection.19.11.1}%
+\contentsline {subsection}{\numberline {19.11.2}Different operand scales require an explicit output scale}{377}{subsection.19.11.2}%
+\contentsline {subsection}{\numberline {19.11.3}Affine codebook error and endpoint constraints}{378}{subsection.19.11.3}%
+\contentsline {subsection}{\numberline {19.11.4}Metadata changes the compression ratio}{378}{subsection.19.11.4}%
+\contentsline {subsection}{\numberline {19.11.5}Low precision changes the grid, not the decoding principle}{378}{subsection.19.11.5}%
+\contentsline {section}{\numberline {19.12}External bytes - Bounds, identity and error detection}{378}{section.19.12}%
+\contentsline {subsection}{\numberline {19.12.1}Bounds belong to the arithmetic domain of the parser}{378}{subsection.19.12.1}%
+\contentsline {subsection}{\numberline {19.12.2}CRC polynomial toy trace}{379}{subsection.19.12.2}%
+\contentsline {subsection}{\numberline {19.12.3}A digest cannot be injective on unrestricted messages}{379}{subsection.19.12.3}%
+\contentsline {section}{\numberline {19.13}Source trail for the combined foundations}{379}{section.19.13}%
+\contentsline {subsection}{\numberline {19.13.1}GPU pipeline, vertex data, and API state}{379}{subsection.19.13.1}%
+\contentsline {subsubsection}{Keep the teaching API and modern buffer model distinct}{379}{subsubsection*.70}%
+\contentsline {subsubsection}{Map the logical image pipeline onto GPU work}{380}{subsubsection*.71}%
+\contentsline {subsubsection}{How the six-space story maps onto GPU work}{380}{subsubsection*.72}%
+\contentsline {subsubsection}{Clipping, culling, rasterization, and fragments}{381}{subsubsection*.73}%
+\contentsline {subsubsection}{Vertex attributes and drawing commands}{381}{subsubsection*.74}%
+\contentsline {subsubsection}{Modern-buffer bridge: bytes, stride, offset, and binding}{383}{subsubsection*.75}%
+\contentsline {subsubsection}{OpenGL commands configure state; they do not define a scene}{384}{subsubsection*.76}%
+\contentsline {subsubsection}{Numeric arrays and line interpolation}{385}{subsubsection*.77}%
+\contentsline {subsubsection}{Applying matrices in the recorded OpenGL examples}{386}{subsubsection*.78}%
+\contentsline {subsection}{\numberline {19.13.2}Additional geometry notes for light transport}{387}{subsection.19.13.2}%
+\contentsline {subsubsection}{Barycentric coordinates describe a point in a triangle}{387}{subsubsection*.79}%
+\contentsline {subsubsection}{Organize the graphics program with model, view, and controller roles}{387}{subsubsection*.80}%
+\contentsline {subsubsection}{Historical snapshot: the 2009 lecture pipeline and API}{388}{subsubsection*.81}%
+\contentsline {subsubsection}{Historical snapshot: the 2009 lecture pipeline and API}{388}{subsubsection*.82}%
+\contentsline {subsubsection}{Rasterization: turn projected polygons into pixel samples}{388}{subsubsection*.83}%
+\contentsline {subsection}{\numberline {19.13.3}Figure U10 - Vertex fetch uses a stride and byte offset}{390}{subsection.19.13.3}%
+\contentsline {chapter}{\numberline {20}From cartridge bytes to a reproducible machine}{391}{chapter.20}%
+\contentsline {section}{\numberline {20.1}Systems: From Cartridge Bytes to a Reproducible Machine}{391}{section.20.1}%
+\contentsline {subsection}{\numberline {20.1.1}An executable byte acquires meaning only inside a machine}{391}{subsection.20.1.1}%
+\contentsline {subsubsection}{Addressing is an algorithm for finding a value, not a suffix}{392}{subsubsection*.85}%
+\contentsline {subsubsection}{Unsigned carry is not signed overflow}{393}{subsubsection*.86}%
+\contentsline {subsection}{\numberline {20.1.2}The memory bus is a device router, not one enormous RAM array}{393}{subsection.20.1.2}%
+\contentsline {subsubsection}{An iNES file describes cartridge memory; it is not executable code itself}{394}{subsubsection*.87}%
+\contentsline {subsection}{\numberline {20.1.3}Rendering time is not the same clock as CPU time}{394}{subsection.20.1.3}%
+\contentsline {subsection}{\numberline {20.1.4}Deterministic replay requires an explicit state contract}{395}{subsection.20.1.4}%
+\contentsline {subsection}{\numberline {20.1.5}Reference implementation and evidence gate}{395}{subsection.20.1.5}%
+\contentsline {subsection}{\numberline {20.1.6}From a deterministic emulator state to an operating-system file}{396}{subsection.20.1.6}%
+\contentsline {subsection}{\numberline {20.1.7}From a file to a message on an unreliable network}{397}{subsection.20.1.7}%
+\contentsline {subsection}{\numberline {20.1.8}From received bytes to a trust decision}{398}{subsection.20.1.8}%
+\contentsline {section}{\numberline {20.2}XR inside an engine --- runtime ownership, frame pacing and hybrid rendering}{400}{section.20.2}%
+\contentsline {subsection}{\numberline {20.2.1}OpenXR belongs in the platform layer}{400}{subsection.20.2.1}%
+\contentsline {subsection}{\numberline {20.2.2}Build around view families, not two hard-coded eyes}{400}{subsection.20.2.2}%
+\contentsline {subsection}{\numberline {20.2.3}Late update needs an ownership boundary}{400}{subsection.20.2.3}%
+\contentsline {subsection}{\numberline {20.2.4}Submitted depth is a contract}{401}{subsection.20.2.4}%
+\contentsline {subsection}{\numberline {20.2.5}Foveation needs a policy layer above VRS}{401}{subsection.20.2.5}%
+\contentsline {subsection}{\numberline {20.2.6}Mixed reality needs an explicit composition graph}{401}{subsection.20.2.6}%
+\contentsline {subsection}{\numberline {20.2.7}Hands and anchors need state machines}{401}{subsection.20.2.7}%
+\contentsline {subsection}{\numberline {20.2.8}XR audio should share the transform graph}{401}{subsection.20.2.8}%
+\contentsline {subsection}{\numberline {20.2.9}Neural graphics should enter the engine through capability contracts}{401}{subsection.20.2.9}%
+\contentsline {subsection}{\numberline {20.2.10}Neural shading is a shader-system problem}{402}{subsection.20.2.10}%
+\contentsline {subsection}{\numberline {20.2.11}Python should own offline automation and research tooling}{402}{subsection.20.2.11}%
+\contentsline {subsection}{\numberline {20.2.12}An XR benchmark harness should replay time}{402}{subsection.20.2.12}%
+\contentsline {subsection}{\numberline {20.2.13}Remote XR turns frame pacing into a networked control problem}{402}{subsection.20.2.13}%
+\contentsline {subsection}{\numberline {20.2.14}WebXR and platform runtimes are different deployment layers}{403}{subsection.20.2.14}%
+\contentsline {subsection}{\numberline {20.2.15}Game Engine project ladder: first executable loop to evidence-backed capstone}{403}{subsection.20.2.15}%
+\contentsline {subsection}{\numberline {20.2.16}Stage 1 --- A visible, repeatable frame}{403}{subsection.20.2.16}%
+\contentsline {subsection}{\numberline {20.2.17}Stage 2 --- Stable identity and transform ownership}{404}{subsection.20.2.17}%
+\contentsline {subsection}{\numberline {20.2.18}Stage 3 --- Compile render intent into a legal logical order}{404}{subsection.20.2.18}%
+\contentsline {subsection}{\numberline {20.2.19}Stage 4 --- Move one rigid body from force to coupled contact}{405}{subsection.20.2.19}%
+\contentsline {subsection}{\numberline {20.2.20}Stage 5 --- Save and replace a scene transactionally}{405}{subsection.20.2.20}%
+\contentsline {subsection}{\numberline {20.2.21}Stage 6 --- Capstone: deterministic replay across save, simulation and rendering}{406}{subsection.20.2.21}%
+\contentsline {subsection}{\numberline {20.2.22}Route completion rule}{406}{subsection.20.2.22}%
+\contentsline {subsection}{\numberline {20.2.23}The deterministic system capstone and its evidence boundary}{406}{subsection.20.2.23}%
+\contentsline {subsection}{\numberline {20.2.24}Reconstruct the working loop and test its contracts}{407}{subsection.20.2.24}%
+\contentsline {subsubsection}{Rebuild the idea in a small executable laboratory}{407}{subsubsection*.88}%
+\contentsline {subsubsection}{Iterate through narrow, testable milestones}{410}{subsubsection*.89}%
+\contentsline {subsubsection}{A compact study sequence for readers implementing their own engine}{411}{subsubsection*.90}%
+\contentsline {subsubsection}{A step-by-step build order for a small Hazel-like engine}{412}{subsubsection*.91}%
+\contentsline {paragraph}{Step 1: Establish a reproducible project}{412}{paragraph*.92}%
+\contentsline {paragraph}{Step 2: Own the window and application lifetime}{412}{paragraph*.93}%
+\contentsline {paragraph}{Step 3: Create a timestep loop}{412}{paragraph*.94}%
+\contentsline {paragraph}{Step 4: Add typed events and propagation}{412}{paragraph*.95}%
+\contentsline {paragraph}{Step 5: Add layers for lifecycle-managed features}{412}{paragraph*.96}%
+\contentsline {paragraph}{Step 6: Draw a triangle, then a sprite}{412}{paragraph*.97}%
+\contentsline {paragraph}{Step 7: Turn game objects into scene data}{412}{paragraph*.98}%
+\contentsline {paragraph}{Step 8: Make the scene editable}{413}{paragraph*.99}%
+\contentsline {paragraph}{Step 9: Separate authoring and runtime}{413}{paragraph*.100}%
+\contentsline {paragraph}{Step 10: Add assets, scripting, and physics as independent integrations}{413}{paragraph*.101}%
+\contentsline {paragraph}{Step 11: Add compatibility and performance work when the project demands it}{413}{paragraph*.102}%
+\contentsline {subsection}{\numberline {20.2.25}Source map, remaining reading, and future additions}{413}{subsection.20.2.25}%
+\contentsline {subsubsection}{Evidence boundary and route through the material}{413}{subsubsection*.103}%
+\contentsline {paragraph}{What a one-prompt engine demo can and cannot prove}{414}{paragraph*.104}%
+\contentsline {paragraph}{Scope and evidence}{414}{paragraph*.105}%
+\contentsline {subsubsection}{Source map and evidence limits}{415}{subsubsection*.106}%
+\contentsline {subsubsection}{Closing perspective}{415}{subsubsection*.107}%
+\contentsline {subsubsection}{Evidence, scope, and how to use this chapter}{415}{subsubsection*.108}%
+\contentsline {paragraph}{Reading boundary}{416}{paragraph*.109}%
+\contentsline {subsubsection}{What a learner should inspect next}{417}{subsubsection*.110}%
+\contentsline {subsubsection}{Closing: build the smallest complete loop}{417}{subsubsection*.111}%
+\contentsline {subsubsection}{Source notes}{418}{subsubsection*.112}%
+\contentsline {subsubsection}{What to study next}{418}{subsubsection*.113}%
+\contentsline {subsubsection}{Reading boundary and further work}{418}{subsubsection*.114}%
+\contentsline {subsubsection}{Follow a collision all the way back to player feedback}{419}{subsubsection*.115}%
+\contentsline {subsubsection}{Keep the authoring and runtime boundary visible}{419}{subsubsection*.116}%
+\contentsline {subsection}{\numberline {20.2.26}Current source legend}{419}{subsection.20.2.26}%
+\contentsline {subsection}{\numberline {20.2.27}Source trail for the systems and mechanics expansion}{420}{subsection.20.2.27}%
+\contentsline {subsection}{\numberline {20.2.28}From declared rendering work to editable captured worlds}{420}{subsection.20.2.28}%
+\contentsline {subsection}{\numberline {20.2.29}2. Compile a render graph before executing it}{421}{subsection.20.2.29}%
+\contentsline {subsection}{\numberline {20.2.30}6. Asset publication connects files, runtime, and graph resources}{423}{subsection.20.2.30}%
+\contentsline {subsection}{\numberline {20.2.31}Primary references used for corrections and terminology}{424}{subsection.20.2.31}%
+\contentsline {subsection}{\numberline {20.2.32}Rendering identity becomes world identity only through an explicit bridge}{424}{subsection.20.2.32}%
+\contentsline {subsection}{\numberline {20.2.33}From a list of render passes to a proved execution order}{425}{subsection.20.2.33}%
+\contentsline {subsubsection}{Derive all three resource hazards, not just producer--consumer arrows}{426}{subsubsection*.117}%
+\contentsline {subsubsection}{Plan subresource state before translating it to an API}{426}{subsubsection*.118}%
+\contentsline {subsubsection}{Complete C++20 graph compiler, executable trace and negative cases}{431}{subsubsection*.119}%
+\contentsline {subsubsection}{The essential missing GPU contract, and how to implement it next}{435}{subsubsection*.120}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{437}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Game Engine --- Sources and Coverage}{437}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Coverage at 6 November 2026}{437}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}The four supplied books}{438}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Public source-code boundaries}{440}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Additional primary references actually inspected}{440}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Per-video ledger}{441}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}Executable and rendering verification}{551}{subsection.A.1.6}%
+\contentsline {subsection}{\numberline {A.1.7}Continuing this one volume}{551}{subsection.A.1.7}%
+\contentsline {subsection}{\numberline {A.1.8}Batch 001 --- capped acquisition and deeper reading}{551}{subsection.A.1.8}%
+\contentsline {subsection}{\numberline {A.1.9}Batch 002 --- full reading and audio transcription fallback}{552}{subsection.A.1.9}%
+\contentsline {subsection}{\numberline {A.1.10}Batch 003 --- resumed reading, sequential acquisition, and audio ASR}{552}{subsection.A.1.10}%
+\contentsline {subsection}{\numberline {A.1.11}Batch 004 --- render graphs, UI geometry, and renderer ownership}{553}{subsection.A.1.11}%
+\contentsline {subsection}{\numberline {A.1.12}Batch 005 --- supervised continuation on 6 November 2026}{553}{subsection.A.1.12}%
+\contentsline {subsection}{\numberline {A.1.13}Batch 006 --- supervised continuation on 6 November 2026}{554}{subsection.A.1.13}%
+\contentsline {subsection}{\numberline {A.1.14}Batch 007 --- caption, book, ASR, and native-layout additions}{555}{subsection.A.1.14}%
+\contentsline {subsubsection}{Caption source-to-volume map}{556}{subsubsection*.121}%
+\contentsline {subsection}{\numberline {A.1.15}Scope boundary}{561}{subsection.A.1.15}%
+\contentsline {subsection}{\numberline {A.1.16}Coverage gaps preserved}{565}{subsection.A.1.16}%
+\contentsline {subsubsection}{Selected book passage map}{565}{subsubsection*.122}%
+\contentsline {subsubsection}{Additional source coverage}{566}{subsubsection*.123}%
+\contentsline {subsection}{\numberline {A.1.17}batch-008 --- expanded reading and integration}{566}{subsection.A.1.17}%
+\contentsline {section}{\numberline {A.2}Batch 008 A coverage map}{566}{section.A.2}%
+\contentsline {section}{\numberline {A.3}Batch-008 group B coverage map}{570}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Source boundaries}{573}{subsection.A.3.1}%
+\contentsline {section}{\numberline {A.4}Batch-008 group C coverage map}{573}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Source boundaries}{577}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}batch-009 --- expanded reading and integration}{579}{subsection.A.4.2}%
+\contentsline {section}{\numberline {A.5}Batch 009 A coverage map}{579}{section.A.5}%
+\contentsline {section}{\numberline {A.6}Batch 009 group B coverage map}{582}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Limits}{587}{subsection.A.6.1}%
+\contentsline {section}{\numberline {A.7}Batch 009 group C coverage map}{587}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}batch-010 --- expanded reading and integration}{590}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}batch-011 --- expanded reading and integration}{591}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}batch-012 --- expanded reading and integration}{592}{subsection.A.7.3}%
+\contentsline {subsection}{\numberline {A.7.4}batch-013 --- expanded reading and integration}{593}{subsection.A.7.4}%
+\contentsline {subsection}{\numberline {A.7.5}Bounded media acquisition outcomes}{593}{subsection.A.7.5}%
+\contentsline {section}{\numberline {A.8}Batch 013 media acquisition attempts}{593}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}batch-014 --- expanded reading and integration}{595}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}batch-015 --- expanded reading and integration}{596}{subsection.A.8.2}%
+\contentsline {section}{\numberline {A.9}Batch 015 --- technical source-to-teaching coverage}{596}{section.A.9}%
+\contentsline {section}{\numberline {A.10}Batch 015 C source coverage}{599}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Game Design Theory and Practice, PDF pp.~633--644}{600}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}\emph {Rules of Play}, PDF pp.~277--288}{602}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}batch-017 --- expanded reading and integration}{605}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Local-pipeline Toolchain coverage}{605}{subsection.A.10.4}%

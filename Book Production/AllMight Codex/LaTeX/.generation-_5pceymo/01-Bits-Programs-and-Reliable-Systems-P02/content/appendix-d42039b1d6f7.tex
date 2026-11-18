@@ -1,0 +1,52 @@
+\hypertarget{appendix-d42039b1d6f7}{}\label{referencestart:appendix-d42039b1d6f7}
+\section{Ref-qualified accessors}\label{appendix-d42039b1d6f7-ref-qualified-accessors}
+
+\hypertarget{appendix-d42039b1d6f7-ref-qualified-accessors}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C008 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-d42039b1d6f7-definition-and-mechanism}
+
+\hypertarget{appendix-d42039b1d6f7-definition-and-mechanism}{}
+
+Value-returning temporary accessors provide an owning result through direct construction or member movement. Both const and mutable rvalue policies remain required; the shorter M009 source example does not replace the four-way safe design.
+
+\end{allmightroledefinition}
+
+Member \&/\&\& qualifiers constrain the caller's object category. Borrowed getters suit persistent owners; temporary getters can return owning values or be deleted. Handle const rvalues too: a missing const\&\& policy can expose a borrowed result through const\&. Inside \&\& members, *this remains an lvalue.
+
+\subsection{Prerequisites}\label{appendix-d42039b1d6f7-prerequisites}
+
+\hypertarget{appendix-d42039b1d6f7-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-c25d60fed375]{Const qualification and shallow constness} --- Access-path qualification constrains nested conversions and member writes.
+\item
+  \hyperref[appendix-1121b30eaeb0]{Value categories and materialization} --- Expression category determines viable binding and whether temporary identity is needed.
+\item
+  \hyperref[appendix-a978b29bbbb0]{Temporary lifetime extension} --- Temporary deadlines constrain returned paths and deferred access.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-d42039b1d6f7-used-by}
+
+\hypertarget{appendix-d42039b1d6f7-used-by}{}
+
+Later sources will deepen this same node; no empty dependent nodes are created.
+
+\subsection{Recall and next depth}\label{appendix-d42039b1d6f7-recall-and-next-depth}
+
+\hypertarget{appendix-d42039b1d6f7-recall-and-next-depth}{}
+
+Write all four Name overloads and justify each return type. Pending: explicit object parameters and generic interface deduction. Written coverage does not establish learner mastery.
+
+\subsection{Source and navigation}\label{appendix-d42039b1d6f7-source-and-navigation}
+
+\hypertarget{appendix-d42039b1d6f7-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m009---parts-127-147]{C009 development}
+
+\hyperref[01-foundations-i-ch003-an-accessor-must-respect-the-callers-lifetime]{Teaching explanation and examples} · \hyperref[appendix-fd090d982a15-m008---parts-113-126]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

@@ -1,0 +1,82 @@
+\hypertarget{appendix-0b104bcba06b}{}\label{referencestart:appendix-0b104bcba06b}
+\section{Storage duration and object lifetime}\label{appendix-0b104bcba06b-storage-duration-and-object-lifetime}
+
+\hypertarget{appendix-0b104bcba06b-storage-duration-and-object-lifetime}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} C003 · \textbf{Latest development:} C010
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-0b104bcba06b-definition-and-mechanism}
+
+\hypertarget{appendix-0b104bcba06b-definition-and-mechanism}{}
+
+Direct local reference binding can extend a temporary under specified rules; a returned parameter alias does not renew the deadline. A reference's own lifetime does not prove the referent's lifetime.
+
+\end{allmightroledefinition}
+
+Construction and destruction can delimit an occupant while backing storage remains. The inline C++ lab uses construct\_at/destroy\_at in an alignas byte buffer and new/delete as the combined allocation/construction and destruction/release operations. The pointer object does not own or extend pointee life. Implicit object creation occurs only for specified operations and suitable types; a reinterpret\_cast is not a universal construction operation.
+
+Storage duration specifies how long storage is potentially available: automatic, static, thread, or dynamic. Object lifetime describes when a particular initialized object exists within it. Old bytes can remain after lifetime ends without authorizing access. const restricts mutation, not physical placement. Language categories do not dictate a universal segment map.
+
+M010 reuses this separation for smart owners and arenas: a wrapper's storage duration, the managed object's lifetime, the ownership-group lifetime, and an external GPU-use interval may all end at different times. Placement construction reuses suitable live storage; object destruction alone does not return that storage to an allocator.
+
+\subsection{Prerequisites}\label{appendix-0b104bcba06b-prerequisites}
+
+\hypertarget{appendix-0b104bcba06b-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-f414bd4ed05c}{Interpretation contract (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Interpretation contract)} --- Representation, type, and lifetime must identify what object exists.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-0b104bcba06b-used-by}
+
+\hypertarget{appendix-0b104bcba06b-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-3b88c6cd7195]{Thread-local storage} --- uses this prerequisite to establish its entity, lifetime, representation or lookup contract.
+\item
+  \hyperref[appendix-a82f9c438857]{Object construction and storage reuse} --- separates an occupant's construction from backing storage availability.
+\item
+  \hyperref[appendix-6af5921bc853]{Pointer arithmetic and provenance} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-b081b7abe193]{Call stack and stack frames} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-c3480f7d9ff3]{Dynamic allocation and heap} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-17c93c4c2f19]{Static storage and initialization} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-5f9e5e2f0a5e]{Read-only data and code} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-d52e4486f527]{Ownership and non-owning views} --- uses this mechanism as stated in its prerequisites.
+\item
+  \hyperref[appendix-d6d562ca9fbb]{References and aliases}
+\item
+  \hyperref[appendix-a978b29bbbb0]{Temporary lifetime extension}
+\item
+  \hyperref[appendix-9bfe377cef7a]{Destruction and partial construction}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-69739d3ab49b}{RAII and resource handles (Bits, Programs, and Reliable Systems, Part 1, Reference notes: RAII and resource handles)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-f56c3e43fd4e}{Placement construction and explicit lifetime management (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Placement construction and explicit lifetime management)}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-0b104bcba06b-recall-and-next-depth}
+
+\hypertarget{appendix-0b104bcba06b-recall-and-next-depth}{}
+
+Explain why returning a local pointer is invalid even if bytes remain.
+
+\textbf{Pending:} Further lifetime replacement corner cases, allocator/concurrency policies and cross-target ABI experiments; the opening examples do not establish those later guarantees.
+
+\subsection{Source and navigation}\label{appendix-0b104bcba06b-source-and-navigation}
+
+\hypertarget{appendix-0b104bcba06b-source-and-navigation}{}
+
+\hyperref[appendix-fd090d982a15-m008---parts-113-126]{C008 development and corrections}
+
+\hyperref[01-foundations-i-ch002-where-the-bytes-live]{C003 teaching chapter} · \hyperref[appendix-fd090d982a15-m003---parts-41-60]{Part definitions} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)} · \hyperref[01-foundations-i-ch002-storage-is-a-place-an-object-is-its-occupant]{C007 development}

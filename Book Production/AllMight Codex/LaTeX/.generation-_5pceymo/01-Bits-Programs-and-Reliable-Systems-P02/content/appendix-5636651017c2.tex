@@ -1,0 +1,56 @@
+\hypertarget{appendix-5636651017c2}{}\label{referencestart:appendix-5636651017c2}
+\section{Move operations and moved-from states}\label{appendix-5636651017c2-move-operations-and-moved-from-states}
+
+\hypertarget{appendix-5636651017c2-move-operations-and-moved-from-states}{}
+
+\textbf{Curriculum depth:} Introduced · \textbf{First seen:} C009 · \textbf{Latest development:} C009
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-5636651017c2-definition-and-mechanism}
+
+\hypertarget{appendix-5636651017c2-definition-and-mechanism}{}
+
+Move construction creates a destination; move assignment also handles a prior target resource. Ownership transfer must repair the surviving source's documented state. Valid-but-unspecified is not destroyed/uninitialized, and custom types must maintain their own invariants.
+
+\end{allmightroledefinition}
+
+\subsection{Prerequisites}\label{appendix-5636651017c2-prerequisites}
+
+\hypertarget{appendix-5636651017c2-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-0104b704fb11]{Move casts and forwarding references} --- An xvalue cast permits selection of a consuming operation without performing it.
+\item
+  \hyperref[appendix-1340cd1ce582]{Copy semantics and resource identity} --- Assignment and moving must implement a defined semantic value rather than a raw pointer copy.
+\item
+  \hyperref[appendix-9bfe377cef7a]{Destruction and partial construction} --- Transfer algorithms need a safe source/temporary cleanup path on success and failure.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-5636651017c2-used-by}
+
+\hypertarget{appendix-5636651017c2-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-42e02a12c694]{Special member generation and traits}
+\item
+  \hyperref[appendix-c746afaa47d1]{Noexcept and transfer selection}
+\item
+  \hyperref[appendix-adfd6397af8d]{Relocation versus move}
+\end{itemize}
+
+\subsection{Recall and next depth}\label{appendix-5636651017c2-recall-and-next-depth}
+
+\hypertarget{appendix-5636651017c2-recall-and-next-depth}{}
+
+Move a raw byte owner into an existing owner and identify every release. Pending: allocator-aware moves and cross-member domain invariants. Written coverage does not demonstrate personal mastery.
+
+\subsection{Source and navigation}\label{appendix-5636651017c2-source-and-navigation}
+
+\hypertarget{appendix-5636651017c2-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch003-a-move-transfers-responsibility-while-the-source-survives]{Teaching mechanism and examples} · \hyperref[appendix-fd090d982a15-m009---parts-127-147]{Exact coverage} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

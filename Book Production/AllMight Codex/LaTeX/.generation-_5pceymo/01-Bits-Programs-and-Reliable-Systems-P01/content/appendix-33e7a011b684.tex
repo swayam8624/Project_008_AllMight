@@ -1,0 +1,50 @@
+\hypertarget{appendix-33e7a011b684}{}\label{referencestart:appendix-33e7a011b684}
+\section{Guest and host integer domains}\label{appendix-33e7a011b684-guest-and-host-integer-domains}
+
+\hypertarget{appendix-33e7a011b684-guest-and-host-integer-domains}{}
+
+\textbf{Curriculum depth:} Forward · \textbf{First seen:} C002 · \textbf{Latest development:} C002
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-33e7a011b684-definition-and-mechanism}
+
+\hypertarget{appendix-33e7a011b684-definition-and-mechanism}{}
+
+An emulator may compute an \(N\)-bit guest operation in a wider host type so carry and other discarded architectural information remain observable.
+
+\end{allmightroledefinition}
+
+Guest means the machine being emulated; host means the implementation platform. An eight-bit guest addition can use a host temporary holding 0--511, extract carry, then narrow to 0--255. Host signed overflow must never be used to imitate guest wrap.
+
+\subsection{Prerequisites}\label{appendix-33e7a011b684-prerequisites}
+
+\hypertarget{appendix-33e7a011b684-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \hyperref[appendix-cc04044b5782]{Fixed-width integer types} --- When supplied, std::uint32\_t has exactly 32 bits; uint\_least32\_t has at least 32; uint\_fast32\_t is chosen for speed with at least 32.
+\item
+  \hyperref[appendix-8d687c9c08ab]{Carry, overflow, negative, and zero flags} --- For eight-bit addition, C tests exact sum\textgreater255; V tests signed sum outside {[}−128,127{]}; N is result bit 7; Z tests low result==0.
+\end{itemize}
+
+\subsection{Used by}\label{appendix-33e7a011b684-used-by}
+
+\hypertarget{appendix-33e7a011b684-used-by}{}
+
+Connect later chunks here when they use this concept.
+
+\subsection{Recall and next depth}\label{appendix-33e7a011b684-recall-and-next-depth}
+
+\hypertarget{appendix-33e7a011b684-recall-and-next-depth}{}
+
+Explain guest and host integer domains without the label, work the example above, then state the assumption whose removal would change the result.
+
+\textbf{Pending:} exact ISA behavior, host-language conversions, and cross-platform emulation tests.
+
+\subsection{Source and navigation}\label{appendix-33e7a011b684-source-and-navigation}
+
+\hypertarget{appendix-33e7a011b684-source-and-navigation}{}
+
+\hyperref[01-foundations-i-ch001-arithmetic-becomes-a-policy]{C002 teaching chapter} · \href{../01-Bits-Programs-and-Reliable-Systems-P03/main.pdf\#appendix-fd090d982a15}{Part definitions and mechanisms (Bits, Programs, and Reliable Systems, Part 3, Reference notes: Foundations)} · \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-4ad47bdd269a}{Dependency Map (Vision, XR, and Playable Worlds, Part 1, Reference notes: Dependency Map)}

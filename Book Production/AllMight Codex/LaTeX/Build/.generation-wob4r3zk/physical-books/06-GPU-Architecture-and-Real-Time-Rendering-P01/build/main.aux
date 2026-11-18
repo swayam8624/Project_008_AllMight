@@ -1,0 +1,711 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\providecommand \oddpage@label [2]{}
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Graphs, Search, and GPU Scheduling}{1}{chapter.1}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch008-graphs-search-and-gpu-scheduling}{{1}{1}{Graphs, Search, and GPU Scheduling}{chapter.1}{}}
+\newlabel{stagechapter:01-foundations-i-ch008}{{1}{1}{Graphs, Search, and GPU Scheduling}{section*.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}From an asset map to a correct navigable world --- Phase 5, M028--M030, Parts 446--500}{1}{section.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-from-an-asset-map-to-a-correct-navigable-world-phase-5-m028m030-parts-446500}{{1.1}{1}{From an asset map to a correct navigable world --- Phase 5, M028--M030, Parts 446--500}{section.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.1}A graph is a data model before it is an algorithm}{1}{subsection.1.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-graph-is-a-data-model-before-it-is-an-algorithm}{{1.1.1}{1}{A graph is a data model before it is an algorithm}{subsection.1.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.2}A queue discovers reachability one edge at a time}{2}{subsection.1.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-queue-discovers-reachability-one-edge-at-a-time}{{1.1.2}{2}{A queue discovers reachability one edge at a time}{subsection.1.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.3}A render graph is an ordering proof, not simply a list of passes}{2}{subsection.1.1.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-render-graph-is-an-ordering-proof-not-simply-a-list-of-passes}{{1.1.3}{2}{A render graph is an ordering proof, not simply a list of passes}{subsection.1.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.4}Shortest paths: the edge assumptions determine the proof}{3}{subsection.1.1.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-shortest-paths-the-edge-assumptions-determine-the-proof}{{1.1.4}{3}{Shortest paths: the edge assumptions determine the proof}{subsection.1.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.5}A* is Dijkstra informed by an admissible lower bound}{4}{subsection.1.1.5}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-is-dijkstra-informed-by-an-admissible-lower-bound}{{1.1.5}{4}{A* is Dijkstra informed by an admissible lower bound}{subsection.1.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.6}Minimum spanning trees solve a different global problem}{5}{subsection.1.1.6}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-minimum-spanning-trees-solve-a-different-global-problem}{{1.1.6}{5}{Minimum spanning trees solve a different global problem}{subsection.1.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.7}Searching and sorting: the order of keys is itself a contract}{5}{subsection.1.1.7}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-searching-and-sorting-the-order-of-keys-is-itself-a-contract}{{1.1.7}{5}{Searching and sorting: the order of keys is itself a contract}{subsection.1.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.8}Morton keys turn 2D proximity into a sortable integer---within limits}{6}{subsection.1.1.8}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-morton-keys-turn-2d-proximity-into-a-sortable-integerwithin-limits}{{1.1.8}{6}{Morton keys turn 2D proximity into a sortable integer---within limits}{subsection.1.1.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.9}Prefix scans turn counts into a proof of nonoverlapping output}{6}{subsection.1.1.9}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-prefix-scans-turn-counts-into-a-proof-of-nonoverlapping-output}{{1.1.9}{6}{Prefix scans turn counts into a proof of nonoverlapping output}{subsection.1.1.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.10}Windows, recursion, dynamic programming and greedy proofs are algorithmic choices}{7}{subsection.1.1.10}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-windows-recursion-dynamic-programming-and-greedy-proofs-are-algorithmic-choices}{{1.1.10}{7}{Windows, recursion, dynamic programming and greedy proofs are algorithmic choices}{subsection.1.1.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.11}Randomization needs a probability proof as well as a seeded test}{8}{subsection.1.1.11}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-randomization-needs-a-probability-proof-as-well-as-a-seeded-test}{{1.1.11}{8}{Randomization needs a probability proof as well as a seeded test}{subsection.1.1.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.12}An LRU cache and a sparse set reconnect algorithms to engine ownership}{8}{subsection.1.1.12}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-an-lru-cache-and-a-sparse-set-reconnect-algorithms-to-engine-ownership}{{1.1.12}{8}{An LRU cache and a sparse set reconnect algorithms to engine ownership}{subsection.1.1.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1.13}The final choice is an experiment grounded in an operation distribution}{9}{subsection.1.1.13}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-the-final-choice-is-an-experiment-grounded-in-an-operation-distribution}{{1.1.13}{9}{The final choice is an experiment grounded in an operation distribution}{subsection.1.1.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}An API is a promise about an operation}{10}{section.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-an-api-is-a-promise-about-an-operation}{{1.2}{10}{An API is a promise about an operation}{section.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.1}State the contract at the boundary}{10}{subsection.1.2.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-state-the-contract-at-the-boundary}{{1.2.1}{10}{State the contract at the boundary}{subsection.1.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.2}Publication is the moment other code may rely on a result}{11}{subsection.1.2.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-publication-is-the-moment-other-code-may-rely-on-a-result}{{1.2.2}{11}{Publication is the moment other code may rely on a result}{subsection.1.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.3}A buffer name, an API object, and its storage are separate}{11}{subsection.1.2.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-buffer-name-an-api-object-and-its-storage-are-separate}{{1.2.3}{11}{A buffer name, an API object, and its storage are separate}{subsection.1.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.4}Destroying a C++ wrapper may not finish external work}{12}{subsection.1.2.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-destroying-a-c-wrapper-may-not-finish-external-work}{{1.2.4}{12}{Destroying a C++ wrapper may not finish external work}{subsection.1.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.5}Error types should preserve the caller's decision}{12}{subsection.1.2.5}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-error-types-should-preserve-the-callers-decision}{{1.2.5}{12}{Error types should preserve the caller's decision}{subsection.1.2.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}A complete handle contract in a small program}{13}{section.1.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-complete-handle-contract-in-a-small-program}{{1.3}{13}{A complete handle contract in a small program}{section.1.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.4}The build graph becomes another interface}{15}{section.1.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-the-build-graph-becomes-another-interface}{{1.4}{15}{The build graph becomes another interface}{section.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.1}A capability exists only where the complete resource contract permits it}{15}{subsection.1.4.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-a-capability-exists-only-where-the-complete-resource-contract-permits-it}{{1.4.1}{15}{A capability exists only where the complete resource contract permits it}{subsection.1.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4.2}Packaging removes an editor dependency, not every runtime dependency}{16}{subsection.1.4.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-packaging-removes-an-editor-dependency-not-every-runtime-dependency}{{1.4.2}{16}{Packaging removes an editor dependency, not every runtime dependency}{subsection.1.4.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.5}Make a shader record an explicit binary contract}{16}{section.1.5}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-make-a-shader-record-an-explicit-binary-contract}{{1.5}{16}{Make a shader record an explicit binary contract}{section.1.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.6}Let many invocations cooperate without inventing a global clock}{17}{section.1.6}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-let-many-invocations-cooperate-without-inventing-a-global-clock}{{1.6}{17}{Let many invocations cooperate without inventing a global clock}{section.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.1}Scan turns local counts into nonoverlapping output regions}{17}{subsection.1.6.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-scan-turns-local-counts-into-nonoverlapping-output-regions}{{1.6.1}{17}{Scan turns local counts into nonoverlapping output regions}{subsection.1.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.2}Load a partial matrix tile with two different bounds}{18}{subsection.1.6.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-load-a-partial-matrix-tile-with-two-different-bounds}{{1.6.2}{18}{Load a partial matrix tile with two different bounds}{subsection.1.6.2}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{193.37987pt}\LT@entry 
+    {1}{256.13962pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.3}+ M129}{32}{subsection.1.6.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-m129}{{1.6.3}{32}{+ M129}{subsection.1.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6.4}GPU EXECUTION ARCHITECTURE}{33}{subsection.1.6.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch008-gpu-execution-architecture}{{1.6.4}{33}{GPU EXECUTION ARCHITECTURE}{subsection.1.6.4}{}}
+\newlabel{5kw7e9}{{1.6.4}{34}{GPU EXECUTION ARCHITECTURE}{section*.5}{}}
+\newlabel{e937zu}{{1.6.4}{34}{GPU EXECUTION ARCHITECTURE}{section*.6}{}}
+\newlabel{qpohrx}{{1.6.4}{35}{GPU EXECUTION ARCHITECTURE}{section*.7}{}}
+\newlabel{6vk2sf}{{1.6.4}{35}{GPU EXECUTION ARCHITECTURE}{section*.8}{}}
+\newlabel{2o38s4}{{1.6.4}{35}{GPU EXECUTION ARCHITECTURE}{section*.9}{}}
+\newlabel{z8wxwy}{{1.6.4}{36}{GPU EXECUTION ARCHITECTURE}{section*.10}{}}
+\newlabel{0x8pi8}{{1.6.4}{37}{GPU EXECUTION ARCHITECTURE}{section*.11}{}}
+\newlabel{v6nvzv}{{1.6.4}{38}{GPU EXECUTION ARCHITECTURE}{section*.12}{}}
+\newlabel{et2xom}{{1.6.4}{39}{GPU EXECUTION ARCHITECTURE}{section*.13}{}}
+\newlabel{yx8mk8}{{1.6.4}{39}{GPU EXECUTION ARCHITECTURE}{section*.14}{}}
+\newlabel{9wj2yb}{{1.6.4}{39}{GPU EXECUTION ARCHITECTURE}{section*.15}{}}
+\newlabel{d2ts06}{{1.6.4}{39}{GPU EXECUTION ARCHITECTURE}{section*.16}{}}
+\newlabel{ccmw1t}{{1.6.4}{40}{GPU EXECUTION ARCHITECTURE}{section*.17}{}}
+\newlabel{r4h73i}{{1.6.4}{40}{GPU EXECUTION ARCHITECTURE}{section*.18}{}}
+\newlabel{6d38i1}{{1.6.4}{40}{GPU EXECUTION ARCHITECTURE}{section*.19}{}}
+\newlabel{bnfz56}{{1.6.4}{40}{GPU EXECUTION ARCHITECTURE}{section*.20}{}}
+\newlabel{t9jsa8}{{1.6.4}{43}{GPU EXECUTION ARCHITECTURE}{section*.21}{}}
+\newlabel{g2gruk}{{1.6.4}{43}{GPU EXECUTION ARCHITECTURE}{section*.22}{}}
+\newlabel{i9imdl}{{1.6.4}{43}{GPU EXECUTION ARCHITECTURE}{section*.23}{}}
+\newlabel{x9gdnc}{{1.6.4}{43}{GPU EXECUTION ARCHITECTURE}{section*.24}{}}
+\newlabel{mmlugb}{{1.6.4}{44}{GPU EXECUTION ARCHITECTURE}{section*.25}{}}
+\newlabel{tun1bn}{{1.6.4}{44}{GPU EXECUTION ARCHITECTURE}{section*.26}{}}
+\newlabel{lzwp5h}{{1.6.4}{45}{GPU EXECUTION ARCHITECTURE}{section*.27}{}}
+\newlabel{32aupj}{{1.6.4}{46}{GPU EXECUTION ARCHITECTURE}{section*.28}{}}
+\newlabel{dov08i}{{1.6.4}{46}{GPU EXECUTION ARCHITECTURE}{section*.29}{}}
+\newlabel{ucsz3u}{{1.6.4}{46}{GPU EXECUTION ARCHITECTURE}{section*.30}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}GPU Memory, Divergence, Atomics, and Ordering}{47}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch009-gpu-memory-divergence-atomics-and-ordering}{{2}{47}{GPU Memory, Divergence, Atomics, and Ordering}{chapter.2}{}}
+\newlabel{stagechapter:01-foundations-i-ch009}{{2}{47}{GPU Memory, Divergence, Atomics, and Ordering}{section*.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.1}MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{47}{subsection.2.0.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch009-memory-divergence-subgroups-atomics-ordering}{{2.0.1}{47}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{subsection.2.0.1}{}}
+\newlabel{q2nq6h}{{2.0.1}{48}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.32}{}}
+\newlabel{xfh30n}{{2.0.1}{48}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.33}{}}
+\newlabel{7e3tbt}{{2.0.1}{48}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.34}{}}
+\newlabel{4d98r5}{{2.0.1}{49}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.35}{}}
+\newlabel{r4zgcd}{{2.0.1}{50}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.36}{}}
+\newlabel{yfpnbu}{{2.0.1}{50}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.37}{}}
+\newlabel{4azajn}{{2.0.1}{51}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.38}{}}
+\newlabel{9euomv}{{2.0.1}{51}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.39}{}}
+\newlabel{atbpdt}{{2.0.1}{51}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.40}{}}
+\newlabel{yx7r08}{{2.0.1}{52}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.41}{}}
+\newlabel{86rlbx}{{2.0.1}{52}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.42}{}}
+\newlabel{c7d0fn}{{2.0.1}{53}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.43}{}}
+\newlabel{3mrjt7}{{2.0.1}{53}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.44}{}}
+\newlabel{jynsrg}{{2.0.1}{54}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.45}{}}
+\newlabel{x2i0x6}{{2.0.1}{54}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.46}{}}
+\newlabel{whgcgz}{{2.0.1}{54}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.47}{}}
+\newlabel{kjzl1q}{{2.0.1}{55}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.48}{}}
+\newlabel{1hu377}{{2.0.1}{55}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.49}{}}
+\newlabel{4aem6v}{{2.0.1}{56}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.50}{}}
+\newlabel{z1r98r}{{2.0.1}{56}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.51}{}}
+\newlabel{nh6bpq}{{2.0.1}{56}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.52}{}}
+\newlabel{xpapkm}{{2.0.1}{56}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.53}{}}
+\newlabel{3nct9g}{{2.0.1}{57}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.54}{}}
+\newlabel{oah6qe}{{2.0.1}{57}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.55}{}}
+\newlabel{l7udrw}{{2.0.1}{58}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.56}{}}
+\newlabel{af4u60}{{2.0.1}{58}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.57}{}}
+\newlabel{7dyn47}{{2.0.1}{58}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.58}{}}
+\newlabel{jow2md}{{2.0.1}{59}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.59}{}}
+\newlabel{sp9bsz}{{2.0.1}{59}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.60}{}}
+\newlabel{o1fakh}{{2.0.1}{59}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.61}{}}
+\newlabel{0mnqgj}{{2.0.1}{60}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.62}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.2}GENERAL COMPUTE \& PARALLEL ALGORITHMS}{60}{subsection.2.0.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch009-general-compute-parallel-algorithms}{{2.0.2}{60}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{subsection.2.0.2}{}}
+\newlabel{ozt45h}{{2.0.2}{61}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.63}{}}
+\newlabel{p4wrmn}{{2.0.2}{62}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.64}{}}
+\newlabel{zugmms}{{2.0.2}{62}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.65}{}}
+\newlabel{dgqe6p}{{2.0.2}{63}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.66}{}}
+\newlabel{ivlz2y}{{2.0.2}{65}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.67}{}}
+\newlabel{zvkv4c}{{2.0.2}{65}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.68}{}}
+\newlabel{uxlrwn}{{2.0.2}{66}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.69}{}}
+\newlabel{zq2h7f}{{2.0.2}{66}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.70}{}}
+\newlabel{ywrrrk}{{2.0.2}{67}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.71}{}}
+\newlabel{jheza8}{{2.0.2}{67}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.72}{}}
+\newlabel{9j7ww5}{{2.0.2}{68}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.73}{}}
+\newlabel{4ie3j5}{{2.0.2}{70}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.74}{}}
+\newlabel{5188rr}{{2.0.2}{70}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.75}{}}
+\newlabel{sz0hjf}{{2.0.2}{70}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.76}{}}
+\newlabel{67v40p}{{2.0.2}{70}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.77}{}}
+\newlabel{t9o8ez}{{2.0.2}{71}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.78}{}}
+\newlabel{r92vsu}{{2.0.2}{71}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.79}{}}
+\newlabel{qa2bts}{{2.0.2}{72}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.80}{}}
+\newlabel{ddkrn5}{{2.0.2}{72}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.81}{}}
+\newlabel{mdso8e}{{2.0.2}{74}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.82}{}}
+\newlabel{ctu20l}{{2.0.2}{74}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.83}{}}
+\newlabel{6uv2yi}{{2.0.2}{74}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.84}{}}
+\newlabel{ugtp35}{{2.0.2}{76}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.85}{}}
+\newlabel{45mfzb}{{2.0.2}{77}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.86}{}}
+\newlabel{akbc8n}{{2.0.2}{77}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.87}{}}
+\newlabel{bypw71}{{2.0.2}{77}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.88}{}}
+\newlabel{e9dtbb}{{2.0.2}{79}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.89}{}}
+\newlabel{brslup}{{2.0.2}{80}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.90}{}}
+\newlabel{oxmxax}{{2.0.2}{80}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.91}{}}
+\newlabel{w6g26n}{{2.0.2}{81}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.92}{}}
+\@writefile{toc}{\contentsline {subsubsection}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{81}{subsubsection*.93}\protected@file@percent }
+\newlabel{01-foundations-i-ch009-first-use-completion-a-stable-radix-pass-is-a-permutation-not-an-in-place-edit}{{2.0.2}{81}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{subsubsection*.93}{}}
+\newlabel{x1rcxl}{{2.0.2}{85}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.94}{}}
+\newlabel{di1gjk}{{2.0.2}{85}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.95}{}}
+\newlabel{0aznm5}{{2.0.2}{85}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.96}{}}
+\newlabel{yjtusl}{{2.0.2}{89}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.97}{}}
+\gdef \LT@ii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\newlabel{387b66}{{2.0.2}{91}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.98}{}}
+\newlabel{yllozt}{{2.0.2}{92}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.99}{}}
+\newlabel{qfd2y3}{{2.0.2}{92}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.100}{}}
+\gdef \LT@iii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\newlabel{d6k0c3}{{2.0.2}{94}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.101}{}}
+\newlabel{lgnm0f}{{2.0.2}{95}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.102}{}}
+\newlabel{nhzbj0}{{2.0.2}{95}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.103}{}}
+\newlabel{hbs55l}{{2.0.2}{95}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.104}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.0.3}Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{96}{subsection.2.0.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch009-next-pass-10-m130-m131-m132-parts-21572200}{{2.0.3}{96}{Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{subsection.2.0.3}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Open Vulkan Devices and Describe Resources}{98}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch013-open-vulkan-devices-and-describe-resources}{{3}{98}{Open Vulkan Devices and Describe Resources}{chapter.3}{}}
+\newlabel{stagechapter:01-foundations-i-ch013}{{3}{98}{Open Vulkan Devices and Describe Resources}{section*.105}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Open the device and describe its storage}{98}{section.3.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch013-open-the-device-and-describe-its-storage}{{3.1}{98}{Open the device and describe its storage}{section.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.1}+ M135}{98}{subsection.3.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch013-m135}{{3.1.1}{98}{+ M135}{subsection.3.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.2}VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{98}{subsection.3.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch013-vulkan-philosophy-instance-devices-queues-surface-swapchain}{{3.1.2}{98}{VULKAN PHILOSOPHY, INSTANCE, DEVICES, QUEUES, SURFACE \& SWAPCHAIN}{subsection.3.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.3}BUFFERS, IMAGES, MEMORY \& UPLOADS}{118}{subsection.3.1.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch013-buffers-images-memory-uploads}{{3.1.3}{118}{BUFFERS, IMAGES, MEMORY \& UPLOADS}{subsection.3.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1.4}DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{133}{subsection.3.1.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch013-descriptors-pipeline-layouts-shaders-rendering-state}{{3.1.4}{133}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{subsection.3.1.4}{}}
+\gdef \LT@iv {\LT@entry 
+    {1}{41.918pt}\LT@entry 
+    {3}{139.13751pt}}
+\newlabel{p11-dyn-ubo}{{3.1.4}{137}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.106}{}}
+\newlabel{p11-kairo-chain}{{3.1.4}{154}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.107}{}}
+\newlabel{p11-pso-graph}{{3.1.4}{162}{DESCRIPTORS, PIPELINE LAYOUTS, SHADERS \& RENDERING STATE}{section*.108}{}}
+\gdef \LT@v {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Submit, Synchronize, and Retire GPU Work}{169}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch014-submit-synchronize-and-retire-gpu-work}{{4}{169}{Submit, Synchronize, and Retire GPU Work}{chapter.4}{}}
+\newlabel{stagechapter:01-foundations-i-ch014}{{4}{169}{Submit, Synchronize, and Retire GPU Work}{section*.109}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}Record, synchronize and retire explicit work}{169}{section.4.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch014-record-synchronize-and-retire-explicit-work}{{4.1}{169}{Record, synchronize and retire explicit work}{section.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}+ M138}{169}{subsection.4.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch014-m138}{{4.1.1}{169}{+ M138}{subsection.4.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{170}{subsection.4.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch014-command-pools-command-buffers-submission-semaphores}{{4.1.2}{170}{COMMAND POOLS, COMMAND BUFFERS, SUBMISSION \& SEMAPHORES}{subsection.4.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{187}{subsection.4.1.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch014-vulkan-memory-model-barriers-multi-frame-lifetimes}{{4.1.3}{187}{VULKAN MEMORY MODEL, BARRIERS \& MULTI-FRAME LIFETIMES}{subsection.4.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.4}TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{205}{subsection.4.1.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch014-timestamps-validation-device-loss-moltenvk-explicit-raii}{{4.1.4}{205}{TIMESTAMPS, VALIDATION, DEVICE LOSS, MOLTENVK \& EXPLICIT RAII}{subsection.4.1.4}{}}
+\gdef \LT@vi {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\gdef \LT@vii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Execute and Measure a Metal Frame}{238}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch015-execute-and-measure-a-metal-frame}{{5}{238}{Execute and Measure a Metal Frame}{chapter.5}{}}
+\newlabel{stagechapter:01-foundations-i-ch015}{{5}{238}{Execute and Measure a Metal Frame}{section*.110}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Execute and measure a Metal frame}{238}{section.5.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch015-execute-and-measure-a-metal-frame-1}{{5.1}{238}{Execute and measure a Metal frame}{section.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}+ M141}{238}{subsection.5.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch015-m141}{{5.1.1}{238}{+ M141}{subsection.5.1.1}{}}
+\gdef \LT@viii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}METAL'S CORE EXECUTION MODEL}{239}{subsection.5.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch015-metals-core-execution-model}{{5.1.2}{239}{METAL'S CORE EXECUTION MODEL}{subsection.5.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{259}{subsection.5.1.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch015-storage-modes-tile-memory-drawables-frames-in-flight-heaps-synchronization}{{5.1.3}{259}{STORAGE MODES, TILE MEMORY, DRAWABLES, FRAMES IN FLIGHT, HEAPS \& SYNCHRONIZATION}{subsection.5.1.3}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Profile GPUs and Respect Apple Ownership Boundaries}{285}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{01-foundations-i-ch016-profile-gpus-and-respect-apple-ownership-boundaries}{{6}{285}{Profile GPUs and Respect Apple Ownership Boundaries}{chapter.6}{}}
+\newlabel{stagechapter:01-foundations-i-ch016}{{6}{285}{Profile GPUs and Respect Apple Ownership Boundaries}{section*.111}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.1}PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{285}{subsection.6.0.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-profiling-objective-c-ownership-swiftui-thread-boundaries}{{6.0.1}{285}{PROFILING, OBJECTIVE-C++ OWNERSHIP, SWIFTUI \& THREAD BOUNDARIES}{subsection.6.0.1}{}}
+\gdef \LT@ix {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\@writefile{toc}{\contentsline {subsubsection}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{308}{subsubsection*.112}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-first-use-completion-lifetime-analysis-for-a-frame-local-attachment-and-a-history-image}{{6.0.1}{308}{First-use completion --- lifetime analysis for a frame-local attachment and a history image}{subsubsection*.112}{}}
+\gdef \LT@x {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\gdef \LT@xi {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.0.2}Distinguish host allocation callbacks from device-memory allocation}{320}{subsection.6.0.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-distinguish-host-allocation-callbacks-from-device-memory-allocation}{{6.0.2}{320}{Distinguish host allocation callbacks from device-memory allocation}{subsection.6.0.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}A generated binding is still an API boundary}{321}{section.6.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-a-generated-binding-is-still-an-api-boundary}{{6.1}{321}{A generated binding is still an API boundary}{section.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.1}Choose the language boundary before choosing a generator}{322}{subsection.6.1.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-choose-the-language-boundary-before-choosing-a-generator}{{6.1.1}{322}{Choose the language boundary before choosing a generator}{subsection.6.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1.2}A visual description does not identify a shader operator}{322}{subsection.6.1.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-a-visual-description-does-not-identify-a-shader-operator}{{6.1.2}{322}{A visual description does not identify a shader operator}{subsection.6.1.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}A platform escape hatch must also restore process-wide state}{323}{section.6.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-a-platform-escape-hatch-must-also-restore-process-wide-state}{{6.2}{323}{A platform escape hatch must also restore process-wide state}{section.6.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.1}Restore the state that existed before the adapter changed it}{323}{subsection.6.2.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-restore-the-state-that-existed-before-the-adapter-changed-it}{{6.2.1}{323}{Restore the state that existed before the adapter changed it}{subsection.6.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2.2}Range count, byte capacity and API guarantees are different quantities}{324}{subsection.6.2.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-range-count-byte-capacity-and-api-guarantees-are-different-quantities}{{6.2.2}{324}{Range count, byte capacity and API guarantees are different quantities}{subsection.6.2.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.3}Integrated Systems Continuation --- From Machine State to Reproducible Execution}{324}{section.6.3}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-integrated-systems-continuation-from-machine-state-to-reproducible-execution}{{6.3}{324}{Integrated Systems Continuation --- From Machine State to Reproducible Execution}{section.6.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.4}An executable byte acquires meaning only inside a machine}{325}{section.6.4}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-an-executable-byte-acquires-meaning-only-inside-a-machine}{{6.4}{325}{An executable byte acquires meaning only inside a machine}{section.6.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.1}Addressing is an algorithm for finding a value, not a suffix}{325}{subsection.6.4.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-addressing-is-an-algorithm-for-finding-a-value-not-a-suffix}{{6.4.1}{325}{Addressing is an algorithm for finding a value, not a suffix}{subsection.6.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4.2}Unsigned carry is not signed overflow}{326}{subsection.6.4.2}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-unsigned-carry-is-not-signed-overflow}{{6.4.2}{326}{Unsigned carry is not signed overflow}{subsection.6.4.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.5}The memory bus is a device router, not one enormous RAM array}{326}{section.6.5}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-the-memory-bus-is-a-device-router-not-one-enormous-ram-array}{{6.5}{326}{The memory bus is a device router, not one enormous RAM array}{section.6.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5.1}An iNES file describes cartridge memory; it is not executable code itself}{327}{subsection.6.5.1}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-an-ines-file-describes-cartridge-memory-it-is-not-executable-code-itself}{{6.5.1}{327}{An iNES file describes cartridge memory; it is not executable code itself}{subsection.6.5.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.6}Rendering time is not the same clock as CPU time}{327}{section.6.6}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-rendering-time-is-not-the-same-clock-as-cpu-time}{{6.6}{327}{Rendering time is not the same clock as CPU time}{section.6.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.7}Deterministic replay requires an explicit state contract}{328}{section.6.7}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-deterministic-replay-requires-an-explicit-state-contract}{{6.7}{328}{Deterministic replay requires an explicit state contract}{section.6.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.8}Reference implementation and evidence gate}{329}{section.6.8}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-reference-implementation-and-evidence-gate}{{6.8}{329}{Reference implementation and evidence gate}{section.6.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.9}From a deterministic emulator state to an operating-system file}{329}{section.6.9}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-from-a-deterministic-emulator-state-to-an-operating-system-file}{{6.9}{329}{From a deterministic emulator state to an operating-system file}{section.6.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.10}From a file to a message on an unreliable network}{330}{section.6.10}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-from-a-file-to-a-message-on-an-unreliable-network}{{6.10}{330}{From a file to a message on an unreliable network}{section.6.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.11}From received bytes to a trust decision}{331}{section.6.11}\protected@file@percent }
+\newlabel{01-foundations-i-ch016-from-received-bytes-to-a-trust-decision}{{6.11}{331}{From received bytes to a trust decision}{section.6.11}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}From Material Data to GPU Bindings}{334}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{03-visual-computing-i-ch006-from-material-data-to-gpu-bindings}{{7}{334}{From Material Data to GPU Bindings}{chapter.7}{}}
+\newlabel{stagechapter:03-visual-computing-i-ch006}{{7}{334}{From Material Data to GPU Bindings}{section*.113}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.1}Blank-page mastery test}{334}{subsection.7.0.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-blank-page-mastery-test}{{7.0.1}{334}{Blank-page mastery test}{subsection.7.0.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.2}PARTS 1987--1995}{335}{subsection.7.0.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-parts-19871995}{{7.0.2}{335}{PARTS 1987--1995}{subsection.7.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.3}glTF → GPU material representation → scalable binding architecture}{335}{subsection.7.0.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-gltf-gpu-material-representation-scalable-binding-architecture}{{7.0.3}{335}{glTF → GPU material representation → scalable binding architecture}{subsection.7.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.4}PARTS 1996--2000}{352}{subsection.7.0.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-parts-19962000}{{7.0.4}{352}{PARTS 1996--2000}{subsection.7.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.5}How to prove a PBR renderer is actually correct}{352}{subsection.7.0.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-how-to-prove-a-pbr-renderer-is-actually-correct}{{7.0.5}{352}{How to prove a PBR renderer is actually correct}{subsection.7.0.5}{}}
+\gdef \LT@xii {\LT@entry 
+    {1}{37.1405pt}\LT@entry 
+    {1}{47.42201pt}\LT@entry 
+    {1}{55.8095pt}}
+\gdef \LT@xiii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\gdef \LT@xiv {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.6}Final Phase-20 reconstruction gate}{391}{subsection.7.0.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-final-phase-20-reconstruction-gate}{{7.0.6}{391}{Final Phase-20 reconstruction gate}{subsection.7.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.7}BRDF examples and angular response}{393}{subsection.7.0.7}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-brdf-examples-and-angular-response}{{7.0.7}{393}{BRDF examples and angular response}{subsection.7.0.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.8}Color under ultraviolet illumination}{393}{subsection.7.0.8}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-color-under-ultraviolet-illumination}{{7.0.8}{393}{Color under ultraviolet illumination}{subsection.7.0.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.9}Lambertian versus perfect specular reflection}{394}{subsection.7.0.9}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-lambertian-versus-perfect-specular-reflection}{{7.0.9}{394}{Lambertian versus perfect specular reflection}{subsection.7.0.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.0.10}Shading links geometry to light}{394}{subsection.7.0.10}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch006-shading-links-geometry-to-light}{{7.0.10}{394}{Shading links geometry to light}{subsection.7.0.10}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {8}BVH Traversal and Deterministic Evidence}{395}{chapter.8}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{03-visual-computing-i-ch011-bvh-traversal-and-deterministic-evidence}{{8}{395}{BVH Traversal and Deterministic Evidence}{chapter.8}{}}
+\newlabel{stagechapter:03-visual-computing-i-ch011}{{8}{395}{BVH Traversal and Deterministic Evidence}{section*.114}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.1}PARTS 2090--2100}{395}{subsection.8.0.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-parts-20902100}{{8.0.1}{395}{PARTS 2090--2100}{subsection.8.0.1}{}}
+\gdef \LT@xv {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\gdef \LT@xvi {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.2}Next --- Pass 9: M127 + M128 + M129, Parts 2101--2156}{432}{subsection.8.0.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-next-pass-9-m127-m128-m129-parts-21012156}{{8.0.2}{432}{Next --- Pass 9: M127 + M128 + M129, Parts 2101--2156}{subsection.8.0.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.3}Rendering equation and numerical integration}{432}{subsection.8.0.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-rendering-equation-and-numerical-integration}{{8.0.3}{432}{Rendering equation and numerical integration}{subsection.8.0.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.4}From the rendering equation to paths}{433}{subsection.8.0.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-from-the-rendering-equation-to-paths}{{8.0.4}{433}{From the rendering equation to paths}{subsection.8.0.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.5}One-bounce Monte Carlo estimator}{434}{subsection.8.0.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-one-bounce-monte-carlo-estimator}{{8.0.5}{434}{One-bounce Monte Carlo estimator}{subsection.8.0.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.6}Bidirectional path construction}{435}{subsection.8.0.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-bidirectional-path-construction}{{8.0.6}{435}{Bidirectional path construction}{subsection.8.0.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.7}Metropolis light transport as a path-space walk}{436}{subsection.8.0.7}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-metropolis-light-transport-as-a-path-space-walk}{{8.0.7}{436}{Metropolis light transport as a path-space walk}{subsection.8.0.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.8}Photon mapping and radiosity}{436}{subsection.8.0.8}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-photon-mapping-and-radiosity}{{8.0.8}{436}{Photon mapping and radiosity}{subsection.8.0.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.9}Recursive light paths: shadows, mirrors, glass, and sampled effects}{436}{subsection.8.0.9}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-recursive-light-paths-shadows-mirrors-glass-and-sampled-effects}{{8.0.9}{436}{Recursive light paths: shadows, mirrors, glass, and sampled effects}{subsection.8.0.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.10}Global illumination solves a coupled light transport problem}{438}{subsection.8.0.10}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-global-illumination-solves-a-coupled-light-transport-problem}{{8.0.10}{438}{Global illumination solves a coupled light transport problem}{subsection.8.0.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.11}Additional geometry notes for cameras}{439}{subsection.8.0.11}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-additional-geometry-notes-for-cameras}{{8.0.11}{439}{Additional geometry notes for cameras}{subsection.8.0.11}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Rotate around an arbitrary line by aligning it to a known axis}{439}{subsubsection*.115}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-rotate-around-an-arbitrary-line-by-aligning-it-to-a-known-axis}{{8.0.11}{439}{Rotate around an arbitrary line by aligning it to a known axis}{subsubsection*.115}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Color and the simplified local-lighting model}{440}{subsubsection*.116}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-color-and-the-simplified-local-lighting-model}{{8.0.11}{440}{Color and the simplified local-lighting model}{subsubsection*.116}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Shadow representations: geometry, volumes, and depth maps}{441}{subsubsection*.117}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-shadow-representations-geometry-volumes-and-depth-maps}{{8.0.11}{441}{Shadow representations: geometry, volumes, and depth maps}{subsubsection*.117}{}}
+\gdef \LT@xvii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Source video index}{443}{subsubsection*.118}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-source-video-index}{{8.0.11}{443}{Source video index}{subsubsection*.118}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.0.12}A programmable, differentiable rendering system}{443}{subsection.8.0.12}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-a-programmable-differentiable-rendering-system}{{8.0.12}{443}{A programmable, differentiable rendering system}{subsection.8.0.12}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Differentiable caustics and media}{445}{subsubsection*.119}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-differentiable-caustics-and-media}{{8.0.12}{445}{Differentiable caustics and media}{subsubsection*.119}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Coherent bundles for Markov-chain rendering}{445}{subsubsection*.120}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch011-coherent-bundles-for-markov-chain-rendering}{{8.0.12}{445}{Coherent bundles for Markov-chain rendering}{subsubsection*.120}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {9}GPU Memory, Divergence and Execution Order}{447}{chapter.9}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{03-visual-computing-i-ch016-gpu-memory-divergence-and-execution-order}{{9}{447}{GPU Memory, Divergence and Execution Order}{chapter.9}{}}
+\newlabel{stagechapter:03-visual-computing-i-ch016}{{9}{447}{GPU Memory, Divergence and Execution Order}{section*.121}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.0.1}MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{447}{subsection.9.0.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-memory-divergence-subgroups-atomics-ordering}{{9.0.1}{447}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{subsection.9.0.1}{}}
+\newlabel{q2nq6h}{{9.0.1}{448}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.122}{}}
+\newlabel{xfh30n}{{9.0.1}{448}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.123}{}}
+\newlabel{7e3tbt}{{9.0.1}{448}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.124}{}}
+\newlabel{4d98r5}{{9.0.1}{449}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.125}{}}
+\newlabel{r4zgcd}{{9.0.1}{450}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.126}{}}
+\newlabel{yfpnbu}{{9.0.1}{450}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.127}{}}
+\newlabel{4azajn}{{9.0.1}{451}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.128}{}}
+\newlabel{9euomv}{{9.0.1}{451}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.129}{}}
+\newlabel{atbpdt}{{9.0.1}{451}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.130}{}}
+\newlabel{yx7r08}{{9.0.1}{451}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.131}{}}
+\newlabel{86rlbx}{{9.0.1}{452}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.132}{}}
+\newlabel{c7d0fn}{{9.0.1}{453}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.133}{}}
+\newlabel{3mrjt7}{{9.0.1}{453}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.134}{}}
+\newlabel{jynsrg}{{9.0.1}{454}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.135}{}}
+\newlabel{x2i0x6}{{9.0.1}{454}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.136}{}}
+\newlabel{whgcgz}{{9.0.1}{454}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.137}{}}
+\newlabel{kjzl1q}{{9.0.1}{455}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.138}{}}
+\newlabel{1hu377}{{9.0.1}{455}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.139}{}}
+\newlabel{4aem6v}{{9.0.1}{456}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.140}{}}
+\newlabel{z1r98r}{{9.0.1}{456}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.141}{}}
+\newlabel{nh6bpq}{{9.0.1}{456}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.142}{}}
+\newlabel{xpapkm}{{9.0.1}{456}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.143}{}}
+\newlabel{3nct9g}{{9.0.1}{457}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.144}{}}
+\newlabel{oah6qe}{{9.0.1}{457}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.145}{}}
+\newlabel{l7udrw}{{9.0.1}{458}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.146}{}}
+\newlabel{af4u60}{{9.0.1}{458}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.147}{}}
+\newlabel{7dyn47}{{9.0.1}{458}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.148}{}}
+\newlabel{jow2md}{{9.0.1}{459}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.149}{}}
+\newlabel{sp9bsz}{{9.0.1}{459}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.150}{}}
+\newlabel{o1fakh}{{9.0.1}{459}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.151}{}}
+\newlabel{0mnqgj}{{9.0.1}{460}{MEMORY, DIVERGENCE, SUBGROUPS, ATOMICS \& ORDERING}{section*.152}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.0.2}GENERAL COMPUTE \& PARALLEL ALGORITHMS}{460}{subsection.9.0.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-general-compute-parallel-algorithms}{{9.0.2}{460}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{subsection.9.0.2}{}}
+\newlabel{ozt45h}{{9.0.2}{461}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.153}{}}
+\newlabel{p4wrmn}{{9.0.2}{462}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.154}{}}
+\newlabel{zugmms}{{9.0.2}{462}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.155}{}}
+\newlabel{dgqe6p}{{9.0.2}{463}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.156}{}}
+\newlabel{ivlz2y}{{9.0.2}{465}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.157}{}}
+\newlabel{zvkv4c}{{9.0.2}{465}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.158}{}}
+\newlabel{uxlrwn}{{9.0.2}{466}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.159}{}}
+\newlabel{zq2h7f}{{9.0.2}{466}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.160}{}}
+\newlabel{ywrrrk}{{9.0.2}{467}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.161}{}}
+\newlabel{jheza8}{{9.0.2}{467}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.162}{}}
+\newlabel{9j7ww5}{{9.0.2}{468}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.163}{}}
+\newlabel{4ie3j5}{{9.0.2}{470}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.164}{}}
+\newlabel{5188rr}{{9.0.2}{470}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.165}{}}
+\newlabel{sz0hjf}{{9.0.2}{470}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.166}{}}
+\newlabel{67v40p}{{9.0.2}{470}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.167}{}}
+\newlabel{t9o8ez}{{9.0.2}{471}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.168}{}}
+\newlabel{r92vsu}{{9.0.2}{471}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.169}{}}
+\newlabel{qa2bts}{{9.0.2}{472}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.170}{}}
+\newlabel{ddkrn5}{{9.0.2}{472}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.171}{}}
+\newlabel{mdso8e}{{9.0.2}{474}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.172}{}}
+\newlabel{ctu20l}{{9.0.2}{474}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.173}{}}
+\newlabel{6uv2yi}{{9.0.2}{474}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.174}{}}
+\newlabel{ugtp35}{{9.0.2}{476}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.175}{}}
+\newlabel{45mfzb}{{9.0.2}{477}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.176}{}}
+\newlabel{akbc8n}{{9.0.2}{477}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.177}{}}
+\newlabel{bypw71}{{9.0.2}{477}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.178}{}}
+\newlabel{e9dtbb}{{9.0.2}{479}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.179}{}}
+\newlabel{brslup}{{9.0.2}{480}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.180}{}}
+\newlabel{oxmxax}{{9.0.2}{480}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.181}{}}
+\newlabel{w6g26n}{{9.0.2}{481}{GENERAL COMPUTE \& PARALLEL ALGORITHMS}{section*.182}{}}
+\@writefile{toc}{\contentsline {subsubsection}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{481}{subsubsection*.183}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-first-use-completion-a-stable-radix-pass-is-a-permutation-not-an-in-place-edit}{{9.0.2}{481}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{subsubsection*.183}{}}
+\newlabel{x1rcxl}{{9.0.2}{485}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.184}{}}
+\newlabel{di1gjk}{{9.0.2}{485}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.185}{}}
+\newlabel{0aznm5}{{9.0.2}{485}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.186}{}}
+\newlabel{yjtusl}{{9.0.2}{489}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.187}{}}
+\gdef \LT@xviii {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\newlabel{387b66}{{9.0.2}{491}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.188}{}}
+\newlabel{yllozt}{{9.0.2}{492}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.189}{}}
+\newlabel{qfd2y3}{{9.0.2}{492}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.190}{}}
+\gdef \LT@xix {\LT@entry 
+    {1}{224.75975pt}\LT@entry 
+    {1}{224.75975pt}}
+\newlabel{d6k0c3}{{9.0.2}{494}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.191}{}}
+\newlabel{lgnm0f}{{9.0.2}{495}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.192}{}}
+\newlabel{nhzbj0}{{9.0.2}{495}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.193}{}}
+\newlabel{hbs55l}{{9.0.2}{495}{First-use completion --- a stable radix pass is a permutation, not an in-place edit}{section*.194}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.1}Build GPU bins and fixed hash tables only after capacity and ownership are explicit}{496}{section.9.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-build-gpu-bins-and-fixed-hash-tables-only-after-capacity-and-ownership-are-explicit}{{9.1}{496}{Build GPU bins and fixed hash tables only after capacity and ownership are explicit}{section.9.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.1}First decide what a successful build means}{496}{subsection.9.1.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-first-decide-what-a-successful-build-means}{{9.1.1}{496}{First decide what a successful build means}{subsection.9.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.2}Worked 2D spatial-bin build}{497}{subsection.9.1.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-worked-2d-spatial-bin-build}{{9.1.2}{497}{Worked 2D spatial-bin build}{subsection.9.1.2}{}}
+\gdef \LT@xx {\LT@entry 
+    {1}{37.63402pt}\LT@entry 
+    {3}{65.48898pt}\LT@entry 
+    {3}{158.18997pt}\LT@entry 
+    {1}{40.12251pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.3}Fixed-capacity open addressing with a bounded build pass}{498}{subsection.9.1.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-fixed-capacity-open-addressing-with-a-bounded-build-pass}{{9.1.3}{498}{Fixed-capacity open addressing with a bounded build pass}{subsection.9.1.3}{}}
+\gdef \LT@xxi {\LT@entry 
+    {1}{148.15787pt}\LT@entry 
+    {1}{153.15787pt}\LT@entry 
+    {1}{148.15787pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.4}Collision trace and full-table failure}{499}{subsection.9.1.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-collision-trace-and-full-table-failure}{{9.1.4}{499}{Collision trace and full-table failure}{subsection.9.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.5}Limits and exit check}{500}{subsection.9.1.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-limits-and-exit-check}{{9.1.5}{500}{Limits and exit check}{subsection.9.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1.6}Reconstruct the append, bin and hash contracts on the CPU}{500}{subsection.9.1.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-reconstruct-the-append-bin-and-hash-contracts-on-the-cpu}{{9.1.6}{500}{Reconstruct the append, bin and hash contracts on the CPU}{subsection.9.1.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.2}Keep a frame's memory alive until its final consumer is finished}{511}{section.9.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-keep-a-frames-memory-alive-until-its-final-consumer-is-finished}{{9.2}{511}{Keep a frame's memory alive until its final consumer is finished}{section.9.2}{}}
+\gdef \LT@xxii {\LT@entry 
+    {1}{69.66228pt}\LT@entry 
+    {1}{96.2018pt}\LT@entry 
+    {1}{96.2018pt}\LT@entry 
+    {1}{96.2018pt}\LT@entry 
+    {1}{91.2018pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.1}Double and triple buffering change ownership, not execution speed}{512}{subsection.9.2.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-double-and-triple-buffering-change-ownership-not-execution-speed}{{9.2.1}{512}{Double and triple buffering change ownership, not execution speed}{subsection.9.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.2}Async compute starts with a dependency graph}{512}{subsection.9.2.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-async-compute-starts-with-a-dependency-graph}{{9.2.2}{512}{Async compute starts with a dependency graph}{subsection.9.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.3}Uploads need bandwidth, visibility and retirement}{513}{subsection.9.2.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-uploads-need-bandwidth-visibility-and-retirement}{{9.2.3}{513}{Uploads need bandwidth, visibility and retirement}{subsection.9.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.4}Readback reverses the direction, not the lifetime rule}{514}{subsection.9.2.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-readback-reverses-the-direction-not-the-lifetime-rule}{{9.2.4}{514}{Readback reverses the direction, not the lifetime rule}{subsection.9.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2.5}Suballocation and aliasing require different proofs}{514}{subsection.9.2.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-suballocation-and-aliasing-require-different-proofs}{{9.2.5}{514}{Suballocation and aliasing require different proofs}{subsection.9.2.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9.3}Measure the limiting resource before changing the arithmetic}{515}{section.9.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-measure-the-limiting-resource-before-changing-the-arithmetic}{{9.3}{515}{Measure the limiting resource before changing the arithmetic}{section.9.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.1}A query reports a defined event, not an explanation by itself}{515}{subsection.9.3.1}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-a-query-reports-a-defined-event-not-an-explanation-by-itself}{{9.3.1}{515}{A query reports a defined event, not an explanation by itself}{subsection.9.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.2}Derive a roofline bound with matching units}{515}{subsection.9.3.2}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-derive-a-roofline-bound-with-matching-units}{{9.3.2}{515}{Derive a roofline bound with matching units}{subsection.9.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.3}Fast math changes a numerical contract}{516}{subsection.9.3.3}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-fast-math-changes-a-numerical-contract}{{9.3.3}{516}{Fast math changes a numerical contract}{subsection.9.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.4}Half precision is a range and accumulation decision}{517}{subsection.9.3.4}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-half-precision-is-a-range-and-accumulation-decision}{{9.3.4}{517}{Half precision is a range and accumulation decision}{subsection.9.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.5}Collective matrix operations distribute a tile across lanes}{517}{subsection.9.3.5}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-collective-matrix-operations-distribute-a-tile-across-lanes}{{9.3.5}{517}{Collective matrix operations distribute a tile across lanes}{subsection.9.3.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.6}Check the scheduling and precision examples with a scalar witness}{518}{subsection.9.3.6}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-check-the-scheduling-and-precision-examples-with-a-scalar-witness}{{9.3.6}{518}{Check the scheduling and precision examples with a scalar witness}{subsection.9.3.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3.7}Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{521}{subsection.9.3.7}\protected@file@percent }
+\newlabel{03-visual-computing-i-ch016-next-pass-10-m130-m131-m132-parts-21572200}{{9.3.7}{521}{Next --- Pass 10: M130 + M131 + M132, Parts 2157--2200}{subsection.9.3.7}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {10}GPU work and reusable Metal frames}{522}{chapter.10}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{05-engine-i-ch019-gpu-work-and-reusable-metal-frames}{{10}{522}{GPU work and reusable Metal frames}{chapter.10}{}}
+\newlabel{stagechapter:05-engine-i-ch019}{{10}{522}{GPU work and reusable Metal frames}{section*.195}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10.1}From GPU-generated work to a Metal frame that can be reused safely}{522}{section.10.1}\protected@file@percent }
+\newlabel{05-engine-i-ch019-from-gpu-generated-work-to-a-metal-frame-that-can-be-reused-safely}{{10.1}{522}{From GPU-generated work to a Metal frame that can be reused safely}{section.10.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.1}The list that the CPU used to build}{522}{subsection.10.1.1}\protected@file@percent }
+\newlabel{05-engine-i-ch019-the-list-that-the-cpu-used-to-build}{{10.1.1}{522}{The list that the CPU used to build}{subsection.10.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.2}Keep separate kinds of ping-pong separate}{524}{subsection.10.1.2}\protected@file@percent }
+\newlabel{05-engine-i-ch019-keep-separate-kinds-of-ping-pong-separate}{{10.1.2}{524}{Keep separate kinds of ping-pong separate}{subsection.10.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.3}Dependency graphs are the real meaning of asynchrony}{526}{subsection.10.1.3}\protected@file@percent }
+\newlabel{05-engine-i-ch019-dependency-graphs-are-the-real-meaning-of-asynchrony}{{10.1.3}{526}{Dependency graphs are the real meaning of asynchrony}{subsection.10.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.4}Arithmetic intensity tells you what to measure next}{527}{subsection.10.1.4}\protected@file@percent }
+\newlabel{05-engine-i-ch019-arithmetic-intensity-tells-you-what-to-measure-next}{{10.1.4}{527}{Arithmetic intensity tells you what to measure next}{subsection.10.1.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.5}Metal is a chain of objects with distinct jobs}{528}{subsection.10.1.5}\protected@file@percent }
+\newlabel{05-engine-i-ch019-metal-is-a-chain-of-objects-with-distinct-jobs}{{10.1.5}{528}{Metal is a chain of objects with distinct jobs}{subsection.10.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.6}C++, Objective-C++, and Swift have different ownership rules}{529}{subsection.10.1.6}\protected@file@percent }
+\newlabel{05-engine-i-ch019-c-objective-c-and-swift-have-different-ownership-rules}{{10.1.6}{529}{C++, Objective-C++, and Swift have different ownership rules}{subsection.10.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.7}A repeatable design and debugging walk-through}{530}{subsection.10.1.7}\protected@file@percent }
+\newlabel{05-engine-i-ch019-a-repeatable-design-and-debugging-walk-through}{{10.1.7}{530}{A repeatable design and debugging walk-through}{subsection.10.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.8}Give one image an explicit path through the machine}{531}{subsection.10.1.8}\protected@file@percent }
+\newlabel{05-engine-i-ch019-give-one-image-an-explicit-path-through-the-machine}{{10.1.8}{531}{Give one image an explicit path through the machine}{subsection.10.1.8}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Native-API evidence is a separate layer from the logical renderer}{531}{subsubsection*.196}\protected@file@percent }
+\newlabel{05-engine-i-ch019-native-api-evidence-is-a-separate-layer-from-the-logical-renderer}{{10.1.8}{531}{Native-API evidence is a separate layer from the logical renderer}{subsubsection*.196}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Start by separating discovery from permission}{531}{subsubsection*.197}\protected@file@percent }
+\newlabel{05-engine-i-ch019-start-by-separating-discovery-from-permission}{{10.1.8}{531}{Start by separating discovery from permission}{subsubsection*.197}{}}
+\gdef \LT@xxiii {\LT@entry 
+    {1}{34.169pt}\LT@entry 
+    {1}{123.0955pt}\LT@entry 
+    {1}{79.09853pt}}
+\@writefile{toc}{\contentsline {subsubsection}{Create storage and then describe how to interpret it}{532}{subsubsection*.198}\protected@file@percent }
+\newlabel{05-engine-i-ch019-create-storage-and-then-describe-how-to-interpret-it}{{10.1.8}{532}{Create storage and then describe how to interpret it}{subsubsection*.198}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Follow a frame slot and a presentation image separately}{532}{subsubsection*.199}\protected@file@percent }
+\newlabel{05-engine-i-ch019-follow-a-frame-slot-and-a-presentation-image-separately}{{10.1.8}{532}{Follow a frame slot and a presentation image separately}{subsubsection*.199}{}}
+\@writefile{toc}{\contentsline {subsubsection}{A command buffer is reusable only under its actual state contract}{534}{subsubsection*.200}\protected@file@percent }
+\newlabel{05-engine-i-ch019-a-command-buffer-is-reusable-only-under-its-actual-state-contract}{{10.1.8}{534}{A command buffer is reusable only under its actual state contract}{subsubsection*.200}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Derive a dependency from the real producer and consumer}{534}{subsubsection*.201}\protected@file@percent }
+\newlabel{05-engine-i-ch019-derive-a-dependency-from-the-real-producer-and-consumer}{{10.1.8}{534}{Derive a dependency from the real producer and consumer}{subsubsection*.201}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Retire a resource after every user, not after one convenient clock}{535}{subsubsection*.202}\protected@file@percent }
+\newlabel{05-engine-i-ch019-retire-a-resource-after-every-user-not-after-one-convenient-clock}{{10.1.8}{535}{Retire a resource after every user, not after one convenient clock}{subsubsection*.202}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1.9}Build variable GPU workloads without a CPU round trip}{537}{subsection.10.1.9}\protected@file@percent }
+\newlabel{05-engine-i-ch019-build-variable-gpu-workloads-without-a-cpu-round-trip}{{10.1.9}{537}{Build variable GPU workloads without a CPU round trip}{subsection.10.1.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{+ M132}{537}{subsubsection*.203}\protected@file@percent }
+\newlabel{05-engine-i-ch019-m132}{{10.1.9}{537}{+ M132}{subsubsection*.203}{}}
+\@writefile{toc}{\contentsline {subsubsection}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{538}{subsubsection*.204}\protected@file@percent }
+\newlabel{05-engine-i-ch019-gpu-resident-data-structures-gpu-driven-work}{{10.1.9}{538}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{subsubsection*.204}{}}
+\newlabel{p10-cpu-driven}{{10.1.9}{538}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.205}{}}
+\newlabel{p10-gpu-driven}{{10.1.9}{538}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.206}{}}
+\newlabel{p10-hash-insert}{{10.1.9}{539}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.207}{}}
+\newlabel{p10-csr-bins}{{10.1.9}{542}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.208}{}}
+\newlabel{p10-atomic-bin}{{10.1.9}{543}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.209}{}}
+\newlabel{p10-global-append}{{10.1.9}{543}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.210}{}}
+\newlabel{p10-bad-readback}{{10.1.9}{545}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.211}{}}
+\newlabel{p10-indirect-buffer}{{10.1.9}{545}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.212}{}}
+\newlabel{p10-indirect-dispatch}{{10.1.9}{545}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.213}{}}
+\newlabel{p10-cull-pipeline}{{10.1.9}{546}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.214}{}}
+\newlabel{p10-lod-flicker}{{10.1.9}{551}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.215}{}}
+\newlabel{p10-draw-command}{{10.1.9}{551}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.216}{}}
+\newlabel{p10-cpu-small}{{10.1.9}{552}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.217}{}}
+\newlabel{p10-particle-aos}{{10.1.9}{552}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.218}{}}
+\newlabel{p10-particle-soa}{{10.1.9}{553}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.219}{}}
+\newlabel{p10-free-list}{{10.1.9}{553}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.220}{}}
+\newlabel{p10-particle-phases}{{10.1.9}{554}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.221}{}}
+\newlabel{p10-pingpong}{{10.1.9}{555}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.222}{}}
+\newlabel{p10-radix-ping}{{10.1.9}{556}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.223}{}}
+\newlabel{p10-double}{{10.1.9}{556}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.224}{}}
+\newlabel{p10-triple}{{10.1.9}{557}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.225}{}}
+\newlabel{p10-maveb-semaphore}{{10.1.9}{557}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.226}{}}
+\newlabel{p10-serialized}{{10.1.9}{557}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.227}{}}
+\newlabel{p10-pipeline}{{10.1.9}{558}{GPU-RESIDENT DATA STRUCTURES \& GPU-DRIVEN WORK}{section*.228}{}}
+\@writefile{toc}{\contentsline {subsubsection}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{558}{subsubsection*.229}\protected@file@percent }
+\newlabel{05-engine-i-ch019-command-execution-async-work-memory-lifetimes}{{10.1.9}{558}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{subsubsection*.229}{}}
+\newlabel{p10-kairo-sync}{{10.1.9}{559}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.230}{}}
+\newlabel{p10-async}{{10.1.9}{559}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.231}{}}
+\newlabel{p10-bad-read}{{10.1.9}{562}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.232}{}}
+\newlabel{p10-gpu-chain}{{10.1.9}{562}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.233}{}}
+\newlabel{p10-no-wait}{{10.1.9}{563}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.234}{}}
+\newlabel{p10-map-everything}{{10.1.9}{563}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.235}{}}
+\newlabel{p10-slice}{{10.1.9}{564}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.236}{}}
+\newlabel{p10-frag}{{10.1.9}{566}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.237}{}}
+\newlabel{p10-alias-bug}{{10.1.9}{567}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.238}{}}
+\newlabel{p10-transient}{{10.1.9}{568}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.239}{}}
+\newlabel{p10-wrong-gpu-time}{{10.1.9}{568}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.240}{}}
+\newlabel{p10-gpu-time}{{10.1.9}{569}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.241}{}}
+\newlabel{p10-pass-timing-needed}{{10.1.9}{569}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.242}{}}
+\newlabel{p10-zones}{{10.1.9}{570}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.243}{}}
+\newlabel{stagechaptersend:06-GPU-Architecture-and-Real-Time-Rendering}{{10.1.9}{571}{COMMAND EXECUTION, ASYNC WORK \& MEMORY LIFETIMES}{section*.243}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Reference Notes}{572}{appendix.A}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{referencestart:appendix-3327b8977adf}{{A}{572}{Reference Notes}{appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Build graph usage requirements}{572}{section.A.1}\protected@file@percent }
+\newlabel{appendix-3327b8977adf-build-graph-usage-requirements}{{A.1}{572}{Build graph usage requirements}{section.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.1}Why public headers force propagation}{572}{subsection.A.1.1}\protected@file@percent }
+\newlabel{appendix-3327b8977adf-why-public-headers-force-propagation}{{A.1.1}{572}{Why public headers force propagation}{subsection.A.1.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.2}Build graph versus include graph}{572}{subsection.A.1.2}\protected@file@percent }
+\newlabel{appendix-3327b8977adf-build-graph-versus-include-graph}{{A.1.2}{572}{Build graph versus include graph}{subsection.A.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.3}Cycles and architecture}{572}{subsection.A.1.3}\protected@file@percent }
+\newlabel{appendix-3327b8977adf-cycles-and-architecture}{{A.1.3}{572}{Cycles and architecture}{subsection.A.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.4}Evidence}{573}{subsection.A.1.4}\protected@file@percent }
+\newlabel{appendix-3327b8977adf-evidence}{{A.1.4}{573}{Evidence}{subsection.A.1.4}{}}
+\newlabel{referencestart:appendix-f662b5b1773b}{{A.1.4}{573}{Evidence}{subsection.A.1.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}GPU workgroups and synchronization}{573}{section.A.2}\protected@file@percent }
+\newlabel{appendix-f662b5b1773b-gpu-workgroups-and-synchronization}{{A.2}{573}{GPU workgroups and synchronization}{section.A.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.1}Execution barrier versus memory visibility}{573}{subsection.A.2.1}\protected@file@percent }
+\newlabel{appendix-f662b5b1773b-execution-barrier-versus-memory-visibility}{{A.2.1}{573}{Execution barrier versus memory visibility}{subsection.A.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Subgroups}{573}{subsection.A.2.2}\protected@file@percent }
+\newlabel{appendix-f662b5b1773b-subgroups}{{A.2.2}{573}{Subgroups}{subsection.A.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.3}Shared memory and bank conflicts}{573}{subsection.A.2.3}\protected@file@percent }
+\newlabel{appendix-f662b5b1773b-shared-memory-and-bank-conflicts}{{A.2.3}{573}{Shared memory and bank conflicts}{subsection.A.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.4}Evidence boundary}{574}{subsection.A.2.4}\protected@file@percent }
+\newlabel{appendix-f662b5b1773b-evidence-boundary}{{A.2.4}{574}{Evidence boundary}{subsection.A.2.4}{}}
+\newlabel{referencestart:appendix-fdae7ff0a23f}{{A.2.4}{574}{Evidence boundary}{subsection.A.2.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.3}Interface contracts and publication}{574}{section.A.3}\protected@file@percent }
+\newlabel{appendix-fdae7ff0a23f-interface-contracts-and-publication}{{A.3}{574}{Interface contracts and publication}{section.A.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.1}Publication is a state transition}{574}{subsection.A.3.1}\protected@file@percent }
+\newlabel{appendix-fdae7ff0a23f-publication-is-a-state-transition}{{A.3.1}{574}{Publication is a state transition}{subsection.A.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.2}Ownership versus readiness}{574}{subsection.A.3.2}\protected@file@percent }
+\newlabel{appendix-fdae7ff0a23f-ownership-versus-readiness}{{A.3.2}{574}{Ownership versus readiness}{subsection.A.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.3}Failure guarantees}{575}{subsection.A.3.3}\protected@file@percent }
+\newlabel{appendix-fdae7ff0a23f-failure-guarantees}{{A.3.3}{575}{Failure guarantees}{subsection.A.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3.4}Evidence}{575}{subsection.A.3.4}\protected@file@percent }
+\newlabel{appendix-fdae7ff0a23f-evidence}{{A.3.4}{575}{Evidence}{subsection.A.3.4}{}}
+\newlabel{referencestart:appendix-563b2cb23fc3}{{A.3.4}{575}{Evidence}{subsection.A.3.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.4}Metal heaps, memoryless resources, and hazards}{575}{section.A.4}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-metal-heaps-memoryless-resources-and-hazards}{{A.4}{575}{Metal heaps, memoryless resources, and hazards}{section.A.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4.1}Heap aliasing is a lifetime proof}{575}{subsection.A.4.1}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-heap-aliasing-is-a-lifetime-proof}{{A.4.1}{575}{Heap aliasing is a lifetime proof}{subsection.A.4.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4.2}Hazard tracking mode}{576}{subsection.A.4.2}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-hazard-tracking-mode}{{A.4.2}{576}{Hazard tracking mode}{subsection.A.4.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4.3}Memoryless attachments}{576}{subsection.A.4.3}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-memoryless-attachments}{{A.4.3}{576}{Memoryless attachments}{subsection.A.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4.4}Argument buffers and residency}{576}{subsection.A.4.4}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-argument-buffers-and-residency}{{A.4.4}{576}{Argument buffers and residency}{subsection.A.4.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4.5}Current evidence}{576}{subsection.A.4.5}\protected@file@percent }
+\newlabel{appendix-563b2cb23fc3-current-evidence}{{A.4.5}{576}{Current evidence}{subsection.A.4.5}{}}
+\newlabel{referencestart:appendix-1680333ac796}{{A.4.5}{576}{Current evidence}{subsection.A.4.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.5}Native GPU evidence protocol}{576}{section.A.5}\protected@file@percent }
+\newlabel{appendix-1680333ac796-native-gpu-evidence-protocol}{{A.5}{576}{Native GPU evidence protocol}{section.A.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5.1}Evidence tiers}{576}{subsection.A.5.1}\protected@file@percent }
+\newlabel{appendix-1680333ac796-evidence-tiers}{{A.5.1}{576}{Evidence tiers}{subsection.A.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5.2}Current branch}{577}{subsection.A.5.2}\protected@file@percent }
+\newlabel{appendix-1680333ac796-current-branch}{{A.5.2}{577}{Current branch}{subsection.A.5.2}{}}
+\newlabel{referencestart:appendix-0fc95374cb7e}{{A.5.2}{577}{Current branch}{subsection.A.5.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.6}Render graph barrier lowering}{577}{section.A.6}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-render-graph-barrier-lowering}{{A.6}{577}{Render graph barrier lowering}{section.A.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6.1}State machine per resource version}{577}{subsection.A.6.1}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-state-machine-per-resource-version}{{A.6.1}{577}{State machine per resource version}{subsection.A.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6.2}Subresource granularity}{578}{subsection.A.6.2}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-subresource-granularity}{{A.6.2}{578}{Subresource granularity}{subsection.A.6.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6.3}Vulkan lowering}{578}{subsection.A.6.3}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-vulkan-lowering}{{A.6.3}{578}{Vulkan lowering}{subsection.A.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6.4}Metal lowering}{578}{subsection.A.6.4}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-metal-lowering}{{A.6.4}{578}{Metal lowering}{subsection.A.6.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6.5}Verification ladder}{578}{subsection.A.6.5}\protected@file@percent }
+\newlabel{appendix-0fc95374cb7e-verification-ladder}{{A.6.5}{578}{Verification ladder}{subsection.A.6.5}{}}
+\newlabel{referencestart:appendix-f15ce0d9c170}{{A.6.5}{578}{Verification ladder}{Item.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.7}Vulkan synchronization2 and resource transitions}{579}{section.A.7}\protected@file@percent }
+\newlabel{appendix-f15ce0d9c170-vulkan-synchronization2-and-resource-transitions}{{A.7}{579}{Vulkan synchronization2 and resource transitions}{section.A.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7.1}Producer → consumer reasoning}{579}{subsection.A.7.1}\protected@file@percent }
+\newlabel{appendix-f15ce0d9c170-producer-consumer-reasoning}{{A.7.1}{579}{Producer → consumer reasoning}{subsection.A.7.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7.2}Image transitions add a layout contract}{579}{subsection.A.7.2}\protected@file@percent }
+\newlabel{appendix-f15ce0d9c170-image-transitions-add-a-layout-contract}{{A.7.2}{579}{Image transitions add a layout contract}{subsection.A.7.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7.3}Queue submission and timeline semaphores}{580}{subsection.A.7.3}\protected@file@percent }
+\newlabel{appendix-f15ce0d9c170-queue-submission-and-timeline-semaphores}{{A.7.3}{580}{Queue submission and timeline semaphores}{subsection.A.7.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7.4}Native witness now in the repository}{580}{subsection.A.7.4}\protected@file@percent }
+\newlabel{appendix-f15ce0d9c170-native-witness-now-in-the-repository}{{A.7.4}{580}{Native witness now in the repository}{subsection.A.7.4}{}}
+\newlabel{stagereferencesend:06-GPU-Architecture-and-Real-Time-Rendering}{{A.7.4}{580}{Native witness now in the repository}{subsection.A.7.4}{}}
+\gdef \@abspage@last{588}

@@ -1,0 +1,56 @@
+\hypertarget{appendix-18eacf61a04b}{}\label{referencestart:appendix-18eacf61a04b}
+\section{ODE integration and stability}\label{appendix-18eacf61a04b-ode-integration-and-stability}
+
+\hypertarget{appendix-18eacf61a04b-ode-integration-and-stability}{}
+
+\textbf{Curriculum depth:} Developed · \textbf{First seen:} University courses · \textbf{Latest development:} Phase 9
+
+\begin{allmightroledefinition}
+
+\subsection{Definition and mechanism}\label{appendix-18eacf61a04b-definition-and-mechanism}
+
+\hypertarget{appendix-18eacf61a04b-definition-and-mechanism}{}
+
+An ordinary differential equation gives the rate of change of a state over time. Forward Euler uses the current derivative: \(q_{k+1}=q_k+h f(q_k,t_k)\), where \(h\) is the time step. For decay \(\dot u=-au\), it multiplies each step by \(1-ah\); if the magnitude exceeds one, the numerical solution grows even though the true solution decays. Spring systems can be stiff because high-frequency modes force very small stable steps. Backward Euler evaluates the rate at the unknown new state and is more stable for decay but requires solving an equation and may add numerical damping. Symplectic Euler updates velocity then position and often keeps energy bounded for conservative mechanics. Choose an integrator according to stability, accuracy, conservation, and runtime rather than displayed frame rate alone.
+
+\end{allmightroledefinition}
+
+\subsubsection{Phase 9--10 development}\label{appendix-18eacf61a04b-phase-910-development}
+
+\hypertarget{appendix-18eacf61a04b-phase-910-development}{}
+
+An initial-value problem consists of a differential equation and a specified starting state. A numerical integrator replaces continuous evolution with finite updates, so accuracy and stability depend on both method and step size. Consistency concerns local approximation, stability concerns error growth under repeated steps, and convergence concerns the limiting solution as the step is refined. Stiff systems can force explicit methods to take very small steps even when the visible trajectory changes slowly. Symplectic methods preserve Hamiltonian structure but do not generally preserve exact energy at each step.
+
+\subsection{Prerequisites}\label{appendix-18eacf61a04b-prerequisites}
+
+\hypertarget{appendix-18eacf61a04b-prerequisites}{}
+
+\begin{itemize}
+\tightlist
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-3ae74e89b4e6}{Absolute and relative error (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Absolute and relative error)}
+\item
+  \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-8f6a01f284a7}{Conditioning and singularity (Bits, Programs, and Reliable Systems, Part 1, Reference notes: Conditioning and singularity)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-e8ab9836882e}{ODE initial-value problems and stiffness (Vision, XR, and Playable Worlds, Part 1, Reference notes: ODE initial-value problems and stiffness)}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-8f96f9c4d5bc}{Time integrators and symplectic updates (Vision, XR, and Playable Worlds, Part 1, Reference notes: Time integrators and symplectic updates)}
+\end{itemize}
+
+\subsection{Used by}\label{appendix-18eacf61a04b-used-by}
+
+\hypertarget{appendix-18eacf61a04b-used-by}{}
+
+\begin{itemize}
+\tightlist
+\item
+  {Worlds, Images and Inference}
+\item
+  \href{../07-Vision-XR-and-Playable-Worlds-P01/main.pdf\#appendix-8836553d56fc}{Implicit differentiation and parameter sensitivities (Vision, XR, and Playable Worlds, Part 1, Reference notes: Implicit differentiation and parameter sensitivities)}
+\end{itemize}
+
+\subsection{Full teaching explanation}\label{appendix-18eacf61a04b-full-teaching-explanation}
+
+\hypertarget{appendix-18eacf61a04b-full-teaching-explanation}{}
+
+\href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#04-visual-computing-ii-ch029-dynamics-forces-and-numerical-integration}{Dynamics, forces, and numerical integration (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)} · \href{../05-Spatial-Worlds-Engine-State-and-Simulation-P01/main.pdf\#04-visual-computing-ii-ch029-animation-curves-and-motion-paths}{Animation curves and motion paths (Spatial Worlds, Engine State, and Simulation, Part 1, Ch. 10)} - \href{../02-Mathematics-for-Visual-Computing-P02/main.pdf\#02-foundations-ii-ch025-odes-and-numerical-simulation}{Phase 9 teaching section (Mathematics for Visual Computing, Part 2, Ch. 9)} - \href{../01-Bits-Programs-and-Reliable-Systems-P01/main.pdf\#appendix-adf48f5dc5c1}{Visual Recall/09 - Calculus and Optimization - Visual Recall.md (Bits, Programs, and Reliable Systems, Part 1, Reference notes: 09 - Calculus and Optimization - Visual Recall)} · Phase 9 visual recall

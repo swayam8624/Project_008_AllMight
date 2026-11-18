@@ -1,0 +1,624 @@
+\contentsline {chapter}{\numberline {8}Tiling, Ordering and Compositing at Scale}{1}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Rasterize kernels at scale and connect their identities}{1}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}+ M150}{1}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}TILING, REFERENCE EXPANSION, SORTING AND COMPOSITING}{2}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}THE M148 DATAFLOW IN CURRENT MAVEB}{30}{subsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.1.4}CPU ORACLE, METAL EXECUTION AND QUANTITATIVE AGREEMENT}{31}{subsection.8.1.4}%
+\contentsline {section}{\numberline {8.2}Give captured Gaussians stable world identity}{49}{section.8.2}%
+\contentsline {subsection}{\numberline {8.2.1}Worked edit: a supported Gaussian under stretch and translation}{50}{subsection.8.2.1}%
+\contentsline {section}{\numberline {8.3}Couple edits in both directions and keep their proof}{51}{section.8.3}%
+\contentsline {subsection}{\numberline {8.3.1}Reconstruction exercise with solution}{52}{subsection.8.3.1}%
+\contentsline {subsection}{\numberline {8.3.2}Limits and exit check}{52}{subsection.8.3.2}%
+\contentsline {section}{\numberline {8.4}Train the splats only after the forward renderer is understood}{52}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Derive the image gradient through a Gaussian's footprint}{53}{section.8.5}%
+\contentsline {section}{\numberline {8.6}Density control changes model size between gradient steps}{54}{section.8.6}%
+\contentsline {subsection}{\numberline {8.6.1}Reconstruction exercise: trace one fit and one topology edit}{56}{subsection.8.6.1}%
+\contentsline {subsection}{\numberline {8.6.2}A complete scalar training-step laboratory}{56}{subsection.8.6.2}%
+\contentsline {chapter}{\numberline {9}XR: Radiometry, Optics and Perception}{60}{chapter.9}%
+\contentsline {section}{\numberline {9.1}XR: From Light to Perception - Seeing and Representing Reality}{60}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Prologue - A perfect scene can still make a poor experience}{60}{subsection.9.1.1}%
+\contentsline {subsubsection}{Figure X0 --- A qualitative picture of the XR loop}{60}{subsubsection*.31}%
+\contentsline {subsection}{\numberline {9.1.2}Light must become a quantity before it becomes a color}{61}{subsection.9.1.2}%
+\contentsline {subsubsection}{Why three RGB values cannot describe a complete spectrum}{62}{subsubsection*.32}%
+\contentsline {subsubsection}{Four light quantities that should not be confused}{63}{subsubsection*.33}%
+\contentsline {subsection}{\numberline {9.1.3}Materials turn incoming light into outgoing light}{64}{subsection.9.1.3}%
+\contentsline {subsection}{\numberline {9.1.4}The eye is an optical instrument with neural processing inside it}{65}{subsection.9.1.4}%
+\contentsline {subsubsection}{Why a uniform patch and an edge produce different responses}{65}{subsubsection*.34}%
+\contentsline {subsection}{\numberline {9.1.5}Angles connect display samples to a viewer}{66}{subsection.9.1.5}%
+\contentsline {subsubsection}{Why the center does not have that exact average density}{66}{subsubsection*.35}%
+\contentsline {subsubsection}{Measuring distance from gaze}{67}{subsubsection*.36}%
+\contentsline {subsection}{\numberline {9.1.6}Focus and stereo can disagree even when the images are sharp}{67}{subsection.9.1.6}%
+\contentsline {subsubsection}{Refraction changes a ray's direction}{67}{subsubsection*.37}%
+\contentsline {subsubsection}{Accommodation changes focus}{67}{subsubsection*.38}%
+\contentsline {subsubsection}{Vergence changes where the eyes point}{68}{subsubsection*.39}%
+\contentsline {subsubsection}{Figure X1 --- Two simultaneous depth demands}{69}{subsubsection*.40}%
+\contentsline {subsection}{\numberline {9.1.7}Visibility is about contrast, conditions and tasks}{69}{subsection.9.1.7}%
+\contentsline {subsubsection}{Acuity changes with eccentricity}{70}{subsubsection*.41}%
+\contentsline {subsubsection}{Contrast describes a difference relative to its surroundings}{70}{subsubsection*.42}%
+\contentsline {subsubsection}{Adaptation, masking, crowding, and attention}{71}{subsubsection*.43}%
+\contentsline {subsection}{\numberline {9.1.8}A gaze sample needs a time as well as a direction}{71}{subsection.9.1.8}%
+\contentsline {subsubsection}{Sampling rate is not latency}{72}{subsubsection*.44}%
+\contentsline {subsubsection}{Screen motion is not always retinal motion}{72}{subsubsection*.45}%
+\contentsline {subsection}{\numberline {9.1.9}Sampling is a question of what remains distinguishable}{72}{subsection.9.1.9}%
+\contentsline {subsubsection}{Two different signals can give identical samples}{73}{subsubsection*.46}%
+\contentsline {subsubsection}{Figure X2 --- The samples cannot name their original}{74}{subsubsection*.47}%
+\contentsline {subsubsection}{What the sampling theorem guarantees}{74}{subsubsection*.48}%
+\contentsline {subsection}{\numberline {9.1.10}Fourier coordinates reveal what a filter removes}{75}{subsection.9.1.10}%
+\contentsline {subsubsection}{Why complex numbers help}{75}{subsubsection*.49}%
+\contentsline {subsubsection}{The finite version: DFT and FFT}{75}{subsubsection*.50}%
+\contentsline {subsubsection}{Read amplitudes using the stated normalization}{76}{subsubsection*.51}%
+\contentsline {subsubsection}{Why a finite observation spreads a frequency across bins}{76}{subsubsection*.52}%
+\contentsline {subsubsection}{Why spectral replicas give the sampling limit}{76}{subsubsection*.53}%
+\contentsline {subsection}{\numberline {9.1.11}A footprint is more meaningful than an isolated pixel center}{77}{subsection.9.1.11}%
+\contentsline {subsubsection}{A three-sample filter we can understand directly}{77}{subsubsection*.54}%
+\contentsline {subsubsection}{What happens to a point of light?}{78}{subsubsection*.55}%
+\contentsline {subsubsection}{Diffraction is another source of blur}{78}{subsubsection*.56}%
+\contentsline {subsubsection}{A pixel value can be an average over an area}{79}{subsubsection*.57}%
+\contentsline {subsection}{\numberline {9.1.12}Multiresolution work must preserve the right information}{79}{subsection.9.1.12}%
+\contentsline {subsubsection}{Pyramids separate broad structure from detail}{79}{subsubsection*.58}%
+\contentsline {subsubsection}{Reconstruction filters make different tradeoffs}{79}{subsubsection*.59}%
+\contentsline {subsubsection}{Antialiasing methods do not all sample the same work}{80}{subsubsection*.60}%
+\contentsline {subsubsection}{Filtering before shading can differ from filtering afterward}{80}{subsubsection*.61}%
+\contentsline {subsection}{\numberline {9.1.13}Temporal reconstruction is an inference about correspondence}{81}{subsection.9.1.13}%
+\contentsline {subsubsection}{Reprojection tries to find the same surface again}{81}{subsubsection*.62}%
+\contentsline {subsubsection}{History validation decides whether reuse is justified}{81}{subsubsection*.63}%
+\contentsline {subsubsection}{Jitter, TAA, and motion blur solve different problems}{82}{subsubsection*.64}%
+\contentsline {subsection}{\numberline {9.1.14}Encoded RGB must not masquerade as linear light}{82}{subsection.9.1.14}%
+\contentsline {subsubsection}{Decode before physically meaningful averaging}{82}{subsubsection*.65}%
+\contentsline {subsubsection}{Figure X3 --- Same endpoints, different averaging domain}{83}{subsubsection*.66}%
+\contentsline {subsubsection}{Relative luminance is not an absolute display measurement}{83}{subsubsection*.67}%
+\contentsline {subsubsection}{Tone mapping changes the relationship between errors}{84}{subsubsection*.68}%
+\contentsline {subsubsection}{Different kinds of noise need different models}{84}{subsubsection*.69}%
+\contentsline {subsection}{\numberline {9.1.15}Quality numbers need a question they can actually answer}{84}{subsection.9.1.15}%
+\contentsline {subsubsection}{Numerical error measures compare values}{84}{subsubsection*.70}%
+\contentsline {subsubsection}{Structural and gaze-aware comparisons add assumptions}{85}{subsubsection*.71}%
+\contentsline {subsection}{\numberline {9.1.16}A threshold is evidence from a procedure, not a universal border}{86}{subsection.9.1.16}%
+\contentsline {subsubsection}{A curve parameter is not always the threshold}{86}{subsubsection*.72}%
+\contentsline {subsubsection}{Experimental design determines what the result supports}{86}{subsubsection*.73}%
+\contentsline {subsection}{\numberline {9.1.17}Foveation is allocation under uncertain perception and timing}{87}{subsection.9.1.17}%
+\contentsline {subsubsection}{Smooth transitions help, but they do not restore missing detail}{87}{subsubsection*.74}%
+\contentsline {subsubsection}{The quality region must allow for prediction error}{87}{subsubsection*.75}%
+\contentsline {subsubsection}{Figure X4 --- Aim detail at visible time}{88}{subsubsection*.76}%
+\contentsline {subsubsection}{Less shading does not mean the whole frame becomes equally faster}{88}{subsubsection*.77}%
+\contentsline {subsection}{\numberline {9.1.18}Read research as a chain of questions, methods and bounded conclusions}{88}{subsection.9.1.18}%
+\contentsline {subsubsection}{Making spatial allocation computationally useful}{89}{subsubsection*.78}%
+\contentsline {subsubsection}{Keeping resolvable contrast rather than merely blurring the periphery}{89}{subsubsection*.79}%
+\contentsline {subsubsection}{Organizing prior work without making a current novelty claim}{89}{subsubsection*.80}%
+\contentsline {subsubsection}{Matching samples across time and predicting their visible error}{89}{subsubsection*.81}%
+\contentsline {subsubsection}{Binocular depth changes the optimization question}{89}{subsubsection*.82}%
+\contentsline {subsection}{\numberline {9.1.19}Make the mathematics operational without pretending to run a human study}{90}{subsection.9.1.19}%
+\contentsline {subsubsection}{Diagnose a symptom by the quantity that failed}{90}{subsubsection*.83}%
+\contentsline {subsubsection}{Complete numerical and image-space laboratory}{91}{subsubsection*.84}%
+\contentsline {subsection}{\numberline {9.1.20}Teach the distinctions from a blank board}{94}{subsection.9.1.20}%
+\contentsline {subsection}{\numberline {9.1.21}What the next sources must add}{95}{subsection.9.1.21}%
+\contentsline {subsection}{\numberline {9.1.22}Recovered cumulative reconstruction proofs}{95}{subsection.9.1.22}%
+\contentsline {subsection}{\numberline {9.1.23}XR - Sampling, contrast transfer and temporal evidence}{95}{subsection.9.1.23}%
+\contentsline {subsubsection}{Why local pixels per degree is not the average}{96}{subsubsection*.85}%
+\contentsline {subsubsection}{Sampling creates ambiguity before reconstruction begins}{96}{subsubsection*.86}%
+\contentsline {subsubsection}{A normalized filter preserves constants, not arbitrary details}{97}{subsubsection*.87}%
+\contentsline {subsubsection}{Temporal variance and age are conditional results}{97}{subsubsection*.88}%
+\contentsline {subsubsection}{Psychometric scale is not itself the chosen threshold}{98}{subsubsection*.89}%
+\contentsline {subsection}{\numberline {9.1.24}XR --- From Light to Perception, Seeing and Representing Reality}{98}{subsection.9.1.24}%
+\contentsline {chapter}{\numberline {10}XR: Extended Walkthrough and Verification Checkpoints}{99}{chapter.10}%
+\contentsline {section}{\numberline {10.1}XR: From Light to Perception - Seeing and Representing Reality}{99}{section.10.1}%
+\contentsline {subsection}{\numberline {10.1.1}Prologue - A perfect scene can still make a poor experience}{99}{subsection.10.1.1}%
+\contentsline {subsubsection}{Figure X0 --- A qualitative picture of the XR loop}{100}{subsubsection*.91}%
+\contentsline {subsection}{\numberline {10.1.2}Light must become a quantity before it becomes a color}{100}{subsection.10.1.2}%
+\contentsline {subsubsection}{Why three RGB values cannot describe a complete spectrum}{101}{subsubsection*.92}%
+\contentsline {subsubsection}{Four light quantities that should not be confused}{102}{subsubsection*.93}%
+\contentsline {subsection}{\numberline {10.1.3}Materials turn incoming light into outgoing light}{103}{subsection.10.1.3}%
+\contentsline {subsection}{\numberline {10.1.4}The eye is an optical instrument with neural processing inside it}{104}{subsection.10.1.4}%
+\contentsline {subsubsection}{Why a uniform patch and an edge produce different responses}{104}{subsubsection*.94}%
+\contentsline {subsection}{\numberline {10.1.5}Angles connect display samples to a viewer}{105}{subsection.10.1.5}%
+\contentsline {subsubsection}{Why the center does not have that exact average density}{105}{subsubsection*.95}%
+\contentsline {subsubsection}{Measuring distance from gaze}{106}{subsubsection*.96}%
+\contentsline {subsection}{\numberline {10.1.6}Focus and stereo can disagree even when the images are sharp}{106}{subsection.10.1.6}%
+\contentsline {subsubsection}{Refraction changes a ray's direction}{106}{subsubsection*.97}%
+\contentsline {subsubsection}{Accommodation changes focus}{106}{subsubsection*.98}%
+\contentsline {subsubsection}{Vergence changes where the eyes point}{107}{subsubsection*.99}%
+\contentsline {subsubsection}{Figure X1 --- Two simultaneous depth demands}{108}{subsubsection*.100}%
+\contentsline {subsection}{\numberline {10.1.7}Visibility is about contrast, conditions and tasks}{108}{subsection.10.1.7}%
+\contentsline {subsubsection}{Acuity changes with eccentricity}{109}{subsubsection*.101}%
+\contentsline {subsubsection}{Contrast describes a difference relative to its surroundings}{109}{subsubsection*.102}%
+\contentsline {subsubsection}{Adaptation, masking, crowding, and attention}{110}{subsubsection*.103}%
+\contentsline {subsection}{\numberline {10.1.8}A gaze sample needs a time as well as a direction}{110}{subsection.10.1.8}%
+\contentsline {subsubsection}{Sampling rate is not latency}{111}{subsubsection*.104}%
+\contentsline {subsubsection}{Screen motion is not always retinal motion}{111}{subsubsection*.105}%
+\contentsline {subsection}{\numberline {10.1.9}Sampling is a question of what remains distinguishable}{111}{subsection.10.1.9}%
+\contentsline {subsubsection}{Two different signals can give identical samples}{112}{subsubsection*.106}%
+\contentsline {subsubsection}{Figure X2 --- The samples cannot name their original}{113}{subsubsection*.107}%
+\contentsline {subsubsection}{What the sampling theorem guarantees}{113}{subsubsection*.108}%
+\contentsline {subsection}{\numberline {10.1.10}Fourier coordinates reveal what a filter removes}{114}{subsection.10.1.10}%
+\contentsline {subsubsection}{Why complex numbers help}{114}{subsubsection*.109}%
+\contentsline {subsubsection}{The finite version: DFT and FFT}{114}{subsubsection*.110}%
+\contentsline {subsubsection}{Read amplitudes using the stated normalization}{115}{subsubsection*.111}%
+\contentsline {subsubsection}{Why a finite observation spreads a frequency across bins}{115}{subsubsection*.112}%
+\contentsline {subsubsection}{Why spectral replicas give the sampling limit}{115}{subsubsection*.113}%
+\contentsline {subsection}{\numberline {10.1.11}A footprint is more meaningful than an isolated pixel center}{116}{subsection.10.1.11}%
+\contentsline {subsubsection}{A three-sample filter we can understand directly}{116}{subsubsection*.114}%
+\contentsline {subsubsection}{What happens to a point of light?}{117}{subsubsection*.115}%
+\contentsline {subsubsection}{Diffraction is another source of blur}{117}{subsubsection*.116}%
+\contentsline {subsubsection}{A pixel value can be an average over an area}{118}{subsubsection*.117}%
+\contentsline {subsection}{\numberline {10.1.12}Multiresolution work must preserve the right information}{118}{subsection.10.1.12}%
+\contentsline {subsubsection}{Pyramids separate broad structure from detail}{118}{subsubsection*.118}%
+\contentsline {subsubsection}{Reconstruction filters make different tradeoffs}{118}{subsubsection*.119}%
+\contentsline {subsubsection}{Antialiasing methods do not all sample the same work}{119}{subsubsection*.120}%
+\contentsline {subsubsection}{Filtering before shading can differ from filtering afterward}{119}{subsubsection*.121}%
+\contentsline {subsection}{\numberline {10.1.13}Temporal reconstruction is an inference about correspondence}{120}{subsection.10.1.13}%
+\contentsline {subsubsection}{Reprojection tries to find the same surface again}{120}{subsubsection*.122}%
+\contentsline {subsubsection}{History validation decides whether reuse is justified}{120}{subsubsection*.123}%
+\contentsline {subsubsection}{Jitter, TAA, and motion blur solve different problems}{121}{subsubsection*.124}%
+\contentsline {subsection}{\numberline {10.1.14}Encoded RGB must not masquerade as linear light}{121}{subsection.10.1.14}%
+\contentsline {subsubsection}{Decode before physically meaningful averaging}{121}{subsubsection*.125}%
+\contentsline {subsubsection}{Figure X3 --- Same endpoints, different averaging domain}{122}{subsubsection*.126}%
+\contentsline {subsubsection}{Relative luminance is not an absolute display measurement}{122}{subsubsection*.127}%
+\contentsline {subsubsection}{Tone mapping changes the relationship between errors}{123}{subsubsection*.128}%
+\contentsline {subsubsection}{Different kinds of noise need different models}{123}{subsubsection*.129}%
+\contentsline {subsection}{\numberline {10.1.15}Quality numbers need a question they can actually answer}{123}{subsection.10.1.15}%
+\contentsline {subsubsection}{Numerical error measures compare values}{123}{subsubsection*.130}%
+\contentsline {subsubsection}{Structural and gaze-aware comparisons add assumptions}{124}{subsubsection*.131}%
+\contentsline {subsection}{\numberline {10.1.16}A threshold is evidence from a procedure, not a universal border}{125}{subsection.10.1.16}%
+\contentsline {subsubsection}{A curve parameter is not always the threshold}{125}{subsubsection*.132}%
+\contentsline {subsubsection}{Experimental design determines what the result supports}{125}{subsubsection*.133}%
+\contentsline {subsection}{\numberline {10.1.17}Foveation is allocation under uncertain perception and timing}{126}{subsection.10.1.17}%
+\contentsline {subsubsection}{Smooth transitions help, but they do not restore missing detail}{126}{subsubsection*.134}%
+\contentsline {subsubsection}{The quality region must allow for prediction error}{126}{subsubsection*.135}%
+\contentsline {subsubsection}{Figure X4 --- Aim detail at visible time}{127}{subsubsection*.136}%
+\contentsline {subsubsection}{Less shading does not mean the whole frame becomes equally faster}{127}{subsubsection*.137}%
+\contentsline {subsection}{\numberline {10.1.18}Read research as a chain of questions, methods and bounded conclusions}{127}{subsection.10.1.18}%
+\contentsline {subsubsection}{Making spatial allocation computationally useful}{128}{subsubsection*.138}%
+\contentsline {subsubsection}{Keeping resolvable contrast rather than merely blurring the periphery}{128}{subsubsection*.139}%
+\contentsline {subsubsection}{Organizing prior work without making a current novelty claim}{128}{subsubsection*.140}%
+\contentsline {subsubsection}{Matching samples across time and predicting their visible error}{128}{subsubsection*.141}%
+\contentsline {subsubsection}{Binocular depth changes the optimization question}{128}{subsubsection*.142}%
+\contentsline {subsection}{\numberline {10.1.19}Make the mathematics operational without pretending to run a human study}{129}{subsection.10.1.19}%
+\contentsline {subsubsection}{Diagnose a symptom by the quantity that failed}{129}{subsubsection*.143}%
+\contentsline {subsubsection}{Complete numerical and image-space laboratory}{130}{subsubsection*.144}%
+\contentsline {subsection}{\numberline {10.1.20}Teach the distinctions from a blank board}{133}{subsection.10.1.20}%
+\contentsline {subsection}{\numberline {10.1.21}What the next sources must add}{134}{subsection.10.1.21}%
+\contentsline {subsection}{\numberline {10.1.22}Recovered cumulative reconstruction proofs}{134}{subsection.10.1.22}%
+\contentsline {subsection}{\numberline {10.1.23}XR - Sampling, contrast transfer and temporal evidence}{134}{subsection.10.1.23}%
+\contentsline {subsubsection}{Why local pixels per degree is not the average}{135}{subsubsection*.145}%
+\contentsline {subsubsection}{Sampling creates ambiguity before reconstruction begins}{135}{subsubsection*.146}%
+\contentsline {subsubsection}{A normalized filter preserves constants, not arbitrary details}{136}{subsubsection*.147}%
+\contentsline {subsubsection}{Temporal variance and age are conditional results}{136}{subsubsection*.148}%
+\contentsline {subsubsection}{Psychometric scale is not itself the chosen threshold}{137}{subsubsection*.149}%
+\contentsline {subsection}{\numberline {10.1.24}Depth-repair checkpoint --- raster, transport, splats, and mesh operations as reference programs}{137}{subsection.10.1.24}%
+\contentsline {chapter}{\numberline {11}Algorithms, application boundaries, and a first playable}{139}{chapter.11}%
+\contentsline {section}{\numberline {11.1}From an asset map to a correct navigable world --- Phase 5, M028--M030, Parts 446--500}{139}{section.11.1}%
+\contentsline {subsection}{\numberline {11.1.1}A graph is a data model before it is an algorithm}{139}{subsection.11.1.1}%
+\contentsline {subsection}{\numberline {11.1.2}A queue discovers reachability one edge at a time}{140}{subsection.11.1.2}%
+\contentsline {subsection}{\numberline {11.1.3}A render graph is an ordering proof, not simply a list of passes}{140}{subsection.11.1.3}%
+\contentsline {subsection}{\numberline {11.1.4}Shortest paths: the edge assumptions determine the proof}{141}{subsection.11.1.4}%
+\contentsline {subsection}{\numberline {11.1.5}A* is Dijkstra informed by an admissible lower bound}{142}{subsection.11.1.5}%
+\contentsline {subsection}{\numberline {11.1.6}Minimum spanning trees solve a different global problem}{143}{subsection.11.1.6}%
+\contentsline {subsection}{\numberline {11.1.7}Searching and sorting: the order of keys is itself a contract}{143}{subsection.11.1.7}%
+\contentsline {subsection}{\numberline {11.1.8}Morton keys turn 2D proximity into a sortable integer---within limits}{144}{subsection.11.1.8}%
+\contentsline {subsection}{\numberline {11.1.9}Prefix scans turn counts into a proof of nonoverlapping output}{144}{subsection.11.1.9}%
+\contentsline {subsection}{\numberline {11.1.10}Windows, recursion, dynamic programming and greedy proofs are algorithmic choices}{145}{subsection.11.1.10}%
+\contentsline {subsection}{\numberline {11.1.11}Randomization needs a probability proof as well as a seeded test}{146}{subsection.11.1.11}%
+\contentsline {subsection}{\numberline {11.1.12}An LRU cache and a sparse set reconnect algorithms to engine ownership}{146}{subsection.11.1.12}%
+\contentsline {subsection}{\numberline {11.1.13}The final choice is an experiment grounded in an operation distribution}{147}{subsection.11.1.13}%
+\contentsline {section}{\numberline {11.2}An API is a promise about an operation}{148}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}State the contract at the boundary}{148}{subsection.11.2.1}%
+\contentsline {subsection}{\numberline {11.2.2}Publication is the moment other code may rely on a result}{149}{subsection.11.2.2}%
+\contentsline {subsection}{\numberline {11.2.3}A buffer name, an API object, and its storage are separate}{149}{subsection.11.2.3}%
+\contentsline {subsection}{\numberline {11.2.4}Destroying a C++ wrapper may not finish external work}{150}{subsection.11.2.4}%
+\contentsline {subsection}{\numberline {11.2.5}Error types should preserve the caller's decision}{150}{subsection.11.2.5}%
+\contentsline {section}{\numberline {11.3}A complete handle contract in a small program}{151}{section.11.3}%
+\contentsline {section}{\numberline {11.4}The build graph becomes another interface}{153}{section.11.4}%
+\contentsline {subsection}{\numberline {11.4.1}A capability exists only where the complete resource contract permits it}{153}{subsection.11.4.1}%
+\contentsline {subsection}{\numberline {11.4.2}Packaging removes an editor dependency, not every runtime dependency}{154}{subsection.11.4.2}%
+\contentsline {section}{\numberline {11.5}Give startup and shutdown a direction}{154}{section.11.5}%
+\contentsline {subsection}{\numberline {11.5.1}Make system ownership match the work}{155}{subsection.11.5.1}%
+\contentsline {section}{\numberline {11.6}Know which story each source can tell}{155}{section.11.6}%
+\contentsline {subsection}{\numberline {11.6.1}Choose an explanation format that matches the learner and the work}{156}{subsection.11.6.1}%
+\contentsline {subsection}{\numberline {11.6.2}Evidence boundary}{157}{subsection.11.6.2}%
+\contentsline {subsection}{\numberline {11.6.3}What the ending establishes}{157}{subsection.11.6.3}%
+\contentsline {subsection}{\numberline {11.6.4}Evidence boundary}{157}{subsection.11.6.4}%
+\contentsline {section}{\numberline {11.7}PROFILING IS A SEARCH FOR THE LIMITING RESOURCE, NOT A RITUAL SCREENSHOT}{157}{section.11.7}%
+\contentsline {subsection}{\numberline {11.7.1}Start with the system timeline}{157}{subsection.11.7.1}%
+\contentsline {subsection}{\numberline {11.7.2}Then inspect one graphics workload in detail}{158}{subsection.11.7.2}%
+\contentsline {subsection}{\numberline {11.7.3}Label everything before you need the labels}{158}{subsection.11.7.3}%
+\contentsline {subsection}{\numberline {11.7.4}Measure representative workloads}{159}{subsection.11.7.4}%
+\contentsline {subsection}{\numberline {11.7.5}Use counter evidence to choose the next experiment}{159}{subsection.11.7.5}%
+\contentsline {section}{\numberline {11.8}PRACTICAL SOURCE TRIANGULATION: WHAT EACH SERIES IS ACTUALLY GOOD FOR}{160}{section.11.8}%
+\contentsline {section}{\numberline {11.9}From Moving Scene to Reproducible Runtime}{161}{section.11.9}%
+\contentsline {subsection}{\numberline {11.9.1}A teaching spine for spatial queries, planning, identity, ECS, content, and builds}{161}{subsection.11.9.1}%
+\contentsline {subsection}{\numberline {11.9.2}1. A robot asks questions of space}{162}{subsection.11.9.2}%
+\contentsline {subsubsection}{1.1 Why surface area predicts traversal}{163}{subsubsection*.151}%
+\contentsline {subsection}{\numberline {11.9.3}2. From geometry to a route}{164}{subsection.11.9.3}%
+\contentsline {subsection}{\numberline {11.9.4}3. Moving structures and durable identities}{165}{subsection.11.9.4}%
+\contentsline {subsubsection}{3.1 Sparse sets and the meaning of a reference}{165}{subsubsection*.152}%
+\contentsline {subsubsection}{3.2 Archetypes and structural migration}{166}{subsubsection*.153}%
+\contentsline {subsection}{\numberline {11.9.5}4. Scene relationships, systems, and identity bridges}{167}{subsection.11.9.5}%
+\contentsline {subsection}{\numberline {11.9.6}5. Assets, editor state, and serialization}{168}{subsection.11.9.6}%
+\contentsline {subsubsection}{Serialize scene meaning through stable identities}{169}{subsubsection*.154}%
+\contentsline {subsection}{\numberline {11.9.7}6. Dependencies, composition, and the build graph}{174}{subsection.11.9.7}%
+\contentsline {subsection}{\numberline {11.9.8}7. End-to-end trace and the invariant ledger}{175}{subsection.11.9.8}%
+\contentsline {subsection}{\numberline {11.9.9}Scope notes for integration}{176}{subsection.11.9.9}%
+\contentsline {subsection}{\numberline {11.9.10}8. Make the guarantees executable}{177}{subsection.11.9.10}%
+\contentsline {subsection}{\numberline {11.9.11}9. How to read claims and select the right mechanism}{182}{subsection.11.9.11}%
+\contentsline {subsection}{\numberline {11.9.12}10. The ownership graph as the final model}{183}{subsection.11.9.12}%
+\contentsline {subsection}{\numberline {11.9.13}Primary references consulted}{184}{subsection.11.9.13}%
+\contentsline {section}{\numberline {11.10}Make the first game ask the architecture a question}{184}{section.11.10}%
+\contentsline {chapter}{\numberline {12}Player choices, rules, and readable feedback}{185}{chapter.12}%
+\contentsline {section}{\numberline {12.1}Design for play beyond a feature checklist}{185}{section.12.1}%
+\contentsline {subsection}{\numberline {12.1.1}Let players read cause and consequence}{186}{subsection.12.1.1}%
+\contentsline {subsubsection}{Design systems that produce readable outcomes}{187}{subsubsection*.156}%
+\contentsline {paragraph}{Environmental effects can change both play and interpretation}{187}{paragraph*.157}%
+\contentsline {subsection}{\numberline {12.1.2}Keep the rules distinct from the machinery}{188}{subsection.12.1.2}%
+\contentsline {subsubsection}{Production rules and player-facing meaning belong in the same conversation}{189}{subsubsection*.158}%
+\contentsline {subsection}{\numberline {12.1.3}Design decisions as authored experiments}{190}{subsection.12.1.3}%
+\contentsline {subsubsection}{An interview separates a designer's view from the editor's conclusion}{190}{subsubsection*.159}%
+\contentsline {subsubsection}{Fairness is both structure and player trust}{191}{subsubsection*.160}%
+\contentsline {subsection}{\numberline {12.1.4}Rules, emergence, and meaningful outcomes}{191}{subsection.12.1.4}%
+\contentsline {subsubsection}{A choice is a loop through possibility, not a menu item}{192}{subsubsection*.161}%
+\contentsline {subsubsection}{Information is uncertainty about a signal, not its meaning}{193}{subsubsection*.162}%
+\contentsline {subsubsection}{Information can be a formal signal or knowledge held by players}{194}{subsubsection*.163}%
+\contentsline {subsubsection}{Use feedback loops to shape how a game state moves}{195}{subsubsection*.164}%
+\contentsline {subsubsection}{Feedback rules and player agency}{196}{subsubsection*.165}%
+\contentsline {subsubsection}{Use game theory as a narrow lens on choices and conflict}{197}{subsubsection*.166}%
+\contentsline {paragraph}{Conflict comes from the rules players can use}{198}{paragraph*.167}%
+\contentsline {subsubsection}{Exploiting a rule is different from breaking it}{198}{subsubsection*.168}%
+\contentsline {subsubsection}{Rule-bending can be part of the rules when its boundaries are clear}{199}{subsubsection*.169}%
+\contentsline {subsubsection}{\emph {Ironclad} puts two win conditions on one board}{200}{subsubsection*.170}%
+\contentsline {subsubsection}{Treat the player-facing contract as an engineering contract}{201}{subsubsection*.171}%
+\contentsline {subsection}{\numberline {12.1.5}Begin with a player situation}{202}{subsection.12.1.5}%
+\contentsline {subsubsection}{Separate chance, risk, and uncertainty}{203}{subsubsection*.172}%
+\contentsline {paragraph}{Chance has a mechanism, a strategy, and a player's interpretation}{204}{paragraph*.173}%
+\contentsline {subsection}{\numberline {12.1.6}Turn adjectives into observations}{204}{subsection.12.1.6}%
+\contentsline {subsubsection}{Treat screenshots and trailers as observations, not implementation proofs}{205}{subsubsection*.174}%
+\contentsline {subsection}{\numberline {12.1.7}Focus the prototype on the risky question}{206}{subsection.12.1.7}%
+\contentsline {subsection}{\numberline {12.1.8}Protect useful ambiguity; eliminate accidental ambiguity}{207}{subsection.12.1.8}%
+\contentsline {subsection}{\numberline {12.1.9}Rules are shared agreements that make play possible}{207}{subsection.12.1.9}%
+\contentsline {subsection}{\numberline {12.1.10}Specify both allowed actions and boundaries}{208}{subsection.12.1.10}%
+\contentsline {subsubsection}{A design document can specify a playable contract without pretending a game exists}{208}{subsubsection*.175}%
+\contentsline {paragraph}{A design document connects mechanics to the world}{209}{paragraph*.176}%
+\contentsline {paragraph}{Turn a design document into an observable route through the game}{210}{paragraph*.177}%
+\contentsline {paragraph}{A design document describes a game that is meant to exist}{210}{paragraph*.178}%
+\contentsline {subsubsection}{Design a mechanic as a state transition, not just a button label}{211}{subsubsection*.179}%
+\contentsline {paragraph}{Choose goals and endings as part of the mechanic}{212}{paragraph*.180}%
+\contentsline {paragraph}{A resource meter can reward style and create a deadline}{213}{paragraph*.181}%
+\contentsline {subsubsection}{A weapon spec is a set of decisions the player can feel}{213}{subsubsection*.182}%
+\contentsline {subsection}{\numberline {12.1.11}Failure feedback and accessibility}{213}{subsection.12.1.11}%
+\contentsline {subsection}{\numberline {12.1.12}Decide what the first game must be able to do}{214}{subsection.12.1.12}%
+\contentsline {subsection}{\numberline {12.1.13}Design by connecting play, technology, and story}{215}{subsection.12.1.13}%
+\contentsline {subsubsection}{Choose the game you want to make before choosing how much engine to build}{215}{subsubsection*.183}%
+\contentsline {subsection}{\numberline {12.1.14}Keep an audio front end separate from its playback backend}{216}{subsection.12.1.14}%
+\contentsline {subsubsection}{Turn the audio front end into a real-time voice and mixing system}{216}{subsubsection*.184}%
+\contentsline {subsubsection}{The audio callback is a deadline boundary}{217}{subsubsection*.185}%
+\contentsline {subsubsection}{A voice owns playback state, not the asset}{217}{subsubsection*.186}%
+\contentsline {subsubsection}{Mixing is addition plus a level policy}{217}{subsubsection*.187}%
+\contentsline {subsubsection}{Voice capacity needs an overload rule}{218}{subsubsection*.188}%
+\contentsline {subsubsection}{Streaming separates decoding from playback}{218}{subsubsection*.189}%
+\contentsline {subsubsection}{Resampling is part of correct playback}{218}{subsubsection*.190}%
+\contentsline {subsubsection}{Spatial audio consumes published world meaning}{218}{subsubsection*.191}%
+\contentsline {subsubsection}{Shared systems should pay for themselves}{222}{subsubsection*.192}%
+\contentsline {subsection}{\numberline {12.1.15}Read a game feature at three nested scales}{222}{subsection.12.1.15}%
+\contentsline {subsection}{\numberline {12.1.16}Ask what the game makes valuable}{224}{subsection.12.1.16}%
+\contentsline {chapter}{\numberline {13}Engine changes across subsystem contracts}{227}{chapter.13}%
+\contentsline {section}{\numberline {13.1}Make a change cross the engine without breaking its promises}{227}{section.13.1}%
+\contentsline {subsection}{\numberline {13.1.1}Engine Architecture, Dependency Direction, Runtime Boundaries, Platform/Backend Abstraction, Asset Identity, Import Pipelines, Dependency Graphs, DDC, Hot Reload, Streaming, Residency, and GPU-Safe Lifetime}{227}{subsection.13.1.1}%
+\contentsline {subsection}{\numberline {13.1.2}ENGINE LAYERING, DEPENDENCY MANAGEMENT, PLATFORM BOUNDARIES, SERVICES, AND APPLICATION LIFETIME}{228}{subsection.13.1.2}%
+\contentsline {subsection}{\numberline {13.1.3}ASSET IDENTITY, IMPORT PIPELINES, DEPENDENCY GRAPHS, DDC, HOT RELOAD, STREAMING AND GPU LIFETIME}{259}{subsection.13.1.3}%
+\contentsline {subsection}{\numberline {13.1.4}Turn shader import into a checked derivation transaction}{276}{subsection.13.1.4}%
+\contentsline {subsubsection}{1. Resolve a source closure under a declared policy}{276}{subsubsection*.194}%
+\contentsline {subsubsection}{2. Hash the complete variant recipe}{277}{subsubsection*.195}%
+\contentsline {subsubsection}{3. Compile a private candidate and collect reflection}{277}{subsubsection*.196}%
+\contentsline {subsubsection}{4. Publish only a complete successful result}{278}{subsubsection*.197}%
+\contentsline {subsubsection}{Solved trace: one variant and two failures}{278}{subsubsection*.198}%
+\contentsline {subsubsection}{A complete bounded importer model}{279}{subsubsection*.199}%
+\contentsline {chapter}{\numberline {14}Streaming resources through explicit states}{302}{chapter.14}%
+\contentsline {subsection}{\numberline {14.0.1}Serialization, Schema Evolution, Compatibility, Endianness, Integrity, Object References, Reflection, Type Erasure, Undo/Redo, Transactions, Recovery, Autosave, Sandboxed Paths, Packaging, Relocatable Bundles, Atomic Publication, and Configuration Boundaries}{329}{subsection.14.0.1}%
+\contentsline {subsection}{\numberline {14.0.2}SERIALIZATION, COMPATIBILITY, REFLECTION, INSPECTORS AND TYPE ERASURE}{329}{subsection.14.0.2}%
+\contentsline {chapter}{\numberline {15}Transactions, recovery, and safe project boundaries}{368}{chapter.15}%
+\contentsline {subsection}{\numberline {15.0.1}UNDO, TRANSACTIONS, RECOVERY, PROJECT BOUNDARIES, PATH SECURITY, PACKAGING AND ATOMIC PUBLICATION}{368}{subsection.15.0.1}%
+\contentsline {subsection}{\numberline {15.0.2}Imported targets describe external artifacts; aliases provide a stable name}{421}{subsection.15.0.2}%
+\contentsline {subsubsection}{A complete project with an externally produced archive}{421}{subsubsection*.202}%
+\contentsline {subsubsection}{Read the dependency graph, then run it}{423}{subsubsection*.203}%
+\contentsline {subsection}{\numberline {15.0.3}Build DAG}{433}{subsection.15.0.3}%
+\contentsline {subsection}{\numberline {15.0.4}Runtime DAG}{433}{subsection.15.0.4}%
+\contentsline {chapter}{\numberline {16}Evidence, tools, and revisable design}{436}{chapter.16}%
+\contentsline {section}{\numberline {16.1}Use tools and evidence to keep the design revisable}{436}{section.16.1}%
+\contentsline {subsection}{\numberline {16.1.1}Publication reconstruction --- make DCC output pass through one engine contract}{436}{subsection.16.1.1}%
+\contentsline {subsubsection}{Measure allocation churn with a per-frame delta}{436}{subsubsection*.205}%
+\contentsline {subsection}{\numberline {16.1.2}Measure the whole action before optimizing one function}{437}{subsection.16.1.2}%
+\contentsline {subsection}{\numberline {16.1.3}Put diagnostic costs beside the feature}{437}{subsection.16.1.3}%
+\contentsline {subsection}{\numberline {16.1.4}Debugging and profiling are design features}{437}{subsection.16.1.4}%
+\contentsline {subsection}{\numberline {16.1.5}A compact architecture contract}{438}{subsection.16.1.5}%
+\contentsline {subsection}{\numberline {16.1.6}Instrument costs in terms of gameplay content}{439}{subsection.16.1.6}%
+\contentsline {subsubsection}{Correlate one player action through every subsystem hand-off}{439}{subsubsection*.206}%
+\contentsline {subsection}{\numberline {16.1.7}Use measurement to decide what to optimize}{440}{subsection.16.1.7}%
+\contentsline {subsection}{\numberline {16.1.8}Architectural tradeoffs worth making explicit}{440}{subsection.16.1.8}%
+\contentsline {subsubsection}{Small interface now or generalized framework later?}{440}{subsubsection*.207}%
+\contentsline {subsubsection}{Global access or explicit dependencies?}{440}{subsubsection*.208}%
+\contentsline {subsubsection}{Immediate event handling or queued events?}{440}{subsubsection*.209}%
+\contentsline {subsubsection}{Native code or scriptable behavior?}{440}{subsubsection*.210}%
+\contentsline {subsubsection}{One renderer backend or several?}{441}{subsubsection*.211}%
+\contentsline {subsubsection}{Entity-component composition or direct objects?}{441}{subsubsection*.212}%
+\contentsline {paragraph}{Why deep inheritance gets brittle}{441}{paragraph*.213}%
+\contentsline {paragraph}{Choose an object architecture by deciding who owns the connections}{441}{paragraph*.214}%
+\contentsline {subsection}{\numberline {16.1.9}A complete worked example: place, play, and inspect a door}{442}{subsection.16.1.9}%
+\contentsline {subsection}{\numberline {16.1.10}Playtesting is a measurement practice}{443}{subsection.16.1.10}%
+\contentsline {subsection}{\numberline {16.1.11}A compact requirement-to-evidence chain}{444}{subsection.16.1.11}%
+\contentsline {subsubsection}{Keep one playable area alive while the design is still uncertain}{445}{subsubsection*.215}%
+\contentsline {subsection}{\numberline {16.1.12}A working loop for design and engineering}{446}{subsection.16.1.12}%
+\contentsline {subsubsection}{Scope a 2D engine around the game it should make}{446}{subsubsection*.216}%
+\contentsline {paragraph}{Keep roadmap statements separate from working features}{447}{paragraph*.217}%
+\contentsline {subparagraph}{Scope and evidence}{447}{subparagraph*.218}%
+\contentsline {subsubsection}{Let the game's next question justify the engine's next feature}{447}{subsubsection*.219}%
+\contentsline {subsection}{\numberline {16.1.13}Use player observation to refine one hypothesis at a time}{448}{subsection.16.1.13}%
+\contentsline {subsection}{\numberline {16.1.14}The bridge from design loop to architecture loop}{449}{subsection.16.1.14}%
+\contentsline {subsection}{\numberline {16.1.15}A case study checklist: make the shield readable}{449}{subsection.16.1.15}%
+\contentsline {subsection}{\numberline {16.1.16}Debug by finding the earliest broken contract}{450}{subsection.16.1.16}%
+\contentsline {subsubsection}{Trace a visual bug through the data path}{450}{subsubsection*.220}%
+\contentsline {subsection}{\numberline {16.1.17}Keep architecture revisable with evidence, not taste}{451}{subsection.16.1.17}%
+\contentsline {subsubsection}{Grow the quality process with the project}{452}{subsubsection*.221}%
+\contentsline {subsubsection}{Let a focused test reveal the bug}{452}{subsubsection*.222}%
+\contentsline {subsection}{\numberline {16.1.18}Turn engine features into headless tests}{453}{subsection.16.1.18}%
+\contentsline {subsection}{\numberline {16.1.19}Asset reload should follow file identity and dependency edges}{453}{subsection.16.1.19}%
+\contentsline {subsubsection}{Make assets keep their identity across edits, imports, and reloads}{453}{subsubsection*.223}%
+\contentsline {subsection}{\numberline {16.1.20}Release claims need distinct evidence layers}{454}{subsection.16.1.20}%
+\contentsline {subsubsection}{Separate a working prototype from a shippable feature}{454}{subsubsection*.224}%
+\contentsline {subsection}{\numberline {16.1.21}A thumbnail cache is derived render output with explicit invalidation}{455}{subsection.16.1.21}%
+\contentsline {subsection}{\numberline {16.1.22}A profiler result belongs to its exact build and scene}{456}{subsection.16.1.22}%
+\contentsline {subsubsection}{Source-to-volume map}{456}{subsubsection*.225}%
+\contentsline {subsection}{\numberline {16.1.23}A trace timeline shows nested work and timing gaps}{457}{subsection.16.1.23}%
+\contentsline {subsubsection}{Source-to-volume map}{457}{subsubsection*.226}%
+\contentsline {subsection}{\numberline {16.1.24}Profile enough to answer one question}{457}{subsection.16.1.24}%
+\contentsline {subsection}{\numberline {16.1.25}Profiling as a question about a workload}{458}{subsection.16.1.25}%
+\contentsline {subsection}{\numberline {16.1.26}Read a timing tree without counting the same work twice}{459}{subsection.16.1.26}%
+\contentsline {subsection}{\numberline {16.1.27}Convert GPU timestamps with their own clock contract}{460}{subsection.16.1.27}%
+\contentsline {subsection}{\numberline {16.1.28}Read performance results with the workload attached}{461}{subsection.16.1.28}%
+\contentsline {subsubsection}{Measure before tuning, and make layout changes explicit}{461}{subsubsection*.227}%
+\contentsline {section}{\numberline {16.2}Keep a frame coherent while resources change}{461}{section.16.2}%
+\contentsline {subsection}{\numberline {16.2.1}Scope and evidence contract}{461}{subsection.16.2.1}%
+\contentsline {subsection}{\numberline {16.2.2}1. A GPU resource needs identity, version, and a safe update point}{462}{subsection.16.2.2}%
+\contentsline {subsection}{\numberline {16.2.3}2. Batching is a state-change problem with explicit flush boundaries}{464}{subsection.16.2.3}%
+\contentsline {subsection}{\numberline {16.2.4}3. Shader hot reload is a publication protocol, not just a file watcher}{465}{subsection.16.2.4}%
+\contentsline {subsection}{\numberline {16.2.5}4. Text rendering: atlas caching is not text shaping}{470}{subsection.16.2.5}%
+\contentsline {subsection}{\numberline {16.2.6}5. Picking turns a screen pixel into an identity lookup}{471}{subsection.16.2.6}%
+\contentsline {subsection}{\numberline {16.2.7}6. Resize, frames in flight, and device-loss evidence}{472}{subsection.16.2.7}%
+\contentsline {subsection}{\numberline {16.2.8}7. Logging, assertions, and test evidence answer different questions}{473}{subsection.16.2.8}%
+\contentsline {subsection}{\numberline {16.2.9}8. What the sources add together}{475}{subsection.16.2.9}%
+\contentsline {subsection}{\numberline {16.2.10}9. Integration guidance and limits}{476}{subsection.16.2.10}%
+\contentsline {section}{\numberline {16.3}Reproducing an entire machine is an engine-systems test}{477}{section.16.3}%
+\contentsline {chapter}{\numberline {17}Game design from mechanics to narrative interfaces}{478}{chapter.17}%
+\contentsline {section}{\numberline {17.1}Turn a design document into a set of tools, not a single promise}{478}{section.17.1}%
+\contentsline {section}{\numberline {17.2}An interview shows film techniques serving game actions}{479}{section.17.2}%
+\contentsline {section}{\numberline {17.3}Two implementation records that need historical labels}{480}{section.17.3}%
+\contentsline {section}{\numberline {17.4}Turn architecture advice into hostile, observable tests}{481}{section.17.4}%
+\contentsline {section}{\numberline {17.5}When players push against the frame}{482}{section.17.5}%
+\contentsline {section}{\numberline {17.6}From one core action to a coupled play system: Centipede}{484}{section.17.6}%
+\contentsline {section}{\numberline {17.7}Interactive writing is a stateful interface}{486}{section.17.7}%
+\contentsline {section}{\numberline {17.8}Rules can carry cultural values; avoid turning an analytic lens into a label}{487}{section.17.8}%
+\contentsline {section}{\numberline {17.9}Meaning emerges from system and context, then loops through action}{488}{section.17.9}%
+\contentsline {section}{\numberline {17.10}Hazel review: an instructive snapshot, not a current architecture guarantee}{489}{section.17.10}%
+\contentsline {section}{\numberline {17.11}Let play become a replayable story}{490}{section.17.11}%
+\contentsline {subsubsection}{Clarification on the FreeType dependency example}{492}{subsubsection*.229}%
+\contentsline {subsection}{\numberline {17.11.1}A scene's save path is part of its editor state}{492}{subsection.17.11.1}%
+\contentsline {subsection}{\numberline {17.11.2}Distinguish updating a rotation from changing its representation}{492}{subsection.17.11.2}%
+\contentsline {subsection}{\numberline {17.11.3}Keep shader compilation, linking and activation separate}{493}{subsection.17.11.3}%
+\contentsline {subsection}{\numberline {17.11.4}Implement one complete collision step and prove what every stage owns}{493}{subsection.17.11.4}%
+\contentsline {subsubsection}{The exact central-disk collision in memory and on the timeline}{494}{subsubsection*.230}%
+\contentsline {subsubsection}{Contact cache ownership and frame validity}{495}{subsubsection*.231}%
+\contentsline {subsubsection}{Refresh neighboring penetrations after position correction}{496}{subsubsection*.232}%
+\contentsline {paragraph}{A planar penetration refresh witness}{497}{paragraph*.233}%
+\contentsline {subsubsection}{Complete persistent-contact implementation and cache policy}{500}{subsubsection*.234}%
+\contentsline {subsubsection}{Resolve a contact in its own frame, then transform the answer back}{507}{subsubsection*.235}%
+\contentsline {subsubsection}{Resting penetration and failures are different physics problems}{508}{subsubsection*.236}%
+\contentsline {subsubsection}{Complete, inspectable C++20 event-step implementation}{508}{subsubsection*.237}%
+\contentsline {subsubsection}{How to reproduce and test the independent laboratories}{515}{subsubsection*.238}%
+\contentsline {section}{\numberline {17.12}Contact forces form a coupled system}{519}{section.17.12}%
+\contentsline {subsection}{\numberline {17.12.1}A contact solver needs a stability policy, not only correct equations}{521}{subsection.17.12.1}%
+\contentsline {section}{\numberline {17.13}Design a game system that can be continued by players}{522}{section.17.13}%
+\contentsline {subsection}{\numberline {17.13.1}Metagame is part of the designed context even when it is not directly controllable}{523}{subsection.17.13.1}%
+\contentsline {section}{\numberline {17.14}What a simulation chooses to represent}{524}{section.17.14}%
+\contentsline {section}{\numberline {17.15}A camera controller is a policy object, not a projection matrix}{525}{section.17.15}%
+\contentsline {section}{\numberline {17.16}Write a development focus that can expose contradictions early}{526}{section.17.16}%
+\contentsline {section}{\numberline {17.17}A design document is a working reference, not a frozen game}{526}{section.17.17}%
+\contentsline {chapter}{\numberline {18}Narrative, simulation, and AI in playable worlds}{528}{chapter.18}%
+\contentsline {section}{\numberline {18.1}Narrative can be authored, played, and retold}{528}{section.18.1}%
+\contentsline {section}{\numberline {18.2}Constraints can carry story when consequences stay visible}{529}{section.18.2}%
+\contentsline {section}{\numberline {18.3}Theme and structure become meaningful through play}{530}{section.18.3}%
+\contentsline {section}{\numberline {18.4}Space is part of the rule for what can happen}{531}{section.18.4}%
+\contentsline {section}{\numberline {18.5}Let a game enter real life with a clear way back out}{531}{section.18.5}%
+\contentsline {section}{\numberline {18.6}AI is a player-experience system before it is an intelligence benchmark}{532}{section.18.6}%
+\contentsline {section}{\numberline {18.7}Navigation answers how to move; the decision layer answers what to do}{534}{section.18.7}%
+\contentsline {subsection}{\numberline {18.7.1}Behavior trees expose authored control structure}{534}{subsection.18.7.1}%
+\contentsline {subsection}{\numberline {18.7.2}Utility AI scores alternatives}{535}{subsection.18.7.2}%
+\contentsline {subsection}{\numberline {18.7.3}GOAP searches over preconditions and effects}{535}{subsection.18.7.3}%
+\contentsline {subsection}{\numberline {18.7.4}A plan must survive a changing world}{535}{subsection.18.7.4}%
+\contentsline {subsection}{\numberline {18.7.5}Keep perception, memory, decision, navigation, and action separate}{536}{subsection.18.7.5}%
+\contentsline {subsection}{\numberline {18.7.6}AI needs observability}{536}{subsection.18.7.6}%
+\contentsline {section}{\numberline {18.8}Let companion AI and level geometry share one contract}{540}{section.18.8}%
+\contentsline {section}{\numberline {18.9}Diagnose choices as a five-stage loop}{541}{section.18.9}%
+\contentsline {subsection}{\numberline {18.9.1}Figure E-choice - From opportunity to consequence}{542}{subsection.18.9.1}%
+\contentsline {section}{\numberline {18.10}Make a runtime debug control observe one owner at a time}{542}{section.18.10}%
+\contentsline {section}{\numberline {18.11}Put the theme in the objective, then bound the choices}{542}{section.18.11}%
+\contentsline {section}{\numberline {18.12}Design for interaction patterns, then tune what players discover}{543}{section.18.12}%
+\contentsline {section}{\numberline {18.13}Keep the draft history that explains why rules changed}{543}{section.18.13}%
+\contentsline {section}{\numberline {18.14}Multiplayer is a gameplay and operations commitment}{544}{section.18.14}%
+\contentsline {subsection}{\numberline {18.14.1}Prediction hides latency; rollback repairs a wrong prediction}{545}{subsection.18.14.1}%
+\contentsline {subsubsection}{Rollback requires reproducible simulation}{545}{subsubsection*.240}%
+\contentsline {subsubsection}{Rollback history is finite}{546}{subsubsection*.241}%
+\contentsline {subsubsection}{Prediction, rollback, interpolation, and reconciliation are different tools}{546}{subsubsection*.242}%
+\contentsline {subsubsection}{Presentation does not have to expose every correction}{546}{subsubsection*.243}%
+\contentsline {subsection}{\numberline {18.14.2}A reconnect window needs an ownership policy}{552}{subsection.18.14.2}%
+\contentsline {section}{\numberline {18.15}A game's interface can carry both its accessibility and its puzzles}{555}{section.18.15}%
+\contentsline {section}{\numberline {18.16}A setback needs a legible cause and a possible recovery}{556}{section.18.16}%
+\contentsline {section}{\numberline {18.17}``Game'' and ``play'' change scope with the question}{556}{section.18.17}%
+\contentsline {section}{\numberline {18.18}Let players control narrative pacing as well as branching}{557}{section.18.18}%
+\contentsline {section}{\numberline {18.19}Count identity collisions without promising uniqueness}{558}{section.18.19}%
+\contentsline {subsection}{\numberline {18.19.1}Figure E-ID - Birthday collision risk}{558}{subsection.18.19.1}%
+\contentsline {section}{\numberline {18.20}Dragging an asset is a typed request, not a pointer gesture}{559}{section.18.20}%
+\contentsline {section}{\numberline {18.21}Debug geometry makes invisible state inspectable}{560}{section.18.21}%
+\contentsline {section}{\numberline {18.22}Tell the player through choices the system permits}{560}{section.18.22}%
+\contentsline {section}{\numberline {18.23}Check units and signs in the buoyancy example before reusing it}{561}{section.18.23}%
+\contentsline {subsection}{\numberline {18.23.1}Figure E-B - Balance force before stepping the state}{562}{subsection.18.23.1}%
+\contentsline {subsection}{\numberline {18.23.2}A restoring force still needs a stable numerical step}{562}{subsection.18.23.2}%
+\contentsline {subsection}{\numberline {18.23.3}Standalone box-force laboratory}{563}{subsection.18.23.3}%
+\contentsline {subsection}{\numberline {18.23.4}A spring law is signed, not just a magnitude}{564}{subsection.18.23.4}%
+\contentsline {subsection}{\numberline {18.23.5}Stiffness couples the force law to the time integrator}{565}{subsection.18.23.5}%
+\contentsline {subsection}{\numberline {18.23.6}The analytic ``fake stiff spring'' has two separate caveats}{566}{subsection.18.23.6}%
+\contentsline {subsection}{\numberline {18.23.7}Damping and coefficient units}{567}{subsection.18.23.7}%
+\contentsline {subsubsection}{Solve each linear damping regime with its own form}{568}{subsubsection*.244}%
+\contentsline {subsection}{\numberline {18.23.8}Standalone spring-direction and integration-order laboratory}{568}{subsection.18.23.8}%
+\contentsline {subsection}{\numberline {18.23.9}A friction coefficient describes a pair, not a timestep}{572}{subsection.18.23.9}%
+\contentsline {subsubsection}{Friction can be directional, so one scalar coefficient is not always enough}{573}{subsubsection*.245}%
+\contentsline {subsection}{\numberline {18.23.10}Slow a projectile only after choosing what to preserve}{574}{subsection.18.23.10}%
+\contentsline {section}{\numberline {18.24}A tool's feature list should follow the game it is meant to enable}{574}{section.18.24}%
+\contentsline {section}{\numberline {18.25}Describe the interaction before judging the game}{575}{section.18.25}%
+\contentsline {section}{\numberline {18.26}Depth-repair checkpoint --- runtime systems now have executable boundary witnesses}{576}{section.18.26}%
+\contentsline {chapter}{\numberline {A}Reference Notes}{577}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Antialiasing and sample allocation}{577}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Definition and mechanism}{577}{subsection.A.1.1}%
+\contentsline {subsubsection}{Phase 9--10 development}{577}{subsubsection*.246}%
+\contentsline {subsection}{\numberline {A.1.2}Prerequisites}{577}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Used by}{577}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}Recall and next depth}{577}{subsection.A.1.4}%
+\contentsline {subsection}{\numberline {A.1.5}Source and navigation}{578}{subsection.A.1.5}%
+\contentsline {subsection}{\numberline {A.1.6}Full teaching explanation}{578}{subsection.A.1.6}%
+\contentsline {section}{\numberline {A.2}Continuous signals and discrete samples}{578}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}Definition and mechanism}{578}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Prerequisites}{578}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Used by}{578}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Recall and next depth}{578}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}Source and navigation}{578}{subsection.A.2.5}%
+\contentsline {section}{\numberline {A.3}Contrast sensitivity adaptation and masking}{578}{section.A.3}%
+\contentsline {subsection}{\numberline {A.3.1}Definition and mechanism}{579}{subsection.A.3.1}%
+\contentsline {subsection}{\numberline {A.3.2}Prerequisites}{579}{subsection.A.3.2}%
+\contentsline {subsection}{\numberline {A.3.3}Used by}{579}{subsection.A.3.3}%
+\contentsline {subsection}{\numberline {A.3.4}Recall and next depth}{579}{subsection.A.3.4}%
+\contentsline {subsection}{\numberline {A.3.5}Source and navigation}{579}{subsection.A.3.5}%
+\contentsline {section}{\numberline {A.4}DCC adapters and engine publication}{579}{section.A.4}%
+\contentsline {subsection}{\numberline {A.4.1}Blender boundary}{579}{subsection.A.4.1}%
+\contentsline {subsection}{\numberline {A.4.2}Maya boundary}{580}{subsection.A.4.2}%
+\contentsline {subsection}{\numberline {A.4.3}Houdini boundary}{580}{subsection.A.4.3}%
+\contentsline {subsection}{\numberline {A.4.4}Nuke boundary}{580}{subsection.A.4.4}%
+\contentsline {subsection}{\numberline {A.4.5}Host-neutral core}{580}{subsection.A.4.5}%
+\contentsline {subsection}{\numberline {A.4.6}Validation before mutation}{581}{subsection.A.4.6}%
+\contentsline {subsection}{\numberline {A.4.7}Executable witness}{581}{subsection.A.4.7}%
+\contentsline {subsection}{\numberline {A.4.8}Executed Blender boundary}{581}{subsection.A.4.8}%
+\contentsline {section}{\numberline {A.5}Eye movements and display-time gaze}{581}{section.A.5}%
+\contentsline {subsection}{\numberline {A.5.1}Definition and mechanism}{582}{subsection.A.5.1}%
+\contentsline {subsection}{\numberline {A.5.2}Prerequisites}{582}{subsection.A.5.2}%
+\contentsline {subsection}{\numberline {A.5.3}Used by}{582}{subsection.A.5.3}%
+\contentsline {subsection}{\numberline {A.5.4}Recall and next depth}{582}{subsection.A.5.4}%
+\contentsline {subsection}{\numberline {A.5.5}Source and navigation}{582}{subsection.A.5.5}%
+\contentsline {section}{\numberline {A.6}Foveated rendering and uncertainty}{582}{section.A.6}%
+\contentsline {subsection}{\numberline {A.6.1}Definition and mechanism}{582}{subsection.A.6.1}%
+\contentsline {subsection}{\numberline {A.6.2}Prerequisites}{582}{subsection.A.6.2}%
+\contentsline {subsection}{\numberline {A.6.3}Used by}{582}{subsection.A.6.3}%
+\contentsline {subsection}{\numberline {A.6.4}Recall and next depth}{583}{subsection.A.6.4}%
+\contentsline {subsection}{\numberline {A.6.5}Source and navigation}{583}{subsection.A.6.5}%
+\contentsline {section}{\numberline {A.7}Incremental contact penetration refresh}{583}{section.A.7}%
+\contentsline {subsection}{\numberline {A.7.1}Prerequisites}{583}{subsection.A.7.1}%
+\contentsline {subsection}{\numberline {A.7.2}Full teaching and executable evidence}{583}{subsection.A.7.2}%
+\contentsline {subsection}{\numberline {A.7.3}Used by}{583}{subsection.A.7.3}%
+\contentsline {section}{\numberline {A.8}Multiscale texture filtering}{583}{section.A.8}%
+\contentsline {subsection}{\numberline {A.8.1}Definition and mechanism}{583}{subsection.A.8.1}%
+\contentsline {subsection}{\numberline {A.8.2}Prerequisites}{584}{subsection.A.8.2}%
+\contentsline {subsection}{\numberline {A.8.3}Used by}{584}{subsection.A.8.3}%
+\contentsline {subsection}{\numberline {A.8.4}Recall and next depth}{584}{subsection.A.8.4}%
+\contentsline {subsection}{\numberline {A.8.5}Source and navigation}{584}{subsection.A.8.5}%
+\contentsline {section}{\numberline {A.9}Optical focus and binocular conflict}{584}{section.A.9}%
+\contentsline {subsection}{\numberline {A.9.1}Definition and mechanism}{584}{subsection.A.9.1}%
+\contentsline {subsection}{\numberline {A.9.2}Prerequisites}{584}{subsection.A.9.2}%
+\contentsline {subsection}{\numberline {A.9.3}Used by}{584}{subsection.A.9.3}%
+\contentsline {subsection}{\numberline {A.9.4}Recall and next depth}{585}{subsection.A.9.4}%
+\contentsline {subsection}{\numberline {A.9.5}Source and navigation}{585}{subsection.A.9.5}%
+\contentsline {section}{\numberline {A.10}PSF OTF and MTF}{585}{section.A.10}%
+\contentsline {subsection}{\numberline {A.10.1}Definition and mechanism}{585}{subsection.A.10.1}%
+\contentsline {subsection}{\numberline {A.10.2}Prerequisites}{585}{subsection.A.10.2}%
+\contentsline {subsection}{\numberline {A.10.3}Used by}{585}{subsection.A.10.3}%
+\contentsline {subsection}{\numberline {A.10.4}Recall and next depth}{585}{subsection.A.10.4}%
+\contentsline {subsection}{\numberline {A.10.5}Source and navigation}{585}{subsection.A.10.5}%
+\contentsline {section}{\numberline {A.11}Perceptual metrics and display calibration}{585}{section.A.11}%
+\contentsline {subsection}{\numberline {A.11.1}Definition and mechanism}{586}{subsection.A.11.1}%
+\contentsline {subsection}{\numberline {A.11.2}Prerequisites}{586}{subsection.A.11.2}%
+\contentsline {subsection}{\numberline {A.11.3}Used by}{586}{subsection.A.11.3}%
+\contentsline {subsection}{\numberline {A.11.4}Source and navigation}{586}{subsection.A.11.4}%
+\contentsline {section}{\numberline {A.12}Production manifests and transactional publication}{586}{section.A.12}%
+\contentsline {subsection}{\numberline {A.12.1}Path safety}{586}{subsection.A.12.1}%
+\contentsline {subsection}{\numberline {A.12.2}Deterministic plans}{587}{subsection.A.12.2}%
+\contentsline {subsection}{\numberline {A.12.3}Staging and commit}{587}{subsection.A.12.3}%
+\contentsline {subsection}{\numberline {A.12.4}Idempotence}{587}{subsection.A.12.4}%
+\contentsline {section}{\numberline {A.13}Psychophysics and threshold inference}{587}{section.A.13}%
+\contentsline {subsection}{\numberline {A.13.1}Definition and mechanism}{587}{subsection.A.13.1}%
+\contentsline {subsection}{\numberline {A.13.2}Prerequisites}{588}{subsection.A.13.2}%
+\contentsline {subsection}{\numberline {A.13.3}Used by}{588}{subsection.A.13.3}%
+\contentsline {subsection}{\numberline {A.13.4}Recall and next depth}{588}{subsection.A.13.4}%
+\contentsline {subsection}{\numberline {A.13.5}Source and navigation}{588}{subsection.A.13.5}%
+\contentsline {section}{\numberline {A.14}Quantization and compressed weights}{588}{section.A.14}%
+\contentsline {subsection}{\numberline {A.14.1}Definition and mechanism}{588}{subsection.A.14.1}%
+\contentsline {subsection}{\numberline {A.14.2}Prerequisites}{588}{subsection.A.14.2}%
+\contentsline {subsection}{\numberline {A.14.3}Used by}{588}{subsection.A.14.3}%
+\contentsline {subsection}{\numberline {A.14.4}Recall and next depth}{589}{subsection.A.14.4}%
+\contentsline {subsection}{\numberline {A.14.5}Source and navigation}{589}{subsection.A.14.5}%
+\contentsline {section}{\numberline {A.15}Research validity and ablation}{589}{section.A.15}%
+\contentsline {subsection}{\numberline {A.15.1}Definition and mechanism}{589}{subsection.A.15.1}%
+\contentsline {subsection}{\numberline {A.15.2}Prerequisites}{589}{subsection.A.15.2}%
+\contentsline {subsection}{\numberline {A.15.3}Source and navigation}{590}{subsection.A.15.3}%
+\contentsline {section}{\numberline {A.16}Retinal encoding and receptive fields}{590}{section.A.16}%
+\contentsline {subsection}{\numberline {A.16.1}Definition and mechanism}{590}{subsection.A.16.1}%
+\contentsline {subsection}{\numberline {A.16.2}Prerequisites}{590}{subsection.A.16.2}%
+\contentsline {subsection}{\numberline {A.16.3}Used by}{590}{subsection.A.16.3}%
+\contentsline {subsection}{\numberline {A.16.4}Source and navigation}{591}{subsection.A.16.4}%
+\contentsline {section}{\numberline {A.17}Spatiotemporal sampling and retinal motion}{591}{section.A.17}%
+\contentsline {subsection}{\numberline {A.17.1}Definition and mechanism}{591}{subsection.A.17.1}%
+\contentsline {subsection}{\numberline {A.17.2}Prerequisites}{591}{subsection.A.17.2}%
+\contentsline {subsection}{\numberline {A.17.3}Used by}{591}{subsection.A.17.3}%
+\contentsline {subsection}{\numberline {A.17.4}Recall and next depth}{591}{subsection.A.17.4}%
+\contentsline {subsection}{\numberline {A.17.5}Source and navigation}{591}{subsection.A.17.5}%
+\contentsline {section}{\numberline {A.18}Spring forces and numerical integration}{591}{section.A.18}%
+\contentsline {subsection}{\numberline {A.18.1}Prerequisites}{592}{subsection.A.18.1}%
+\contentsline {subsection}{\numberline {A.18.2}Full teaching and executable evidence}{592}{subsection.A.18.2}%
+\contentsline {subsection}{\numberline {A.18.3}Used by}{592}{subsection.A.18.3}%
+\contentsline {section}{\numberline {A.19}Stereoacuity and binocular foveation}{592}{section.A.19}%
+\contentsline {subsection}{\numberline {A.19.1}Definition and mechanism}{592}{subsection.A.19.1}%
+\contentsline {subsection}{\numberline {A.19.2}Prerequisites}{592}{subsection.A.19.2}%
+\contentsline {subsection}{\numberline {A.19.3}Used by}{592}{subsection.A.19.3}%
+\contentsline {subsection}{\numberline {A.19.4}Recall and next depth}{593}{subsection.A.19.4}%
+\contentsline {subsection}{\numberline {A.19.5}Source and navigation}{593}{subsection.A.19.5}%
+\contentsline {section}{\numberline {A.20}Temporal reprojection and history validation}{593}{section.A.20}%
+\contentsline {subsection}{\numberline {A.20.1}Definition and mechanism}{593}{subsection.A.20.1}%
+\contentsline {subsection}{\numberline {A.20.2}Prerequisites}{593}{subsection.A.20.2}%
+\contentsline {subsection}{\numberline {A.20.3}Used by}{593}{subsection.A.20.3}%
+\contentsline {subsection}{\numberline {A.20.4}Source and navigation}{593}{subsection.A.20.4}%
+\contentsline {subsection}{\numberline {A.20.5}Phase 11 camera development}{593}{subsection.A.20.5}%
+\contentsline {subsection}{\numberline {A.20.6}Neighborhood clipping and deterministic jitter witness}{594}{subsection.A.20.6}%
+\contentsline {section}{\numberline {A.21}Visual acuity and eccentricity}{594}{section.A.21}%
+\contentsline {subsection}{\numberline {A.21.1}Definition and mechanism}{594}{subsection.A.21.1}%
+\contentsline {subsection}{\numberline {A.21.2}Prerequisites}{594}{subsection.A.21.2}%
+\contentsline {subsection}{\numberline {A.21.3}Used by}{594}{subsection.A.21.3}%
+\contentsline {subsection}{\numberline {A.21.4}Recall and next depth}{595}{subsection.A.21.4}%
+\contentsline {subsection}{\numberline {A.21.5}Source and navigation}{595}{subsection.A.21.5}%
+\contentsline {section}{\numberline {A.22}Visual angle and calibrated rays}{595}{section.A.22}%
+\contentsline {subsection}{\numberline {A.22.1}Definition and mechanism}{595}{subsection.A.22.1}%
+\contentsline {subsection}{\numberline {A.22.2}Prerequisites}{595}{subsection.A.22.2}%
+\contentsline {subsection}{\numberline {A.22.3}Used by}{595}{subsection.A.22.3}%
+\contentsline {subsection}{\numberline {A.22.4}Recall and next depth}{595}{subsection.A.22.4}%
+\contentsline {subsection}{\numberline {A.22.5}Source and navigation}{596}{subsection.A.22.5}%
+\contentsline {subsection}{\numberline {A.22.6}Phase 11 camera development}{596}{subsection.A.22.6}%
+\contentsline {section}{\numberline {A.23}Game Engine - Retrieval Card}{596}{section.A.23}%
+\contentsline {subsection}{\numberline {A.23.1}Two figures worth reconstructing}{598}{subsection.A.23.1}%
+\contentsline {subsection}{\numberline {A.23.2}Contact candidates, active constraints, and surviving identities}{599}{subsection.A.23.2}%
+\contentsline {subsection}{\numberline {A.23.3}Clip first, divide second, query only completed pass inputs}{600}{subsection.A.23.3}%
+\contentsline {subsection}{\numberline {A.23.4}The editor has its own visibility and freshness rules}{601}{subsection.A.23.4}%
+\contentsline {subsection}{\numberline {A.23.5}Signed forces and changing contacts}{601}{subsection.A.23.5}%
+\contentsline {subsection}{\numberline {A.23.6}Model choices before tuning}{602}{subsection.A.23.6}%
+\contentsline {subsection}{\numberline {A.23.7}Context and lifecycle}{603}{subsection.A.23.7}%
+\contentsline {subsection}{\numberline {A.23.8}Reconstruct the integrated runtime witnesses}{603}{subsection.A.23.8}%
+\contentsline {subsection}{\numberline {A.23.9}Recall the contract before trusting the result}{604}{subsection.A.23.9}%
+\contentsline {section}{\numberline {A.24}Light, Vision and Perception --- Visual Recall}{605}{section.A.24}%
+\contentsline {subsection}{\numberline {A.24.1}Figure-linked short notes}{605}{subsection.A.24.1}%
+\contentsline {subsection}{\numberline {A.24.2}Visual atlas --- what each view is for}{606}{subsection.A.24.2}%
+\contentsline {subsection}{\numberline {A.24.3}From emitted light to a perceptual claim}{607}{subsection.A.24.3}%
+\contentsline {subsection}{\numberline {A.24.4}Four measurement families that must not be collapsed}{607}{subsection.A.24.4}%
+\contentsline {subsection}{\numberline {A.24.5}Sampling and filtering: preserve what can be distinguished}{608}{subsection.A.24.5}%
+\contentsline {subsection}{\numberline {A.24.6}Temporal reuse is a correspondence hypothesis}{609}{subsection.A.24.6}%
+\contentsline {subsection}{\numberline {A.24.7}Foveation is a budget under uncertainty}{609}{subsection.A.24.7}%
+\contentsline {subsection}{\numberline {A.24.8}Retrieval prompts}{609}{subsection.A.24.8}%
+\contentsline {chapter}{\numberline {B}Source Attachments}{611}{appendix.B}%
