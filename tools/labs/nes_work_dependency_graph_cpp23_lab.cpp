@@ -382,6 +382,30 @@ void cpu_gpu_dependency_demo() {
     // Do not call execute_cpu_only after invalidation. Re-check at boundary.
 }
 
+void checked_scatter_offsets_and_overflow() {
+    constexpr std::array<std::size_t,4> counts{2,0,3,1};
+    const auto layout=g::checked_exclusive_scan(counts);
+    check(layout && layout->total==6 &&
+          layout->offsets==std::vector<std::size_t>({0,2,2,5}),
+          "exclusive scan must produce 0,2,2,5 for 2,0,3,1");
+    for (std::size_t i=0;i+1<counts.size();++i) {
+        check(layout->offsets[i]+counts[i] == layout->offsets[i+1],
+              "each half-open scatter interval ends at next offset");
+    }
+    check(layout->offsets.back()+counts.back()==layout->total,
+          "last output interval must end at total");
+    const std::array<std::size_t,0> empty{};
+    const auto none=g::checked_exclusive_scan(empty);
+    check(none && none->offsets.empty() && none->total==0,
+          "empty compaction produces no writes");
+    constexpr std::array<std::size_t,2> invalid{
+        std::numeric_limits<std::size_t>::max(),1};
+    const auto over=g::checked_exclusive_scan(invalid);
+    check(!over && over.error()==g::ScanError::overflow,
+          "oversized count sum must reject rather than wrap");
+    // This CPU oracle tests index arithmetic only, not GPU memory visibility.
+}
+
 void randomized_acyclic_graph_oracle() {
     std::uint32_t state=0xBADC0DEU;
     const auto next=[&state]() {
@@ -422,6 +446,7 @@ int main() {
         failures_and_determinism();
         generation_key_independence();
         cpu_gpu_dependency_demo();
+        checked_scatter_offsets_and_overflow();
         randomized_acyclic_graph_oracle();
         std::cout << "NES-08G: RAW/WAR/WAW, stable topological planning, "
                      "real NROM CPU work, GPU obligations, cycle/overflow "
