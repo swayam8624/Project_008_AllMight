@@ -52,6 +52,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-02T - Transactional Cartridge Replacement.md",
         b"\n## Let the compiler compose the operations\n",
     ),
+    Insert(
+        "NES-02P",
+        "Supplementary/C++23 Project Labs/NES-02P - Ownership Proofs for an Emulator.md",
+        b"\n## From one owned resource to many requests and a replaceable backend\n",
+    ),
 )
 
 
