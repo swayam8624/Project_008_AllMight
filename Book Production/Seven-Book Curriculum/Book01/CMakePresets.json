@@ -1,0 +1,78 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug-ninja",
+      "displayName": "NES course — C++23 Debug with Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../../build/nes-course/debug-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "release-ninja",
+      "displayName": "NES course — measured Release with Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/../../../build/nes-course/release-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "clang-sanitizers",
+      "displayName": "NES course — Clang ASan/UBSan",
+      "inherits": "debug-ninja",
+      "binaryDir": "${sourceDir}/../../../build/nes-course/clang-sanitizers",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug-ninja",
+      "configurePreset": "debug-ninja"
+    },
+    {
+      "name": "release-ninja",
+      "configurePreset": "release-ninja"
+    },
+    {
+      "name": "clang-sanitizers",
+      "configurePreset": "clang-sanitizers"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug-ninja",
+      "configurePreset": "debug-ninja",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-ninja",
+      "configurePreset": "release-ninja",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "clang-sanitizers",
+      "configurePreset": "clang-sanitizers",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
