@@ -101,6 +101,25 @@ class EvidenceContractTests(unittest.TestCase):
             self.assertEqual(details["CMAKE_CXX_COMPILER"], "/usr/bin/clang++")
             self.assertEqual(details["CMAKE_BUILD_TYPE"], "Debug")
 
+    def test_freshness_guard_rejects_missing_or_stale_binaries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            build = Path(tmp)
+            (build / "CMakeCache.txt").write_text(
+                "CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++\n"
+            )
+            junit = build / "ctest-junit.xml"
+            self.write_xml(junit)
+            with self.assertRaises(evidence.EvidenceError):
+                evidence.check_fresh_compiled_results(REPO, build, junit)
+            for _, name, _ in evidence.EXPECTED:
+                (build / name).write_bytes(b"fixture-not-a-real-binary")
+            # Force the XML to be older than these binaries. The guard
+            # refuses a stale file even if its testcase elements look green.
+            import os
+            os.utime(junit, (1, 1))
+            with self.assertRaises(evidence.EvidenceError):
+                evidence.check_fresh_compiled_results(REPO, build, junit)
+
     def test_source_change_invalidates_a_passing_record(self) -> None:
         inventory = evidence.inspect_sources(REPO)
         self.assertTrue(evidence.git_sha(REPO))
