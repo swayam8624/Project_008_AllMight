@@ -53,6 +53,8 @@ class ProjectInsertionTests(unittest.TestCase):
             "## An API is a promise about an operation\n"
             "Keep original API/device material.\n"
             "### GENERAL COMPUTE & PARALLEL ALGORITHMS\n"
+            "Keep original GPU parallel algorithms and scan coverage.\n"
+            "### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW\n"
             "Keep all the original subsequent material.\n"
         ).encode("utf-8")
         self.master.write_bytes(self.original)
@@ -65,6 +67,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson7 = self.root / "Supplementary/C++23 Project Labs/NES-07C - CPU Instructions and Typed Debugger Structures.md"
         self.lesson8 = self.root / "Supplementary/C++23 Project Labs/NES-08G - Dependency Graphs and Explicit GPU Work Contracts.md"
         self.lesson9 = self.root / "Supplementary/C++23 Project Labs/NES-09M - GPU Memory and Ordering Contracts.md"
+        self.lesson10 = self.root / "Supplementary/C++23 Project Labs/NES-10R - Reproducibility and Evidence-Driven Profiling.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
@@ -74,6 +77,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson7.write_text("### NES-07C — A tested CPU/debugger\n\nOriginal NES-07C addition.\n")
         self.lesson8.write_text("### NES-08G — A tested graph planner\n\nOriginal NES-08G addition.\n")
         self.lesson9.write_text("### NES-09M — A tested memory model\n\nOriginal NES-09M addition.\n")
+        self.lesson10.write_text("### NES-10R — A tested reproducibility protocol\n\nOriginal NES-10R addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -107,14 +111,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES07C-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES08G-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES09M-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES10R-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the nine
+        # Stronger preservation oracle: surgically delete only the ten
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M", b"NES10R"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
@@ -146,11 +151,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES07C-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES08G-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES09M-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES10R-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original NES-09M addition.", b"Locally edited NES-09M addition."
+            b"Original NES-10R addition.", b"Locally edited NES-10R addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
