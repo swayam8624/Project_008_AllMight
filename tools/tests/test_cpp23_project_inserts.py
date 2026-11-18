@@ -79,10 +79,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(self.master.read_bytes(), once)
 
     def test_previously_applied_nes01_is_not_duplicated(self) -> None:
-        self.lesson2.rename(self.lesson2.with_suffix(".bak"))
-        # The new two-insert script requires both lessons, so emulate an
-        # already-applied NES-01 by reproducing its exact byte block.
-        self.lesson2.with_suffix(".bak").rename(self.lesson2)
+        # Emulate an existing NES-01 insert made by the earlier one-section tool.
         beginning = b"<!-- ALLMIGHT-CPP23-NES01-ADDITIVE-START -->\n"
         ending = b"<!-- ALLMIGHT-CPP23-NES01-ADDITIVE-END -->\n"
         block = b"\n" + beginning + self.lesson1.read_bytes().rstrip(b"\n") + b"\n" + ending
