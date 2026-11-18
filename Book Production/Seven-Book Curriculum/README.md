@@ -125,7 +125,7 @@ No LaTeX compilations, PDF builds, export pipeline changes or generated chapter 
 
 The write deliberately distinguishes `std::optional::emplace`'s **general destruction-before-construction rule** from the **concrete** nothrow move path that makes publication safe in this implementation. Source: C++23 [N4950 draft](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf), [cppreference optional::emplace](https://en.cppreference.com/w/cpp/utility/optional/emplace). These language guarantees are distinct from software test evidence.
 
-**Test status:** the shared bus refactor compiled and passed the NES-02 test on the local Linux authoring container. The new NES-02T implementation and new insertion-fixture revisions are committed but **not yet independently compiled/tested on the user's Mac**. Run the commands below to verify; report compiler or sanitizer output before claiming full Pass 03 executable closure.
+**Test status:** the shared bus refactor and a local reconstruction of the NES-02T transactional implementation compiled under GCC 14 and Clang 17 in C++23 mode with strict warnings. Local AddressSanitizer/UndefinedBehaviorSanitizer execution passed, as did a three-test CMake/CTest run (NES-01, NES-02, NES-02T). The exact committed NES-02T file and new insertion-fixture revisions still require an independent build/test on the user's Mac. Do not claim native macOS or final book verification from the local Linux reconstruction.
 
 ### Apply all existing additions without deleting canonical text
 
