@@ -43,6 +43,14 @@ add_executable(generational_asset_registry_cpp23_lab
 )
 target_compile_features(generational_asset_registry_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(generational_asset_registry_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass07: real multi-translation-unit CPU debugger with public PIMPL.
+add_executable(nes_cpu_debugger_cpp23_lab
+    ../../../tools/labs/nes_cpu_debugger_cpp23_lab.cpp
+    ../../../tools/labs/nes_course/cpu_debug_session.cpp
+)
+target_compile_features(nes_cpu_debugger_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(nes_cpu_debugger_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -60,8 +68,9 @@ if(MSVC)
     target_compile_options(nes_ownership_proofs_cpp23_lab PRIVATE /W4)
     target_compile_options(typed_asset_pipeline_cpp23_lab PRIVATE /W4)
     target_compile_options(generational_asset_registry_cpp23_lab PRIVATE /W4)
+    target_compile_options(nes_cpu_debugger_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -84,3 +93,6 @@ add_test(NAME nes_05a_typed_asset_pipeline_and_failure_boundaries
 
 add_test(NAME nes_06g_generational_asset_registry_identity_and_reuse
          COMMAND generational_asset_registry_cpp23_lab)
+
+add_test(NAME nes_07c_6502_subset_debugger_and_data_structures
+         COMMAND nes_cpu_debugger_cpp23_lab)
