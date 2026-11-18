@@ -195,7 +195,7 @@ template<> struct Spec<MeshTag> {
             if (index >= vertices) return std::unexpected(DecodeError::invalid_index);
             output.indices.push_back(index);
         }
-        return output;
+        return std::move(output);
     }
 };
 
