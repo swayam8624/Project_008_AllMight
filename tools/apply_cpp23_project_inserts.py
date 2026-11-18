@@ -57,6 +57,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-02P - Ownership Proofs for an Emulator.md",
         b"\n## From one owned resource to many requests and a replaceable backend\n",
     ),
+    Insert(
+        "NES-05A",
+        "Supplementary/C++23 Project Labs/NES-05A - Type-Safe Asset Import and Publication.md",
+        b"\n### The real performance question is what gets instantiated, stored and moved\n",
+    ),
 )
 
 
