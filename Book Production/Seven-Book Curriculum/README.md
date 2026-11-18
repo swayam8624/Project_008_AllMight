@@ -162,6 +162,48 @@ python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py'
 This builds NES-01, NES-02 and NES-02T, not KairoNES's GUI or the seven-volume LaTeX book. No completed seven-book edition is claimed.
 
 
+## Pass 04 — Book 01, Chapter 04: prove ownership against the same NES runtime
+
+**Original source preservation:** the already substantial chapter "Prove C++ Ownership with Runnable Experiments" (~1,603 reading-copy lines) remains intact. This is a surgical, long-form addition placed before the existing heading `## From one owned resource to many requests and a replaceable backend`, not a shorter chapter generated from scratch. The canonical `Continuous Notes/` manuscript remains unchanged on GitHub until the user explicitly applies the addition on the Mac.
+
+**New work:** [NES-02P long-form teaching section](../../Supplementary/C++23%20Project%20Labs/NES-02P%20-%20Ownership%20Proofs%20for%20an%20Emulator.md) (~18,124 characters) and [C++23 ownership proof suite](../../tools/labs/nes_ownership_proofs_cpp23_lab.cpp) (~315 source lines). The suite imports the very same [transaction runtime header](../../tools/labs/nes_course/cartridge_runtime.hpp) used in the previous chapter, rather than a reconstructed duplicate. It proves five independent behaviors: partial-construction cleanup order, `std::move` as an xvalue cast versus actual transfer, `std::optional::emplace` destruction-before-construction on failure, cartridge independence from a destroyed external byte buffer with failed-load preservation, and `std::weak_ptr` observation without keeping an object alive. The original chapter's extensive prior laboratories remain available.
+
+**Test wiring:** four C++23 executables are built through `Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt`. A focused [GitHub Actions CI workflow](../../.github/workflows/allmight-cpp23-nes-course.yml) builds the C++23 exercises on Ubuntu GCC and Clang and verifies the byte-preserving manuscript insertion fixtures. **Do not claim CI success, native Mac success or complete NES correctness until these outputs are inspected.**
+
+**On the Mac, after pulling this branch:**
+
+```bash
+cd ~/Desktop/Programming/Project_008_AllMight
+git fetch origin
+git switch curriculum/cpp23-nes-project-pass01
+git pull --ff-only origin curriculum/cpp23-nes-project-pass01
+
+# Read-only preflight, then a byte-preserving edit of the original book.
+python3 tools/apply_cpp23_project_inserts.py --check
+python3 tools/apply_cpp23_project_inserts.py --apply
+python3 tools/apply_cpp23_project_inserts.py --check
+
+# Original source must show additions, never deletion or large rewrites.
+git diff --check
+git diff --numstat -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+git diff -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+
+# Only C++23 tests: never LaTeX, InDesign, PDF or book regeneration.
+brew install cmake ninja llvm
+cmake -S "Book Production/Seven-Book Curriculum/Book01" \\
+  -B build/allmight-nes-course -G Ninja \\
+  -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++" \\
+  -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/allmight-nes-course --parallel
+ctest --test-dir build/allmight-nes-course --output-on-failure
+python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py'
+```
+
+The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T blocks and adds only missing NES-02P. It refuses to overwrite a modified previous addition or to insert at an ambiguous heading. It never compiles LaTeX.
+
+**Next learning stage:** Book 01 Chapter 05, generic asset pipelines; reuse these ownership proofs across cartridge, texture and mesh import data. The learner's primary implementation remains C++23, with every other language's interoperability boundary explicitly justified.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
