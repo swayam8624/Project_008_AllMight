@@ -51,6 +51,8 @@ class ProjectInsertionTests(unittest.TestCase):
             "## The scene is now too large for the wrong container — Phase 5, M025–M027, Parts 401–445\n"
             "Keep original graph/algorithmic material.\n"
             "## An API is a promise about an operation\n"
+            "Keep original API/device material.\n"
+            "### GENERAL COMPUTE & PARALLEL ALGORITHMS\n"
             "Keep all the original subsequent material.\n"
         ).encode("utf-8")
         self.master.write_bytes(self.original)
@@ -62,6 +64,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson6 = self.root / "Supplementary/C++23 Project Labs/NES-06G - Generational Identity and Safe Reuse.md"
         self.lesson7 = self.root / "Supplementary/C++23 Project Labs/NES-07C - CPU Instructions and Typed Debugger Structures.md"
         self.lesson8 = self.root / "Supplementary/C++23 Project Labs/NES-08G - Dependency Graphs and Explicit GPU Work Contracts.md"
+        self.lesson9 = self.root / "Supplementary/C++23 Project Labs/NES-09M - GPU Memory and Ordering Contracts.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
@@ -70,6 +73,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson6.write_text("### NES-06G — A tested generational registry\n\nOriginal NES-06G addition.\n")
         self.lesson7.write_text("### NES-07C — A tested CPU/debugger\n\nOriginal NES-07C addition.\n")
         self.lesson8.write_text("### NES-08G — A tested graph planner\n\nOriginal NES-08G addition.\n")
+        self.lesson9.write_text("### NES-09M — A tested memory model\n\nOriginal NES-09M addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -102,14 +106,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES06G-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES07C-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES08G-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES09M-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the eight
+        # Stronger preservation oracle: surgically delete only the nine
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A", b"NES06G", b"NES07C", b"NES08G", b"NES09M"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
@@ -140,11 +145,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES06G-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES07C-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES08G-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES09M-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original NES-08G addition.", b"Locally edited NES-08G addition."
+            b"Original NES-09M addition.", b"Locally edited NES-09M addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
