@@ -87,6 +87,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-10R - Reproducibility and Evidence-Driven Profiling.md",
         b"\n### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW\n",
     ),
+    Insert(
+        "NES-11B",
+        "Supplementary/C++23 Project Labs/NES-11B - Scoped Borrows and CPU-GPU Frame Buffering.md",
+        b"\n## From generated GPU work to safe explicit execution\n",
+    ),
 )
 
 
