@@ -40,6 +40,8 @@ constexpr g::ResourceKey cpu_ram{
     g::ResourceKind::cpu_ram,0,0,1};
 constexpr g::ResourceKey instruction_trace{
     g::ResourceKind::instruction_trace,0,0,1};
+constexpr g::ResourceKey debug_overlay{
+    g::ResourceKind::debug_overlay,0,0,1};
 constexpr g::ResourceKey gpu_texture{
     g::ResourceKind::gpu_texture,0,0,1};
 constexpr g::ResourceKey gpu_output{
@@ -255,6 +257,9 @@ g::DependencyGraph make_demo_graph(const Demo& demo) {
                         write(instruction_trace)}});
     must_add(graph,{task(60),"inspect CPU RAM",g::Domain::host,1,
                     {},{read(cpu_ram)}});
+    must_add(graph,{task(65),"prepare CPU debug overlay",g::Domain::host,2,
+                    {task(60)},{read(cpu_state),read(instruction_trace),
+                                write(debug_overlay)}});
     must_add(graph,{task(70),"validate RGBA8 asset",g::Domain::host,1,
                     {},{read(tex)}});
     must_add(graph,{task(80),"GPU texture upload plan",g::Domain::gpu_transfer,5,
@@ -262,7 +267,7 @@ g::DependencyGraph make_demo_graph(const Demo& demo) {
     must_add(graph,{task(90),"GPU compute plan",g::Domain::gpu_compute,8,
                     {},{read(gpu_texture),write(gpu_output)}});
     must_add(graph,{task(100),"GPU graphics plan",g::Domain::gpu_graphics,3,
-                    {},{read(gpu_output)}});
+                    {},{read(gpu_output),read(debug_overlay)}});
     return graph;
 }
 void execute_cpu_only(Demo& demo,const g::Plan& plan) {
@@ -309,6 +314,12 @@ void execute_cpu_only(Demo& demo,const g::Plan& plan) {
                       demo.bus.read(0x1801)==0x7F,
                       "CPU bus RAM mirror after scheduled STA");
                 break;
+            case 65:
+                check(demo.cpu && demo.cpu->snapshot() &&
+                      demo.cpu->snapshot()->pc==0x8004 &&
+                      demo.cpu->pending_traces()==2,
+                      "overlay staging consumes the completed CPU snapshot");
+                break;
             case 70: {
                 const auto valid=demo.registry.lookup(demo.texture);
                 check(valid && valid->get().pixels.size()==4 &&
@@ -321,7 +332,7 @@ void execute_cpu_only(Demo& demo,const g::Plan& plan) {
         }
         executed.push_back(work.id.value);
     }
-    check(executed.size()==7,"all seven host tasks must execute once");
+    check(executed.size()==8,"all eight host tasks must execute once");
     check(demo.cpu && demo.cpu->snapshot() &&
           demo.cpu->snapshot()->a==0x7F &&
           demo.cpu->snapshot()->pc==0x8004 &&
@@ -333,8 +344,8 @@ void cpu_gpu_dependency_demo() {
     Demo demo;
     auto graph=make_demo_graph(demo);
     auto p=graph.plan();
-    check(p && p->ordered.size()==10,
-          "NES+GPU planning fixture must contain 10 tasks");
+    check(p && p->ordered.size()==11,
+          "NES+GPU planning fixture must contain 11 tasks");
     verify_order(*p);
     check(edge(*p,20,30) &&
           g::has_reason(*edge(*p,20,30),g::read_after_write),
@@ -353,6 +364,9 @@ void cpu_gpu_dependency_demo() {
           "transfer request cannot preempt CPU-side texture validation");
     check(edge(*p,80,90) && edge(*p,90,100),
           "GPU stage resource writes must create planning dependencies");
+    check(edge(*p,65,100) &&
+          g::has_reason(*edge(*p,65,100),g::read_after_write),
+          "graphics must wait for the CPU-prepared debugger overlay");
     check(p->gpu_edges_requiring_backend_review.size()>=3,
           "GPU stages must carry backend review obligations");
 
