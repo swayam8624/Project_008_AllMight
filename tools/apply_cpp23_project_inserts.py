@@ -62,6 +62,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-05A - Type-Safe Asset Import and Publication.md",
         b"\n### The real performance question is what gets instantiated, stored and moved\n",
     ),
+    Insert(
+        "NES-06G",
+        "Supplementary/C++23 Project Labs/NES-06G - Generational Identity and Safe Reuse.md",
+        b"\n## From a living asset registry to reliable queries and transformations\n",
+    ),
 )
 
 
