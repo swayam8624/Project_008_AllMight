@@ -17,6 +17,7 @@
 #include <initializer_list>
 #include <limits>
 #include <optional>
+#include <span>
 #include <queue>
 #include <string>
 #include <type_traits>
@@ -110,6 +111,29 @@ struct Plan {
     // GPU queue/pipeline changes are descriptive obligations only.
     std::vector<Edge> gpu_edges_requiring_backend_review;
 };
+
+enum class ScanError { overflow };
+struct ScatterLayout {
+    std::vector<std::size_t> offsets;
+    std::size_t total{};
+};
+
+// Exact CPU reference for the "count -> exclusive offsets -> scatter" stage
+// used in GPU compaction. It does NOT execute a GPU parallel scan or supply
+// a device barrier. Each half-open interval [offset_i,offset_i+count_i)
+// is disjoint, and the last endpoint is exactly total.
+[[nodiscard]] inline std::expected<ScatterLayout,ScanError>
+checked_exclusive_scan(std::span<const std::size_t> counts) {
+    ScatterLayout result;
+    result.offsets.reserve(counts.size());
+    for (const auto count : counts) {
+        if (count > std::numeric_limits<std::size_t>::max() - result.total)
+            return std::unexpected(ScanError::overflow);
+        result.offsets.push_back(result.total);
+        result.total += count;
+    }
+    return result;
+}
 
 [[nodiscard]] constexpr bool is_gpu(Domain d) noexcept {
     return d != Domain::host;
