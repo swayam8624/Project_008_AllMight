@@ -80,6 +80,15 @@ add_executable(nes_reproducible_benchmark_cpp23_lab
 )
 target_compile_features(nes_reproducible_benchmark_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(nes_reproducible_benchmark_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass11: single-threaded lifetime-guarded CPU frame ring, with an actual
+# separately compiled NES CPU debugger. No Vulkan/Metal device is created.
+add_executable(nes_scoped_frame_upload_cpp23_lab
+    ../../../tools/labs/nes_scoped_frame_upload_cpp23_lab.cpp
+    ../../../tools/labs/nes_course/cpu_debug_session.cpp
+)
+target_compile_features(nes_scoped_frame_upload_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(nes_scoped_frame_upload_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
 find_package(Threads REQUIRED)
 target_link_libraries(nes_gpu_memory_contract_cpp23_lab PRIVATE Threads::Threads)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
@@ -103,8 +112,9 @@ if(MSVC)
     target_compile_options(nes_work_dependency_graph_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_gpu_memory_contract_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_reproducible_benchmark_cpp23_lab PRIVATE /W4)
+    target_compile_options(nes_scoped_frame_upload_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab nes_scoped_frame_upload_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -116,7 +126,8 @@ foreach(course_lab IN ITEMS
  nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab
  typed_asset_pipeline_cpp23_lab generational_asset_registry_cpp23_lab
  nes_cpu_debugger_cpp23_lab nes_work_dependency_graph_cpp23_lab
- nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab)
+ nes_gpu_memory_contract_cpp23_lab nes_reproducible_benchmark_cpp23_lab
+ nes_scoped_frame_upload_cpp23_lab)
     target_link_libraries(${course_lab} PRIVATE nes_course_public_api)
 endforeach()
 
@@ -150,3 +161,6 @@ add_test(NAME nes_09m_memory_visibility_and_host_atomic_ordering
 
 add_test(NAME nes_10r_reproducible_correctness_and_measurement_protocol
          COMMAND nes_reproducible_benchmark_cpp23_lab)
+
+add_test(NAME nes_11b_const_borrow_guarded_frame_upload_and_retirement
+         COMMAND nes_scoped_frame_upload_cpp23_lab)
