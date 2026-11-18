@@ -212,6 +212,52 @@ void adc_carry_and_inx_wrap() {
           "INX wraps to zero in eight-bit domain");
 }
 
+void reset_bus_errors_are_not_silent_zeroes() {
+    CpuBus bus;
+    CpuDebugSession session(bus);
+    const auto not_mounted = session.reset();
+    check(!not_mounted && not_mounted.error() == SessionError::bus_error,
+          "reset without a cartridge must report the missing PRG bus");
+    check(session.snapshot() && !session.snapshot()->ready,
+          "failed reset must not make a CPU ready");
+
+    // A valid NROM can still point the reset vector at unimplemented PPU
+    // registers. Reset vector bytes are valid, but a later opcode fetch isn't.
+    const auto rom = image(0x2000);
+    mount(bus,rom);
+    check(session.reset().has_value(), "valid reset vector decoding");
+    const auto at_reset = session.snapshot();
+    const auto unsupported_bus_fetch = session.step();
+    check(!unsupported_bus_fetch &&
+          unsupported_bus_fetch.error() == SessionError::bus_error,
+          "opcode fetch in PPU MMIO region must be a typed bus failure");
+    check(session.snapshot() == at_reset &&
+          session.pending_traces() == 0,
+          "failed fetch must not commit register or trace state");
+}
+
+void two_bank_reset_vector_maps_to_upper_prg_bank() {
+    std::vector<Byte> rom(header_bytes + 2U*prg_bank_bytes, 0);
+    rom[0]='N'; rom[1]='E'; rom[2]='S'; rom[3]=0x1A;
+    rom[4]=2; rom[5]=0;
+    // NROM-256 CPU FFFC maps to byte 0x7FFC in 32KiB PRG.
+    rom[header_bytes + 0x7FFCU] = 0x00;
+    rom[header_bytes + 0x7FFDU] = 0xC0;
+    rom[header_bytes + prg_bank_bytes] = 0xEA; // C000: NOP
+    rom[header_bytes] = 0x00; // 8000: deliberately unsupported BRK
+
+    CpuBus bus;
+    mount(bus,rom);
+    CpuDebugSession session(bus);
+    check(session.reset().has_value() &&
+          session.snapshot()->pc == 0xC000,
+          "two-bank NROM reset vector should point to bank two");
+    step_ok(session,0xC000,0xC001,0xEA,2,2);
+    check(bus.read(0x8000) == 0x00 &&
+          bus.read(0xC000) == 0xEA,
+          "NROM-256 must not accidentally mirror the first PRG bank");
+}
+
 void unsupported_opcode_is_not_a_halt() {
     auto rom = image();
     bytes_at(rom,0x8000,{0x00}); // BRK needs stack/IRQ semantics; not HALT
@@ -336,6 +382,8 @@ int main() {
         complete_program_and_breakpoint();
         branch_cycles_and_signed_offsets();
         adc_carry_and_inx_wrap();
+        reset_bus_errors_are_not_silent_zeroes();
+        two_bank_reset_vector_maps_to_upper_prg_bank();
         unsupported_opcode_is_not_a_halt();
         trace_ring_guards_the_cpu_and_wraps();
         inspection_heap_and_ram_aliases();
