@@ -53,7 +53,7 @@ struct Layout {
 // Bytes are read by their format-defined indices, not by memcpy-ing a C++
 // struct whose padding, alignment and object representation are unrelated to
 // the external file-format contract.
-std::expected<Layout, ParseError> inspect(std::span<const Byte> image) {
+inline std::expected<Layout, ParseError> inspect(std::span<const Byte> image) {
     if (image.size() < header_bytes) {
         return std::unexpected(ParseError::short_header);
     }
