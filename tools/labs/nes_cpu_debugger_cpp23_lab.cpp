@@ -12,7 +12,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <initializer_list>
 #include <iostream>
+#include <optional>
 #include <limits>
 #include <stdexcept>
 #include <string>
