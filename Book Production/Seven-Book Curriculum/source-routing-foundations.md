@@ -9,7 +9,7 @@
 | 01 From Bits to Running Systems | B1 | **NES-01**, iNES header interpretation, typed errors, tests, bytes and flags. Started and compiled. |
 | 02 Values at Addresses: Layout, Lifetimes, and Representation | B1 | **NES-02 authored; pending canonical insertion**. Owned NROM cartridge, RAM mirroring, PRG mapping, typed missing-device errors, failed-load publication, moved-from safety and strict C++23 tests. Existing original text retained. |
 | 03 Records as Resource Transactions | B1 | **Pass 03 authored; canonical insertion pending.** NES-02T: staging an owned cartridge, strong exception guarantee, no-throw commit, validated publication, revision identity, simulated allocation failure, typed error translation, rollback witnesses. Original ~1,892-line chapter-edition material preserved. |
-| 04 Prove C++ Ownership with Runnable Experiments | B1 | RAII/move/borrow experiments against a progressively safer cartridge and byte-buffer interface. |
+| 04 Prove C++ Ownership with Runnable Experiments | B1 | **Pass 04 authored; canonical insertion pending.** NES-02P shares the actual iNES, bus and cartridge runtime implementations; deterministic unwind/move/optional-emplace/owned-byte/failure-atomicity/weak-observer tests; preserves the original ~1,603-line derived reading copy. |
 | 05 Generic Asset Pipelines without Hidden Contracts | B1 | C++23 generic loaders and type-specific cartridge/asset validation; bridge to KairoAssets. |
 | 06 Grow Registries without Invalidating Identity | B1 | Safe generational handles for cartridge/texture registries; later ECS uses same proof. |
 | 07 Typed Interfaces, Identity, and Data Structures | B1 | Refactor emulator bus and MLLibrary types; verify container choice with measurements. |
@@ -75,3 +75,15 @@ Existing chapter: "Records as Resource Transactions" (~1,892 lines in the derive
 - Scope: a single-threaded, CPU-owned NROM transaction. Not an authenticated file parser, general mapper implementation, CPU execution engine, GPU resource retirement system or concurrency-safe publishing protocol.
 
 The next original chapter, 04 ("Prove C++ Ownership with Runnable Experiments"), should inspect the real C++ witness suite, then test move/copy/exception/noexcept behavior with reproducible compiler configurations and sanitizers. The broader NES-03 CPU execution stage follows once its object lifetime and bus correctness dependencies are satisfied.
+
+
+## Pass 04 — Independent ownership evidence against the same emulator
+
+The existing "Prove C++ Ownership with Runnable Experiments" chapter already has 1,603 lines of derivations and runnable examples. It includes values and references, borrowed views, safe asset pipelines, constructor/destructor rules, smart pointers, partial construction, native resource lifetimes, callbacks, C++20/23 language boundaries and explicit limitations. This pass **does not rewrite these explanations**. It adds an independent **evidence-oriented C++23 experiment** at the first-use boundary immediately before `## From one owned resource to many requests and a replaceable backend`.
+
+**New additive prose:** `Supplementary/C++23 Project Labs/NES-02P - Ownership Proofs for an Emulator.md` (~18,124 characters).
+**New executable:** `tools/labs/nes_ownership_proofs_cpp23_lab.cpp` (five independent proof groups).
+**Shared previous core:** `tools/labs/nes_course/ines_layout.hpp`, `nes_bus_nrom.hpp`, `cartridge_runtime.hpp`. The transaction runtime was extracted unchanged from the NES-02T lab so that the two binaries execute the **same implementation**.
+**Tests:** exact constructor/unwinding event sequences; `std::move` cast vs move constructor; one release duty across owner transfers; `optional::emplace` throwing-constructor counterexample; deep-copy independence of a file buffer; prepared-but-rejected transaction preserving the old cartridge and RAM; weak observation without ownership.
+**Operational verification:** CMake/CTest entry added to existing NES course, plus an isolated GCC/Clang GitHub Actions workflow (`.github/workflows/allmight-cpp23-nes-course.yml`). Workflow execution and native macOS C++23 tests are **not yet confirmed**, and no result may be called passed until the workflow or user-side run reports success. The canonical book remains unchanged on GitHub; source insertions are committed as supplements and locally applied by `tools/apply_cpp23_project_inserts.py`.
+**Not claimed:** full memory safety, complete 6502/PPU/APU timing, Vulkan/Metal synchronization, comprehensive allocation-failure coverage, concurrency-safe cartridge swaps, or entire-source-unit exhaustiveness.
