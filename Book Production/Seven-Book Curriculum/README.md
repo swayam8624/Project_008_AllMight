@@ -316,6 +316,23 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 11 "C++ Const, Borrowing, and CPU–GPU Buffering". Use the same NROM/PIMPL/asset/GPU-memory teaching system to derive immutable access authority, owned versus borrowed views and multi-buffering without abandoning the original manuscript.
 
 
+## Pass 11 — Book 01, Chapter 11: C++ Const, Borrowing, and CPU–GPU Buffering
+
+**No per-pass user actions.** This additive revision is committed to `curriculum/cpp23-nes-project-pass01`; the user's one-shot pull, exact manuscript insertion, native Mac build and LaTeX work remain deferred to an explicit checkpoint. Do not shorten or regenerate the original 5,000+ page curriculum.
+
+**Existing chapter preserved:** The original Chapter 11 reading copy contains ~2,378 lines / 94.97K characters already covering const qualification, borrow interval proofs, generation lifetime, GPU-generated work, frame slots, ping-pong and triple buffering, Metal/Vulkan execution, presentation and multi-queue lifetime. None was replaced. The ~43.25K-character new long-form lesson [NES-11B — Scoped Borrows and CPU-GPU Frame Buffering](../../Supplementary/C++23%20Project%20Labs/NES-11B%20-%20Scoped%20Borrows%20and%20CPU-GPU%20Frame%20Buffering.md) is staged immediately before `## From generated GPU work to safe explicit execution`, where C++ borrowing turns into real graphics resource lifetimes.
+
+**Cumulative C++23 code:** [scoped_frame_upload_ring.hpp](../../tools/labs/nes_course/scoped_frame_upload_ring.hpp) defines single-threaded `FrameUploadRing<Capacity>` with an owned heap control block, explicitly immutable `std::span<const Byte>` ReadLease pinned by RAII, move-only transactional WriteLease and rollback, per-pool owner/slot/generation identity and no ABA wrap, three independent simulated queue completion values, CPU pin refusal, permanent maximum-generation slot retirement and independent owned snapshot copying.
+
+**Actual project integration:** [nes_scoped_frame_upload_cpp23_lab.cpp](../../tools/labs/nes_scoped_frame_upload_cpp23_lab.cpp) imports a TXR4 RGBA8 image through Pass05/06 typed decoding, executes LDA/STA on the real earlier NROM CpuBus/Pass07 separately compiled PIMPL debugger, and serializes a 16-byte NESF frame/CPU state header with eight actual texture pixels. It tests three in-flight frames, real data deep-copy isolation, queue completion componentwise checks, immutable views, reader pin lifetime, abandoned writer recovery, slot reuse/generation increment, foreign/forged handles, generation overflow retirement and an independent swapchain acquisition-index example.
+
+**Build and provenance:** Book01 CMake/CTest now registers **11** cumulative C++23 executable targets; Pass11 links `cpu_debug_session.cpp` in its executable, reusing the actual prior debugger. The staged insertion tool, fixture restoration tests, source-manifest evidence collector and manifest unit tests were extended to the eleventh lesson, target and shared header. The existing GCC, Clang, macOS AppleClang and Linux sanitizer CI definitions cover the new source paths. A passing CI status is **not asserted until actual runner results and receipts are inspected**.
+
+**Limits:** The ring models no real GPU device, buffer mapping, command buffer submission, semaphore, queue-family transfer, presentation, resource residency, display output or device lost recovery. Completion values are **synthetic caller-provided observations**, not native timestamps. All slot operations are single-threaded. A copied raw `span<const Byte>` can outlive its ReadLease if misused; the contract forbids that and provides `copy_snapshot()` for an independent value. The host model is not a concurrency safety proof and should not be called a production Vulkan/Metal upload implementation.
+
+**Next:** Chapter 12, "Commands, Async Work, and Resource Lifetimes": retain the same ring and add a tested command-state and submission/cancellation lifecycle, with explicit native backend verification boundaries.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
