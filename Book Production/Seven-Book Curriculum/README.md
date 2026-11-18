@@ -26,6 +26,26 @@ This is the first **authored** intervention, not a blanket review of all 129 cha
 - Verification scope: code compiled and all 11 synthetic cases executed with GCC 14 in C++23 strict-warnings mode in the authoring workspace; stand-alone TeX module compiled into a two-page preview. **Not yet tested in the repository's own CI or native full seven-book production build.**
 - Subsequent milestones: NES-02 checked memory bus and mirroring; NES-03 6502 state and instruction traces; NES-04 interrupts/cycles; NES-05 PPU; NES-06 APU/controllers; NES-07 mappers and cartridge metadata; NES-08 deterministic regression and performance.
 
+### Reproduce NES-01
+
+From the repository root:
+
+```bash
+cmake -S "Book Production/Seven-Book Curriculum/Book01" -B build/nes-01 \
+  -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/nes-01
+ctest --test-dir build/nes-01 --output-on-failure
+```
+
+The header and address-mirroring rules were independently checked against
+[NESdev iNES](https://www.nesdev.org/wiki/INES),
+[NESdev NES 2.0](https://www.nesdev.org/wiki/NES_2.0), and
+[NESdev mirroring](https://www.nesdev.org/wiki/Mirroring).
+The lab intentionally declines NES 2.0, does not yet interpret older dirty-header
+conventions, and does not claim to instantiate an actual mapper. Files with
+additional trailing bytes may be valid under extensions; their treatment will be
+specified in the next cartridge-loader milestone.
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
