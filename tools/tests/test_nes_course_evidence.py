@@ -21,8 +21,8 @@ class EvidenceContractTests(unittest.TestCase):
     def test_source_inventory_audit_is_not_a_build_certificate(self) -> None:
         item = evidence.inspect_sources(REPO)
         self.assertEqual(item["kind"], "source_inventory_only_not_a_build_result")
-        self.assertEqual(len(item["expected_targets"]), 10)
-        self.assertEqual(len(item["ctest_names"]), 10)
+        self.assertEqual(len(item["expected_targets"]), 11)
+        self.assertEqual(len(item["ctest_names"]), 11)
         self.assertEqual(len(item["source_sha256"]), len(evidence.source_paths()))
         self.assertTrue(item["source_sha256"].get(
             "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
@@ -129,7 +129,7 @@ class EvidenceContractTests(unittest.TestCase):
             "source_git_sha": evidence.git_sha(REPO),
             "ctest": {
                 "status": "pass",
-                "executed": 10,
+                "executed": 11,
                 "names": list(inventory["ctest_names"]),
             },
             "inventory": inventory,
