@@ -47,6 +47,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-02 - Owned NROM and Memory Bus.md",
         b"\n## Choose a type for its promise, not its familiar size\n",
     ),
+    Insert(
+        "NES-02T",
+        "Supplementary/C++23 Project Labs/NES-02T - Transactional Cartridge Replacement.md",
+        b"\n## Let the compiler compose the operations\n",
+    ),
 )
 
 
