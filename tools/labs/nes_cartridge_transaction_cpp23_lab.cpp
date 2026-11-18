@@ -197,12 +197,12 @@ void exercise() {
     first[header_bytes] = 0x3A;
     first[header_bytes + prg_bank_bytes - 1] = 0x91;
     const auto first_commit = runtime.replace(first);
-    check(first_commit == 1, "first commit must produce generation one");
+    check(first_commit.has_value() && *first_commit == 1, "first commit must produce generation one");
 
     // Prove that the runtime does not borrow the original input storage.
     first.clear();
     first.shrink_to_fit();
-    check(runtime.write_ram(0x0001, 0x51), "RAM store failed");
+    check(runtime.write_ram(0x0001, 0x51).has_value(), "RAM store failed");
     check(runtime.write_pattern(0, 0x22), "CHR-RAM write failed");
     check(runtime.write_pattern(0x1FFF, 0x6D), "CHR-RAM end write failed");
     const Witness stable = witness(runtime);
@@ -250,7 +250,7 @@ void exercise() {
     }
 
     const auto committed = runtime.replace(second);
-    check(committed == 2, "only successful replacements advance generation");
+    check(committed.has_value() && *committed == 2, "only successful replacements advance generation");
     check(runtime.bus().read(0x8000) == 0xA4, "new first bank not committed");
     check(runtime.bus().read(0xC000) == 0xB5, "new second bank not committed");
     check(runtime.bus().read(0xFFFF) == 0xC6, "new last PRG byte wrong");
