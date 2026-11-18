@@ -43,6 +43,8 @@ class ProjectInsertionTests(unittest.TestCase):
             "## Let the compiler compose the operations\n"
             "Keep original laboratory and ownership content.\n"
             "## From one owned resource to many requests and a replaceable backend\n"
+            "Keep original generic asset chapter content.\n"
+            "### The real performance question is what gets instantiated, stored and moved\n"
             "Keep all the original subsequent material.\n"
         ).encode("utf-8")
         self.master.write_bytes(self.original)
@@ -50,10 +52,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.lesson2 = self.root / "Supplementary/C++23 Project Labs/NES-02 - Owned NROM and Memory Bus.md"
         self.lesson3 = self.root / "Supplementary/C++23 Project Labs/NES-02T - Transactional Cartridge Replacement.md"
         self.lesson4 = self.root / "Supplementary/C++23 Project Labs/NES-02P - Ownership Proofs for an Emulator.md"
+        self.lesson5 = self.root / "Supplementary/C++23 Project Labs/NES-05A - Type-Safe Asset Import and Publication.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
         self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
         self.lesson4.write_text("### NES-02P — A tested ownership proof\n\nOriginal NES-02P addition.\n")
+        self.lesson5.write_text("### NES-05A — A tested asset pipeline\n\nOriginal NES-05A addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -82,14 +86,15 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02T-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02P-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES05A-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
 
-        # Stronger preservation oracle: surgically delete only the four
+        # Stronger preservation oracle: surgically delete only the five
         # newly inserted byte ranges, then compare the entire old book
         # byte-for-byte, not just a few snippets.
         stripped = once
-        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P"):
+        for name in (b"NES01", b"NES02", b"NES02T", b"NES02P", b"NES05A"):
             start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
             end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
             begin_index = stripped.index(start)
@@ -116,11 +121,12 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES02-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES02T-ADDITIVE-START -->"), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES02P-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES05A-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original NES-02P addition.", b"Locally edited NES-02P addition."
+            b"Original NES-05A addition.", b"Locally edited NES-05A addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
