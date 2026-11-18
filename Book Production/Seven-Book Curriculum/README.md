@@ -1,5 +1,28 @@
 # Project AllMight — Seven-book C++23 curriculum (in progress)
 
+> **Correction, 18 November 2026 — preserve the full books.** This branch is an **additive revision layer** for existing long-form manuscripts. The older two-page LaTeX preview was a small standalone proof-of-format, **not a revised chapter, not a replacement for the thousands of pages, and not the expected amount of chapter work**. It must never be substituted for the canonical chapter or used to infer that a chapter is complete. No existing source has been deleted or shortened on this branch. The current manuscript source is the continuous Markdown under `Continuous Notes/`; its existing large file cannot be safely replaced using the limited content-fetch operation. New material is first developed as a source-preserving insert and applied locally, without regenerating the book.
+
+**Actual NES-01 addition:** [Supplementary/C++23 Project Labs/NES-01 - Cartridge Bytes and Trusted Layout.md](../../Supplementary/C++23%20Project%20Labs/NES-01%20-%20Cartridge%20Bytes%20and%20Trusted%20Layout.md) — written to be inserted directly after the original bit-field exercise, before the existing heading "Arithmetic becomes a policy". The older lessons are retained verbatim. The runnable C++23 lab lives at [tools/labs/ines_header_cpp23_lab.cpp](../../tools/labs/ines_header_cpp23_lab.cpp). The former `Book01/01-bits-to-cartridge-nes.tex` remains an **optional prototype** only, not the canonical seven-book teaching source.
+
+**On your Mac, from the repository root (safe first):**
+
+```bash
+git fetch origin
+git switch curriculum/cpp23-nes-project-pass01
+python3 tools/apply_cpp23_project_inserts.py --check
+python3 tools/apply_cpp23_project_inserts.py --apply
+python3 tools/apply_cpp23_project_inserts.py --check
+
+git diff --check
+git diff --stat
+git diff -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+```
+
+The script refuses ambiguous anchors and modified partial insertions, checks that removing the inserted byte range exactly recovers the original source, and reports the original and final SHA-256. It makes **no PDF, TeX, export or regenerated reading edition**. Do not use it as a substitute for a source-by-source technical review. Updating derived Chapter Edition or LaTeX exports is a distinct, user-controlled action once the canonical revision has been reviewed.
+
+**Build policy:** ChatGPT must not run LaTeX, render PDFs, or rebuild the book editions. Provide explicit Mac commands only when requested or when the proper existing master TeX file and its build tooling are identified. A synthetic C++ lab is evidence only for its named tests, not a full-emulator certification.
+
+
 **Status:** authoring track, not a finished seven-book production build. The repository currently has three canonical continuous manuscripts and 129 chapter-edition chapters, with a six-volume print pipeline. These remain authoritative and unchanged. The seven titles below represent the seven-stage teaching architecture, **not** seven verified, already-existing TeX masters. Do not misreport a finished book, complete source review, or executable milestone on the strength of this file.
 
 ## Seven-book teaching route
