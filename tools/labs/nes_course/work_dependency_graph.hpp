@@ -100,6 +100,7 @@ struct PlannedTask {
     std::uint64_t earliest_start{};
     std::uint64_t earliest_finish{};
     Domain domain{Domain::host};
+    friend bool operator==(const PlannedTask&, const PlannedTask&) = default;
 };
 struct Plan {
     std::vector<PlannedTask> ordered;
@@ -223,8 +224,10 @@ public:
                 auto& state = history[a.resource];
                 if (state.writer) {
                     std::uint8_t reason = 0;
-                    if (a.read) reason |= read_after_write;
-                    if (a.write) reason |= write_after_write;
+                    if (a.read) reason = static_cast<std::uint8_t>(
+                        reason | read_after_write);
+                    if (a.write) reason = static_cast<std::uint8_t>(
+                        reason | write_after_write);
                     add_edge(*state.writer,to,reason);
                 }
                 if (a.write) {
