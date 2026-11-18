@@ -21,6 +21,13 @@ add_executable(nes_cartridge_transaction_cpp23_lab
     ../../../tools/labs/nes_cartridge_transaction_cpp23_lab.cpp
 )
 target_compile_features(nes_cartridge_transaction_cpp23_lab PRIVATE cxx_std_23)
+
+# Pass 04: independent object-lifetime and transactional ownership witnesses.
+add_executable(nes_ownership_proofs_cpp23_lab
+    ../../../tools/labs/nes_ownership_proofs_cpp23_lab.cpp
+)
+target_compile_features(nes_ownership_proofs_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(nes_ownership_proofs_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -35,8 +42,9 @@ if(MSVC)
     target_compile_options(ines_header_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_bus_nrom_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_cartridge_transaction_cpp23_lab PRIVATE /W4)
+    target_compile_options(nes_ownership_proofs_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -50,3 +58,6 @@ add_test(NAME nes_02_owned_cartridge_and_cpu_bus
 
 add_test(NAME nes_02t_transactional_cartridge_replacement
          COMMAND nes_cartridge_transaction_cpp23_lab)
+
+add_test(NAME nes_02p_cpp23_ownership_and_failure_proofs
+         COMMAND nes_ownership_proofs_cpp23_lab)
