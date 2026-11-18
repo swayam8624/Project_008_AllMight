@@ -117,6 +117,51 @@ python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py'
 No LaTeX compilations, PDF builds, export pipeline changes or generated chapter copies were performed. Final TeX rebuilds remain user-controlled and must use the actual book master and existing build commands after the canonical source has been reviewed.
 
 
+## Pass 03 — Book 01, Chapter 03: Records as Resource Transactions
+
+**Editing rule:** the existing 1,892-line derived chapter is not replaced. The additive prose is attached to the original `## Failure guarantees shape the transfer algorithm` discussion, just before the canonical heading `## Let the compiler compose the operations`. It extends the actual long manuscript **after user-side insertion**, which is an explicit operation on the user's Mac; no LaTeX or PDF compilation occurs here.
+
+**New work:** [NES-02T transactional lesson](../../Supplementary/C++23%20Project%20Labs/NES-02T%20-%20Transactional%20Cartridge%20Replacement.md) and [C++23 lab](../../tools/labs/nes_cartridge_transaction_cpp23_lab.cpp), with the [NROM cartridge/bus core](../../tools/labs/nes_course/nes_bus_nrom.hpp) now shared by NES-02 and NES-02T. A cartridge load stages a complete owned candidate, verifies invariants, then commits by nothrow move and increments a revision. Expected file errors and injected `std::bad_alloc` do not replace the old cartridge. This is a teaching-level, single-threaded guarantee and does not imply concurrent publication or GPU retirement.
+
+The write deliberately distinguishes `std::optional::emplace`'s **general destruction-before-construction rule** from the **concrete** nothrow move path that makes publication safe in this implementation. Source: C++23 [N4950 draft](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf), [cppreference optional::emplace](https://en.cppreference.com/w/cpp/utility/optional/emplace). These language guarantees are distinct from software test evidence.
+
+**Test status:** the shared bus refactor compiled and passed the NES-02 test on the local Linux authoring container. The new NES-02T implementation and new insertion-fixture revisions are committed but **not yet independently compiled/tested on the user's Mac**. Run the commands below to verify; report compiler or sanitizer output before claiming full Pass 03 executable closure.
+
+### Apply all existing additions without deleting canonical text
+
+```bash
+cd ~/Desktop/Programming/Project_008_AllMight
+git fetch origin
+git switch curriculum/cpp23-nes-project-pass01
+git pull --ff-only origin curriculum/cpp23-nes-project-pass01
+
+python3 tools/apply_cpp23_project_inserts.py --check
+python3 tools/apply_cpp23_project_inserts.py --apply
+python3 tools/apply_cpp23_project_inserts.py --check
+
+git diff --check
+git diff --numstat -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+git diff -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+```
+
+The patcher knows the previous NES-01/NES-02 markers. It cannot silently overwrite a locally edited or partially inserted lesson, and it verifies byte-preservation for each new block before writing. It does not operate on generated Chapter Edition files.
+
+### Compile C++23 labs only, with no LaTeX or PDFs
+
+```bash
+brew install cmake ninja llvm
+cmake -S "Book Production/Seven-Book Curriculum/Book01" \\
+  -B build/allmight-nes-course -G Ninja \\
+  -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++" \\
+  -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/allmight-nes-course --parallel
+ctest --test-dir build/allmight-nes-course --output-on-failure
+python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py'
+```
+
+This builds NES-01, NES-02 and NES-02T, not KairoNES's GUI or the seven-volume LaTeX book. No completed seven-book edition is claimed.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
