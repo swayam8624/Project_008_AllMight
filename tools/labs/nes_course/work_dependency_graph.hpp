@@ -41,6 +41,7 @@ enum class ResourceKind : std::uint8_t {
     cpu_ram,
     cpu_program,
     instruction_trace,
+    debug_overlay,
     cartridge,
     texture,
     mesh,
