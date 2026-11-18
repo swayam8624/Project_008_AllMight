@@ -18,7 +18,7 @@ namespace allmight::nes {
 
 enum class CartridgeError { invalid_image, unsupported_mapper, unsupported_prg_banks,
                             unsupported_chr_banks };
-enum class BusError { no_cartridge, unimplemented_device, unmapped_address, read_only };
+enum class BusError { no_cartridge, unimplemented_device, unmapped_address, read_only, invalid_cartridge };
 
 // Own the exact bytes we are allowed to read. No spans into the original
 // caller-owned image are retained, so an image vector can be destroyed.
@@ -74,6 +74,10 @@ public:
         return true;
     }
     bool uses_chr_ram() const noexcept { return chr_ram_; }
+    bool ready() const noexcept {
+        return (prg_.size() == prg_bank_bytes || prg_.size() == 2 * prg_bank_bytes)
+            && chr_.size() == chr_bank_bytes;
+    }
 
 private:
     NromCartridge(std::vector<Byte> prg, std::vector<Byte> chr, bool chr_ram)
@@ -88,7 +92,11 @@ private:
 // falsely imply an accurate NES open-bus/electrical behavior.
 class CpuBus {
 public:
-    void insert(NromCartridge cartridge) { cartridge_.emplace(std::move(cartridge)); }
+    std::expected<void, BusError> insert(NromCartridge cartridge) {
+        if (!cartridge.ready()) return std::unexpected(BusError::invalid_cartridge);
+        cartridge_.emplace(std::move(cartridge));
+        return {};
+    }
     bool has_cartridge() const noexcept { return cartridge_.has_value(); }
 
     std::expected<Byte, BusError> read(std::uint16_t address) const noexcept {
@@ -190,7 +198,7 @@ void tests() {
         image[16] = 0xA5;
         image[16 + 0x3FFF] = 0xB6;
         image[16 + prg_bank_bytes] = 0x77;
-        bus.insert(load(image));
+        require(bus.insert(load(image)).has_value(), "valid cartridge should insert");
         // Destroy and reuse the original image buffer: cartridge still owns
         // a private copy, never a dangling span into this input.
         image.clear(); image.shrink_to_fit();
@@ -208,18 +216,27 @@ void tests() {
         auto image = make_image(2, 1);
         image[16] = 0x41;
         image[16 + prg_bank_bytes] = 0x42;
-        bus.insert(load(image));
+        require(bus.insert(load(image)).has_value(), "valid cartridge should insert");
         require(bus.read(0x8000) == 0x41 && bus.read(0xC000) == 0x42,
                 "32 KiB NROM has two distinct banks");
         require(bus.read(0x0001) == 0x5A, "cartridge replacement must preserve RAM");
     }
     {
         const auto image = make_image(1, 0);
-        bus.insert(load(image));
+        require(bus.insert(load(image)).has_value(), "valid cartridge should insert");
         require(bus.read_pattern(0) == 0, "emulated CHR RAM initialized to zero");
         require(bus.write_pattern(0x1FFF, 0x5C), "CHR RAM must be writable");
         require(bus.read_pattern(0x1FFF) == 0x5C, "CHR RAM must retain writes");
         require(!bus.write_pattern(0x2000, 0x0A), "PPU name table not in cartridge pattern RAM");
+    }
+    {
+        const auto image = make_image(1, 0);
+        auto moved = load(image);
+        require(bus.insert(std::move(moved)).has_value(), "first move of ready cart works");
+        const auto rejected = bus.insert(std::move(moved));
+        require(!rejected && rejected.error() == BusError::invalid_cartridge,
+                "moving an empty source twice must not publish broken cartridge");
+        require(bus.read(0x8000).has_value(), "failed moved-from insert preserves previous cartridge");
     }
     {
         auto bad = make_image(1, 0);
