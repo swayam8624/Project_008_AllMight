@@ -28,6 +28,13 @@ add_executable(nes_ownership_proofs_cpp23_lab
 )
 target_compile_features(nes_ownership_proofs_cpp23_lab PRIVATE cxx_std_23)
 set_target_properties(nes_ownership_proofs_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
+
+# Pass05: cartridge/texture/mesh through one typed publication protocol.
+add_executable(typed_asset_pipeline_cpp23_lab
+    ../../../tools/labs/typed_asset_pipeline_cpp23_lab.cpp
+)
+target_compile_features(typed_asset_pipeline_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(typed_asset_pipeline_cpp23_lab PROPERTIES CXX_EXTENSIONS OFF)
 set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -43,8 +50,9 @@ if(MSVC)
     target_compile_options(nes_bus_nrom_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_cartridge_transaction_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_ownership_proofs_cpp23_lab PRIVATE /W4)
+    target_compile_options(typed_asset_pipeline_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab nes_ownership_proofs_cpp23_lab typed_asset_pipeline_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -61,3 +69,6 @@ add_test(NAME nes_02t_transactional_cartridge_replacement
 
 add_test(NAME nes_02p_cpp23_ownership_and_failure_proofs
          COMMAND nes_ownership_proofs_cpp23_lab)
+
+add_test(NAME nes_05a_typed_asset_pipeline_and_failure_boundaries
+         COMMAND typed_asset_pipeline_cpp23_lab)
