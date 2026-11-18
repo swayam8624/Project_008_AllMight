@@ -79,6 +79,19 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02T-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
+
+        # Stronger preservation oracle: surgically delete only the three
+        # newly inserted byte ranges, then compare the entire old book
+        # byte-for-byte, not just a few snippets.
+        stripped = once
+        for name in (b"NES01", b"NES02", b"NES02T"):
+            start = b"\n<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-START -->\n"
+            end = b"<!-- ALLMIGHT-CPP23-" + name + b"-ADDITIVE-END -->\n"
+            begin_index = stripped.index(start)
+            end_index = stripped.index(end, begin_index) + len(end)
+            stripped = stripped[:begin_index] + stripped[end_index:]
+        self.assertEqual(stripped, self.original)
+
         self.run_script("--check")
         self.run_script("--apply")
         self.assertEqual(self.master.read_bytes(), once)
@@ -106,6 +119,13 @@ class ProjectInsertionTests(unittest.TestCase):
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
         self.assertEqual(self.master.read_bytes(), modified)
+
+    def test_duplicate_anchor_refuses_to_edit(self) -> None:
+        anchor = b"\n## Let the compiler compose the operations\n"
+        ambiguous = self.original.replace(anchor, anchor + anchor)
+        self.master.write_bytes(ambiguous)
+        self.run_script("--apply", success=False)
+        self.assertEqual(self.master.read_bytes(), ambiguous)
 
     def test_missing_or_ambiguous_anchor_refuses_to_change_file(self) -> None:
         other = self.original.replace(
