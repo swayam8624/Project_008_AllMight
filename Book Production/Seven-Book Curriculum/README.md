@@ -69,6 +69,54 @@ conventions, and does not claim to instantiate an actual mapper. Files with
 additional trailing bytes may be valid under extensions; their treatment will be
 specified in the next cartridge-loader milestone.
 
+## Pass 02 — Book 01, Chapter 02: owning cartridge state and address mapping
+
+**Status:** authored, tested, and staged for surgical insertion; **not yet applied to the canonical multi-thousand-page manuscript on GitHub**. The source-preserving local patcher now handles both NES-01 and NES-02, including machines where NES-01 was applied previously, without rewriting any original manuscript bytes.
+
+The existing 2,417-line chapter-edition copy of "Values at Addresses: Layout, Lifetimes, and Representation" already covers byte order, alignment, virtual memory, storage, object lifetimes, build systems, identity, generational handles and binary schemas. Pass 02 does not replace or abridge these lessons. Its **14,645-character addition** goes at the first-use ownership/handle boundary, immediately before the pre-existing heading "Choose a type for its promise, not its familiar size":
+
+- **Additive long-form lesson:** [NES-02 — Owned NROM and Memory Bus](../../Supplementary/C++23%20Project%20Labs/NES-02%20-%20Owned%20NROM%20and%20Memory%20Bus.md). Distinguishes file bytes, borrowed views, owned cartridge state, address identities and hardware mappings; traces NROM-128 versus NROM-256; includes explicit failure behavior, source comparisons, exercises and accuracy limits.
+- **New C++23 executable:** [NES-02 owned NROM and CPU-bus lab](../../tools/labs/nes_bus_nrom_cpp23_lab.cpp). Keeps 2 KiB CPU RAM, 16-/32-KiB NROM program mapping, 8-KiB CHR ROM or CHR RAM and unsupported hardware regions distinct. Rejected cartridge parsing and moved-from publication cannot silently replace live state.
+- **Single parser source:** [shared iNES C++23 header](../../tools/labs/nes_course/ines_layout.hpp), also used by the NES-01 test. No duplicate parser bodies.
+- **Evidence:** GCC 14 and Clang 17 compiled both NES labs under C++23 with strict warnings; CMake/CTest ran both tests; NES-02 passed an ASan/UBSan run locally. It includes deterministic exhaustive checks of all 8,192 internal-RAM mirror addresses and both 16-KiB PRG mirror windows. The connected GitHub branch is not claimed to have run CI or native macOS tests.
+- **Insertion safety:** [tools/apply_cpp23_project_inserts.py](../../tools/apply_cpp23_project_inserts.py) dry-runs by default, detects changed/partial previous inserts, and proves that removing each new block recovers the preceding book exactly. [Tools tests](../../tools/tests/test_cpp23_project_inserts.py) exercise preservation, idempotence, existing NES-01 compatibility and failure behavior in disposable fixtures (committed, not yet independently run on macOS).
+- **Source boundaries:** [NESdev CPU memory map](https://www.nesdev.org/wiki/CPU_ALL), [NROM](https://www.nesdev.org/wiki/NROM), [CHR ROM vs RAM](https://www.nesdev.org/wiki/CHR-ROM_vs_CHR-RAM), and the actual NESEmulator cartridge/bus implementation. No complete emulator, production mapper support or full NES hardware behavior is certified.
+
+### Apply both additive sections on your Mac (no book/PDF generation)
+
+```bash
+cd ~/Desktop/Programming/Project_008_AllMight
+git fetch origin
+git switch curriculum/cpp23-nes-project-pass01
+git pull --ff-only origin curriculum/cpp23-nes-project-pass01
+
+python3 tools/apply_cpp23_project_inserts.py --check
+python3 tools/apply_cpp23_project_inserts.py --apply
+python3 tools/apply_cpp23_project_inserts.py --check
+
+git diff --check
+git diff --numstat -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+git diff -- "Continuous Notes/Computing Foundations - From Bits to C++ and Systems APIs.md"
+```
+
+Both inserts are idempotent. If the previous section has been changed manually after insertion, the script refuses to overwrite those changes; reconcile them intentionally.
+
+### Build only the C++23 exercises on your Mac (not LaTeX)
+
+```bash
+brew install cmake ninja llvm
+cmake -S "Book Production/Seven-Book Curriculum/Book01" \\
+      -B build/allmight-nes-course -G Ninja \\
+      -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++" \\
+      -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/allmight-nes-course --parallel
+ctest --test-dir build/allmight-nes-course --output-on-failure
+python3 -m unittest discover -s tools/tests -p 'test_cpp23_project_inserts.py'
+```
+
+No LaTeX compilations, PDF builds, export pipeline changes or generated chapter copies were performed. Final TeX rebuilds remain user-controlled and must use the actual book master and existing build commands after the canonical source has been reviewed.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
