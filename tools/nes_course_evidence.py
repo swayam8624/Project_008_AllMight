@@ -67,6 +67,8 @@ EXTRA_SOURCES = (
     ".github/workflows/allmight-cpp23-nes-course.yml",
     "Book Production/Seven-Book Curriculum/Book01/CMakeLists.txt",
     "Book Production/Seven-Book Curriculum/Book01/CMakePresets.json",
+    "Book Production/Seven-Book Curriculum/README.md",
+    "Book Production/Seven-Book Curriculum/source-routing-foundations.md",
 )
 
 class EvidenceError(RuntimeError):
@@ -253,6 +255,14 @@ def collect(root: Path, build: Path, junit: Path) -> dict[str, Any]:
     actual = parse_ctest_junit(junit, len(EXPECTED))
     validate_junit_names(actual["names"], inventory["ctest_names"])
     cache = parse_cmake_cache(build)
+    compiler_path = cache["CMAKE_CXX_COMPILER"]
+    version = subprocess.run(
+        [compiler_path, "--version"], capture_output=True, text=True,
+        check=False, timeout=10,
+    )
+    if version.returncode != 0 or not version.stdout.strip():
+        raise EvidenceError("could not confirm actual C++ compiler version")
+    cache["COMPILER_VERSION_BANNER"] = version.stdout.splitlines()[0]
     home = cache.get("CMAKE_HOME_DIRECTORY")
     if home and Path(home).resolve() != (root / "Book Production/Seven-Book Curriculum/Book01").resolve():
         raise EvidenceError("CMakeCache belongs to a different source tree")
@@ -326,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
             verify_record(args.root.resolve(), json.loads(args.record.read_text()))
             print(json.dumps({"result": "verified-current-source", "record": str(args.record)}))
         return 0
-    except (EvidenceError, ET.ParseError, OSError, ValueError) as exc:
+    except (EvidenceError, ET.ParseError, OSError, ValueError, subprocess.TimeoutExpired) as exc:
         print(f"NES evidence refused: {exc}", file=sys.stderr)
         return 1
 
