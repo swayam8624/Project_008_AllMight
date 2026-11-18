@@ -59,6 +59,8 @@ public:
     [[nodiscard]] std::optional<CpuStateSnapshot> snapshot() const noexcept;
     [[nodiscard]] std::expected<void, SessionError>
     add_breakpoint(std::uint16_t address) noexcept;
+    [[nodiscard]] std::expected<void, SessionError>
+    remove_breakpoint(std::uint16_t address) noexcept;
     [[nodiscard]] std::optional<std::uint16_t>
     next_breakpoint_at_or_after(std::uint16_t address) const noexcept;
     [[nodiscard]] std::expected<bool, SessionError>
