@@ -276,6 +276,25 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 09 "GPU Memory, Divergence, Atomics, and Ordering" will use this host dependency model to derive device memory ranges, visibility/ordering contracts and per-backend verifiable experiments, with source preserved and no premature performance/correctness claims.
 
 
+## Pass 09 — Book 01, Chapter 09: GPU Memory, Divergence, Atomics, and Ordering
+
+**No interim user action.** Continue the chapter-by-chapter source work on `curriculum/cpp23-nes-project-pass01`. The user will pull, run the byte-preserving source insertion and complete native compiler/CTest/LaTeX checks only at their requested end-of-day or end-of-book checkpoint. Do not issue per-pass Mac commands or shorten/rebuild the original book.
+
+**Existing chapter:** "GPU Memory, Divergence, Atomics, and Ordering" has ~3,356 lines of GPU memory hierarchy, shared/unified memory, memory coalescing, SIMT divergence, subgroup operations, atomics/order, barriers, multi-dispatch scans, GPU compute, stable sorting and resource-management material. It remains unmodified in the original source. Pass 09 adds a research-level, application-oriented continuation immediately before the original `### GENERAL COMPUTE & PARALLEL ALGORITHMS` heading.
+
+**Long-form addition:** [NES-09M — GPU Memory and Ordering Contracts](../../Supplementary/C++23%20Project%20Labs/NES-09M%20-%20GPU%20Memory%20and%20Ordering%20Contracts.md) (~37.3K chars) bridges the existing typed TXR4 texture, generational registry and Pass08 CPU work graph with allocation alignment, initialized ranges, logical byte visibility, execution versus memory dependencies, conceptual resource ownership/layout, device completion-based retirement, coalescing proxy tests and workgroup barrier participation. Derives C++ host release/acquire publication and contrasts it with the distinct Vulkan/Metal shader/device memory models.
+
+**Shared reference implementation:** [gpu_memory_contract_oracle.hpp](../../tools/labs/nes_course/gpu_memory_contract_oracle.hpp). A **CPU-only** monotonic virtual byte-allocation model with overflow-safe power-of-two alignment, typed failures, versioned initialization and visibility, independent execution-only role transition and memory dependency, byte-exact source transfer, conceptual compute/graphics reads, simulated in-flight ticket retirement, permanent tombstones, hypothetical aligned-segment counts and barrier-participation classification.
+
+**Test executable:** [nes_gpu_memory_contract_cpp23_lab.cpp](../../tools/labs/nes_gpu_memory_contract_cpp23_lab.cpp). Uses real Pass05/06 RGBA8 imports, stage-to-stage work plan from Pass08, wrong-role/wrong-layout/uninitialized/invisible-byte tests, exact byte transformations, stale generational handle and pending completion refusal, and **512 actual host `std::atomic` release/acquire exchanges** between two C++ threads. A valid host-thread message protocol is not evidence of native GPU synchronization. The CMake target links `Threads::Threads`.
+
+**Verification:** The Book01 CMake/CTest has **nine** cumulative C++23 targets. The strict byte-preservation insert script stages nine marker-delimited additions and fixture tests now include all nine in exact recovery, idempotence and conflict checks. The original canonical manuscript has not been edited; this branch contains the staged source and code. **The exact Pass09 build and complete cumulative tests have not been verified as passing**; no native Vulkan/Metal device code exists in this milestone.
+
+**Limitations:** The C++ oracle does not create real GPU images/buffers, issue fences/events, perform queue-family ownership transfer, model subresource layouts, check GPU memory residency, recycle transient physical allocations or measure device behavior. Any native backend work must consult current Khronos synchronization requirements and Apple Metal/Metal4 queue/barrier guidance and validate against the actual Kairo/Maveb revision. Real GPU workgroups and lanes are NOT simulated by the participation/segment helper.
+
+**Next:** Chapter 10, "Reproducible Builds, Profiling, and Repository Contracts": turn the growing source into reproducible, independently audited C++23 builds and reported results, preserving the user's no-command-until-checkpoint workflow.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
