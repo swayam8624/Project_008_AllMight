@@ -241,6 +241,12 @@ struct Demo {
         cartridge=*a; texture=*t;
     }
 };
+[[nodiscard]] bool preflight_asset_handles(const Demo& demo) noexcept {
+    // A topologically valid plan does not pin assets. Revalidate the actual
+    // owner/generation/kind at the execution boundary, before doing any work.
+    return demo.registry.lookup(demo.cartridge).has_value() &&
+           demo.registry.lookup(demo.texture).has_value();
+}
 g::DependencyGraph make_demo_graph(const Demo& demo) {
     g::DependencyGraph graph;
     const auto rom=key(demo.cartridge,g::ResourceKind::cartridge);
@@ -271,6 +277,8 @@ g::DependencyGraph make_demo_graph(const Demo& demo) {
     return graph;
 }
 void execute_cpu_only(Demo& demo,const g::Plan& plan) {
+    check(preflight_asset_handles(demo),
+          "stale generation must block dispatch before the first task");
     std::vector<std::uint32_t> executed;
     for (const auto& work:plan.ordered) {
         if (work.domain!=g::Domain::host) continue;
@@ -379,7 +387,9 @@ void cpu_gpu_dependency_demo() {
     const auto old=demo.cartridge;
     check(demo.registry.erase(old).has_value(),"erase live cartridge");
     check(!demo.registry.lookup(old),"planned handle must now be stale");
-    // Do not call execute_cpu_only after invalidation. Re-check at boundary.
+    check(!preflight_asset_handles(demo),
+          "stale cartridge must refuse execution in preflight");
+    // No stale work is dispatched after the failed preflight.
 }
 
 void checked_scatter_offsets_and_overflow() {
