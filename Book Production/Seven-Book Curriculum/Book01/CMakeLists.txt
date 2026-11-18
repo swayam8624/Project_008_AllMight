@@ -15,6 +15,15 @@ add_executable(nes_bus_nrom_cpp23_lab
     ../../../tools/labs/nes_bus_nrom_cpp23_lab.cpp
 )
 target_compile_features(nes_bus_nrom_cpp23_lab PRIVATE cxx_std_23)
+
+# NES-02T links the same parser and bus through a staged transactional runtime.
+add_executable(nes_cartridge_transaction_cpp23_lab
+    ../../../tools/labs/nes_cartridge_transaction_cpp23_lab.cpp
+)
+target_compile_features(nes_cartridge_transaction_cpp23_lab PRIVATE cxx_std_23)
+set_target_properties(nes_cartridge_transaction_cpp23_lab PROPERTIES
+    CXX_EXTENSIONS OFF
+)
 set_target_properties(nes_bus_nrom_cpp23_lab PROPERTIES
     CXX_EXTENSIONS OFF
 )
@@ -25,8 +34,9 @@ set_target_properties(ines_header_cpp23_lab PROPERTIES
 if(MSVC)
     target_compile_options(ines_header_cpp23_lab PRIVATE /W4)
     target_compile_options(nes_bus_nrom_cpp23_lab PRIVATE /W4)
+    target_compile_options(nes_cartridge_transaction_cpp23_lab PRIVATE /W4)
 else()
-    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab)
+    foreach(lab IN ITEMS ines_header_cpp23_lab nes_bus_nrom_cpp23_lab nes_cartridge_transaction_cpp23_lab)
         target_compile_options(${lab} PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
     endforeach()
 endif()
@@ -37,3 +47,6 @@ add_test(NAME nes_01_synthetic_cartridge_contract
 
 add_test(NAME nes_02_owned_cartridge_and_cpu_bus
          COMMAND nes_bus_nrom_cpp23_lab)
+
+add_test(NAME nes_02t_transactional_cartridge_replacement
+         COMMAND nes_cartridge_transaction_cpp23_lab)
