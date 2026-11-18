@@ -172,6 +172,18 @@ void tests() {
     require(bus.read(0x5000).error() == BusError::unmapped_address, "expansion not yet modeled");
 
     {
+        // Exhaustively check all 2,048 RAM indices in all four mirror windows.
+        CpuBus sweep;
+        for (std::uint16_t index = 0; index < 2048; ++index)
+            require(sweep.write(index, static_cast<Byte>((index * 37U) & 0xFF)).has_value(),
+                    "RAM sweep write failed");
+        for (std::uint16_t address = 0; address < 0x2000; ++address)
+            require(sweep.read(address) == static_cast<Byte>(((address & 0x07FF) * 37U) & 0xFF),
+                    "RAM sweep mirror mismatch");
+    }
+
+
+    {
         auto bad = make_image(1, 1, 0x10); // mapper 1, unsupported in NROM lab
         const auto result = NromCartridge::from_image(bad);
         require(!result && result.error() == CartridgeError::unsupported_mapper, "reject mapper 1");
@@ -211,6 +223,21 @@ void tests() {
         require(bus.read_pattern(0) == 0x77, "failed CHR-ROM write cannot mutate data");
         require(bus.write(0x8000, 0).error() == BusError::read_only, "PRG-ROM write must be rejected");
         require(bus.read(0x8000) == 0xA5, "PRG-ROM must remain unchanged");
+    }
+    {
+        // Every byte in NROM-128 must agree with an independent image oracle.
+        auto image = make_image(1, 1);
+        for (std::size_t offset = 0; offset < prg_bank_bytes; ++offset)
+            image[16 + offset] = static_cast<Byte>((offset * 19U + 7U) & 0xFF);
+        CpuBus sweep;
+        require(sweep.insert(load(image)).has_value(), "PRG mirror sweep insertion failed");
+        for (std::size_t offset = 0; offset < prg_bank_bytes; ++offset) {
+            const auto expected = static_cast<Byte>((offset * 19U + 7U) & 0xFF);
+            require(sweep.read(static_cast<std::uint16_t>(0x8000U + offset)) == expected,
+                    "low NROM-128 mirror mismatch");
+            require(sweep.read(static_cast<std::uint16_t>(0xC000U + offset)) == expected,
+                    "high NROM-128 mirror mismatch");
+        }
     }
     {
         auto image = make_image(2, 1);
