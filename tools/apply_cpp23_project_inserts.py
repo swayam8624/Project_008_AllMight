@@ -72,6 +72,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-07C - CPU Instructions and Typed Debugger Structures.md",
         "\n## The scene is now too large for the wrong container — Phase 5, M025–M027, Parts 401–445\n".encode("utf-8"),
     ),
+    Insert(
+        "NES-08G",
+        "Supplementary/C++23 Project Labs/NES-08G - Dependency Graphs and Explicit GPU Work Contracts.md",
+        b"\n## An API is a promise about an operation\n",
+    ),
 )
 
 
