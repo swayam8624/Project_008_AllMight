@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <exception>
 #include <functional>
 #include <limits>
 #include <new>
@@ -118,6 +119,9 @@ public:
     template<Supported Tag>
     [[nodiscard]] std::expected<AssetHandle<Tag>, RegistryFailure>
     import(ByteView bytes, TestFault fault = TestFault::none) {
+        static_assert(std::is_nothrow_constructible_v<
+            AssetRecord, std::in_place_type_t<Asset<Tag>>, Asset<Tag>&&>,
+            "slot publication must be no-throw for every supported asset");
         if (owner_ == 0) {
             return std::unexpected(RegistryFailure{
                 RegistryImportError::invalid_moved_from_owner, {}});
