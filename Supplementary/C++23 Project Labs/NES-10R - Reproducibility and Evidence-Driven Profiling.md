@@ -20,7 +20,7 @@ add_library(nes_course_public_api INTERFACE)
 
 # Public consumers can find nes_course/*.hpp.
 target_include_directories(nes_course_public_api INTERFACE
-    "BOOK01_RELATIVE_PATH_TO_TOOLS_LABS"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/labs"
 )
 target_compile_features(nes_course_public_api INTERFACE cxx_std_23)
 
@@ -30,7 +30,7 @@ target_link_libraries(nes_reproducible_benchmark_cpp23_lab
 )
 ```
 
-The placeholder above represents the actual CMake expression found in `CMakeLists.txt` for the public include root. The executable doesn't expose its own public API through that link, so `PRIVATE` is appropriate. If a library publicly exposes the types in another target's headers, the required include/feature dependencies may instead need `PUBLIC` or `INTERFACE` propagation. These CMake keywords are build-system visibility rules, not C++ access specifiers and not security barriers.
+The include-root expression above is the actual CMake source-directory-relative path used in `CMakeLists.txt`; it resolves to the repository’s `tools/labs` folder when this Book01 project is configured. The executable does not expose its own public API through that link, so `PRIVATE` is appropriate. If a library publicly exposes the types in another target's headers, the required include/feature dependencies may instead need `PUBLIC` or `INTERFACE` propagation. These CMake keywords are build-system visibility rules, not C++ access specifiers and not security barriers.
 
 A public header must also provide its own standard-library dependencies. The new measurement header uses `std::convertible_to` in a template constraint and therefore includes `<concepts>` directly. It must not depend on another header accidentally having included that declaration. A clean consumer that compiles the header alone is a better test of this contract than a monolithic build in which every translation unit happens to include twenty unrelated headers first.
 
