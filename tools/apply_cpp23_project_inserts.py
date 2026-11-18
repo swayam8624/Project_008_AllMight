@@ -60,8 +60,8 @@ def get_block(spec: Insert) -> tuple[bytes, bytes, bytes]:
     lesson.decode("utf-8")
     if not lesson.startswith(("### " + spec.name + " ").encode("utf-8")):
         raise ValueError(f"{spec.name}: lesson heading mismatch in {spec.source}")
-    begin = ("<!-- ALLMIGHT-CPP23-" + spec.name + "-ADDITIVE-START -->\n").encode("ascii")
-    end = ("<!-- ALLMIGHT-CPP23-" + spec.name + "-ADDITIVE-END -->\n").encode("ascii")
+    begin = ("<!-- ALLMIGHT-CPP23-" + spec.name.replace("-", "") + "-ADDITIVE-START -->\n").encode("ascii")
+    end = ("<!-- ALLMIGHT-CPP23-" + spec.name.replace("-", "") + "-ADDITIVE-END -->\n").encode("ascii")
     if begin in lesson or end in lesson:
         raise ValueError(f"{spec.name}: unexpected insertion marker in lesson")
     return begin, end, b"\n" + begin + lesson.rstrip(b"\n") + b"\n" + end
