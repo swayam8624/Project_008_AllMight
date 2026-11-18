@@ -101,6 +101,13 @@ CpuDebugSession::add_breakpoint(std::uint16_t address) noexcept {
     return {};
 }
 
+std::expected<void, SessionError>
+CpuDebugSession::remove_breakpoint(std::uint16_t address) noexcept {
+    if (!impl_) return std::unexpected(SessionError::moved_from);
+    impl_->debugger.remove_breakpoint(ProgramCounter{address});
+    return {};
+}
+
 std::optional<std::uint16_t>
 CpuDebugSession::next_breakpoint_at_or_after(std::uint16_t address) const noexcept {
     if (!impl_) return std::nullopt;
