@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
