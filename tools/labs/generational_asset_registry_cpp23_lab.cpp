@@ -154,6 +154,35 @@ void reuse_invalidates_old_handle_and_preserves_type() {
           "reuse should consume exactly one free slot");
 }
 
+void cross_kind_reuse_and_zero_generation() {
+    GenerationalAssetRegistry registry(1);
+    const auto m = must_import<MeshTag>(registry, mesh());
+    check(m.slot == 0 && m.generation == 1, "first mesh handle");
+    const AssetHandle<MeshTag> generation_zero{
+        m.owner, m.slot, 0
+    };
+    check(!registry.lookup(generation_zero) &&
+          registry.lookup(generation_zero).error() == LookupError::stale_or_dead,
+          "zero generation is never a valid occupant identity");
+
+    check(registry.erase(m).has_value(), "mesh deletion should succeed");
+    const auto rom = must_import<CartridgeTag>(registry, cartridge(0x7A));
+    check(rom.owner == m.owner && rom.slot == m.slot &&
+          rom.generation == m.generation + 1U,
+          "a new asset kind may reuse the same physical slot");
+    check(!registry.lookup(m),
+          "old mesh handle cannot name a newly inserted cartridge");
+    const AssetHandle<MeshTag> wrong_kind{
+        rom.owner, rom.slot, rom.generation
+    };
+    check(!registry.lookup(wrong_kind) &&
+          registry.lookup(wrong_kind).error() == LookupError::wrong_kind,
+          "correct generation must not bypass variant type validation");
+    check(registry.lookup(rom) &&
+          registry.lookup(rom)->get().read_prg(0x8000) == 0x7A,
+          "cartridge imported with the actual shared NROM decoder");
+}
+
 void owner_namespace_and_move() {
     GenerationalAssetRegistry first(10);
     GenerationalAssetRegistry other(10);
@@ -252,6 +281,7 @@ int main() {
     try {
         identity_is_not_an_address();
         reuse_invalidates_old_handle_and_preserves_type();
+        cross_kind_reuse_and_zero_generation();
         owner_namespace_and_move();
         generation_overflow_retires_instead_of_wrapping();
         long_reuse_sequence_and_model_oracle();
