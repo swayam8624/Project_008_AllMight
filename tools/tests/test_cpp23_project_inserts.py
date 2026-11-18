@@ -39,13 +39,17 @@ class ProjectInsertionTests(unittest.TestCase):
             "## A handle remembers which occupant was intended\n"
             "Keep the untouched original identity lesson.\n"
             "## Choose a type for its promise, not its familiar size\n"
+            "Keep original construction and failure guarantee content.\n"
+            "## Let the compiler compose the operations\n"
             "Keep all the original subsequent material.\n"
         ).encode("utf-8")
         self.master.write_bytes(self.original)
         self.lesson1 = self.root / "Supplementary/C++23 Project Labs/NES-01 - Cartridge Bytes and Trusted Layout.md"
         self.lesson2 = self.root / "Supplementary/C++23 Project Labs/NES-02 - Owned NROM and Memory Bus.md"
+        self.lesson3 = self.root / "Supplementary/C++23 Project Labs/NES-02T - Transactional Cartridge Replacement.md"
         self.lesson1.write_text("### NES-01 — A tested cartridge\n\nOriginal NES-01 addition.\n")
         self.lesson2.write_text("### NES-02 — A tested bus\n\nOriginal NES-02 addition.\n")
+        self.lesson3.write_text("### NES-02T — A tested transaction\n\nOriginal NES-02T addition.\n")
 
     def run_script(self, mode: str, success: bool = True) -> str:
         result = subprocess.run(
@@ -72,6 +76,7 @@ class ProjectInsertionTests(unittest.TestCase):
         self.assertTrue(once.startswith(b"# Original complete book"))
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES01-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02-ADDITIVE-START -->"), 1)
+        self.assertEqual(once.count(b"<!-- ALLMIGHT-CPP23-NES02T-ADDITIVE-START -->"), 1)
         self.assertEqual(once.count(b"Keep the untouched old lesson."), 1)
         self.assertEqual(once.count(b"Keep all the original subsequent material."), 1)
         self.run_script("--check")
@@ -91,11 +96,12 @@ class ProjectInsertionTests(unittest.TestCase):
         final = self.master.read_bytes()
         self.assertEqual(final.count(beginning), 1)
         self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES02-ADDITIVE-START -->"), 1)
+        self.assertEqual(final.count(b"<!-- ALLMIGHT-CPP23-NES02T-ADDITIVE-START -->"), 1)
 
     def test_modified_insert_is_a_hard_conflict(self) -> None:
         self.run_script("--apply")
         modified = self.master.read_bytes().replace(
-            b"Original NES-02 addition.", b"Locally edited NES-02 addition."
+            b"Original NES-02T addition.", b"Locally edited NES-02T addition."
         )
         self.master.write_bytes(modified)
         self.run_script("--apply", success=False)
