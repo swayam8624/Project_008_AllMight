@@ -220,6 +220,31 @@ void check_mixed_pipeline_and_publication() {
             "capacity exhaustion should be explicit");
     require(store.count()==256, "capacity failure must not change count");
 }
+void check_checked_math_and_batch_scope() {
+    std::size_t value = 0;
+    const auto max = std::numeric_limits<std::size_t>::max();
+    require(!multiply(max, 2, value),
+            "multiplication must refuse overflow before evaluating the product");
+    require(multiply(0, max, value) && value == 0,
+            "zero-by-large multiplication must be representable");
+    require(add(12, 24, value) && value == 36,
+            "checked length addition must give the exact result");
+    require(!add(max, 1, value),
+            "length addition must refuse overflow");
+
+    AssetStore store(2);
+    const auto first = store.import<TextureTag>(rgba(1, 1));
+    require(first.has_value(), "first batch-like call must succeed");
+    auto second = triangle();
+    second[0] = '?';
+    const auto rejected = store.import<MeshTag>(second);
+    require(!rejected && rejected.error().kind == PublishError::rejected_source,
+            "second batch-like call must reject bad mesh");
+    // These are TWO independent operations, not an all-or-nothing batch.
+    require(store.count() == 1 && store.find(*first) != nullptr,
+            "an earlier successful import remains committed on later failure");
+}
+
 void check_contracts_at_compile_time() {
     static_assert(Supported<CartridgeTag> && Supported<TextureTag> &&
                   Supported<MeshTag>);
@@ -232,6 +257,7 @@ void check_contracts_at_compile_time() {
 int main() {
     try {
         check_contracts_at_compile_time();
+        check_checked_math_and_batch_scope();
         check_texture_contract();
         check_mesh_contract();
         check_mixed_pipeline_and_publication();
