@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <initializer_list>
 #include <limits>
 #include <optional>
 #include <queue>
@@ -172,17 +173,29 @@ public:
             std::uint8_t reasons{};
         };
         std::vector<IndexedEdge> edges;
-        const auto add_edge = [&edges](std::size_t a,std::size_t b,
-                                      std::uint8_t reason) {
-            // A task can declare both an explicit dependency and a memory
-            // hazard on the same predecessor. Merge flags, not indegrees.
-            for (auto& e : edges) {
-                if (e.from == a && e.to == b) {
-                    e.reasons = static_cast<std::uint8_t>(e.reasons | reason);
-                    return;
-                }
+        std::unordered_map<std::uint64_t,std::size_t> edge_index;
+        const auto add_edge = [&edges,&edge_index](std::size_t a,std::size_t b,
+                                                   std::uint8_t reason) {
+            // 4096-task bound permits a collision-free 32+32 bit index pair.
+            // Different reasons for one pair are flags on ONE graph edge,
+            // otherwise Kahn indegrees and debug output would be misleading.
+            const auto key = (static_cast<std::uint64_t>(a) << 32U) |
+                             static_cast<std::uint64_t>(b);
+            const auto it = edge_index.find(key);
+            if (it != edge_index.end()) {
+                auto& flags = edges[it->second].reasons;
+                flags = static_cast<std::uint8_t>(flags | reason);
+                return;
             }
+            // Reserve both mutations so a failure cannot leave an invalid
+            // edge-index map entry. Exceptions propagate; plan is pure.
             edges.push_back(IndexedEdge{a,b,reason});
+            try {
+                edge_index.emplace(key,edges.size()-1);
+            } catch (...) {
+                edges.pop_back();
+                throw;
+            }
         };
 
         // Forward references are legal while building. They must resolve
