@@ -295,6 +295,27 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 10, "Reproducible Builds, Profiling, and Repository Contracts": turn the growing source into reproducible, independently audited C++23 builds and reported results, preserving the user's no-command-until-checkpoint workflow.
 
 
+## Pass 10 — Book 01, Chapter 10: Reproducible Builds, Profiling, and Repository Contracts
+
+**The user's deferred workflow remains unchanged.** Do not request interim `git pull`, local compilation, manuscript application or LaTeX commands. All code and additive lessons accumulate on `curriculum/cpp23-nes-project-pass01`. When the user requests a final checkpoint, review the entire source diff, apply additions through the exact fail-closed tool and execute/inspect all compiler and CTest results.
+
+**Preserved chapter:** the existing reading-copy chapter has ~4,037 lines of substantial build systems, CMake targets and modules, repository pinning, CI, sanitizers, diagnostics, profiling and resource transactions. No original chapter content was truncated or rewritten. The Pass10 project lesson is staged immediately before the original `### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW` section.
+
+**New narrative:** [NES-10R — Reproducibility and Evidence-Driven Profiling](../../Supplementary/C++23%20Project%20Labs/NES-10R%20-%20Reproducibility%20and%20Evidence-Driven%20Profiling.md) (~25K characters). Traces the exact existing NROM/CPU/typed registry/task graph system into a declared C++23 build, independent source/toolchain evidence, JUnit correctness and optional actual timing rather than using a disconnected build-system example.
+
+**C++23 measurement:** [measurement_protocol.hpp](../../tools/labs/nes_course/measurement_protocol.hpp) provides bounded trials, warmups and iterations, work-result checksums, steady-clock durations, nearest-rank median and p90. [nes_reproducible_benchmark_cpp23_lab.cpp](../../tools/labs/nes_reproducible_benchmark_cpp23_lab.cpp) verifies prior real NROM import, 6502 CPU instruction results, 32-task DAG and 256-count scan, with `--benchmark` an optional, measured CSV mode, **not an automatically passing speed threshold**.
+
+**Build contracts:** [Book01/CMakeLists.txt](Book01/CMakeLists.txt) now has **ten** cumulative C++23 executable/CTest targets and a public `nes_course_public_api` INTERFACE target expressing the include root and language requirements. [Book01/CMakePresets.json](Book01/CMakePresets.json) provides isolated Debug Ninja, Release Ninja and Clang ASan/UBSan build configurations. Compiler versions/SDKs are not magically pinned by preset names.
+
+**Fail-closed evidence:** [tools/nes_course_evidence.py](../../tools/nes_course_evidence.py) separates a *source-only inventory audit* from an observed JUnit CTest receipt. It validates names and outcomes for all ten tests, CMake configuration, executable existence, freshness of test XML relative to source/build/binaries, source-tree cleanliness and source SHA-256 against an exact Git commit. It rejects missing, failed, skipped or stale evidence; old test results cannot be silently promoted to current-source certificates. [test_nes_course_evidence.py](../../tools/tests/test_nes_course_evidence.py) covers these negative cases with private test-only fixtures.
+
+**CI and preservation:** GitHub Actions is configured for Ubuntu GCC, Ubuntu Clang, macOS AppleClang and Ubuntu ASan/UBSan, and configured to collect test JUnit/source-pinned provenance artifacts. This is **configured workflow, not proof the jobs executed successfully**. Manuscript insertion remains dry-run-only in CI. [apply_cpp23_project_inserts.py](../../tools/apply_cpp23_project_inserts.py) stages ten unique byte-preserving insertions; its fixture tests verify ten-block exact recovery, idempotence and hard conflicts.
+
+**Hard boundaries:** No numerical benchmark was run or invented, no GPU device was created, no actual Metal/Vulkan correctness was inferred from CPU-only code, and no complete emulator or seven-book mastery certification is claimed. CMake/CTest execution results for the new cumulative tree still require direct observation.
+
+**Next:** Chapter 11 "C++ Const, Borrowing, and CPU–GPU Buffering". Use the same NROM/PIMPL/asset/GPU-memory teaching system to derive immutable access authority, owned versus borrowed views and multi-buffering without abandoning the original manuscript.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
