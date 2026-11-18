@@ -112,6 +112,32 @@ void check_allocation_and_validation() {
     check(state && state->owner==g::Domain::host &&
           state->layout==m::Layout::undefined,
           "rejected barrier leaves resource role/layout unchanged");
+
+    // Explicitly separate the two independent obligations. An execution-
+    // only role/layout transition makes the bytes legal to ADDRESS in the
+    // transfer role, but does NOT publish the host-written versions.
+    check(oracle.execution_only_transition({keyA,g::Domain::host,
+          g::Domain::gpu_transfer,m::Layout::undefined,
+          m::Layout::transfer_source,0,8}).has_value(),
+          "execution-only transfer is a valid control-state transition");
+    const auto invisible=oracle.read(keyA,g::Domain::gpu_transfer,0,2);
+    check(!invisible &&
+          invisible.error()==m::MemoryError::consumer_not_visible,
+          "execution order alone must NOT make host writes visible");
+    const auto wrongProducer=oracle.memory_dependency(
+        keyA,g::Domain::gpu_transfer,g::Domain::gpu_transfer,0,2);
+    check(!wrongProducer &&
+          wrongProducer.error()==m::MemoryError::producer_not_visible,
+          "a source role cannot publish a version it has never observed");
+    check(oracle.memory_dependency(
+        keyA,g::Domain::host,g::Domain::gpu_transfer,0,2).has_value(),
+        "explicit memory dependency publishes the two written bytes");
+    const auto visible=oracle.read(keyA,g::Domain::gpu_transfer,0,2);
+    check(visible && *visible==*known,
+          "consumer can read exact data after memory publication");
+    const auto untouched=oracle.read(keyA,g::Domain::gpu_transfer,0,3);
+    check(!untouched && untouched.error()==m::MemoryError::uninitialized,
+          "visibility of a prefix must not initialize the rest of the resource");
 }
 void real_texture_through_upload_plan() {
     GenerationalAssetRegistry registry(2);
