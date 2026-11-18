@@ -82,6 +82,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-09M - GPU Memory and Ordering Contracts.md",
         b"\n### GENERAL COMPUTE & PARALLEL ALGORITHMS\n",
     ),
+    Insert(
+        "NES-10R",
+        "Supplementary/C++23 Project Labs/NES-10R - Reproducibility and Evidence-Driven Profiling.md",
+        b"\n### REPRODUCIBILITY, CI, TESTING, DIAGNOSTICS, PROFILING AND THE COMPLETE ENGINE FLOW\n",
+    ),
 )
 
 
