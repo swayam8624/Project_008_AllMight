@@ -201,7 +201,54 @@ def validate_junit_names(test_names: list[str], expected_names: list[str]) -> No
     if sorted(test_names) != sorted(expected_names):
         raise EvidenceError("executed CTest names differ from source-declared tests")
 
+def check_fresh_compiled_results(root: Path, build: Path, junit: Path) -> None:
+    """Never certify an old XML file against newly edited or missing binaries.
+
+    This is a freshness sanity check, not cryptographic proof of the trusted
+    runner. Test runners must still execute ctest for the relevant build.
+    """
+    if not junit.is_file():
+        raise EvidenceError("CTest JUnit file absent; no current test evidence")
+    cache = build / "CMakeCache.txt"
+    if not cache.is_file():
+        raise EvidenceError("CMake cache absent; no configured build")
+
+    # Every target must have an actual executable in this CMake binary dir,
+    # not merely a source declaration. The current course targets output at
+    # the top level; Windows suffix supports future Windows CI extensions.
+    executables = []
+    suffix = ".exe" if os.name == "nt" else ""
+    for _, target, _ in EXPECTED:
+        binary = build / (target + suffix)
+        if not binary.is_file():
+            raise EvidenceError(f"compiled executable not found: {binary}")
+        executables.append(binary)
+
+    newest_input = max(
+        [cache.stat().st_mtime_ns]
+        + [(root / path).stat().st_mtime_ns for path in source_paths()]
+        + [binary.stat().st_mtime_ns for binary in executables]
+    )
+    if junit.stat().st_mtime_ns < newest_input:
+        raise EvidenceError(
+            "CTest JUnit is older than source, build cache or compiled executable"
+        )
+
+    changed = subprocess.run(
+        ["git", "-C", str(root), "status", "--porcelain=v1",
+         "--untracked-files=no", "--", *source_paths()],
+        capture_output=True, text=True, check=False,
+    )
+    if changed.returncode != 0:
+        raise EvidenceError("cannot verify source working-tree cleanliness")
+    if changed.stdout.strip():
+        raise EvidenceError(
+            "tracked source modifications are not committed; "
+            "cannot tie test receipt to HEAD"
+        )
+
 def collect(root: Path, build: Path, junit: Path) -> dict[str, Any]:
+    check_fresh_compiled_results(root, build, junit)
     inventory = inspect_sources(root)
     actual = parse_ctest_junit(junit, len(EXPECTED))
     validate_junit_names(actual["names"], inventory["ctest_names"])
