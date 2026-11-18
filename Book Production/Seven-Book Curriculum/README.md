@@ -204,6 +204,23 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next learning stage:** Book 01 Chapter 05, generic asset pipelines; reuse these ownership proofs across cartridge, texture and mesh import data. The learner's primary implementation remains C++23, with every other language's interoperability boundary explicitly justified.
 
 
+## Pass 05 — Book 01, Chapter 05: Generic Asset Pipelines without Hidden Contracts
+
+**Delivery model changed per user instruction:** continue developing consecutive chapter passes on the same `curriculum/cpp23-nes-project-pass01` branch. Do not require the user to pull, apply inserts or run commands between passes. Reserve a consolidated pull/review/test/application plan for the **end-of-day or end-of-book checkpoint** when the user requests it. Nothing in this section asks for immediate local action.
+
+**Preservation:** the existing roughly 1,516-line derived chapter already teaches class templates, explicit/partial specialization, forwarding, concepts, parameter packs, byte budgets, compile-time policies, value categories, std::variant tradeoffs and C++ performance considerations. All its content is preserved. The new project addition belongs before the original heading `### The real performance question is what gets instantiated, stored and moved`, after the publication-correctness discussion. It is staged as a fifth marker-delimited insert, not an abbreviated replacement manuscript.
+
+**New narrative:** [NES-05A — Type-Safe Asset Import and Publication](../../Supplementary/C++23%20Project%20Labs/NES-05A%20-%20Type-Safe%20Asset%20Import%20and%20Publication.md) (25,513 characters). Follows one end-to-end type-aware import story, from external bytes to three different validated owned C++23 types and their transactional publication.
+
+**Cumulative code:** [typed_asset_pipeline.hpp](../../tools/labs/nes_course/typed_asset_pipeline.hpp) and [typed_asset_pipeline_cpp23_lab.cpp](../../tools/labs/typed_asset_pipeline_cpp23_lab.cpp). The existing C++23 `NromCartridge` is a real variant alternative, alongside the deliberately educational `TXR4` (RGBA8) and `MSH1` (quantized 16-bit triangle mesh) formats. Validation includes byte offsets, little-endian decoding, checked lengths, resource budget, triangle-index bounds, per-domain errors, independent owned storage, staging failures and append-only index lookup across vector relocation.
+
+**Integrity and evidence:** the source-preserving `tools/apply_cpp23_project_inserts.py` now handles five idempotent section additions. Test fixtures check exact recovery of original bytes after stripping these additions and fail closed on modified existing sections. CMake/CTest now registers five cumulative C++23 executables; the GitHub Actions workflow monitors the relevant source paths. **No new successful CI/macOS compilation is asserted until a job result is actually observed.**
+
+**Important limitations:** the index token is not a generational handle, not globally unique and not a concurrency-safe pointer. It is valid only for an append-only store whose lifetime continues. A single successful import remains committed even if a subsequent independent import fails: this is *not* an all-or-nothing batch. CPU image and mesh preparation is *not* a GPU upload. These are intentional teaching boundaries for Chapters 06 and the later graphics books.
+
+**Next:** Chapter 06, "Grow Registries without Invalidating Identity", will grow this exact store into owner-aware generational handles, explicit release/reuse policy, handle invalidation tests and a clear distinction between stable logical identity and movable physical storage.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
