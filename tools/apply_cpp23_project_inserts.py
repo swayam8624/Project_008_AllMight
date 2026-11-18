@@ -67,6 +67,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-06G - Generational Identity and Safe Reuse.md",
         b"\n## From a living asset registry to reliable queries and transformations\n",
     ),
+    Insert(
+        "NES-07C",
+        "Supplementary/C++23 Project Labs/NES-07C - CPU Instructions and Typed Debugger Structures.md",
+        "\n## The scene is now too large for the wrong container — Phase 5, M025–M027, Parts 401–445\n".encode("utf-8"),
+    ),
 )
 
 
