@@ -5,7 +5,10 @@
 #include "nes_course/cartridge_runtime.hpp"
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <initializer_list>
 #include <expected>
 #include <iostream>
 #include <memory>
