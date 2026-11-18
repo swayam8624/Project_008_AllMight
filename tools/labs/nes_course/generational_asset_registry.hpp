@@ -79,6 +79,7 @@ class GenerationalAssetRegistry {
         bool retired{false};
     };
     static_assert(std::is_nothrow_move_constructible_v<Slot>);
+    static_assert(std::is_nothrow_move_constructible_v<AssetRecord>);
     static_assert(std::is_nothrow_destructible_v<AssetRecord>);
 
 public:
@@ -119,9 +120,8 @@ public:
     template<Supported Tag>
     [[nodiscard]] std::expected<AssetHandle<Tag>, RegistryFailure>
     import(ByteView bytes, TestFault fault = TestFault::none) {
-        static_assert(std::is_nothrow_constructible_v<
-            AssetRecord, std::in_place_type_t<Asset<Tag>>, Asset<Tag>&&>,
-            "slot publication must be no-throw for every supported asset");
+        static_assert(std::is_nothrow_move_constructible_v<AssetRecord>,
+                      "prepared variant must have a non-throwing move constructor");
         if (owner_ == 0) {
             return std::unexpected(RegistryFailure{
                 RegistryImportError::invalid_moved_from_owner, {}});
@@ -151,17 +151,22 @@ public:
                 throw std::bad_alloc{};
             }
 
+            // A variant's in-place constructor need not be declared noexcept,
+            // even when its alternative has a noexcept move constructor.
+            // Prepare the entire variant before mutating a registry slot.
+            AssetRecord prepared(std::in_place_type<Asset<Tag>>,
+                                 std::move(*staged));
+
             if (!free_.empty()) {
                 const auto index = free_.back();
                 Slot& slot = slots_[index];
                 // A free-list element denotes an empty non-retired slot.
-                // All domain AssetRecord move constructions are noexcept.
+                // The prepared variant can be moved into an empty slot without throwing.
                 if (slot.retired || slot.asset.has_value() ||
                     slot.generation == 0) {
                     std::terminate(); // internal corruption, not bad input
                 }
-                slot.asset.emplace(
-                    std::in_place_type<Asset<Tag>>, std::move(*staged));
+                slot.asset.emplace(std::move(prepared));
                 free_.pop_back();
                 ++active_;
                 return AssetHandle<Tag>{owner_, index, slot.generation};
@@ -173,8 +178,7 @@ public:
             slots_.emplace_back();
             Slot& slot = slots_.back();
             slot.generation = initial_generation_;
-            slot.asset.emplace(
-                std::in_place_type<Asset<Tag>>, std::move(*staged));
+            slot.asset.emplace(std::move(prepared));
             ++active_;
             return AssetHandle<Tag>{owner_, index, slot.generation};
         } catch (const std::bad_alloc&) {
