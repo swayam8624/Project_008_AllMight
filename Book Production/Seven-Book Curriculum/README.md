@@ -238,6 +238,27 @@ The insertion tool recognizes existing untouched NES-01, NES-02 and NES-02T bloc
 **Next:** Chapter 07, "Typed Interfaces, Identity, and Data Structures", with continued improvements to the same store and evidence-based choice of data structures.
 
 
+## Pass 07 — Book 01, Chapter 07: Typed Interfaces, Identity, and Data Structures
+
+**User workflow remains deferred.** Continue source additions on the same `curriculum/cpp23-nes-project-pass01` branch. The user does not need to pull, apply, compile, export or run commands after each pass. Consolidated review, byte-preserving canonical insertion, native Mac compilation, sanitizer checks and LaTeX/PDF production are deferred until the user requests an end-of-day or end-of-book checkpoint.
+
+**Original long chapter preserved:** the existing chapter "Typed Interfaces, Identity, and Data Structures" (~877 source-edition lines and ~128K characters) already includes detailed PIMPL, phantom types, matrix/expression-template lifetimes, intrusive ownership, CPU/cache/SIMD, allocation/concurrency, recurrences, arrays/queues, hashing, Bloom filters, heaps and union-find. No original paragraph has been deleted, summarized away or directly rewritten on GitHub. The new additive lesson attaches just before `## The scene is now too large for the wrong container — Phase 5, M025–M027, Parts 401–445` so the existing CPU narrative leads into an executable instruction/debugger, then back into the original DSA lessons.
+
+**Deep teaching addition:** [NES-07C — CPU Instructions and Typed Debugger Structures](../../Supplementary/C++23%20Project%20Labs/NES-07C%20-%20CPU%20Instructions%20and%20Typed%20Debugger%20Structures.md) (~35.6K characters). It derives three address domains, real NROM PRG mapping, the little-endian reset vector, binary ADC flags, signed relative branch offsets, branch-page cost accounting and the difference between an architectural instruction transition and a real hardware bus-cycle trace. It then integrates a genuinely separately compiled PIMPL, owned debugger snapshots, fixed lossless trace backpressure, ordered breakpoints, priority memory probes, Bloom negative filtering and DSU analysis of RAM mirrors.
+
+**Cumulative code:**
+- [cpu6502_subset.hpp](../../tools/labs/nes_course/cpu6502_subset.hpp) — a deliberately partial instruction executor for opcode bytes EA, A9, A2, 85, E8, 18, 38, 69, D0, F0 and 4C, reusing the actual `CpuBus` and `NromCartridge` from NES-02.
+- [cpu_debug_instruments.hpp](../../tools/labs/nes_course/cpu_debug_instruments.hpp) — ring, ordered breakpoints, visited PC filter, priority probe scheduler and disjoint-set.
+- [cpu_debug_session.hpp](../../tools/labs/nes_course/cpu_debug_session.hpp) + [cpu_debug_session.cpp](../../tools/labs/nes_course/cpu_debug_session.cpp) — real C++23 PIMPL with out-of-line destructor/move assignment and typed, owned snapshots.
+- [nes_cpu_debugger_cpp23_lab.cpp](../../tools/labs/nes_cpu_debugger_cpp23_lab.cpp) — executable synthetic iNES/NROM-128/256 CPU trace, flag, branch, timing, reset failure, unsupported BRK, PPU MMIO fetch, FIFO, breakpoint, heap and DSU regression oracles.
+
+**Safety boundary:** this is neither a complete MOS 6502 nor a complete Ricoh 2A03/NES. The numeric per-instruction cost counter does not simulate every cycle's real bus actions. No interrupts/stack, full opcode matrix, decimal-mode instructions, PPU, APU, DMA, audio/video, controller I/O or accurate frame synchronization are modeled. The debug structures and shared bus are single-threaded. A Bloom positive result may be a false positive. The public C++ PIMPL is not a portable cross-toolchain plugin ABI.
+
+**Verification boundary:** the Book01 CMake/CTest now contains **seven targets**, and the seventh compiles the debugger client and the private implementation from separate translation units. The original additive patcher handles seven marker-delimited sections, with byte-exact restoration/idempotence fixtures extended accordingly. A dedicated GitHub Actions workflow tracks these paths. **Do not claim a passing native Mac build, complete CI, hardware differential validation or sanitizer certification until the actual outputs are inspected.** No LaTeX or PDF work was run here.
+
+**Next:** Chapter 08, "Graphs, Search, and GPU Scheduling". The next curriculum pass should derive a graph of real resource and debugger workload dependencies rather than using disconnected graph snippets. Keep CPU instruction order, host task scheduling and eventual Vulkan/Metal GPU synchronization as *distinct semantics*.
+
+
 ## Editorial acceptance rule for each subsequent chapter
 
 1. State the practical problem and derive what must be represented; define notation at its first use.
