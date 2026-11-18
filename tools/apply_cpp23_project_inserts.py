@@ -77,6 +77,11 @@ INSERTS = (
         "Supplementary/C++23 Project Labs/NES-08G - Dependency Graphs and Explicit GPU Work Contracts.md",
         b"\n## An API is a promise about an operation\n",
     ),
+    Insert(
+        "NES-09M",
+        "Supplementary/C++23 Project Labs/NES-09M - GPU Memory and Ordering Contracts.md",
+        b"\n### GENERAL COMPUTE & PARALLEL ALGORITHMS\n",
+    ),
 )
 
 
